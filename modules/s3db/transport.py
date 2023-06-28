@@ -691,18 +691,18 @@ class TransportModel(DataModel):
 
         # Reusable field
         represent = transport_BorderCrossingRepresent(show_link=True)
-        border_crossing_id = S3ReusableField("border_crossing_id", "reference %s" % tablename,
-                                             label = T("Border Crossing"),
-                                             represent = represent,
-                                             requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                                  represent,
-                                                                  ),
-                                             sortby = "name",
-                                             comment = S3PopupLink(c="transport",
-                                                                   f="border_crossing",
-                                                                   tooltip=T("Create a new border crossing"),
-                                                                   ),
-                                             )
+        border_crossing_id = FieldTemplate("border_crossing_id", "reference %s" % tablename,
+                                           label = T("Border Crossing"),
+                                           represent = represent,
+                                           requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                                represent,
+                                                                ),
+                                           sortby = "name",
+                                           comment = S3PopupLink(c="transport",
+                                                                 f="border_crossing",
+                                                                 tooltip=T("Create a new border crossing"),
+                                                                 ),
+                                           )
 
         # ---------------------------------------------------------------------
         # Countries involved in a border crossing

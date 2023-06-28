@@ -111,24 +111,25 @@ class MemberModel(DataModel):
             msg_list_empty = T("No membership types currently registered"))
 
         represent = S3Represent(lookup=tablename, translate=True)
-        membership_type_id = S3ReusableField("membership_type_id", "reference %s" % tablename,
-                                             label = T("Type"),
-                                             ondelete = "SET NULL",
-                                             readable = types,
-                                             represent = represent,
-                                             requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db, "member_membership_type.id",
-                                                                      represent,
-                                                                      filterby="organisation_id",
-                                                                      filter_opts=filter_opts)),
-                                             sortby = "name",
-                                             writable = types,
-                                             comment = S3PopupLink(f = "membership_type",
-                                                                   label = ADD_MEMBERSHIP_TYPE,
-                                                                   title = ADD_MEMBERSHIP_TYPE,
-                                                                   tooltip = T("Add a new membership type to the catalog."),
-                                                                   ),
-                                             )
+        membership_type_id = FieldTemplate("membership_type_id", "reference %s" % tablename,
+                                           label = T("Type"),
+                                           ondelete = "SET NULL",
+                                           readable = types,
+                                           represent = represent,
+                                           requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "member_membership_type.id",
+                                                                  represent,
+                                                                  filterby = "organisation_id",
+                                                                  filter_opts = filter_opts,
+                                                                  )),
+                                           sortby = "name",
+                                           writable = types,
+                                           comment = S3PopupLink(f = "membership_type",
+                                                                 label = ADD_MEMBERSHIP_TYPE,
+                                                                 title = ADD_MEMBERSHIP_TYPE,
+                                                                 tooltip = T("Add a new membership type to the catalog."),
+                                                                 ),
+                                           )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",
@@ -409,14 +410,14 @@ class MemberModel(DataModel):
                             )
 
         represent = S3Represent(lookup=tablename, fields=["code"])
-        membership_id = S3ReusableField("membership_id", "reference %s" % tablename,
-                                        label = T("Member"),
-                                        ondelete = "CASCADE",
-                                        represent = represent,
-                                        requires = IS_ONE_OF(db, "member_membership.id",
-                                                             represent,
-                                                             ),
-                                        )
+        membership_id = FieldTemplate("membership_id", "reference %s" % tablename,
+                                      label = T("Member"),
+                                      ondelete = "CASCADE",
+                                      represent = represent,
+                                      requires = IS_ONE_OF(db, "member_membership.id",
+                                                           represent,
+                                                           ),
+                                      )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

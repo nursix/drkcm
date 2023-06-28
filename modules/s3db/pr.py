@@ -299,14 +299,13 @@ class PRPersonEntityModel(DataModel):
                        )
 
         # Reusable fields
-        pr_pe_label = S3ReusableField("pe_label", length=128,
-                                      label = T("ID Tag Number"),
-                                      requires = IS_EMPTY_OR(
+        pr_pe_label = FieldTemplate("pe_label", length=128,
+                                    label = T("ID Tag Number"),
+                                    requires = IS_EMPTY_OR(
                                                     [IS_LENGTH(128),
-                                                     IS_NOT_ONE_OF(db,
-                                                        "pr_pentity.pe_label"),
+                                                     IS_NOT_ONE_OF(db, "pr_pentity.pe_label"),
                                                      ]),
-                                      )
+                                    )
 
         # Custom Method for S3AutocompleteWidget
         self.set_method("pr_pentity",
@@ -397,13 +396,14 @@ class PRPersonEntityModel(DataModel):
 
         # Reusable fields
         pr_role_represent = pr_RoleRepresent()
-        role_id = S3ReusableField("role_id", "reference %s" % tablename,
-                                  label = T("Role"),
-                                  ondelete = "CASCADE",
-                                  represent = pr_role_represent,
-                                  requires = IS_ONE_OF(db, "pr_role.id",
-                                                       pr_role_represent),
-                                  )
+        role_id = FieldTemplate("role_id", "reference %s" % tablename,
+                                label = T("Role"),
+                                ondelete = "CASCADE",
+                                represent = pr_role_represent,
+                                requires = IS_ONE_OF(db, "pr_role.id",
+                                                     pr_role_represent,
+                                                     ),
+                                )
 
         # ---------------------------------------------------------------------
         # Affiliation
@@ -787,15 +787,15 @@ class PRPersonModel(DataModel):
             # in various countries)
             pr_gender_opts[4] = T("other")
 
-        pr_gender = S3ReusableField("gender", "integer",
-                                    default = 1,
-                                    label = T("Sex"),
-                                    represent = represent_option(pr_gender_opts),
-                                    requires = IS_PERSON_GENDER(pr_gender_opts,
-                                                                sort = True,
-                                                                zero = None,
-                                                                ),
-                                    )
+        pr_gender = FieldTemplate("gender", "integer",
+                                  default = 1,
+                                  label = T("Sex"),
+                                  represent = represent_option(pr_gender_opts),
+                                  requires = IS_PERSON_GENDER(pr_gender_opts,
+                                                              sort = True,
+                                                              zero = None,
+                                                              ),
+                                  )
 
         if settings.get_L10n_mandatory_lastname():
             last_name_validate = [IS_NOT_EMPTY(error_message = T("Please enter a last name")),
@@ -966,21 +966,21 @@ class PRPersonModel(DataModel):
         sortby = [fn for fn in keys if fn in NAMES]
         orderby = "pr_person.%s" % (sortby[0] if sortby else NAMES[0])
 
-        person_id = S3ReusableField("person_id", "reference %s" % tablename,
-                                    sortby = sortby,
-                                    requires = IS_EMPTY_OR(
-                                        IS_ONE_OF(db, "pr_person.id",
-                                                  person_represent,
-                                                  orderby = orderby,
-                                                  sort = True,
-                                                  error_message = T("Person must be specified!"))
-                                                  ),
-                                    represent = person_represent,
-                                    label = T("Person"),
-                                    comment = person_id_comment,
-                                    ondelete = "RESTRICT",
-                                    widget = S3PersonAutocompleteWidget(),
-                                    )
+        person_id = FieldTemplate("person_id", "reference %s" % tablename,
+                                  sortby = sortby,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "pr_person.id",
+                                                          person_represent,
+                                                          orderby = orderby,
+                                                          sort = True,
+                                                          error_message = T("Person must be specified!"))
+                                                          ),
+                                  represent = person_represent,
+                                  label = T("Person"),
+                                  comment = person_id_comment,
+                                  ondelete = "RESTRICT",
+                                  widget = S3PersonAutocompleteWidget(),
+                                  )
 
         # Custom Methods for S3PersonAutocompleteWidget and S3AddPersonWidget
         set_method = self.set_method
@@ -2195,21 +2195,21 @@ class PRGroupModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    comment = S3PopupLink(c = "pr",
-                                                          f = "group_status",
-                                                          label = CREATE_STATUS,
-                                                          title = CREATE_STATUS,
-                                                          vars = {"child": "status_id"},
-                                                          ),
-                                    label = T("Status"),
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  comment = S3PopupLink(c = "pr",
+                                                        f = "group_status",
+                                                        label = CREATE_STATUS,
+                                                        title = CREATE_STATUS,
+                                                        vars = {"child": "status_id"},
+                                                        ),
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_group_status.id",
                                                           represent,
                                                           )),
-                                    )
+                                  )
 
         # ---------------------------------------------------------------------
         # Hard Coded Group types. Add/Comment entries, but don't remove!
@@ -2320,24 +2320,25 @@ class PRGroupModel(DataModel):
             tooltip = T("Create a new Group")
 
         represent = pr_GroupRepresent()
-        group_id = S3ReusableField("group_id", "reference %s" % tablename,
-                                   sortby = "name",
-                                   comment = S3PopupLink(#c = "pr",
-                                                         f = "group",
-                                                         label = add_label,
-                                                         title = title,
-                                                         tooltip = tooltip,
-                                                         ),
-                                   label = label,
-                                   ondelete = "RESTRICT",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        group_id = FieldTemplate("group_id", "reference %s" % tablename,
+                                 sortby = "name",
+                                 comment = S3PopupLink(#c = "pr",
+                                                       f = "group",
+                                                       label = add_label,
+                                                       title = title,
+                                                       tooltip = tooltip,
+                                                       ),
+                                 label = label,
+                                 ondelete = "RESTRICT",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_group.id",
                                                           represent,
                                                           filterby="system",
-                                                          filter_opts=(False,))),
-                                   widget = S3AutocompleteWidget("pr", "group")
-                                   )
+                                                          filter_opts=(False,),
+                                                          )),
+                                 widget = S3AutocompleteWidget("pr", "group")
+                                 )
 
         # Components
         self.add_components(tablename,
@@ -2457,22 +2458,22 @@ class PRGroupModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        role_id = S3ReusableField("role_id", "reference %s" % tablename,
-                                  comment = S3PopupLink(c = "pr",
-                                                        f = "group_member_role",
-                                                        label = CREATE_ROLE,
-                                                        title = CREATE_ROLE,
-                                                        tooltip = T("The role of the member in the group"),
-                                                        vars = {"child": "role_id"},
-                                                        ),
-                                  label = T("Group Member Role"),
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        role_id = FieldTemplate("role_id", "reference %s" % tablename,
+                                comment = S3PopupLink(c = "pr",
+                                                      f = "group_member_role",
+                                                      label = CREATE_ROLE,
+                                                      title = CREATE_ROLE,
+                                                      tooltip = T("The role of the member in the group"),
+                                                      vars = {"child": "role_id"},
+                                                      ),
+                                label = T("Group Member Role"),
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_group_member_role.id",
                                                           represent,
                                                           )),
-                                  )
+                                )
 
         # ---------------------------------------------------------------------
         # Group membership
@@ -2985,23 +2986,23 @@ class PRForumModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        forum_id = S3ReusableField("forum_id", "reference %s" % tablename,
-                                   sortby = "name",
-                                   comment = S3PopupLink(c = "pr",
-                                                         f = "forum",
-                                                         label = T("Create Forum"),
-                                                         title = T("Create Forum"),
-                                                         tooltip = T("Create a new Forum"),
-                                                         ),
-                                   label = T("Forum"),
-                                   ondelete = "RESTRICT",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        forum_id = FieldTemplate("forum_id", "reference %s" % tablename,
+                                 sortby = "name",
+                                 comment = S3PopupLink(c = "pr",
+                                                       f = "forum",
+                                                       label = T("Create Forum"),
+                                                       title = T("Create Forum"),
+                                                       tooltip = T("Create a new Forum"),
+                                                       ),
+                                 label = T("Forum"),
+                                 ondelete = "RESTRICT",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_forum.id",
                                                           represent,
                                                           )),
-                                   #widget = S3AutocompleteWidget("pr", "forum")
-                                   )
+                                 #widget = S3AutocompleteWidget("pr", "forum")
+                                 )
 
         # Components
         self.add_components(tablename,
@@ -3658,14 +3659,15 @@ class PRContactModel(DataModel):
 
         contact_represent = pr_ContactRepresent()
 
-        #contact_id = S3ReusableField("contact_id", "reference %s" % tablename,
-        #                             label = T("Contact"),
-        #                             ondelete = "CASCADE",
-        #                             represent = contact_represent,
-        #                             requires = IS_EMPTY_OR(
+        #contact_id = FieldTemplate("contact_id", "reference %s" % tablename,
+        #                           label = T("Contact"),
+        #                           ondelete = "CASCADE",
+        #                           represent = contact_represent,
+        #                           requires = IS_EMPTY_OR(
         #                                            IS_ONE_OF(current.db, "pr_contact.id",
-        #                                                      contact_represent)),
-        #                             )
+        #                                                      contact_represent,
+        #                                                      )),
+        #                           )
 
         # ---------------------------------------------------------------------
         # Emergency Contact Information
@@ -4120,14 +4122,15 @@ class PRAvailabilityModel(DataModel):
                   )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        date_formula_id = S3ReusableField("date_formula_id", "reference %s" % tablename,
-                                          label = T("Date Formula"),
-                                          ondelete = "CASCADE",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(
+        date_formula_id = FieldTemplate("date_formula_id", "reference %s" % tablename,
+                                        label = T("Date Formula"),
+                                        ondelete = "CASCADE",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "pr_date_formula.id",
-                                                                  represent)),
-                                          )
+                                                                  represent,
+                                                                  )),
+                                        )
 
         # ---------------------------------------------------------------------
         # Time Formula
@@ -4150,14 +4153,15 @@ class PRAvailabilityModel(DataModel):
                   )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        time_formula_id = S3ReusableField("time_formula_id", "reference %s" % tablename,
-                                          label = T("Time Formula"),
-                                          ondelete = "CASCADE",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(
+        time_formula_id = FieldTemplate("time_formula_id", "reference %s" % tablename,
+                                        label = T("Time Formula"),
+                                        ondelete = "CASCADE",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "pr_time_formula.id",
-                                                                  represent)),
-                                          )
+                                                                  represent,
+                                                                  )),
+                                        )
 
         # ---------------------------------------------------------------------
         # Slots
@@ -4176,18 +4180,19 @@ class PRAvailabilityModel(DataModel):
                   )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        slot_id = S3ReusableField("slot_id", "reference %s" % tablename,
-                                  label = T("Slot"),
-                                  ondelete = "CASCADE",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        slot_id = FieldTemplate("slot_id", "reference %s" % tablename,
+                                label = T("Slot"),
+                                ondelete = "CASCADE",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "pr_slot.id",
-                                                          represent)),
-                                  #comment=S3PopupLink(c = "pr",
-                                  #                    f = "slot",
-                                  #                    label = ADD_SLOT,
-                                  #                    ),
-                                  )
+                                                          represent,
+                                                          )),
+                                #comment=S3PopupLink(c = "pr",
+                                #                    f = "slot",
+                                #                    label = ADD_SLOT,
+                                #                    ),
+                                )
 
         # ---------------------------------------------------------------------
         # Persons <> Slots
@@ -4651,13 +4656,14 @@ class PRDescriptionModel(DataModel):
             6:T("Senior (50+)")
         }
         # Also used in DVI
-        pr_age_group = S3ReusableField("age_group", "integer",
-                                       default = 1,
-                                       label = T("Age Group"),
-                                       represent = represent_option(pr_age_group_opts),
-                                       requires = IS_IN_SET(pr_age_group_opts,
-                                                            zero=None),
-                                       )
+        pr_age_group = FieldTemplate("age_group", "integer",
+                                     default = 1,
+                                     label = T("Age Group"),
+                                     represent = represent_option(pr_age_group_opts),
+                                     requires = IS_IN_SET(pr_age_group_opts,
+                                                          zero = None,
+                                                          ),
+                                     )
 
         pr_race_opts = {
             1: T("caucasoid"),
@@ -5040,22 +5046,22 @@ class PREducationModel(DataModel):
            msg_list_empty = T("No Education Levels currently registered"))
 
         represent = S3Represent(lookup=tablename, translate=True)
-        level_id = S3ReusableField("level_id", "reference %s" % tablename,
-                                   comment = S3PopupLink(c = "pr",
-                                                         f = "education_level",
-                                                         label = ADD_EDUCATION_LEVEL,
-                                                         ),
-                                   label = T("Level of Award"),
-                                   ondelete = "RESTRICT",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
-                                        IS_ONE_OF(current.db, "pr_education_level.id",
-                                                  represent,
-                                                  filterby="organisation_id",
-                                                  filter_opts=filter_opts
-                                                  )),
-                                   sortby = "name",
-                                   )
+        level_id = FieldTemplate("level_id", "reference %s" % tablename,
+                                 comment = S3PopupLink(c = "pr",
+                                                       f = "education_level",
+                                                       label = ADD_EDUCATION_LEVEL,
+                                                       ),
+                                 label = T("Level of Award"),
+                                 ondelete = "RESTRICT",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(current.db, "pr_education_level.id",
+                                                          represent,
+                                                          filterby="organisation_id",
+                                                          filter_opts=filter_opts
+                                                          )),
+                                 sortby = "name",
+                                 )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -5414,20 +5420,19 @@ class PROccupationModel(DataModel):
         represent = S3Represent(lookup = tablename,
                                 translate = True,
                                 )
-        occupation_type_id = S3ReusableField("occupation_type_id",
-                                             "reference %s" % tablename,
-                                             label = T("Occupation Type"),
-                                             represent = represent,
-                                             requires = IS_ONE_OF(db,
-                                                          "pr_occupation_type.id",
-                                                          represent,
-                                                          ),
-                                             sortby = "name",
-                                             comment = S3PopupLink(c="pr",
-                                                                   f="occupation_type",
-                                                                   tooltip=T("Create a new occupation type"),
-                                                                   ),
-                                             )
+        occupation_type_id = FieldTemplate("occupation_type_id",
+                                           "reference %s" % tablename,
+                                           label = T("Occupation Type"),
+                                           represent = represent,
+                                           requires = IS_ONE_OF(db, "pr_occupation_type.id",
+                                                                represent,
+                                                                ),
+                                           sortby = "name",
+                                           comment = S3PopupLink(c = "pr",
+                                                                 f = "occupation_type",
+                                                                 tooltip = T("Create a new occupation type"),
+                                                                 ),
+                                           )
 
         # ---------------------------------------------------------------------
         # Occupation Type <=> Person Link
@@ -5785,18 +5790,17 @@ class PRSavedFilterModel(DataModel):
                           )
 
         represent = S3Represent(lookup=tablename, fields=["title"])
-        filter_id = S3ReusableField("filter_id", "reference %s" % tablename,
-                                    label = T("Filter"),
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(
-                                                    current.db, "pr_filter.id",
-                                                    represent,
-                                                    orderby="pr_filter.title",
-                                                    sort=True,
-                                                    )),
-                                    )
+        filter_id = FieldTemplate("filter_id", "reference %s" % tablename,
+                                  label = T("Filter"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(current.db, "pr_filter.id",
+                                                          represent,
+                                                          orderby="pr_filter.title",
+                                                          sort=True,
+                                                          )),
+                                  )
 
         self.configure(tablename,
                        listadd = False,

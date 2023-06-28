@@ -182,22 +182,22 @@ class HRModel(DataModel):
             msg_list_empty = T("Currently no entries in the catalog"))
 
         represent = S3Represent(lookup = tablename)
-        department_id = S3ReusableField("department_id", "reference %s" % tablename,
-            label = T("Department / Unit"),
-            ondelete = "SET NULL",
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "hrm_department.id",
-                                  represent,
-                                  filterby = "organisation_id",
-                                  filter_opts = filter_opts,
-                                  )),
-            sortby = "name",
-            comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-                                  f = "department",
-                                  label = label_create,
-                                  ),
-            )
+        department_id = FieldTemplate("department_id", "reference %s" % tablename,
+                                      label = T("Department / Unit"),
+                                      ondelete = "SET NULL",
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "hrm_department.id",
+                                                              represent,
+                                                              filterby = "organisation_id",
+                                                              filter_opts = filter_opts,
+                                                              )),
+                                      sortby = "name",
+                                      comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
+                                                            f = "department",
+                                                            label = label_create,
+                                                            ),
+                                      )
 
         configure("hrm_department",
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -329,23 +329,23 @@ class HRModel(DataModel):
                                   not_filter_opts = not_filter_opts,
                                   ))
 
-        job_title_id = S3ReusableField("job_title_id", "reference %s" % tablename,
-            label = label,
-            ondelete = "SET NULL",
-            represent = represent,
-            requires = requires,
-            sortby = "name",
-            comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-                                  f = "job_title",
-                                  # Add this for usecases where this is no special controller for an options lookup
-                                  #vars = {"prefix": "hrm",
-                                  #        "parent": "human_resource",
-                                  #        },
-                                  label = label_create,
-                                  title = label,
-                                  tooltip = tooltip,
-                                  ),
-            )
+        job_title_id = FieldTemplate("job_title_id", "reference %s" % tablename,
+                                     label = label,
+                                     ondelete = "SET NULL",
+                                     represent = represent,
+                                     requires = requires,
+                                     sortby = "name",
+                                     comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
+                                                           f = "job_title",
+                                                           # Add this for usecases where this is no special controller for an options lookup
+                                                           #vars = {"prefix": "hrm",
+                                                           #        "parent": "human_resource",
+                                                           #        },
+                                                           label = label_create,
+                                                           title = label,
+                                                           tooltip = tooltip,
+                                                           ),
+                                     )
 
         configure("hrm_job_title",
                   deduplicate = self.hrm_job_title_duplicate,
@@ -605,15 +605,15 @@ class HRModel(DataModel):
                               tooltip = AUTOCOMPLETE_HELP,
                               )
 
-        human_resource_id = S3ReusableField("human_resource_id", "reference %s" % tablename,
-                                            label = label,
-                                            ondelete = "RESTRICT",
-                                            represent = hrm_human_resource_represent,
-                                            requires = requires,
-                                            sortby = ["type", "status"],
-                                            widget = widget,
-                                            comment = comment,
-                                            )
+        human_resource_id = FieldTemplate("human_resource_id", "reference %s" % tablename,
+                                          label = label,
+                                          ondelete = "RESTRICT",
+                                          represent = hrm_human_resource_represent,
+                                          requires = requires,
+                                          sortby = ["type", "status"],
+                                          widget = widget,
+                                          comment = comment,
+                                          )
 
         # Custom Method for S3HumanResourceAutocompleteWidget and S3AddPersonWidget
         set_method = self.set_method
@@ -1036,7 +1036,7 @@ class HRModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"hrm_department_id": dummy("department_id"),
                 "hrm_job_title_id": dummy("job_title_id"),
@@ -1915,27 +1915,27 @@ class HRJobModel(DataModel):
         #   msg_list_empty = T("Currently no entries in the catalog"))
 
         #label_create = crud_strings[tablename].label_create
-        position_id = S3ReusableField("position_id", "reference %s" % tablename,
-                                      label = T("Position"),
-                                      ondelete = "SET NULL",
-                                      #represent = hrm_position_represent,
-                                      requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                                       "hrm_position.id",
-                                                                       #hrm_position_represent,
-                                                                       )),
-                                      sortby = "name",
-                                      #comment = DIV(A(label_create,
-                                      #                _class="s3_add_resource_link",
-                                      #                _href=URL(f="position",
-                                      #                          args="create",
-                                      #                          vars={"format": "popup"}
-                                      #                          ),
-                                      #                _target="top",
-                                      #                _title=label_create),
-                                      #              DIV(_class="tooltip",
-                                      #                  _title="%s|%s" % (label_create,
-                                      #                                    T("Add a new job role to the catalog.")))),
-                                      )
+        position_id = FieldTemplate("position_id", "reference %s" % tablename,
+                                    label = T("Position"),
+                                    ondelete = "SET NULL",
+                                    #represent = hrm_position_represent,
+                                    requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "hrm_position.id",
+                                                              #hrm_position_represent,
+                                                              )),
+                                    sortby = "name",
+                                    #comment = DIV(A(label_create,
+                                    #                _class="s3_add_resource_link",
+                                    #                _href=URL(f="position",
+                                    #                          args="create",
+                                    #                          vars={"format": "popup"}
+                                    #                          ),
+                                    #                _target="top",
+                                    #                _title=label_create),
+                                    #              DIV(_class="tooltip",
+                                    #                  _title="%s|%s" % (label_create,
+                                    #                                    T("Add a new job role to the catalog.")))),
+                                    )
 
         # =========================================================================
         # Availability
@@ -2147,25 +2147,25 @@ class HRSkillModel(DataModel):
         skill_types = settings.get_hrm_skill_types()
         label_create = crud_strings[tablename].label_create
         represent = S3Represent(lookup=tablename)
-        skill_type_id = S3ReusableField("skill_type_id", "reference %s" % tablename,
-            default = self.skill_type_default,
-            label = T("Skill Type"),
-            ondelete = "RESTRICT",
-            readable = skill_types,
-            writable = skill_types,
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "hrm_skill_type.id",
-                                  represent
-                                  )),
-            sortby = "name",
-            comment = S3PopupLink(c = c,
-                                  f = "skill_type",
-                                  label = label_create,
-                                  title = label_create,
-                                  tooltip = T("Add a new skill type to the catalog."),
-                                  ),
-            )
+        skill_type_id = FieldTemplate("skill_type_id", "reference %s" % tablename,
+                                      default = self.skill_type_default,
+                                      label = T("Skill Type"),
+                                      ondelete = "RESTRICT",
+                                      readable = skill_types,
+                                      writable = skill_types,
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "hrm_skill_type.id",
+                                                              represent,
+                                                              )),
+                                      sortby = "name",
+                                      comment = S3PopupLink(c = c,
+                                                            f = "skill_type",
+                                                            label = label_create,
+                                                            title = label_create,
+                                                            tooltip = T("Add a new skill type to the catalog."),
+                                                            ),
+                                      )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -2223,38 +2223,39 @@ class HRSkillModel(DataModel):
                                  )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        skill_id = S3ReusableField("skill_id", "reference %s" % tablename,
-                                   label = T("Skill"),
-                                   ondelete = "SET NULL",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        skill_id = FieldTemplate("skill_id", "reference %s" % tablename,
+                                 label = T("Skill"),
+                                 ondelete = "SET NULL",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "hrm_skill.id",
                                                           represent,
                                                           sort=True
                                                           )),
-                                   sortby = "name",
-                                   comment = skill_help,
-                                   widget = widget
-                                   )
+                                 sortby = "name",
+                                 comment = skill_help,
+                                 widget = widget
+                                 )
 
         multi_skill_represent = S3Represent(lookup = tablename,
                                             multiple = True,
                                             )
-        multi_skill_id = S3ReusableField("skill_id", "list:reference hrm_skill",
-                                         label = T("Skills"),
-                                         ondelete = "SET NULL",
-                                         represent = multi_skill_represent,
-                                         requires = IS_EMPTY_OR(
+        multi_skill_id = FieldTemplate("skill_id", "list:reference hrm_skill",
+                                       label = T("Skills"),
+                                       ondelete = "SET NULL",
+                                       represent = multi_skill_represent,
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "hrm_skill.id",
                                                                   represent,
                                                                   sort=True,
                                                                   multiple=True
                                                                   )),
-                                         sortby = "name",
-                                         #comment = skill_help,
-                                         widget = S3MultiSelectWidget(header="",
-                                                                      selectedList=3),
-                                         )
+                                       sortby = "name",
+                                       #comment = skill_help,
+                                       widget = S3MultiSelectWidget(header = "",
+                                                                    selectedList = 3,
+                                                                    ),
+                                       )
 
         configure("hrm_skill",
                   deduplicate = S3Duplicate(),
@@ -2312,19 +2313,20 @@ class HRSkillModel(DataModel):
             msg_list_empty = T("Currently no entries in the catalog"))
 
         represent = S3Represent(lookup=tablename, translate=True)
-        competency_id = S3ReusableField("competency_id", "reference %s" % tablename,
-                                        label = T("Competency"),
-                                        ondelete = "RESTRICT",
-                                        represent = represent,
-                                        requires = IS_EMPTY_OR(
+        competency_id = FieldTemplate("competency_id", "reference %s" % tablename,
+                                      label = T("Competency"),
+                                      ondelete = "RESTRICT",
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db,
                                                               "hrm_competency_rating.id",
                                                               represent,
-                                                              orderby="hrm_competency_rating.priority desc",
-                                                              sort=True)),
-                                        sortby = "priority",
-                                        comment = self.competency_rating_comment(),
-                                        )
+                                                              orderby = "hrm_competency_rating.priority desc",
+                                                              sort = True,
+                                                              )),
+                                      sortby = "priority",
+                                      comment = self.competency_rating_comment(),
+                                      )
 
         configure("hrm_competency_rating",
                   deduplicate = self.hrm_competency_rating_duplicate,
@@ -2432,27 +2434,31 @@ class HRSkillModel(DataModel):
 
         #label_create = crud_strings[tablename].label_create
         #represent = S3Represent(lookup=tablename)
-        #skill_group_id = S3ReusableField("skill_provision_id", "reference %s" % tablename,
-        #                           label = T("Skill Provision"),
-        #                           ondelete = "SET NULL",
-        #                           represent = represent,
-        #                           requires = IS_EMPTY_OR(IS_ONE_OF(db,
-        #                                                           "hrm_skill_provision.id",
-        #                                                           represent)),
-        #                           sortby = "name",
-        #                           comment = DIV(A(label_create,
-        #                                           _class="s3_add_resource_link",
-        #                                           _href=URL(f="skill_provision",
-        #                                                     args="create",
-        #                                                     vars={"format": "popup"},
-        #                                                     ),
-        #                                           _target="top",
-        #                                           _title=label_create),
-        #                                         DIV(_class="tooltip",
-        #                                             _title="%s|%s" % (label_create,
-        #                                                               T("Add a new skill provision to the catalog.")))),
-        #                           )
-
+        #skill_group_id = FieldTemplate("skill_provision_id", "reference %s" % tablename,
+        #                               label = T("Skill Provision"),
+        #                               ondelete = "SET NULL",
+        #                               represent = represent,
+        #                               requires = IS_EMPTY_OR(
+        #                                            IS_ONE_OF(db, "hrm_skill_provision.id",
+        #                                                      represent,
+        #                                                      )),
+        #                               sortby = "name",
+        #                               comment = DIV(A(label_create,
+        #                                               _class = "s3_add_resource_link",
+        #                                               _href = URL(f = "skill_provision",
+        #                                                           args = "create",
+        #                                                           vars = {"format": "popup"},
+        #                                                           ),
+        #                                               _target = "top",
+        #                                               _title = label_create,
+        #                                               ),
+        #                                             DIV(_class="tooltip",
+        #                                                 _title="%s|%s" % (label_create,
+        #                                                                   T("Add a new skill provision to the catalog."),
+        #                                                                   ),
+        #                                                 ),
+        #                                             ),
+        #                               )
 
         # =========================================================================
         # Courses
@@ -2556,21 +2562,21 @@ class HRSkillModel(DataModel):
             #                                    AUTOCOMPLETE_HELP))
 
         course_represent = S3Represent(lookup=tablename, translate=True)
-        course_id = S3ReusableField("course_id", "reference %s" % tablename,
-                                    label = T("Course"),
-                                    ondelete = "RESTRICT",
-                                    represent = course_represent,
-                                    requires = IS_EMPTY_OR(
+        course_id = FieldTemplate("course_id", "reference %s" % tablename,
+                                  label = T("Course"),
+                                  ondelete = "RESTRICT",
+                                  represent = course_represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "hrm_course.id",
                                                           course_represent,
                                                           filterby = "organisation_id",
                                                           filter_opts = filter_opts,
                                                           )),
-                                    sortby = "name",
-                                    comment = course_help,
-                                    # Comment this to use a Dropdown & not an Autocomplete
-                                    #widget = S3AutocompleteWidget("hrm", "course")
-                                    )
+                                  sortby = "name",
+                                  comment = course_help,
+                                  # Comment this to use a Dropdown & not an Autocomplete
+                                  #widget = S3AutocompleteWidget("hrm", "course")
+                                  )
 
         if settings.get_hrm_create_certificates_from_courses():
             onaccept = self.hrm_course_onaccept
@@ -2632,24 +2638,24 @@ class HRSkillModel(DataModel):
         event_types = settings.get_hrm_event_types()
         label_create = crud_strings[tablename].label_create
         represent = S3Represent(lookup=tablename)
-        event_type_id = S3ReusableField("event_type_id", "reference %s" % tablename,
-            label = T("Event Type"),
-            ondelete = "RESTRICT",
-            readable = event_types,
-            writable = event_types,
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "hrm_event_type.id",
-                                  represent
-                                  )),
-            sortby = "name",
-            comment = S3PopupLink(c = "hrm",
-                                  f = "event_type",
-                                  label = label_create,
-                                  title = label_create,
-                                  tooltip = T("Add a new event type to the catalog."),
-                                  ),
-            )
+        event_type_id = FieldTemplate("event_type_id", "reference %s" % tablename,
+                                      label = T("Event Type"),
+                                      ondelete = "RESTRICT",
+                                      readable = event_types,
+                                      writable = event_types,
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "hrm_event_type.id",
+                                                              represent
+                                                              )),
+                                      sortby = "name",
+                                      comment = S3PopupLink(c = "hrm",
+                                                            f = "event_type",
+                                                            label = label_create,
+                                                            title = label_create,
+                                                            tooltip = T("Add a new event type to the catalog."),
+                                                            ),
+                                      )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -2769,24 +2775,24 @@ class HRSkillModel(DataModel):
             msg_list_empty = T("Currently no training events registered"))
 
         represent = hrm_TrainingEventRepresent()
-        training_event_id = S3ReusableField("training_event_id", "reference %s" % tablename,
-                                            label = T("Training Event"),
-                                            ondelete = "RESTRICT",
-                                            represent = represent,
-                                            requires = IS_EMPTY_OR(
+        training_event_id = FieldTemplate("training_event_id", "reference %s" % tablename,
+                                          label = T("Training Event"),
+                                          ondelete = "RESTRICT",
+                                          represent = represent,
+                                          requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "hrm_training_event.id",
                                                                   represent,
                                                                   #filterby="organisation_id",
                                                                   #filter_opts=filter_opts,
                                                                   )),
-                                            sortby = "course_id",
-                                            comment = S3PopupLink(c = c,
-                                                                  f = "training_event",
-                                                                  label = ADD_TRAINING_EVENT,
-                                                                  ),
-                                            # Comment this to use a Dropdown & not an Autocomplete
-                                            #widget = S3AutocompleteWidget("hrm", "training_event")
-                                            )
+                                          sortby = "course_id",
+                                          comment = S3PopupLink(c = c,
+                                                                f = "training_event",
+                                                                label = ADD_TRAINING_EVENT,
+                                                                ),
+                                          # Comment this to use a Dropdown & not an Autocomplete
+                                          #widget = S3AutocompleteWidget("hrm", "training_event")
+                                          )
 
         # Which levels of Hierarchy are we using?
         levels = current.gis.get_relevant_hierarchy_levels()
@@ -3334,25 +3340,25 @@ class HRSkillModel(DataModel):
 
         label_create = crud_strings[tablename].label_create
         represent = S3Represent(lookup=tablename)
-        certificate_id = S3ReusableField("certificate_id", "reference %s" % tablename,
-             label = T("Certificate"),
-             ondelete = "RESTRICT",
-             represent = represent,
-             requires = IS_EMPTY_OR(
-                            IS_ONE_OF(db,
-                                      "hrm_certificate.id",
-                                      represent,
-                                      filterby="organisation_id" if filter_certs else None,
-                                      filter_opts=filter_opts
-                                      )),
-             sortby = "name",
-             comment = S3PopupLink(c = c,
-                                   f = "certificate",
-                                   label = label_create,
-                                   title = label_create,
-                                   tooltip = T("Add a new certificate to the catalog."),
-                                   ),
-             )
+        certificate_id = FieldTemplate("certificate_id", "reference %s" % tablename,
+                                       label = T("Certificate"),
+                                       ondelete = "RESTRICT",
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db,
+                                                              "hrm_certificate.id",
+                                                              represent,
+                                                              filterby="organisation_id" if filter_certs else None,
+                                                              filter_opts=filter_opts
+                                                              )),
+                                       sortby = "name",
+                                       comment = S3PopupLink(c = c,
+                                                             f = "certificate",
+                                                             label = label_create,
+                                                             title = label_create,
+                                                             tooltip = T("Add a new certificate to the catalog."),
+                                                             ),
+                                       )
 
         if settings.get_hrm_use_skills():
             create_next = URL(f="certificate",
@@ -3646,7 +3652,7 @@ class HRSkillModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {#"hrm_competency_id": dummy("competency_id"),
                 "hrm_course_id": dummy("course_id"),
@@ -4854,22 +4860,23 @@ class HRProgrammeModel(DataModel):
             filter_opts = (None,)
 
         represent = S3Represent(lookup=tablename, translate=True)
-        programme_id = S3ReusableField("programme_id", "reference %s" % tablename,
-            label = T("Program"),
-            ondelete = "SET NULL",
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "hrm_programme.id",
-                                  represent,
-                                  filterby="organisation_id",
-                                  filter_opts=filter_opts)),
-            sortby = "name",
-            comment = S3PopupLink(f = "programme",
-                                  label = label_create,
-                                  title = label_create,
-                                  tooltip = T("Add a new program to the catalog."),
-                                  ),
-            )
+        programme_id = FieldTemplate("programme_id", "reference %s" % tablename,
+                                     label = T("Program"),
+                                     ondelete = "SET NULL",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "hrm_programme.id",
+                                                              represent,
+                                                              filterby = "organisation_id",
+                                                              filter_opts = filter_opts,
+                                                              )),
+                                     sortby = "name",
+                                     comment = S3PopupLink(f = "programme",
+                                                           label = label_create,
+                                                           title = label_create,
+                                                           tooltip = T("Add a new program to the catalog."),
+                                                           ),
+                                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",
@@ -5115,18 +5122,19 @@ class HRShiftModel(DataModel):
                      )
 
         represent = S3Represent(lookup=tablename, fields=["start_date", "end_date"])
-        shift_id = S3ReusableField("shift_id", "reference %s" % tablename,
-                                   label = T("Shift"),
-                                   ondelete = "RESTRICT",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        shift_id = FieldTemplate("shift_id", "reference %s" % tablename,
+                                 label = T("Shift"),
+                                 ondelete = "RESTRICT",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "hrm_shift.id",
-                                                          represent)),
-                                   comment = S3PopupLink(c = "hrm",
-                                                         f = "shift",
-                                                         label = T("Create Shift"),
-                                                         ),
-                                   )
+                                                          represent,
+                                                          )),
+                                 comment = S3PopupLink(c = "hrm",
+                                                       f = "shift",
+                                                       label = T("Create Shift"),
+                                                       ),
+                                 )
 
         self.add_components(tablename,
                             hrm_human_resource_shift = {"joinby": "shift_id",
@@ -5272,7 +5280,7 @@ class HRShiftModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"hrm_shift_id": S3ReusableField.dummy("shift_id"),
+        return {"hrm_shift_id": FieldTemplate.dummy("shift_id"),
                 }
 
 # =============================================================================
@@ -5527,7 +5535,7 @@ class HRDelegationModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField.dummy
+        #dummy = FieldTemplate.dummy
 
         return {"hrm_delegation_status_opts": {}}
 

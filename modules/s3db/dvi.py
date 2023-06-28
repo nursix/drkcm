@@ -153,13 +153,15 @@ class DVIModel(DataModel):
                                 fields = ["marker", "date", "bodies_found"],
                                 labels = T("[%(marker)s] %(date)s: %(bodies_found)s bodies"),
                                 )
-        dvi_recreq_id = S3ReusableField("dvi_recreq_id", "reference %s" % tablename,
-                                        requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                        "dvi_recreq.id",
-                                                        represent)),
-                                        represent = represent,
-                                        label=T("Recovery Request"),
-                                        ondelete = "RESTRICT")
+        dvi_recreq_id = FieldTemplate("dvi_recreq_id", "reference %s" % tablename,
+                                      label = T("Recovery Request"),
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "dvi_recreq.id",
+                                                              represent,
+                                                              )),
+                                      represent = represent,
+                                      ondelete = "RESTRICT",
+                                      )
 
         # ---------------------------------------------------------------------
         # Morgue
@@ -192,11 +194,14 @@ class DVIModel(DataModel):
                      )
 
         # Reusable Field
-        morgue_id = S3ReusableField("morgue_id", "reference %s" % tablename,
-                                    requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                    "dvi_morgue.id", "%(name)s")),
-                                    represent = S3Represent(lookup="dvi_morgue"),
-                                    ondelete = "RESTRICT")
+        morgue_id = FieldTemplate("morgue_id", "reference %s" % tablename,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "dvi_morgue.id",
+                                                          "%(name)s",
+                                                          )),
+                                  represent = S3Represent(lookup="dvi_morgue"),
+                                  ondelete = "RESTRICT",
+                                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -308,12 +313,13 @@ class DVIModel(DataModel):
         # ---------------------------------------------------------------------
         # Checklist of operations
         #
-        checklist_item = S3ReusableField("checklist_item", "integer",
-                                         requires = IS_IN_SET(task_status, zero=None),
-                                         default = 1,
-                                         label = T("Checklist Item"),
-                                         represent = lambda opt: \
-                                                     task_status.get(opt, UNKNOWN_OPT))
+        checklist_item = FieldTemplate("checklist_item", "integer",
+                                       label = T("Checklist Item"),
+                                       default = 1,
+                                       requires = IS_IN_SET(task_status, zero=None),
+                                       represent = lambda opt: \
+                                                   task_status.get(opt, UNKNOWN_OPT),
+                                       )
 
         tablename = "dvi_checklist"
         define_table(tablename,

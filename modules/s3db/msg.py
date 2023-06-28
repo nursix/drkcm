@@ -120,13 +120,13 @@ class MsgChannelModel(DataModel):
                           )
 
         # Reusable Field
-        channel_id = S3ReusableField("channel_id", "reference %s" % tablename,
-                                     label = T("Channel"),
-                                     ondelete = "SET NULL",
-                                     represent = S3Represent(lookup = tablename),
-                                     requires = IS_EMPTY_OR(
-                                        IS_ONE_OF_EMPTY(db, "msg_channel.channel_id")),
-                                     )
+        channel_id = FieldTemplate("channel_id", "reference %s" % tablename,
+                                   label = T("Channel"),
+                                   ondelete = "SET NULL",
+                                   represent = S3Represent(lookup = tablename),
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_channel.channel_id")),
+                                   )
 
         self.add_components(tablename,
                             msg_channel_status = "channel_id",
@@ -438,12 +438,12 @@ class MsgMessageModel(DataModel):
 
         # Reusable Field
         message_represent = S3Represent(lookup = tablename, fields = ["body"])
-        message_id = S3ReusableField("message_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     represent = message_represent,
-                                     requires = IS_EMPTY_OR(
-                                        IS_ONE_OF_EMPTY(db, "msg_message.message_id")),
-                                     )
+        message_id = FieldTemplate("message_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   represent = message_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_message.message_id")),
+                                   )
 
         self.add_components(tablename,
                             msg_attachment = "message_id",
@@ -469,16 +469,16 @@ class MsgMessageModel(DataModel):
                            5 : T("Failed"),
                            }
 
-        opt_msg_status = S3ReusableField("status", "integer",
-                                         notnull=True,
-                                         requires = IS_IN_SET(MSG_STATUS_OPTS,
-                                                              zero = None),
-                                         default = 1,
-                                         label = T("Status"),
-                                         represent = lambda opt: \
-                                                     MSG_STATUS_OPTS.get(opt,
-                                                                 UNKNOWN_OPT)
-                                         )
+        opt_msg_status = FieldTemplate("status", "integer",
+                                       notnull=True,
+                                       requires = IS_IN_SET(MSG_STATUS_OPTS,
+                                                            zero = None,
+                                                            ),
+                                       default = 1,
+                                       label = T("Status"),
+                                       represent = lambda opt: \
+                                                   MSG_STATUS_OPTS.get(opt, UNKNOWN_OPT)
+                                       )
 
         # Outbox - needs to be separate to Message since a single message
         # sent needs different outbox entries for each recipient
@@ -533,7 +533,7 @@ class MsgMessageModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"msg_message_id": S3ReusableField.dummy("message_id"),
+        return {"msg_message_id": FieldTemplate.dummy("message_id"),
                 }
 
 # =============================================================================
@@ -1588,14 +1588,15 @@ class MsgRSSModel(MsgChannelModel):
                                     fields = ["title", "from_address",],
                                     field_sep = " - ")
 
-        rss_id = S3ReusableField("rss_id", "reference %s" % tablename,
-                                 label = T("RSS Link"),
-                                 ondelete = "CASCADE",
-                                 represent = rss_represent,
-                                 requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(current.db, "msg_rss.id",
-                                                          rss_represent)),
-                                 )
+        rss_id = FieldTemplate("rss_id", "reference %s" % tablename,
+                               label = T("RSS Link"),
+                               ondelete = "CASCADE",
+                               represent = rss_represent,
+                               requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(current.db, "msg_rss.id",
+                                                      rss_represent,
+                                                      )),
+                               )
 
         # ---------------------------------------------------------------------
         # Links for RSS Feed
@@ -2302,14 +2303,13 @@ class MsgTwitterSearchModel(MsgChannelModel):
 
         # Reusable Query ID
         represent = S3Represent(lookup=tablename, fields=["keywords"])
-        search_id = S3ReusableField("search_id", "reference %s" % tablename,
-                    label = T("Search Query"),
-                    ondelete = "CASCADE",
-                    represent = represent,
-                    requires = IS_EMPTY_OR(
-                                IS_ONE_OF_EMPTY(db, "msg_twitter_search.id")
-                                ),
-                    )
+        search_id = FieldTemplate("search_id", "reference %s" % tablename,
+                                  label = T("Search Query"),
+                                  ondelete = "CASCADE",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_twitter_search.id")),
+                                  )
 
         set_method("msg_twitter_search",
                    method = "poll",

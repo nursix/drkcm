@@ -374,17 +374,17 @@ class HospitalDataModel(DataModel):
                                               )
 
         represent = S3Represent(lookup=tablename)
-        hospital_id = S3ReusableField("hospital_id", "reference %s" % tablename,
-                                      comment = hms_hospital_id_comment,
-                                      label = T("Hospital"),
-                                      ondelete = "RESTRICT",
-                                      represent = represent,
-                                      requires = IS_EMPTY_OR(
+        hospital_id = FieldTemplate("hospital_id", "reference %s" % tablename,
+                                    comment = hms_hospital_id_comment,
+                                    label = T("Hospital"),
+                                    ondelete = "RESTRICT",
+                                    represent = represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "hms_hospital.id",
                                                               represent
                                                               )),
-                                      sortby = "name",
-                                      )
+                                    sortby = "name",
+                                    )
 
         # Components
         single = {"joinby": "hospital_id",
@@ -915,7 +915,7 @@ class HospitalDataModel(DataModel):
     # -------------------------------------------------------------------------
     def defaults(self):
 
-        return {"hms_hospital_id": S3ReusableField.dummy("hospital_id"),
+        return {"hms_hospital_id": FieldTemplate.dummy("hospital_id"),
                 }
 
     # -------------------------------------------------------------------------

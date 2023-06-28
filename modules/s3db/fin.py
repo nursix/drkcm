@@ -119,18 +119,18 @@ class FinExpensesModel(DataModel):
 
         represent = S3Represent(lookup = tablename)
 
-        expense_id = S3ReusableField("expense_id", "reference %s" % tablename,
-                                     label = T("Expense"),
-                                     ondelete = "CASCADE",
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        expense_id = FieldTemplate("expense_id", "reference %s" % tablename,
+                                   label = T("Expense"),
+                                   ondelete = "CASCADE",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(current.db, "fin_expense.id",
                                                           represent,
                                                           orderby="fin_expense.name",
                                                           sort=True,
                                                           )),
-                                     sortby = "name",
-                                     )
+                                   sortby = "name",
+                                   )
 
         # ---------------------------------------------------------------------
         # Return global names to s3.*
@@ -145,7 +145,7 @@ class FinExpensesModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"fin_expense_id": S3ReusableField.dummy("expense_id"),
+        return {"fin_expense_id": FieldTemplate.dummy("expense_id"),
                 }
 
 # =============================================================================
@@ -201,7 +201,7 @@ class FinVoucherModel(DataModel):
                           )
 
         org_group_id = self.org_group_id
-        org_group_represent = org_group_id.attr.represent
+        org_group_represent = org_group_id().represent
         org_group_requires = IS_EMPTY_OR(IS_ONE_OF(db, "org_group.id",
                                                    org_group_represent,
                                                    sort = True,
@@ -332,14 +332,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup = tablename)
-        program_id = S3ReusableField("program_id", "reference %s" % tablename,
-                                     label = T("Program"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        program_id = FieldTemplate("program_id", "reference %s" % tablename,
+                                   label = T("Program"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # -------------------------------------------------------------------------
         # Voucher billing
@@ -436,14 +436,14 @@ class FinVoucherModel(DataModel):
                                                                                utc = True,
                                                                                ),
                                 )
-        billing_id = S3ReusableField("billing_id", "reference %s" % tablename,
-                                     label = T("Billing"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        billing_id = FieldTemplate("billing_id", "reference %s" % tablename,
+                                   label = T("Billing"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -657,14 +657,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable field
         represent = fin_VoucherInvoiceRepresent()
-        invoice_id = S3ReusableField("invoice_id", "reference %s" % tablename,
-                                     label = T("Invoice"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        invoice_id = FieldTemplate("invoice_id", "reference %s" % tablename,
+                                   label = T("Invoice"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
 
         # -------------------------------------------------------------------------
@@ -822,14 +822,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, fields=["refno", "date"])
-        claim_id = S3ReusableField("claim_id", "reference %s" % tablename,
-                                   label = T("Compensation Claim"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        claim_id = FieldTemplate("claim_id", "reference %s" % tablename,
+                                 label = T("Compensation Claim"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                   )
+                                 )
 
         # -------------------------------------------------------------------------
         # Voucher eligibility type
@@ -876,15 +876,15 @@ class FinVoucherModel(DataModel):
         )
 
         represent = S3Represent(lookup = tablename, translate = True)
-        eligibility_type_id = S3ReusableField("eligibility_type_id", "reference %s" % tablename,
-                                              label = T("Type of Eligibility"),
-                                              ondelete = "RESTRICT",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
+        eligibility_type_id = FieldTemplate("eligibility_type_id", "reference %s" % tablename,
+                                            label = T("Type of Eligibility"),
+                                            ondelete = "RESTRICT",
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
                                                             IS_ONE_OF(db, "%s.id" % tablename,
                                                                       represent,
                                                                       )),
-                                              )
+                                            )
 
         # -------------------------------------------------------------------------
         # Voucher
@@ -985,10 +985,10 @@ class FinVoucherModel(DataModel):
         )
 
         # Reusable field
-        voucher_id = S3ReusableField("voucher_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     requires = IS_ONE_OF(db, "%s.id" % tablename),
-                                     )
+        voucher_id = FieldTemplate("voucher_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   requires = IS_ONE_OF(db, "%s.id" % tablename),
+                                   )
 
         # -------------------------------------------------------------------------
         # Voucher debit
@@ -1095,10 +1095,10 @@ class FinVoucherModel(DataModel):
         )
 
         # Reusable field
-        debit_id = S3ReusableField("debit_id", "reference %s" % tablename,
-                                   ondelete = "RESTRICT",
-                                   requires = IS_ONE_OF(db, "%s.id" % tablename),
-                                   )
+        debit_id = FieldTemplate("debit_id", "reference %s" % tablename,
+                                 ondelete = "RESTRICT",
+                                 requires = IS_ONE_OF(db, "%s.id" % tablename),
+                                 )
 
         # -------------------------------------------------------------------------
         # Voucher transaction

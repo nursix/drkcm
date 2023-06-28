@@ -154,16 +154,17 @@ class CMSContentModel(DataModel):
         # Reusable field
         translate = settings.get_L10n_translate_cms_series()
         represent = S3Represent(lookup=tablename, translate=translate)
-        series_id = S3ReusableField("series_id", "reference %s" % tablename,
-                                    label = T("Type"), # Even if this isn't always the use-case
-                                    ondelete = "CASCADE",
-                                    readable = False,
-                                    writable = False,
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        series_id = FieldTemplate("series_id", "reference %s" % tablename,
+                                  label = T("Type"), # Even if this isn't always the use-case
+                                  ondelete = "CASCADE",
+                                  readable = False,
+                                  writable = False,
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cms_series.id",
-                                                          represent)),
-                                    )
+                                                          represent,
+                                                          )),
+                                  )
 
         # Resource Configuration
         configure(tablename,
@@ -209,20 +210,21 @@ class CMSContentModel(DataModel):
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
                                 #none = T("Unknown"))
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                        comment = S3PopupLink(title = ADD_STATUS,
-                                              c = "cms",
-                                              f = "status",
-                                              ),
-                        label = T("Status"),
-                        ondelete = "SET NULL",
-                        represent = represent,
-                        requires = IS_EMPTY_OR(
-                                    IS_ONE_OF(db, "cms_status.id",
-                                              represent,
-                                              sort=True)),
-                        sortby = "name",
-                        )
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "cms_status.id",
+                                                          represent,
+                                                          sort = True,
+                                                          )),
+                                  sortby = "name",
+                                  comment = S3PopupLink(title = ADD_STATUS,
+                                                        c = "cms",
+                                                        f = "status",
+                                                        ),
+                                  )
 
         # ---------------------------------------------------------------------
         # Posts
@@ -333,20 +335,21 @@ class CMSContentModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        post_id = S3ReusableField("post_id", "reference %s" % tablename,
-                                  comment = S3PopupLink(c = "cms",
-                                                        f = "post",
-                                                        title = ADD_POST,
-                                                        tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
-                                                        ),
-                                  label = T("Post"),
-                                  ondelete = "CASCADE",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        post_id = FieldTemplate("post_id", "reference %s" % tablename,
+                                label = T("Post"),
+                                ondelete = "CASCADE",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cms_post.id",
-                                                          represent)),
-                                  sortby = "name",
-                                  )
+                                                          represent,
+                                                          )),
+                                sortby = "name",
+                                comment = S3PopupLink(c = "cms",
+                                                      f = "post",
+                                                      title = ADD_POST,
+                                                      tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
+                                                      ),
+                                )
 
         list_fields = ["post_module.module",
                        "title",
@@ -600,15 +603,16 @@ class CMSContentModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        tag_id = S3ReusableField("tag_id", "reference %s" % tablename,
-                                 label = T("Tag"),
-                                 ondelete = "CASCADE",
-                                 represent = represent,
-                                 requires = IS_EMPTY_OR(
+        tag_id = FieldTemplate("tag_id", "reference %s" % tablename,
+                               label = T("Tag"),
+                               ondelete = "CASCADE",
+                               represent = represent,
+                               requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cms_tag.id",
-                                                          represent)),
-                                 sortby = "name",
-                                 )
+                                                          represent,
+                                                          )),
+                               sortby = "name",
+                               )
 
         # Custom Methods
         set_method("cms_tag",
@@ -683,7 +687,7 @@ class CMSContentModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"cms_post_id": dummy("post_id"),
                 "cms_tag_id": dummy("tag_id"),

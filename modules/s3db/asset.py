@@ -272,16 +272,17 @@ class AssetModel(DataModel):
         asset_represent = asset_AssetRepresent(show_link=True)
 
         # Reusable Field
-        asset_id = S3ReusableField("asset_id", "reference %s" % tablename,
-                                   label = T("Asset"),
-                                   ondelete = "CASCADE",
-                                   represent = asset_represent,
-                                   requires = IS_EMPTY_OR(
+        asset_id = FieldTemplate("asset_id", "reference %s" % tablename,
+                                 label = T("Asset"),
+                                 ondelete = "CASCADE",
+                                 represent = asset_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "asset_asset.id",
                                                           asset_represent,
-                                                          sort=True)),
-                                   sortby = "number",
-                                   )
+                                                          sort = True,
+                                                          )),
+                                 sortby = "number",
+                                 )
 
         # Which levels of Hierarchy are we using?
         levels = current.gis.get_relevant_hierarchy_levels()
@@ -635,7 +636,7 @@ $.filterOptionsS3({
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        return {"asset_asset_id": S3ReusableField.dummy("asset_id"),
+        return {"asset_asset_id": FieldTemplate.dummy("asset_id"),
                 }
 
     # -------------------------------------------------------------------------

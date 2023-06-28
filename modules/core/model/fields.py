@@ -31,7 +31,7 @@ __all__ = ("CommentsField",
            "DateTimeField",
            "LanguageField",
            "TimeField",
-           "S3ReusableField",
+           "FieldTemplate",
            "S3MetaFields",
            "s3_fieldmethod",
            "s3_meta_fields",
@@ -43,9 +43,8 @@ __all__ = ("CommentsField",
 import datetime
 from uuid import uuid4
 
-from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_TIME, TAG
+from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, IS_TIME, TAG
 from gluon.sqlhtml import TimeWidget
-from gluon.storage import Storage
 from gluon.tools import DEFAULT
 
 from s3dal import SQLCustomType
@@ -94,92 +93,121 @@ def s3_fieldmethod(name, f, represent=None, search_field=None):
     return fieldmethod
 
 # =============================================================================
-class S3ReusableField:
+class FieldTemplate:
     """
-        DRY Helper for reusable fields:
+        Field templates (=anonymous Field subclasses); useful to avoid
+        repeating the same Field definition in multiple tables
 
-        This creates neither a Table nor a Field, but just
-        an argument store. The field is created with the __call__
-        method, which is faster than copying an existing field.
+        Example:
+            # Define once:
+            person_id = FieldTemplate("person_id", "reference pr_person.id",
+                                      label = ...,
+                                      requires = ...,
+                                      represent = ...,
+                                      widget = ...,
+                                      )
+
+            # Use many times:
+            define_table("some_table",
+                         person_id(),
+                         )
+
+            define_table("other_table",
+                         person_id(),
+                         )
     """
 
-    def __init__(self, name, type="string", **attr):
+    def __init__(self, name, type="string", **args):
+        """
+            Args:
+                name: the field name
+                type: the field type
+                args: default keyword args for instances
+        """
 
-        self.name = name
-        self.__type = type
-        self.attr = Storage(attr)
+        class Template(Field):
+
+            def __init__(self, fieldname=None, empty=None, **kwargs):
+
+                ia = dict(args)
+                ia.update(kwargs)
+
+                if not fieldname:
+                    fieldname = name
+
+                if empty is not None and "requires" not in kwargs:
+                    requires = ia.get("requires")
+                    validate = requires[0] \
+                               if isinstance(requires, (list, tuple)) else requires
+
+                    if empty:
+                        if validate and not isinstance(validate, IS_EMPTY_OR):
+                            validate = IS_EMPTY_OR(validate)
+                    else:
+                        if not validate:
+                            validate = IS_NOT_EMPTY()
+                        elif isinstance(validate, IS_EMPTY_OR):
+                            validate = validate.other
+
+                    if isinstance(requires, (list, tuple)):
+                        ia["requires"] = [validate] + list(requires[1:])
+                    else:
+                        ia["requires"] = validate
+
+                script = ia.pop("script", None)
+                if script:
+                    comment = ia.get("comment")
+                    if comment:
+                        ia["comment"] = TAG[""](comment, S3ScriptItem(script))
+                    else:
+                        ia["comment"] = S3ScriptItem(script)
+
+                super().__init__(fieldname, type=type, **ia)
+
+        self.template = Template
 
     # -------------------------------------------------------------------------
-    def __call__(self, name=None, **attr):
+    def __call__(self, fieldname=None, empty=None, **kwargs):
+        """
+            Generates an instance of the Field template
 
-        if not name:
-            name = self.name
+            Args:
+                fieldname: alternative field name
+                empty: whether to allow empty field values
+                       - None: use the default validator
+                       - True: allow empty values
+                       - False: reject empty values
+                kwargs: any additional keyword arguments, including
+                        overrides for default keyword arguments
+        """
 
-        ia = dict(self.attr)
+        # Cannot override the field type
+        kwargs.pop("type", None)
 
-        DEFAULT = "default"
-        widgets = ia.pop("widgets", {})
-
-        if attr:
-            empty = attr.pop("empty", True)
-            if not empty:
-                requires = ia.get("requires")
-                if requires:
-                    if not isinstance(requires, (list, tuple)):
-                        requires = [requires]
-                    if requires:
-                        r = requires[0]
-                        if isinstance(r, IS_EMPTY_OR):
-                            requires = r.other
-                            ia["requires"] = requires
-            widget = attr.pop("widget", DEFAULT)
-            ia.update(**attr)
-        else:
-            widget = DEFAULT
-
-        if isinstance(widget, str):
-            if widget == DEFAULT and "widget" in ia:
-                widget = ia["widget"]
-            else:
-                if not isinstance(widgets, dict):
-                    widgets = {DEFAULT: widgets}
-                if widget != DEFAULT and widget not in widgets:
-                    raise NameError("Undefined widget: %s" % widget)
-                else:
-                    widget = widgets.get(widget)
-        ia["widget"] = widget
-
-        script = ia.pop("script", None)
-        if script:
-            comment = ia.get("comment")
-            if comment:
-                ia["comment"] = TAG[""](comment,
-                                        S3ScriptItem(script=script),
-                                        )
-            else:
-                ia["comment"] = S3ScriptItem(script=script)
-
-        return Field(name, self.__type, **ia)
+        return self.template(fieldname, empty=empty, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def dummy(fname="dummy_id", ftype="integer"):
         """
-            Provide a dummy reusable field; for safe defaults in models
+            A dummy FieldTemplate; for safe defaults in models
 
             Args:
                 fname: the dummy field name
                 ftype: the dummy field type
 
             Returns:
-                a lambda with the same signature as a reusable field
+                a lambda with the same call signature as a FieldTemplate,
+                which ignores all keyword arguments except the field name
+                and produces a hidden dummy field without constraints and
+                default=None
         """
 
-        return lambda name=fname, **attr: Field(name,
-                                                ftype,
-                                                readable = False,
-                                                writable = False,
-                                                )
+        return lambda fieldname=fname, **attr: Field(fieldname,
+                                                     ftype,
+                                                     readable = False,
+                                                     writable = False,
+                                                     )
 
 # =============================================================================
 # Meta-fields

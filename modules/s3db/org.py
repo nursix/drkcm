@@ -194,25 +194,25 @@ class OrgOrganisationModel(DataModel):
             msg_record_deleted = T("Organization Type deleted"),
             msg_list_empty = T("No Organization Types currently registered"))
 
-        organisation_type_id = S3ReusableField("organisation_type_id",
-            "reference %s" % tablename,
-            label = T("Organization Type"),
-            ondelete = "SET NULL",
-            represent = type_represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "org_organisation_type.id",
-                                  type_represent,
-                                  sort = True
-                                  )),
-            sortby = "name",
-            widget = organisation_type_widget,
-            comment = S3PopupLink(c = "org",
-                                  f = "organisation_type",
-                                  label = T("Create Organization Type"),
-                                  title = T("Organization Type"),
-                                  tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
-                                  ),
-            )
+        organisation_type_id = FieldTemplate("organisation_type_id",
+                                             "reference %s" % tablename,
+                                             label = T("Organization Type"),
+                                             ondelete = "SET NULL",
+                                             represent = type_represent,
+                                             requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "org_organisation_type.id",
+                                                                      type_represent,
+                                                                      sort = True
+                                                                      )),
+                                              sortby = "name",
+                                              widget = organisation_type_widget,
+                                              comment = S3PopupLink(c = "org",
+                                                                    f = "organisation_type",
+                                                                    label = T("Create Organization Type"),
+                                                                    title = T("Organization Type"),
+                                                                    tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
+                                                                    ),
+                                              )
 
         configure(tablename,
                   # Not needed since unique=True but would be
@@ -294,25 +294,25 @@ class OrgOrganisationModel(DataModel):
                 msg_record_deleted = T("Region deleted"),
                 msg_list_empty = T("No Regions currently registered"))
 
-            region_id = S3ReusableField("region_id", "reference %s" % tablename,
-                label = T("Region"),
-                ondelete = "SET NULL",
-                represent = region_represent,
-                requires = IS_EMPTY_OR(
-                            IS_ONE_OF(db, "org_region.id",
-                                      region_represent,
-                                      sort = True,
-                                      not_filterby = opts_filter[0],
-                                      not_filter_opts = opts_filter[1],
-                                      )),
-                sortby = "name",
-                comment = S3PopupLink(c = "org",
-                                      f = "region",
-                                      label = T("Add Region"),
-                                      title = T("Region"),
-                                      tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
-                                      ),
-                )
+            region_id = FieldTemplate("region_id", "reference %s" % tablename,
+                                      label = T("Region"),
+                                      ondelete = "SET NULL",
+                                      represent = region_represent,
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "org_region.id",
+                                                              region_represent,
+                                                              sort = True,
+                                                              not_filterby = opts_filter[0],
+                                                              not_filter_opts = opts_filter[1],
+                                                              )),
+                                      sortby = "name",
+                                      comment = S3PopupLink(c = "org",
+                                                            f = "region",
+                                                            label = T("Add Region"),
+                                                            title = T("Region"),
+                                                            tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
+                                                            ),
+                                      )
 
             configure(tablename,
                       deduplicate = S3Duplicate(),
@@ -340,9 +340,10 @@ class OrgOrganisationModel(DataModel):
 
         else:
             region_represent = None
-            region_id = S3ReusableField("region_id", "integer",
-                                        readable = False,
-                                        writable = False)
+            region_id = FieldTemplate("region_id", "integer",
+                                      readable = False,
+                                      writable = False,
+                                      )
 
         # ---------------------------------------------------------------------
         # Organisations
@@ -547,17 +548,17 @@ class OrgOrganisationModel(DataModel):
                                            tooltip = tooltip,
                                            )
         auth = current.auth
-        organisation_id = S3ReusableField("organisation_id", "reference %s" % tablename,
-                                          comment = organisation_comment,
-                                          default = auth.user.organisation_id if auth.is_logged_in() \
-                                                                              else None,
-                                          label = messages.ORGANISATION,
-                                          ondelete = "RESTRICT",
-                                          represent = org_organisation_represent,
-                                          requires = org_organisation_requires(),
-                                          sortby = "name",
-                                          widgets = org_widgets,
-                                          )
+        organisation_id = FieldTemplate("organisation_id", "reference %s" % tablename,
+                                        comment = organisation_comment,
+                                        default = auth.user.organisation_id \
+                                                  if auth.is_logged_in() else None,
+                                        label = messages.ORGANISATION,
+                                        ondelete = "RESTRICT",
+                                        represent = org_organisation_represent,
+                                        requires = org_organisation_requires(),
+                                        sortby = "name",
+                                        widgets = org_widgets,
+                                        )
 
         list_fields = ["id",
                        "name",
@@ -1471,19 +1472,19 @@ class OrgOrganisationGroupModel(DataModel):
                   )
 
         group_represent = S3Represent(lookup=tablename)
-        group_id = S3ReusableField("group_id", "reference %s" % tablename,
-                                   label = T(label),
-                                   # Always links via Link Tables
-                                   ondelete = "CASCADE",
-                                   represent = group_represent,
-                                   requires = IS_EMPTY_OR(
+        group_id = FieldTemplate("group_id", "reference %s" % tablename,
+                                 label = T(label),
+                                 # Always links via Link Tables
+                                 ondelete = "CASCADE",
+                                 represent = group_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "org_group.id",
                                                           group_represent,
                                                           sort = True,
                                                           updateable = True,
                                                           )),
-                                   sortby = "name",
-                                   )
+                                 sortby = "name",
+                                 )
 
         # Components
         self.add_components(tablename,
@@ -1535,17 +1536,17 @@ class OrgOrganisationGroupModel(DataModel):
                 msg_list_empty = T("No Statuses currently defined"))
 
         represent = S3Represent(lookup=tablename)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    label = T("Status"),
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "org_group_membership_status.id",
                                                           represent,
                                                           sort = True,
                                                           )),
-                                    sortby = "name",
-                                    )
+                                  sortby = "name",
+                                  )
 
         # ---------------------------------------------------------------------
         # Group membership
@@ -1664,17 +1665,17 @@ class OrgOrganisationGroupPersonModel(DataModel):
                 msg_list_empty = T("No Statuses currently defined"))
 
         represent = S3Represent(lookup=tablename)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    label = T("Status"),
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "org_group_person_status.id",
                                                           represent,
                                                           sort=True,
                                                           )),
-                                    sortby = "name",
-                                    )
+                                  sortby = "name",
+                                  )
 
         # ---------------------------------------------------------------------
         # Link table between Organisation Groups & Persons
@@ -2157,20 +2158,20 @@ class OrgOrganisationSectorModel(DataModel):
                                                    )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        sector_id = S3ReusableField("sector_id", "reference %s" % tablename,
-                                    label = SECTOR,
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        sector_id = FieldTemplate("sector_id", "reference %s" % tablename,
+                                  label = SECTOR,
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "org_sector.id",
                                                           represent,
                                                           sort=True,
                                                           filterby=filterby,
                                                           filter_opts=filter_opts,
                                                           )),
-                                    sortby = "abrv",
-                                    comment = sector_comment("sector_id"),
-                                    )
+                                  sortby = "abrv",
+                                  comment = sector_comment("sector_id"),
+                                  )
 
         # Components
         add_components(tablename,
@@ -2244,17 +2245,18 @@ class OrgOrganisationSectorModel(DataModel):
                 # msg_record_deleted = T("Subsector deleted"),
                 # msg_list_empty = T("No Subsectors currently registered"))
 
-        # subsector_id = S3ReusableField("subsector_id", "reference %s" % tablename,
-        #                                label = SUBSECTOR,
-        #                                ondelete = "SET NULL",
-        #                                represent = self.org_subsector_represent,
-        #                                requires = IS_EMPTY_OR(
-        #                                               IS_ONE_OF(db, "org_subsector.id",
-        #                                                         self.org_subsector_represent,
-        #                                                         sort=True)),
-        #                                sortby = "abrv",
-        #                                #comment = Script to filter the sector_subsector drop down
-        #                                )
+        # subsector_id = FieldTemplate("subsector_id", "reference %s" % tablename,
+        #                              label = SUBSECTOR,
+        #                              ondelete = "SET NULL",
+        #                              represent = self.org_subsector_represent,
+        #                              requires = IS_EMPTY_OR(
+        #                                            IS_ONE_OF(db, "org_subsector.id",
+        #                                                      self.org_subsector_represent,
+        #                                                      sort = True,
+        #                                                      )),
+        #                              sortby = "abrv",
+        #                              #comment = Script to filter the sector_subsector drop down
+        #                              )
 
         # configure("org_subsector",
         #           deduplicate = self.org_sector_duplicate,
@@ -2489,18 +2491,18 @@ class OrgServiceModel(DataModel):
             msg_list_empty = T("No Services currently registered"))
 
         # Reusable Field
-        service_id = S3ReusableField("service_id", "reference %s" % tablename,
-                                     label = T("Services"),
-                                     ondelete = "CASCADE",
-                                     represent = service_represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "org_service.id",
-                                                              service_represent,
-                                                              sort = True,
-                                                              )),
-                                     sortby = "name",
-                                     widget = widget,
-                                     )
+        service_id = FieldTemplate("service_id", "reference %s" % tablename,
+                                   label = T("Services"),
+                                   ondelete = "CASCADE",
+                                   represent = service_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "org_service.id",
+                                                          service_represent,
+                                                          sort = True,
+                                                          )),
+                                   sortby = "name",
+                                   widget = widget,
+                                   )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -2729,14 +2731,11 @@ class OrgServiceModel(DataModel):
                             )
 
         # Reusable field
-        service_location_id = S3ReusableField("service_location_id",
-                                              "reference %s" % tablename,
-                                              ondelete = "CASCADE",
-                                              requires = IS_ONE_OF(db,
-                                                            "org_service_location.id",
-                                                            ),
-                                              )
-
+        service_location_id = FieldTemplate("service_location_id",
+                                            "reference %s" % tablename,
+                                            ondelete = "CASCADE",
+                                            requires = IS_ONE_OF(db, "org_service_location.id"),
+                                            )
 
         # ---------------------------------------------------------------------
         # Service types at service location
@@ -2788,16 +2787,16 @@ class OrgServiceModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        booking_mode_id = S3ReusableField("booking_mode_id",
-                                          "reference %s" % tablename,
-                                          label = T("Booking Mode"),
-                                          ondelete = "SET NULL",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                        "%s.id" % tablename,
-                                                        represent,
-                                                        )),
-                                          )
+        booking_mode_id = FieldTemplate("booking_mode_id",
+                                        "reference %s" % tablename,
+                                        label = T("Booking Mode"),
+                                        ondelete = "SET NULL",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                        )
 
         # ---------------------------------------------------------------------
         # Modes of Service (services, sites, teams)
@@ -2833,16 +2832,16 @@ class OrgServiceModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        service_mode_id = S3ReusableField("service_mode_id",
-                                          "reference %s" % tablename,
-                                          label = T("Service Mode"),
-                                          ondelete = "SET NULL",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                        "%s.id" % tablename,
-                                                        represent,
-                                                        )),
-                                          )
+        service_mode_id = FieldTemplate("service_mode_id",
+                                        "reference %s" % tablename,
+                                        label = T("Service Mode"),
+                                        ondelete = "SET NULL",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                        )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -4175,24 +4174,24 @@ class OrgFacilityModel(DataModel):
             msg_record_deleted = T("Facility Type deleted"),
             msg_list_empty = T("No Facility Types currently registered"))
 
-        facility_type_id = S3ReusableField("facility_type_id",
-            "reference %s" % tablename,
-            label = T("Facility Type"),
-            ondelete = "CASCADE",
-            represent = type_represent,
-            # Only used by org_site_facility_type
-            requires = IS_ONE_OF(db, "org_facility_type.id",
-                                 type_represent,
-                                 sort = True,
-                                 ),
-            sortby = "name",
-            comment = S3PopupLink(c = "org",
-                                  f = "facility_type",
-                                  label = ADD_FAC,
-                                  title = T("Facility Type"),
-                                  tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
-                                  ),
-            )
+        facility_type_id = FieldTemplate("facility_type_id",
+                                         "reference %s" % tablename,
+                                         label = T("Facility Type"),
+                                         ondelete = "CASCADE",
+                                         represent = type_represent,
+                                         # Only used by org_site_facility_type
+                                         requires = IS_ONE_OF(db, "org_facility_type.id",
+                                                              type_represent,
+                                                              sort = True,
+                                                              ),
+                                         sortby = "name",
+                                         comment = S3PopupLink(c = "org",
+                                                               f = "facility_type",
+                                                               label = ADD_FAC,
+                                                               title = T("Facility Type"),
+                                                               tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
+                                                               ),
+                                         )
 
         configure(tablename,
                   deduplicate = S3Duplicate(),
@@ -4802,17 +4801,17 @@ class OrgRoomModel(DataModel):
 
         # Reusable field for other tables to reference
         represent = S3Represent(lookup=tablename)
-        room_id = S3ReusableField("room_id", "reference %s" % tablename,
-                                  label = T("Room"),
-                                  ondelete = "SET NULL",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        room_id = FieldTemplate("room_id", "reference %s" % tablename,
+                                label = T("Room"),
+                                ondelete = "SET NULL",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "org_room.id",
                                                           represent
                                                           )),
-                                  sortby = "name",
-                                  comment = room_comment,
-                                  )
+                                sortby = "name",
+                                comment = room_comment,
+                                )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(),
@@ -4894,25 +4893,25 @@ class OrgOfficeModel(DataModel):
             msg_list_empty = T("No Office Types currently registered"))
 
         represent = S3Represent(lookup=tablename, translate=True)
-        office_type_id = S3ReusableField("office_type_id", "reference %s" % tablename,
-                            label = T("Office Type"),
-                            ondelete = "SET NULL",
-                            represent = represent,
-                            requires = IS_EMPTY_OR(
-                                        IS_ONE_OF(db, "org_office_type.id",
-                                                  represent,
-                                                  sort=True,
-                                                  filterby="organisation_id",
-                                                  filter_opts=filter_opts,
-                                                  )),
-                            sortby = "name",
-                            comment = S3PopupLink(c = "org",
-                                                  f = "office_type",
-                                                  label = ADD_OFFICE_TYPE,
-                                                  title = T("Office Type"),
-                                                  tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
-                                                  ),
-                            )
+        office_type_id = FieldTemplate("office_type_id", "reference %s" % tablename,
+                                       label = T("Office Type"),
+                                       ondelete = "SET NULL",
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "org_office_type.id",
+                                                              represent,
+                                                              sort=True,
+                                                              filterby="organisation_id",
+                                                              filter_opts=filter_opts,
+                                                              )),
+                                       sortby = "name",
+                                       comment = S3PopupLink(c = "org",
+                                                             f = "office_type",
+                                                             label = ADD_OFFICE_TYPE,
+                                                             title = T("Office Type"),
+                                                             tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
+                                                             ),
+                                       )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),

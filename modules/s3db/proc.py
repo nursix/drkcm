@@ -127,17 +127,18 @@ class PROCProcurementPlansModel(DataModel):
                   )
 
         proc_plan_represent = self.proc_plan_represent
-        plan_id = S3ReusableField("plan_id", "reference %s" % tablename,
-                                  sortby = "date",
-                                  requires = IS_EMPTY_OR(
+        plan_id = FieldTemplate("plan_id", "reference %s" % tablename,
+                                sortby = "date",
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "proc_plan.id",
                                                           proc_plan_represent,
-                                                          orderby="proc_plan.date",
-                                                          sort=True)),
-                                  represent = proc_plan_represent,
-                                  label = T("Procurement Plan"),
-                                  ondelete = "CASCADE",
-                                  )
+                                                          orderby = "proc_plan.date",
+                                                          sort = True,
+                                                          )),
+                                represent = proc_plan_represent,
+                                label = T("Procurement Plan"),
+                                ondelete = "CASCADE",
+                                )
 
         # Items as a component of Plans
         self.add_components(tablename,
@@ -286,11 +287,11 @@ class PROCPurchaseOrdersModel(DataModel):
 
         SITE_LABEL = settings.get_org_site_label()
         string_represent = lambda s: s if s else current.messages["NONE"]
-        purchase_ref = S3ReusableField("purchase_ref",
-                                       label = T("%(PO)s Number") % \
-                                               {"PO": settings.get_proc_shortname()},
-                                       represent = string_represent,
-                                       )
+        purchase_ref = FieldTemplate("purchase_ref",
+                                     label = T("%(PO)s Number") % \
+                                             {"PO": settings.get_proc_shortname()},
+                                     represent = string_represent,
+                                     )
 
         # =====================================================================
         # Purchase Orders
@@ -342,17 +343,18 @@ class PROCPurchaseOrdersModel(DataModel):
         proc_order_represent = S3Represent(lookup = tablename,
                                            fields = ["purchase_ref"],
                                            )
-        order_id = S3ReusableField("order_id", "reference %s" % tablename,
-                                   sortby = "date",
-                                   requires = IS_EMPTY_OR(
+        order_id = FieldTemplate("order_id", "reference %s" % tablename,
+                                 sortby = "date",
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "proc_order.id",
                                                           proc_order_represent,
-                                                          orderby="proc_order.date",
-                                                          sort=True)),
-                                   represent = proc_order_represent,
-                                   label = T("Purchase Order"),
-                                   ondelete = "CASCADE",
-                                   )
+                                                          orderby = "proc_order.date",
+                                                          sort = True,
+                                                          )),
+                                 represent = proc_order_represent,
+                                 label = T("Purchase Order"),
+                                 ondelete = "CASCADE",
+                                 )
 
         # Items as a component of Plans
         self.add_components(tablename,
@@ -480,7 +482,7 @@ class PROCPurchaseOrdersModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"proc_order_id": S3ReusableField.dummy("order_id"),
+        return {"proc_order_id": FieldTemplate.dummy("order_id"),
                 }
 
     # -------------------------------------------------------------------------

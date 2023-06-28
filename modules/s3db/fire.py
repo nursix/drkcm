@@ -239,14 +239,15 @@ class FireStationModel(DataModel):
                        super_entity = "org_site",
                        )
 
-        station_id = S3ReusableField("station_id", "reference %s" % tablename,
-                                     label = T("Station"),
-                                     ondelete = "CASCADE",
-                                     represent = self.fire_station_represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "fire_station.id",
-                                                              self.fire_station_represent)),
-                                     )
+        station_id = FieldTemplate("station_id", "reference %s" % tablename,
+                                   label = T("Station"),
+                                   ondelete = "CASCADE",
+                                   represent = self.fire_station_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "fire_station.id",
+                                                          self.fire_station_represent,
+                                                          )),
+                                   )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -480,14 +481,15 @@ class FireStationModel(DataModel):
                                    ),
                      )
 
-        shift_id = S3ReusableField("shift_id", "reference %s" % tablename,
-                                   label = T("Shift"),
-                                   ondelete = "CASCADE",
-                                   represent = self.fire_shift_represent,
-                                   requires = IS_EMPTY_OR(
+        shift_id = FieldTemplate("shift_id", "reference %s" % tablename,
+                                 label = T("Shift"),
+                                 ondelete = "CASCADE",
+                                 represent = self.fire_shift_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "fire_shift.id",
-                                                          self.fire_shift_represent)),
-                                   )
+                                                          self.fire_shift_represent,
+                                                          )),
+                                 )
 
         # ---------------------------------------------------------------------
         tablename = "fire_shift_staff"

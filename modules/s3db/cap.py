@@ -719,16 +719,16 @@ $.filterOptionsS3({
                                       )
 
         # Reusable Field
-        alert_id = S3ReusableField("alert_id", "reference %s" % tablename,
-                                   comment = T("The alert message containing this information"),
-                                   label = T("Alert"),
-                                   ondelete = "CASCADE",
-                                   represent = alert_represent,
-                                   requires = IS_EMPTY_OR(
+        alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
+                                 comment = T("The alert message containing this information"),
+                                 label = T("Alert"),
+                                 ondelete = "CASCADE",
+                                 represent = alert_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cap_alert.id",
                                                           alert_represent,
                                                           )),
-                                   )
+                                 )
 
         # ---------------------------------------------------------------------
         # Acknowledgement Table for CAP Alert
@@ -785,7 +785,7 @@ $.filterOptionsS3({
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"cap_alert_id": S3ReusableField.dummy("alert_id"),
+        return {"cap_alert_id": FieldTemplate.dummy("alert_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1369,16 +1369,16 @@ $.filterOptionsS3({
                                      field_sep = " - ")
 
         # Reusable Field
-        info_id = S3ReusableField("info_id", "reference %s" % tablename,
-                                  label = T("Information Segment"),
-                                  ondelete = "CASCADE",
-                                  represent = info_represent,
-                                  requires = IS_EMPTY_OR(
+        info_id = FieldTemplate("info_id", "reference %s" % tablename,
+                                label = T("Information Segment"),
+                                ondelete = "CASCADE",
+                                represent = info_represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cap_info.id",
                                                           info_represent,
                                                           )),
-                                  #sortby = "identifier",
-                                  )
+                                #sortby = "identifier",
+                                )
 
         # ---------------------------------------------------------------------
         # CAP Info Parameters (Name-Value-Pairs)
@@ -1941,14 +1941,14 @@ class CAPAreaModel(DataModel):
         area_represent = cap_AreaRepresent(show_link=True)
 
         # Reusable Field
-        area_id = S3ReusableField("area_id", "reference %s" % tablename,
-                                  label = T("Area"),
-                                  ondelete = "CASCADE",
-                                  represent = area_represent,
-                                  requires = IS_ONE_OF(db, "cap_area.id",
-                                                       area_represent,
-                                                       ),
-                                  )
+        area_id = FieldTemplate("area_id", "reference %s" % tablename,
+                                label = T("Area"),
+                                ondelete = "CASCADE",
+                                represent = area_represent,
+                                requires = IS_ONE_OF(db, "cap_area.id",
+                                                     area_represent,
+                                                     ),
+                                )
 
         # ---------------------------------------------------------------------
         # Area <> Location Link Table
@@ -2721,14 +2721,14 @@ class CAPWarningPriorityModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        priority_id = S3ReusableField("priority", "reference %s" % tablename,
-                                      label = T("Priority"),
-                                      represent = represent,
-                                      requires = IS_EMPTY_OR(
+        priority_id = FieldTemplate("priority", "reference %s" % tablename,
+                                    label = T("Priority"),
+                                    represent = represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent
                                                               )),
-                                      )
+                                    )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2743,7 +2743,7 @@ class CAPWarningPriorityModel(DataModel):
         """
 
 
-        return {"cap_warning_priority_id": S3ReusableField.dummy("priority"),
+        return {"cap_warning_priority_id": FieldTemplate.dummy("priority"),
                 }
 
     # -------------------------------------------------------------------------
@@ -3116,16 +3116,16 @@ class CAPHistoryModel(DataModel):
                                               )
 
         # Reusable Field
-        alert_history_id = S3ReusableField("alert_history_id", "reference %s" % tablename,
-                                comment = T("The alert message containing this information"),
-                                label = T("Alert History"),
-                                ondelete = "CASCADE",
-                                represent = alert_history_represent,
-                                requires = IS_EMPTY_OR(
-                                            IS_ONE_OF(db, "cap_alert_history.id",
-                                                      alert_history_represent,
-                                                      )),
-                                )
+        alert_history_id = FieldTemplate("alert_history_id", "reference %s" % tablename,
+                                         label = T("Alert History"),
+                                         ondelete = "CASCADE",
+                                         represent = alert_history_represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "cap_alert_history.id",
+                                                                  alert_history_represent,
+                                                                  )),
+                                         comment = T("The alert message containing this information"),
+                                         )
 
         # ---------------------------------------------------------------------
         # CAP Info History Table
@@ -3389,15 +3389,15 @@ class CAPHistoryModel(DataModel):
                                              )
 
         # Reusable Field
-        info_history_id = S3ReusableField("info_history_id", "reference %s" % tablename,
-                                          label = T("Information History Segment"),
-                                          ondelete = "CASCADE",
-                                          represent = info_history_represent,
-                                          requires = IS_EMPTY_OR(
+        info_history_id = FieldTemplate("info_history_id", "reference %s" % tablename,
+                                        label = T("Information History Segment"),
+                                        ondelete = "CASCADE",
+                                        represent = info_history_represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "cap_info_history.id",
                                                                   info_history_represent,
                                                                   )),
-                                          )
+                                        )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3545,14 +3545,14 @@ class CAPHistoryModel(DataModel):
 
         # Reusable Field
         represent = cap_AreaRepresent(show_link=True)
-        area_history_id = S3ReusableField("area_history_id", "reference %s" % tablename,
-                                          label = T("Area"),
-                                          ondelete = "CASCADE",
-                                          represent = represent,
-                                          requires = IS_ONE_OF(db, "cap_area_history.id",
-                                                               represent,
-                                                               ),
-                                          )
+        area_history_id = FieldTemplate("area_history_id", "reference %s" % tablename,
+                                        label = T("Area"),
+                                        ondelete = "CASCADE",
+                                        represent = represent,
+                                        requires = IS_ONE_OF(db, "cap_area_history.id",
+                                                             represent,
+                                                             ),
+                                        )
 
         # ---------------------------------------------------------------------
         # CAP Area Locations history table
@@ -3860,15 +3860,15 @@ class CAPAlertingAuthorityModel(DataModel):
                                 field_sep = " - ",
                                 )
 
-        authority_id = S3ReusableField("alerting_authority_id", "reference %s" % tablename,
-                                       label = T("CAP Alerting Authority"),
-                                       ondelete = "CASCADE",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        authority_id = FieldTemplate("alerting_authority_id", "reference %s" % tablename,
+                                     label = T("CAP Alerting Authority"),
+                                     ondelete = "CASCADE",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent,
                                                               )),
-                                       )
+                                     )
 
         # ---------------------------------------------------------------------
         # Feed URL for CAP Alerting Authority

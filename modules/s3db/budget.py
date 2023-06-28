@@ -192,21 +192,21 @@ class BudgetModel(DataModel):
         #budget_budget_represent = S3Represent(lookup=tablename, show_link=True)
 
         # Reusable Field
-        #budget_budget_id = S3ReusableField("budget_id", "reference %s" % tablename,
-        #    label = T("Budget"),
-        #    ondelete = "CASCADE",
-        #    represent = budget_budget_represent,
-        #    requires = IS_ONE_OF(db, "budget_budget.id",
-        #                         budget_budget_represent,
-        #                         ),
-        #    comment = S3PopupLink(
-        #        c = "budget",
-        #        f = "budget",
-        #        label = ADD_BUDGET,
-        #        title = T("Budget"),
-        #        tooltip = T("You can create a new budget by clicking link '%s'.") % ADD_BUDGET
-        #        ),
-        #    )
+        #budget_budget_id = FieldTemplate("budget_id", "reference %s" % tablename,
+        #                                 label = T("Budget"),
+        #                                 ondelete = "CASCADE",
+        #                                 represent = budget_budget_represent,
+        #                                 requires = IS_ONE_OF(db, "budget_budget.id",
+        #                                                      budget_budget_represent,
+        #                                                      ),
+        #                                 comment = S3PopupLink(
+        #                                    c = "budget",
+        #                                    f = "budget",
+        #                                    label = ADD_BUDGET,
+        #                                    title = T("Budget"),
+        #                                    tooltip = T("You can create a new budget by clicking link '%s'.") % ADD_BUDGET
+        #                                    ),
+        #                                 )
 
         # Configuration
         configure(tablename,
@@ -300,21 +300,21 @@ class BudgetModel(DataModel):
                                                 fields=["code"])
 
         # Reusable Field
-        budget_location_id = S3ReusableField("location_id", "reference %s" % tablename,
-            label = T("Location"),
-            ondelete = "CASCADE",
-            represent = budget_location_represent,
-            requires = IS_ONE_OF(db, "budget_location.id",
-                                 budget_location_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "location",
-                label = ADD_LOCATION,
-                title = T("Location"),
-                tooltip = T("You can create a new location by clicking link '%s'.") % ADD_LOCATION
-                ),
-            )
+        budget_location_id = FieldTemplate("location_id", "reference %s" % tablename,
+                                           label = T("Location"),
+                                           ondelete = "CASCADE",
+                                           represent = budget_location_represent,
+                                           requires = IS_ONE_OF(db, "budget_location.id",
+                                                                budget_location_represent,
+                                                                ),
+                                           comment = S3PopupLink(
+                                                c = "budget",
+                                                f = "location",
+                                                label = ADD_LOCATION,
+                                                title = T("Location"),
+                                                tooltip = T("You can create a new location by clicking link '%s'.") % ADD_LOCATION
+                                                ),
+                                           )
 
         # Configuration
         configure(tablename,
@@ -383,21 +383,21 @@ class BudgetModel(DataModel):
                                              fields=["name"])
 
         # Reusable Field
-        budget_staff_id = S3ReusableField("staff_id", "reference %s" % tablename,
-            label = T("Staff"),
-            ondelete = "RESTRICT",
-            represent = budget_staff_represent,
-            requires = IS_ONE_OF(db, "budget_staff.id",
-                                 budget_staff_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "staff",
-                label = ADD_STAFF_TYPE,
-                title = T("Staff"),
-                tooltip = T("You can create new staff by clicking link '%s'.") % ADD_STAFF_TYPE
-                ),
-            )
+        budget_staff_id = FieldTemplate("staff_id", "reference %s" % tablename,
+                                        label = T("Staff"),
+                                        ondelete = "RESTRICT",
+                                        represent = budget_staff_represent,
+                                        requires = IS_ONE_OF(db, "budget_staff.id",
+                                                            budget_staff_represent,
+                                                            ),
+                                        comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "staff",
+                                            label = ADD_STAFF_TYPE,
+                                            title = T("Staff"),
+                                            tooltip = T("You can create new staff by clicking link '%s'.") % ADD_STAFF_TYPE
+                                            ),
+                                        )
 
         # Configuration
         configure(tablename,
@@ -446,7 +446,7 @@ class BudgetModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"budget_budget_id": dummy("budget_id"),
                 "budget_location_id": dummy("location_id"),
@@ -630,21 +630,21 @@ class BudgetKitModel(DataModel):
         budget_kit_represent = S3Represent(lookup=tablename, fields=["code"])
 
         # Reusable Field
-        budget_kit_id = S3ReusableField("kit_id", "reference %s" % tablename,
-            ondelete = "RESTRICT",
-            label = T("Kit"),
-            represent = budget_kit_represent,
-            requires = IS_ONE_OF(db, "budget_kit.id",
-                                 budget_kit_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "kit",
-                label = ADD_KIT,
-                title = T("Kit"),
-                tooltip = T("You can create a new kit by clicking link '%s'.") % ADD_KIT
-                ),
-            )
+        budget_kit_id = FieldTemplate("kit_id", "reference %s" % tablename,
+                                      ondelete = "RESTRICT",
+                                      label = T("Kit"),
+                                      represent = budget_kit_represent,
+                                      requires = IS_ONE_OF(db, "budget_kit.id",
+                                                           budget_kit_represent,
+                                                           ),
+                                      comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "kit",
+                                            label = ADD_KIT,
+                                            title = T("Kit"),
+                                            tooltip = T("You can create a new kit by clicking link '%s'.") % ADD_KIT
+                                            ),
+                                      )
 
         # Configuration
         configure(tablename,
@@ -757,21 +757,21 @@ class BudgetKitModel(DataModel):
                                             fields=["description"])
 
         # Reusable Field
-        budget_item_id = S3ReusableField("item_id", "reference %s" % tablename,
-            label = T("Item"),
-            ondelete = "RESTRICT",
-            represent = budget_item_represent,
-            requires = IS_ONE_OF(db, "budget_item.id",
-                                 budget_item_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "item",
-                label = ADD_ITEM,
-                title = T("Item"),
-                tooltip = T("You can create a new item by clicking link '%s'.") % ADD_ITEM
-                ),
-            )
+        budget_item_id = FieldTemplate("item_id", "reference %s" % tablename,
+                                       label = T("Item"),
+                                       ondelete = "RESTRICT",
+                                       represent = budget_item_represent,
+                                       requires = IS_ONE_OF(db, "budget_item.id",
+                                                            budget_item_represent,
+                                                            ),
+                                       comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "item",
+                                            label = ADD_ITEM,
+                                            title = T("Item"),
+                                            tooltip = T("You can create a new item by clicking link '%s'.") % ADD_ITEM
+                                            ),
+                                       )
 
         # Configuration
         configure(tablename,
@@ -813,7 +813,7 @@ class BudgetKitModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"budget_kit_id": dummy("kit_id"),
                 "budget_item_id": dummy("item_id"),
@@ -1010,21 +1010,21 @@ class BudgetBundleModel(DataModel):
                                              fields=["name"])
 
         # Reusable Field
-        budget_bundle_id = S3ReusableField("bundle_id", "reference %s" % tablename,
-            label = T("Bundle"),
-            ondelete = "RESTRICT",
-            represent = budget_bundle_represent,
-            requires = IS_ONE_OF(db, "budget_bundle.id",
-                                 budget_bundle_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "bundle",
-                label = ADD_BUNDLE,
-                title = T("Bundle"),
-                tooltip = T("You can create a new bundle by clicking link '%s'.") % ADD_BUNDLE
-                ),
-            )
+        budget_bundle_id = FieldTemplate("bundle_id", "reference %s" % tablename,
+                                         label = T("Bundle"),
+                                         ondelete = "RESTRICT",
+                                         represent = budget_bundle_represent,
+                                         requires = IS_ONE_OF(db, "budget_bundle.id",
+                                                              budget_bundle_represent,
+                                                              ),
+                                         comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "bundle",
+                                            label = ADD_BUNDLE,
+                                            title = T("Bundle"),
+                                            tooltip = T("You can create a new bundle by clicking link '%s'.") % ADD_BUNDLE
+                                            ),
+                                         )
 
         # ---------------------------------------------------------------------
         # Bundle<>Kit Many2Many
@@ -1168,7 +1168,7 @@ class BudgetBundleModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"budget_bundle_id": S3ReusableField.dummy("bundle_id"),
+        return {"budget_bundle_id": FieldTemplate.dummy("bundle_id"),
                 }
 
     # -------------------------------------------------------------------------

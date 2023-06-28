@@ -394,19 +394,19 @@ class SecuritySeizedItemsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        item_type_id = S3ReusableField("item_type_id", "reference %s" % tablename,
-                                       label = T("Type"),
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
-                                                   IS_ONE_OF(db, "%s.id" % tablename,
-                                                             represent,
-                                                             )),
-                                       sortby = "name",
-                                       comment = S3PopupLink(c="security",
-                                                             f="seized_item_type",
-                                                             tooltip=T("Create new item type"),
-                                                             ),
-                                       )
+        item_type_id = FieldTemplate("item_type_id", "reference %s" % tablename,
+                                     label = T("Type"),
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                     sortby = "name",
+                                     comment = S3PopupLink(c = "security",
+                                                           f = "seized_item_type",
+                                                           tooltip = T("Create new item type"),
+                                                           ),
+                                     )
 
         # ---------------------------------------------------------------------
         # Depositories
@@ -435,15 +435,15 @@ class SecuritySeizedItemsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        depository_id = S3ReusableField("depository_id", "reference %s" % tablename,
-                                        label = T("Depository"),
-                                        represent = represent,
-                                        requires = IS_EMPTY_OR(
+        depository_id = FieldTemplate("depository_id", "reference %s" % tablename,
+                                      label = T("Depository"),
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent,
                                                               )),
-                                        sortby = "name",
-                                        )
+                                      sortby = "name",
+                                      )
 
         # ---------------------------------------------------------------------
         # Seized Items

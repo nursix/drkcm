@@ -333,18 +333,19 @@ class DeployModel(DataModel):
                                 show_link = True,
                                 )
 
-        mission_id = S3ReusableField("mission_id", "reference %s" % tablename,
-                                     label = T("Mission"),
-                                     ondelete = "CASCADE",
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db,
-                                                          "deploy_mission.id",
-                                                          represent),
-                                     comment = S3PopupLink(c = "deploy",
-                                                           f = "mission",
-                                                           label = label_create,
-                                                           ),
-                                     )
+        mission_id = FieldTemplate("mission_id", "reference %s" % tablename,
+                                   label = T("Mission"),
+                                   ondelete = "CASCADE",
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db,
+                                                        "deploy_mission.id",
+                                                        represent,
+                                                        ),
+                                   comment = S3PopupLink(c = "deploy",
+                                                         f = "mission",
+                                                         label = label_create,
+                                                         ),
+                                   )
 
         # ---------------------------------------------------------------------
         # Link table to link documents to missions, responses or assignments
@@ -532,10 +533,10 @@ class DeployModel(DataModel):
                                          },
                        )
 
-        assignment_id = S3ReusableField("assignment_id",
-                                        "reference %s" % tablename,
-                                        ondelete = "CASCADE",
-                                        )
+        assignment_id = FieldTemplate("assignment_id",
+                                      "reference %s" % tablename,
+                                      ondelete = "CASCADE",
+                                      )
 
         # ---------------------------------------------------------------------
         # Link Assignments to Appraisals
@@ -579,7 +580,7 @@ class DeployModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"deploy_mission_id": S3ReusableField.dummy("mission_id"),
+        return {"deploy_mission_id": FieldTemplate.dummy("mission_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1001,14 +1002,14 @@ class DeployAlertModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        alert_id = S3ReusableField("alert_id", "reference %s" % tablename,
-                                   label = T("Alert"),
-                                   ondelete = "CASCADE",
-                                   represent = represent,
-                                   requires = IS_ONE_OF(db, "deploy_alert.id",
-                                                        represent,
-                                                        ),
-                                   )
+        alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
+                                 label = T("Alert"),
+                                 ondelete = "CASCADE",
+                                 represent = represent,
+                                 requires = IS_ONE_OF(db, "deploy_alert.id",
+                                                      represent,
+                                                      ),
+                                 )
 
         # ---------------------------------------------------------------------
         # Recipients of the Alert

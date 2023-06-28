@@ -301,15 +301,15 @@ class S3DynamicTablesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        table_id = S3ReusableField("table_id", "reference %s" % tablename,
-                                   label = T("Table"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        table_id = FieldTemplate("table_id", "reference %s" % tablename,
+                                 label = T("Table"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                   sortby = "name",
-                                   )
+                                 sortby = "name",
+                                 )
 
         # ---------------------------------------------------------------------
         # Field in Dynamic Table
@@ -429,15 +429,15 @@ class S3DynamicTablesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        field_id = S3ReusableField("field_id", "reference %s" % tablename,
-                                   label = T("Field"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
-                                            IS_ONE_OF(db, "%s.id" % tablename,
-                                                      represent,
-                                                      )),
-                                   sortby = "name",
-                                   )
+        field_id = FieldTemplate("field_id", "reference %s" % tablename,
+                                 label = T("Field"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                 sortby = "name",
+                                 )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

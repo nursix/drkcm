@@ -392,22 +392,21 @@ class ProjectModel(DataModel):
         else:
             project_represent = S3Represent(lookup=tablename)
 
-        project_id = S3ReusableField("project_id", "reference %s" % tablename,
-            label = T("Project"),
-            ondelete = "CASCADE",
-            represent = project_represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "project_project.id",
-                                  project_represent,
-                                  updateable = True,
+        project_id = FieldTemplate("project_id", "reference %s" % tablename,
+                                   label = T("Project"),
+                                   ondelete = "CASCADE",
+                                   represent = project_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "project_project.id",
+                                                          project_represent,
+                                                          updateable = True,
+                                                          )),
+                                  sortby = "name",
+                                  comment = S3PopupLink(c = "project",
+                                                        f = "project",
+                                                        tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
+                                                        ),
                                   )
-                        ),
-            sortby = "name",
-            comment = S3PopupLink(c = "project",
-                                  f = "project",
-                                  tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
-                                  ),
-            )
 
         # Custom Methods
         set_method("project_project",
@@ -539,7 +538,7 @@ class ProjectModel(DataModel):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        return {"project_project_id": S3ReusableField.dummy("project_id"),
+        return {"project_project_id": FieldTemplate.dummy("project_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1113,21 +1112,22 @@ class ProjectBeneficiaryModel(DataModel):
                   )
 
         # Reusable Field
-        beneficiary_id = S3ReusableField("beneficiary_id", "reference %s" % tablename,
-            label = T("Beneficiaries"),
-            ondelete = "SET NULL",
-            represent = self.project_beneficiary_represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "project_beneficiary.id",
-                                  self.project_beneficiary_represent,
-                                  sort=True)),
-            sortby = "name",
-            comment = S3PopupLink(c = "project",
-                                  f = "beneficiary",
-                                  title = ADD_BNF,
-                                  tooltip = T("If you don't see the beneficiary in the list, you can add a new one by clicking link 'Add Beneficiaries'."),
-                                  ),
-            )
+        beneficiary_id = FieldTemplate("beneficiary_id", "reference %s" % tablename,
+                                       label = T("Beneficiaries"),
+                                       ondelete = "SET NULL",
+                                       represent = self.project_beneficiary_represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "project_beneficiary.id",
+                                                              self.project_beneficiary_represent,
+                                                              sort = True,
+                                                              )),
+                                       sortby = "name",
+                                       comment = S3PopupLink(c = "project",
+                                                             f = "beneficiary",
+                                                             title = ADD_BNF,
+                                                             tooltip = T("If you don't see the beneficiary in the list, you can add a new one by clicking link 'Add Beneficiaries'."),
+                                                             ),
+                                       )
 
         # Components
         self.add_components(tablename,
@@ -1291,16 +1291,17 @@ class ProjectHazardModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        hazard_id = S3ReusableField("hazard_id", "reference %s" % tablename,
-                                    sortby = "name",
-                                    label = T("Hazards"),
-                                    requires = IS_EMPTY_OR(
+        hazard_id = FieldTemplate("hazard_id", "reference %s" % tablename,
+                                  sortby = "name",
+                                  label = T("Hazards"),
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "project_hazard.id",
                                                           represent,
-                                                          sort=True)),
-                                    represent = represent,
-                                    ondelete = "CASCADE",
-                                    )
+                                                          sort = True,
+                                                          )),
+                                  represent = represent,
+                                  ondelete = "CASCADE",
+                                  )
 
         # ---------------------------------------------------------------------
         # Projects <> Hazards Link Table
@@ -1679,21 +1680,22 @@ class ProjectLocationModel(DataModel):
 
         # Reusable Field
         project_location_represent = project_LocationRepresent()
-        project_location_id = S3ReusableField("project_location_id", "reference %s" % tablename,
-            label = LOCATION,
-            ondelete = "CASCADE",
-            represent = project_location_represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "project_location.id",
-                                  project_location_represent,
-                                  updateable = True,
-                                  sort=True)),
-            comment = S3PopupLink(ADD_LOCATION,
-                                  c = "project",
-                                  f = "location",
-                                  tooltip = LOCATION_TOOLTIP,
-                                  ),
-            )
+        project_location_id = FieldTemplate("project_location_id", "reference %s" % tablename,
+                                            label = LOCATION,
+                                            ondelete = "CASCADE",
+                                            represent = project_location_represent,
+                                            requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "project_location.id",
+                                                                      project_location_represent,
+                                                                      updateable = True,
+                                                                      sort = True,
+                                                                      )),
+                                            comment = S3PopupLink(ADD_LOCATION,
+                                                                  c = "project",
+                                                                  f = "location",
+                                                                  tooltip = LOCATION_TOOLTIP,
+                                                                  ),
+                                            )
 
         # ---------------------------------------------------------------------
         # Project Community Contact Person
@@ -1787,7 +1789,7 @@ class ProjectLocationModel(DataModel):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        return {"project_location_id": S3ReusableField.dummy("project_location_id"),
+        return {"project_location_id": FieldTemplate.dummy("project_location_id"),
                 "project_location_represent": lambda v, row=None: "",
                 }
 
@@ -2180,20 +2182,21 @@ class ProjectStatusModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                        comment = S3PopupLink(title = ADD_STATUS,
-                                              c = "project",
-                                              f = "status",
-                                              ),
-                        label = T("Status"),
-                        ondelete = "SET NULL",
-                        represent = represent,
-                        requires = IS_EMPTY_OR(
-                                    IS_ONE_OF(current.db, "project_status.id",
-                                              represent,
-                                              sort=True)),
-                        sortby = "name",
-                        )
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  comment = S3PopupLink(title = ADD_STATUS,
+                                                        c = "project",
+                                                        f = "status",
+                                                        ),
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(current.db, "project_status.id",
+                                                          represent,
+                                                          sort = True,
+                                                          )),
+                                  sortby = "name",
+                                  )
 
         # Pass names back to global scope (s3.*)
         return {"project_status_id": status_id,
@@ -2205,7 +2208,7 @@ class ProjectStatusModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"project_status_id": S3ReusableField.dummy("status_id"),
+        return {"project_status_id": FieldTemplate.dummy("status_id"),
                 }
 
 # =============================================================================
@@ -2306,16 +2309,17 @@ class ProjectThemeModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        theme_id = S3ReusableField("theme_id", "reference %s" % tablename,
-                                   label = T("Theme"),
-                                   ondelete = "CASCADE",
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        theme_id = FieldTemplate("theme_id", "reference %s" % tablename,
+                                 label = T("Theme"),
+                                 ondelete = "CASCADE",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "project_theme.id",
                                                           represent,
-                                                          sort=True)),
-                                   sortby = "name",
-                                   )
+                                                          sort = True,
+                                                          )),
+                                 sortby = "name",
+                                 )
 
         # Components
         add_components(tablename,
@@ -2785,21 +2789,22 @@ class ProjectActivityModel(DataModel):
                   )
 
         # Reusable Field
-        activity_id = S3ReusableField("activity_id", "reference %s" % tablename,
-                        comment = S3PopupLink(ADD_ACTIVITY,
-                                              c = "project",
-                                              f = "activity",
-                                              tooltip = ACTIVITY_TOOLTIP,
-                                              ),
-                        label = T("Activity"),
-                        ondelete = "CASCADE",
-                        represent = represent,
-                        requires = IS_EMPTY_OR(
-                                    IS_ONE_OF(db, "project_activity.id",
-                                              represent,
-                                              sort=True)),
-                        sortby="name",
-                        )
+        activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
+                                    comment = S3PopupLink(ADD_ACTIVITY,
+                                                          c = "project",
+                                                          f = "activity",
+                                                          tooltip = ACTIVITY_TOOLTIP,
+                                                          ),
+                                    label = T("Activity"),
+                                    ondelete = "CASCADE",
+                                    represent = represent,
+                                    requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "project_activity.id",
+                                                              represent,
+                                                              sort = True,
+                                                              )),
+                                    sortby="name",
+                                    )
 
         # Components
         add_components(tablename,
@@ -2913,7 +2918,7 @@ class ProjectActivityModel(DataModel):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        return {"project_activity_id": S3ReusableField.dummy("activity_id"),
+        return {"project_activity_id": FieldTemplate.dummy("activity_id"),
                 }
 
     # ---------------------------------------------------------------------
@@ -3102,22 +3107,22 @@ class ProjectActivityTypeModel(DataModel):
 
         # Reusable Fields
         represent = S3Represent(lookup=tablename, translate=True)
-        activity_type_id = S3ReusableField("activity_type_id", "reference %s" % tablename,
-                                           label = T("Activity Type"),
-                                           ondelete = "SET NULL",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
+        activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
+                                         label = T("Activity Type"),
+                                         ondelete = "SET NULL",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "project_activity_type.id",
                                                                   represent,
-                                                                  sort=True)
-                                                        ),
-                                           sortby = "name",
-                                           comment = S3PopupLink(title = ADD_ACTIVITY_TYPE,
-                                                                 c = "project",
-                                                                 f = "activity_type",
-                                                                 tooltip = T("If you don't see the type in the list, you can add a new one by clicking link 'Create Activity Type'."),
-                                                                 ),
-                                           )
+                                                                  sort = True,
+                                                                  )),
+                                         sortby = "name",
+                                         comment = S3PopupLink(title = ADD_ACTIVITY_TYPE,
+                                                               c = "project",
+                                                               f = "activity_type",
+                                                               tooltip = T("If you don't see the type in the list, you can add a new one by clicking link 'Create Activity Type'."),
+                                                               ),
+                                         )
 
         if current.deployment_settings.get_project_sectors():
             # Component (for Custom Form)
@@ -3475,20 +3480,21 @@ class ProjectTaskModel(DataModel):
                                 fields=["name", "date"],
                                 labels="%(name)s: %(date)s",
                                 )
-        milestone_id = S3ReusableField("milestone_id", "reference %s" % tablename,
-                                       label = T("Milestone"),
-                                       ondelete = "RESTRICT",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        milestone_id = FieldTemplate("milestone_id", "reference %s" % tablename,
+                                     label = T("Milestone"),
+                                     ondelete = "RESTRICT",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "project_milestone.id",
-                                                              represent)),
-                                       sortby = "name",
-                                       comment = S3PopupLink(c = "project",
-                                                             f = "milestone",
-                                                             title = ADD_MILESTONE,
-                                                             tooltip = T("A project milestone marks a significant date in the calendar which shows that progress towards the overall objective is being made."),
-                                                             ),
-                                       )
+                                                              represent,
+                                                              )),
+                                     sortby = "name",
+                                     comment = S3PopupLink(c = "project",
+                                                           f = "milestone",
+                                                           title = ADD_MILESTONE,
+                                                           tooltip = T("A project milestone marks a significant date in the calendar which shows that progress towards the overall objective is being made."),
+                                                           ),
+                                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -3829,20 +3835,21 @@ class ProjectTaskModel(DataModel):
 
         # Reusable field
         represent = project_TaskRepresent(show_link=True)
-        task_id = S3ReusableField("task_id", "reference %s" % tablename,
-                                  label = T("Task"),
-                                  ondelete = "CASCADE",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        task_id = FieldTemplate("task_id", "reference %s" % tablename,
+                                label = T("Task"),
+                                ondelete = "CASCADE",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "project_task.id",
-                                                          represent)),
-                                  sortby = "name",
-                                  comment = S3PopupLink(c = "project",
-                                                        f = "task",
-                                                        title = ADD_TASK,
-                                                        tooltip = T("A task is a piece of work that an individual or team can do in 1-2 days."),
-                                                        ),
-                                  )
+                                                          represent,
+                                                          )),
+                                sortby = "name",
+                                comment = S3PopupLink(c = "project",
+                                                      f = "task",
+                                                      title = ADD_TASK,
+                                                      tooltip = T("A task is a piece of work that an individual or team can do in 1-2 days."),
+                                                      ),
+                                )
 
         # Representation with project name, for time log form
         task_represent_project = project_TaskRepresent(show_project=True)
@@ -4048,7 +4055,7 @@ class ProjectTaskModel(DataModel):
     def defaults():
         """ Safe defaults for model-global names if module is disabled """
 
-        return {"project_task_id": S3ReusableField.dummy("task_id"),
+        return {"project_task_id": FieldTemplate.dummy("task_id"),
                 "project_task_active_statuses": [],
                 }
 

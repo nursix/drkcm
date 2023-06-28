@@ -173,19 +173,19 @@ class VolunteerActivityModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        activity_type_id = S3ReusableField("activity_type_id", "reference %s" % tablename,
-                                           label = T("Activity Type"),
-                                           requires = IS_EMPTY_OR(
+        activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
+                                         label = T("Activity Type"),
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "vol_activity_type.id",
                                                                   represent,
                                                                   #filterby="organisation_id",
                                                                   #filter_opts=filter_opts,
                                                                   )),
-                                           ondelete = "CASCADE",
-                                           represent = represent,
-                                           comment = comment
-                                           )
+                                         ondelete = "CASCADE",
+                                         represent = represent,
+                                         comment = comment
+                                         )
 
         # Components
         add_components(tablename,
@@ -258,17 +258,16 @@ class VolunteerActivityModel(DataModel):
             msg_list_empty = T("No Activities found"))
 
         represent = S3Represent(lookup=tablename, show_link=True)
-        activity_id = S3ReusableField("activity_id", "reference %s" % tablename,
-                                      label = T("Activity"),
-                                      requires = IS_ONE_OF(db,
-                                                           "vol_activity.id",
-                                                           represent,
-                                                           #filterby="organisation_id",
-                                                           #filter_opts=filter_opts,
-                                                           ),
-                                      represent = represent,
-                                      #comment = comment
-                                      )
+        activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
+                                    label = T("Activity"),
+                                    requires = IS_ONE_OF(db, "vol_activity.id",
+                                                         represent,
+                                                         #filterby="organisation_id",
+                                                         #filter_opts=filter_opts,
+                                                         ),
+                                    represent = represent,
+                                    #comment = comment
+                                    )
 
         # Components
         add_components(tablename,
@@ -650,17 +649,17 @@ class VolunteerAwardModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        award_id = S3ReusableField("award_id", "reference %s" % tablename,
-                                   label = T("Award"),
-                                   requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db,
-                                                          "vol_award.id",
+        award_id = FieldTemplate("award_id", "reference %s" % tablename,
+                                 label = T("Award"),
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "vol_award.id",
                                                           represent,
-                                                          filterby="organisation_id",
-                                                          filter_opts=filter_opts)),
-                                   represent = represent,
-                                   comment = comment
-                                   )
+                                                          filterby = "organisation_id",
+                                                          filter_opts = filter_opts,
+                                                          )),
+                                 represent = represent,
+                                 comment = comment
+                                 )
 
         # ---------------------------------------------------------------------
         # Volunteers <> Awards link table
@@ -793,15 +792,16 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_type_id = S3ReusableField("vol_cluster_type_id", "reference %s" % tablename,
-                                              label = T("Volunteer Cluster Type"),
-                                              requires = IS_EMPTY_OR(
+        vol_cluster_type_id = FieldTemplate("vol_cluster_type_id", "reference %s" % tablename,
+                                            label = T("Volunteer Cluster Type"),
+                                            requires = IS_EMPTY_OR(
                                                             IS_ONE_OF(db,
                                                                       "vol_cluster_type.id",
-                                                                      represent)),
-                                              represent = represent,
-                                              comment = comment
-                                              )
+                                                                      represent,
+                                                                      )),
+                                            represent = represent,
+                                            comment = comment
+                                            )
 
         # ---------------------------------------------------------------------
         # Volunteer Cluster
@@ -839,15 +839,16 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_id = S3ReusableField("vol_cluster_id", "reference %s" % tablename,
-                                         label = T("Volunteer Cluster"),
-                                         requires = IS_EMPTY_OR(
+        vol_cluster_id = FieldTemplate("vol_cluster_id", "reference %s" % tablename,
+                                       label = T("Volunteer Cluster"),
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "vol_cluster.id",
-                                                                  represent)),
-                                         represent = represent,
-                                         comment = comment
-                                         )
+                                                                  represent,
+                                                                  )),
+                                       represent = represent,
+                                       comment = comment
+                                       )
 
         # ---------------------------------------------------------------------
         # Volunteer Group Position
@@ -885,12 +886,13 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_position_id = S3ReusableField("vol_cluster_position_id", "reference %s" % tablename,
+        vol_cluster_position_id = FieldTemplate("vol_cluster_position_id", "reference %s" % tablename,
                                                 label = T("Volunteer Cluster Position"),
                                                 requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db,
-                                                                      "vol_cluster_position.id",
-                                                                      represent)),
+                                                                IS_ONE_OF(db,
+                                                                          "vol_cluster_position.id",
+                                                                          represent,
+                                                                          )),
                                                 represent = represent,
                                                 comment = comment
                                                 )
@@ -930,7 +932,7 @@ $.filterOptionsS3({
             deployment_settings.
         """
 
-        return {"vol_cluster_id": S3ReusableField.dummy("vol_cluster_id"),
+        return {"vol_cluster_id": FieldTemplate.dummy("vol_cluster_id"),
                 }
 
 # =============================================================================

@@ -115,15 +115,15 @@ class CRShelterModel(DataModel):
                   )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        shelter_type_id = S3ReusableField("shelter_type_id", "reference %s" % tablename,
-                                          label = T("Shelter Type"),
-                                          ondelete = "RESTRICT",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(
+        shelter_type_id = FieldTemplate("shelter_type_id", "reference %s" % tablename,
+                                        label = T("Shelter Type"),
+                                        ondelete = "RESTRICT",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "cr_shelter_type.id",
                                                                   represent,
                                                                   )),
-                                          )
+                                        )
 
         # -------------------------------------------------------------------------
         # Shelters
@@ -141,12 +141,12 @@ class CRShelterModel(DataModel):
         else:
             population_total = T("Current Population##shelter")
 
-        population = S3ReusableField("population", "integer",
-                                     default = 0,
-                                     label = population_total,
-                                     represent = IS_INT_AMOUNT.represent,
-                                     requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                                     )
+        population = FieldTemplate("population", "integer",
+                                   default = 0,
+                                   label = population_total,
+                                   represent = IS_INT_AMOUNT.represent,
+                                   requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
+                                   )
 
         population_writable = not manage_units and \
                               not manage_registrations and \
@@ -435,25 +435,25 @@ class CRShelterModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        shelter_id = S3ReusableField("shelter_id", "reference %s" % tablename,
-                                     label = SHELTER_LABEL,
-                                     ondelete = "RESTRICT",
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        shelter_id = FieldTemplate("shelter_id", "reference %s" % tablename,
+                                   label = SHELTER_LABEL,
+                                   ondelete = "RESTRICT",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "cr_shelter.id",
                                                               represent,
                                                               sort = True,
                                                               )),
-                                     comment = S3PopupLink(c = "cr",
-                                                           f = "shelter",
-                                                           label = ADD_SHELTER,
-                                                           title = SHELTER_LABEL,
-                                                           tooltip = "%s (%s)." % (SHELTER_HELP,
-                                                                                   T("optional"),
-                                                                                   ),
-                                                           ),
-                                     widget = S3AutocompleteWidget("cr", "shelter")
-                                     )
+                                   comment = S3PopupLink(c = "cr",
+                                                         f = "shelter",
+                                                         label = ADD_SHELTER,
+                                                         title = SHELTER_LABEL,
+                                                         tooltip = "%s (%s)." % (SHELTER_HELP,
+                                                                                 T("optional"),
+                                                                                 ),
+                                                         ),
+                                   widget = S3AutocompleteWidget("cr", "shelter")
+                                   )
 
         # ---------------------------------------------------------------------
         # Pass variables back to global scope (response.s3.*)
@@ -468,7 +468,7 @@ class CRShelterModel(DataModel):
             Returns safe defaults in case the model has been deactivated.
         """
 
-        return {"cr_shelter_id": S3ReusableField.dummy("shelter_id"),
+        return {"cr_shelter_id": FieldTemplate.dummy("shelter_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -585,30 +585,30 @@ class CRShelterPopulationModel(DataModel):
             )
 
         represent = S3Represent(lookup=tablename)
-        type_id = S3ReusableField("type_id", "reference %s" % tablename,
-                                  label = T("Population Type"),
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        type_id = FieldTemplate("type_id", "reference %s" % tablename,
+                                label = T("Population Type"),
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           filterby = "obsolete",
                                                           filter_opts = (False,),
                                                           )),
-                                  ondelete = "RESTRICT",
-                                  )
+                                ondelete = "RESTRICT",
+                                )
 
         # -------------------------------------------------------------------------
         # Shelter population per type
         #
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
-        population = S3ReusableField("population", "integer",
-                                     label = T("Population##shelter"),
-                                     represent = IS_INT_AMOUNT.represent,
-                                     requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                                     readable = True,
-                                     writable = False,
-                                     )
+        population = FieldTemplate("population", "integer",
+                                   label = T("Population##shelter"),
+                                   represent = IS_INT_AMOUNT.represent,
+                                   requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
+                                   readable = True,
+                                   writable = False,
+                                   )
 
         tablename = "cr_shelter_population"
         define_table(tablename,
@@ -701,12 +701,12 @@ class CRShelterUnitModel(DataModel):
 
         define_table = self.define_table
 
-        population = S3ReusableField("population", "integer",
-                                     default = 0,
-                                     label = T("Current Population"),
-                                     represent = IS_INT_AMOUNT.represent,
-                                     requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                                     )
+        population = FieldTemplate("population", "integer",
+                                   default = 0,
+                                   label = T("Current Population"),
+                                   represent = IS_INT_AMOUNT.represent,
+                                   requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
+                                   )
         manage_registrations = settings.get_cr_shelter_registration()
         use_blocked_capacity = settings.get_cr_shelter_blocked_capacity()
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
@@ -818,18 +818,18 @@ class CRShelterUnitModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup="cr_shelter_unit")
-        shelter_unit_id = S3ReusableField("shelter_unit_id", "reference cr_shelter_unit",
-                                          label = T("Housing Unit"),
-                                          ondelete = "RESTRICT",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(
+        shelter_unit_id = FieldTemplate("shelter_unit_id", "reference cr_shelter_unit",
+                                        label = T("Housing Unit"),
+                                        ondelete = "RESTRICT",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "cr_shelter_unit.id",
                                                                   represent,
                                                                   orderby="shelter_id",
                                                                   #sort=True,
                                                                   )),
-                                          #widget = S3AutocompleteWidget("cr", "shelter_unit")
-                                          )
+                                        #widget = S3AutocompleteWidget("cr", "shelter_unit")
+                                        )
 
         # ---------------------------------------------------------------------
         # Pass variables back to global scope (response.s3.*)
@@ -843,7 +843,7 @@ class CRShelterUnitModel(DataModel):
             Returns safe defaults in case the model has been deactivated.
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"cr_shelter_unit_id": dummy("shelter_unit_id"),
                 }
@@ -966,13 +966,13 @@ class CRShelterStatusModel(DataModel):
 
         status_opts = shelter_status_opts()
 
-        population = S3ReusableField("population", "integer",
-                                     label = T("Population##shelter"),
-                                     represent = IS_INT_AMOUNT.represent,
-                                     requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
-                                     readable = True,
-                                     writable = False,
-                                     )
+        population = FieldTemplate("population", "integer",
+                                   label = T("Population##shelter"),
+                                   represent = IS_INT_AMOUNT.represent,
+                                   requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
+                                   readable = True,
+                                   writable = False,
+                                   )
         population_by_age_group = settings.get_cr_shelter_population_by_age_group()
         use_blocked_capacity = settings.get_cr_shelter_blocked_capacity()
 
@@ -1082,20 +1082,21 @@ class CRShelterServiceModel(DataModel):
 
         service_represent = S3Represent(lookup=tablename, translate=True)
 
-        service_id = S3ReusableField("service_id", "reference %s" % tablename,
-                                     label = SHELTER_SERVICE_LABEL,
-                                     ondelete = "RESTRICT",
-                                     represent = service_represent,
-                                     requires = IS_EMPTY_OR(
+        service_id = FieldTemplate("service_id", "reference %s" % tablename,
+                                   label = SHELTER_SERVICE_LABEL,
+                                   ondelete = "RESTRICT",
+                                   represent = service_represent,
+                                   requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(current.db,
                                                               "cr_shelter_service.id",
-                                                              service_represent)),
-                                     sortby = "name",
-                                     comment = S3PopupLink(c = "cr",
-                                                           f = "shelter_service",
-                                                           label = ADD_SHELTER_SERVICE,
-                                                           ),
-                                     )
+                                                              service_represent,
+                                                              )),
+                                   sortby = "name",
+                                   comment = S3PopupLink(c = "cr",
+                                                         f = "shelter_service",
+                                                         label = ADD_SHELTER_SERVICE,
+                                                         ),
+                                   )
         self.configure(tablename,
                        deduplicate = S3Duplicate(),
                        )
@@ -1268,14 +1269,14 @@ class CRShelterInspectionModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        flag_id = S3ReusableField("flag_id", "reference %s" % tablename,
-                                  label = T("Shelter Flag"),
-                                  represent = represent,
-                                  requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                       represent,
-                                                       ),
-                                  sortby = "name",
-                                  )
+        flag_id = FieldTemplate("flag_id", "reference %s" % tablename,
+                                label = T("Shelter Flag"),
+                                represent = represent,
+                                requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                     represent,
+                                                     ),
+                                sortby = "name",
+                                )
 
         # ---------------------------------------------------------------------
         # Shelter Inspection
@@ -1449,7 +1450,7 @@ class CRShelterInspectionModel(DataModel):
     def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
-        return {"cr_shelter_flag_id":  S3ReusableField.dummy("flag_id"),
+        return {"cr_shelter_flag_id":  FieldTemplate.dummy("flag_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1664,15 +1665,13 @@ class CRShelterRegistrationModel(DataModel):
                            3: T("Checked-out"),
                            }
 
-        reg_status = S3ReusableField("registration_status", "integer",
-                                     label = T("Status"),
-                                     represent = S3Represent(
-                                                    options=reg_status_opts,
-                                                    ),
-                                     requires = IS_IN_SET(reg_status_opts,
-                                                          zero=None
-                                                          ),
-                                     )
+        reg_status = FieldTemplate("registration_status", "integer",
+                                   label = T("Status"),
+                                   represent = S3Represent(options=reg_status_opts),
+                                   requires = IS_IN_SET(reg_status_opts,
+                                                        zero=None
+                                                        ),
+                                   )
 
         housing_unit = settings.get_cr_shelter_units()
 

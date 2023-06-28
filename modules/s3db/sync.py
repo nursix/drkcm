@@ -391,20 +391,19 @@ class SyncRepositoryModel(DataModel):
 
         # Reusable Fields
         sync_repository_represent = S3Represent(lookup = tablename)
-        repository_id = S3ReusableField("repository_id", "reference %s" % tablename,
-                                        comment = S3PopupLink(c = "sync",
-                                                              f = "repository",
-                                                              label = ADD_REPOSITORY,
-                                                              title = ADD_REPOSITORY,
-                                                              tooltip = ADD_REPOSITORY,
-                                                              ),
-                                        label = T("Repository"),
-                                        represent = sync_repository_represent,
-                                        requires = IS_ONE_OF(db,
-                                                             "sync_repository.id",
-                                                             "%(name)s",
-                                                             ),
-                                        )
+        repository_id = FieldTemplate("repository_id", "reference %s" % tablename,
+                                      comment = S3PopupLink(c = "sync",
+                                                            f = "repository",
+                                                            label = ADD_REPOSITORY,
+                                                            title = ADD_REPOSITORY,
+                                                            tooltip = ADD_REPOSITORY,
+                                                            ),
+                                      label = T("Repository"),
+                                      represent = sync_repository_represent,
+                                      requires = IS_ONE_OF(db, "sync_repository.id",
+                                                           "%(name)s",
+                                                           ),
+                                      )
 
         # Components
         self.add_components(tablename,
@@ -662,14 +661,14 @@ class SyncDatasetModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        dataset_id = S3ReusableField("dataset_id", "reference %s" % tablename,
-                                     label = T("Data Set"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                  "%s.id" % tablename,
-                                                  represent,
-                                                  )),
-                                     )
+        dataset_id = FieldTemplate("dataset_id", "reference %s" % tablename,
+                                   label = T("Data Set"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # ---------------------------------------------------------------------
         # Data Set Archive
@@ -1168,13 +1167,13 @@ class SyncTaskModel(DataModel):
 
         # Reusable Field
         task_represent = self.sync_task_represent
-        task_id = S3ReusableField("task_id", "reference %s" % tablename,
-                                  label = T("Task"),
-                                  represent = task_represent,
-                                  requires = IS_ONE_OF(db, "sync_task.id",
-                                                       task_represent,
-                                                       ),
-                                  )
+        task_id = FieldTemplate("task_id", "reference %s" % tablename,
+                                label = T("Task"),
+                                represent = task_represent,
+                                requires = IS_ONE_OF(db, "sync_task.id",
+                                                     task_represent,
+                                                     ),
+                                )
 
         # Components
         self.add_components(tablename,

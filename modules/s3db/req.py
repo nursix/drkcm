@@ -104,16 +104,14 @@ def req_priority_opts():
 
 def req_priority():
     priority_opts = req_priority_opts()
-    return S3ReusableField("priority", "integer",
-                           default = 2,
-                           label = current.T("Priority"),
-                           #@ToDo: Colour code the priority text - red, orange, green
-                           #represent = req_priority_represent,
-                           represent = represent_option(priority_opts),
-                           requires = IS_EMPTY_OR(
-                                           IS_IN_SET(priority_opts)
-                                           ),
-                           )
+    return FieldTemplate("priority", "integer",
+                         default = 2,
+                         label = current.T("Priority"),
+                         #@ToDo: Colour code the priority text - red, orange, green
+                         #represent = req_priority_represent,
+                         represent = represent_option(priority_opts),
+                         requires = IS_EMPTY_OR(IS_IN_SET(priority_opts)),
+                         )
 
 # =============================================================================
 def req_status_opts():
@@ -131,15 +129,15 @@ def req_status_opts():
 
 def req_status():
     status_opts = req_status_opts()
-    return S3ReusableField("req_status", "integer",
-                           label = current.T("Request Status"),
-                           represent = represent_option(status_opts),
-                           requires = IS_EMPTY_OR(
+    return FieldTemplate("req_status", "integer",
+                         label = current.T("Request Status"),
+                         represent = represent_option(status_opts),
+                         requires = IS_EMPTY_OR(
                                         IS_IN_SET(status_opts,
                                                   zero = None,
                                                   )
                                         ),
-                           )
+                         )
 
 # =============================================================================
 def req_timeframe():
@@ -272,12 +270,12 @@ class RequestModel(DataModel):
         # ---------------------------------------------------------------------
         # Request Reference
         #
-        req_ref = S3ReusableField("req_ref", "string",
-                                  label = T("%(REQ)s Number") %
-                                          {"REQ": settings.get_req_shortname()},
-                                  represent = req_ref_represent,
-                                  writable = False,
-                                  )
+        req_ref = FieldTemplate("req_ref", "string",
+                                label = T("%(REQ)s Number") %
+                                        {"REQ": settings.get_req_shortname()},
+                                represent = req_ref_represent,
+                                writable = False,
+                                )
 
         # ---------------------------------------------------------------------
         # Requests
@@ -593,21 +591,20 @@ class RequestModel(DataModel):
 
         # Reusable Field
         represent = self.req_represent
-        req_id = S3ReusableField("req_id", "reference %s" % tablename,
-                                 label = T("Request"),
-                                 ondelete = "CASCADE",
-                                 represent = represent,
-                                 requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db,
-                                                          "req_req.id",
-                                                          lambda req_id, row:
-                                                            represent(req_id, row,
-                                                                      show_link=False),
-                                                          orderby="req_req.date",
-                                                          sort=True)
-                                                ),
-                                 sortby = "date",
-                                 )
+        req_id = FieldTemplate("req_id", "reference %s" % tablename,
+                               label = T("Request"),
+                               ondelete = "CASCADE",
+                               represent = represent,
+                               requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(db, "req_req.id",
+                                                      lambda req_id, row=None: \
+                                                             represent(req_id, row, show_link=False),
+                                                      orderby = "req_req.date",
+                                                      sort = True,
+                                                      )),
+                               sortby = "date",
+                               )
+
         list_fields = ["id",
                        "date",
                        "date_required",
@@ -760,7 +757,7 @@ class RequestModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"req_req_id": dummy("req_id"),
                 "req_req_ref": dummy("req_ref", "string"),
@@ -1842,21 +1839,22 @@ class RequestItemModel(DataModel):
 
         # Reusable Field
         req_item_represent = req_ReqItemRepresent()
-        req_item_id = S3ReusableField("req_item_id", "reference %s" % tablename,
-                                      label = T("Request Item"),
-                                      ondelete = "CASCADE",
-                                      represent = req_item_represent,
-                                      requires = IS_EMPTY_OR(
+        req_item_id = FieldTemplate("req_item_id", "reference %s" % tablename,
+                                    label = T("Request Item"),
+                                    ondelete = "CASCADE",
+                                    represent = req_item_represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db,
                                                               "req_req_item.id",
                                                               req_item_represent,
                                                               orderby = "req_req_item.id",
-                                                              sort = True)),
-                                      comment = DIV(_class = "tooltip",
-                                                    _title = "%s|%s" % (T("Request Item"),
-                                                                        T("Select Items from the Request")),
-                                                                        ),
-                                      script = '''
+                                                              sort = True,
+                                                              )),
+                                    comment = DIV(_class = "tooltip",
+                                                  _title = "%s|%s" % (T("Request Item"),
+                                                                      T("Select Items from the Request")),
+                                                                      ),
+                                    script = '''
 $.filterOptionsS3({
  'trigger':'req_item_id',
  'target':'item_pack_id',
@@ -1951,7 +1949,7 @@ $.filterOptionsS3({
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"req_item_id": S3ReusableField.dummy("req_item_id"),
+        return {"req_item_id": FieldTemplate.dummy("req_item_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -2604,18 +2602,18 @@ class RequestNeedsModel(DataModel):
         represent = S3Represent(lookup = tablename,
                                 show_link = True,
                                 )
-        need_id = S3ReusableField("need_id", "reference %s" % tablename,
-                                  label = T("Need"),
-                                  ondelete = "CASCADE",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        need_id = FieldTemplate("need_id", "reference %s" % tablename,
+                                label = T("Need"),
+                                ondelete = "CASCADE",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "req_need.id",
                                                           represent,
-                                                          orderby="req_need.date",
-                                                          sort=True,
+                                                          orderby = "req_need.date",
+                                                          sort = True,
                                                           )),
-                                  sortby = "date",
-                                  )
+                                sortby = "date",
+                                )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2629,7 +2627,7 @@ class RequestNeedsModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"req_need_id": S3ReusableField.dummy("need_id"),
+        return {"req_need_id": FieldTemplate.dummy("need_id"),
                 }
 
 # =============================================================================
@@ -3596,18 +3594,18 @@ class CommitModel(DataModel):
 
         # Reusable Field
         commit_represent = req_CommitRepresent()
-        commit_id = S3ReusableField("commit_id", "reference %s" % tablename,
-                                    label = T("Commitment"),
-                                    ondelete = "CASCADE",
-                                    represent = commit_represent,
-                                    requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "req_commit.id",
-                                                              commit_represent,
-                                                              orderby="req_commit.date",
-                                                              sort=True,
-                                                              )),
-                                    sortby = "date",
-                                    )
+        commit_id = FieldTemplate("commit_id", "reference %s" % tablename,
+                                  label = T("Commitment"),
+                                  ondelete = "CASCADE",
+                                  represent = commit_represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "req_commit.id",
+                                                          commit_represent,
+                                                          orderby = "req_commit.date",
+                                                          sort = True,
+                                                          )),
+                                  sortby = "date",
+                                  )
 
         list_fields = ["site_id",
                        "req_id",

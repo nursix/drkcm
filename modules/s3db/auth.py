@@ -550,15 +550,15 @@ class AuthMasterKeyModel(DataModel):
 
         represent = S3Represent(lookup=tablename)
 
-        masterkey_id = S3ReusableField("masterkey_id", "reference %s" % tablename,
-                                       #label = T("Master Key"),
-                                       ondelete = "CASCADE",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        masterkey_id = FieldTemplate("masterkey_id", "reference %s" % tablename,
+                                     #label = T("Master Key"),
+                                     ondelete = "CASCADE",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(current.db, "auth_masterkey.id",
                                                               represent,
                                                               )),
-                                       )
+                                     )
 
         # ---------------------------------------------------------------------
         # Single-use tokens for master key authentication

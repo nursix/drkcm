@@ -163,16 +163,16 @@ class WaterModel(DataModel):
             msg_list_empty = T("No Rivers currently registered"))
 
         #represent = S3Represent(lookup = tablename)
-        #river_id = S3ReusableField("river_id", "reference %s" % tablename,
-        #                           label = T("River"),
-        #                           ondelete = "RESTRICT",
-        #                           represent = represent,
-        #                           requires = IS_EMPTY_OR(IS_ONE_OF(db, "water_river.id", represent)),
-        #                           comment = S3PopupLink(c = "water",
-        #                                                 f = "river",
-        #                                                 title = ADD_RIVER,
-        #                                                 ),
-        #                           )
+        #river_id = FieldTemplate("river_id", "reference %s" % tablename,
+        #                         label = T("River"),
+        #                         ondelete = "RESTRICT",
+        #                         represent = represent,
+        #                         requires = IS_EMPTY_OR(IS_ONE_OF(db, "water_river.id", represent)),
+        #                         comment = S3PopupLink(c = "water",
+        #                                               f = "river",
+        #                                               title = ADD_RIVER,
+        #                                               ),
+        #                         )
 
         # -----------------------------------------------------------------------------
         # Gauges

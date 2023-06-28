@@ -251,14 +251,15 @@ class DocumentModel(DataModel):
                                           labels = "%(name)s",
                                           show_link = True)
 
-        document_id = S3ReusableField("document_id", "reference %s" % tablename,
-                                      label = T("Document"),
-                                      ondelete = "CASCADE",
-                                      represent = represent,
-                                      requires = IS_ONE_OF(db,
-                                                           "doc_document.id",
-                                                           represent),
-                                      )
+        document_id = FieldTemplate("document_id", "reference %s" % tablename,
+                                    label = T("Document"),
+                                    ondelete = "CASCADE",
+                                    represent = represent,
+                                    requires = IS_ONE_OF(db,
+                                                         "doc_document.id",
+                                                         represent,
+                                                         ),
+                                    )
 
         self.add_components(tablename,
                             doc_document_tag = document_id,
@@ -374,7 +375,7 @@ class DocumentModel(DataModel):
     def defaults(self):
         """ Safe defaults if the module is disabled """
 
-        return {"doc_document_id": S3ReusableField.dummy("document_id"),
+        return {"doc_document_id": FieldTemplate.dummy("document_id"),
                 }
 
     # -------------------------------------------------------------------------

@@ -110,13 +110,13 @@ class PatientModel(DataModel):
         patient_represent = patient_PatientRepresent(lookup = "patient_patient")
 
         # Reusable Field for Component Link
-        patient_id = S3ReusableField("patient_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     represent = patient_represent,
-                                     requires = IS_ONE_OF(db,
-                                                          "patient_patient.id",
-                                                          patient_represent),
-                                     )
+        patient_id = FieldTemplate("patient_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   represent = patient_represent,
+                                   requires = IS_ONE_OF(db, "patient_patient.id",
+                                                        patient_represent,
+                                                        ),
+                                   )
         # Search method
         filter_widgets = [
             TextFilter(["person_id$first_name",

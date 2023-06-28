@@ -854,14 +854,14 @@ class TranslateReadFiles:
             else:
                 template_list = template
 
-        # List of fields which don't have an S3ReusableField defined but we
+        # List of fields which don't have an FieldTemplate defined but we
         # know we wish to translate
         # @ToDo: Extend to dict if we need to support some which don't just translate the name
         always_translate = ("project_beneficiary_type_id",
                             "stats_demographic_id",
                             )
 
-        # List of fields which have an S3ReusableField defined but we
+        # List of fields which have an FieldTemplate defined but we
         # know we don't wish to translate
         never_translate = ("gis_location_id",
                            )
@@ -898,8 +898,8 @@ class TranslateReadFiles:
                     reusable_field = s3db.get(fieldname)
                     # Excludes lambdas which are in defaults()
                     # i.e. reusable fields in disabled modules
-                    from ..model import S3ReusableField
-                    if reusable_field and isinstance(reusable_field, S3ReusableField):
+                    from ..model import FieldTemplate
+                    if reusable_field and isinstance(reusable_field, FieldTemplate):
                         represent = reusable_field.attr.represent
                         if hasattr(represent, "translate"):
                             translate = represent.translate

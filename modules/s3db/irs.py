@@ -463,15 +463,15 @@ class IRSModel(DataModel):
                                  },
                       )
 
-        ireport_id = S3ReusableField("ireport_id", "reference %s" % tablename,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db,
-                                                              "irs_ireport.id",
-                                                              self.irs_ireport_represent)),
-                                     represent = self.irs_ireport_represent,
-                                     label = T("Incident"),
-                                     ondelete = "CASCADE",
-                                     )
+        ireport_id = FieldTemplate("ireport_id", "reference %s" % tablename,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "irs_ireport.id",
+                                                          self.irs_ireport_represent,
+                                                          )),
+                                   represent = self.irs_ireport_represent,
+                                   label = T("Incident"),
+                                   ondelete = "CASCADE",
+                                   )
 
         # Custom Methods
         set_method("irs_ireport",
@@ -516,7 +516,7 @@ class IRSModel(DataModel):
             - used by events module
         """
 
-        return {"irs_ireport_id": S3ReusableField.dummy("ireport_id"),
+        return {"irs_ireport_id": FieldTemplate.dummy("ireport_id"),
                 }
 
     # -------------------------------------------------------------------------

@@ -245,18 +245,18 @@ class DVRCaseModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    label = T("Status"),
-                                    ondelete = "RESTRICT",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Status"),
+                                  ondelete = "RESTRICT",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvr_case_status.id",
                                                           represent,
                                                           orderby = "dvr_case_status.workflow_position",
                                                           sort = False,
                                                           )),
-                                    sortby = "workflow_position",
-                                    )
+                                  sortby = "workflow_position",
+                                  )
 
         # ---------------------------------------------------------------------
         # Cases
@@ -300,14 +300,14 @@ class DVRCaseModel(DataModel):
                                               not_filterby = "obsolete",
                                               not_filter_opts = (True,),
                                               ))
-        transfer_site_id = S3ReusableField("transfer_site_id", "reference org_site",
-                                           ondelete = "RESTRICT",
-                                           requires = transfer_site_requires,
-                                           represent = site_represent,
-                                           # Enable in template if required
-                                           readable = track_transfer_sites,
-                                           writable = track_transfer_sites,
-                                           )
+        transfer_site_id = FieldTemplate("transfer_site_id", "reference org_site",
+                                         ondelete = "RESTRICT",
+                                         requires = transfer_site_requires,
+                                         represent = site_represent,
+                                         # Enable in template if required
+                                         readable = track_transfer_sites,
+                                         writable = track_transfer_sites,
+                                         )
 
         tablename = "dvr_case"
         define_table(tablename,
@@ -558,14 +558,15 @@ class DVRCaseModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, fields=("reference",))
-        case_id = S3ReusableField("case_id", "reference %s" % tablename,
-                                  label = label,
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        case_id = FieldTemplate("case_id", "reference %s" % tablename,
+                                label = label,
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvr_case.id",
-                                                          represent)),
-                                  )
+                                                          represent,
+                                                          )),
+                                )
 
         # ---------------------------------------------------------------------
         # Case Language: languages that can be used to communicate with
@@ -662,7 +663,7 @@ class DVRCaseModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"dvr_case_id": dummy("case_id"),
                 "dvr_case_status_id": dummy("status_id"),
@@ -1026,19 +1027,20 @@ class DVRCaseFlagModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        flag_id = S3ReusableField("flag_id", "reference %s" % tablename,
-                                  label = T("Case Flag"),
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        flag_id = FieldTemplate("flag_id", "reference %s" % tablename,
+                                label = T("Case Flag"),
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvr_case_flag.id",
-                                                          represent)),
-                                  comment=S3PopupLink(c = "dvr",
-                                                      f = "case_flag",
-                                                      title = ADD_FLAG,
-                                                      tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
-                                                      ),
-                                  )
+                                                          represent,
+                                                          )),
+                                comment=S3PopupLink(c = "dvr",
+                                                    f = "case_flag",
+                                                    title = ADD_FLAG,
+                                                    tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
+                                                    ),
+                                )
 
         # ---------------------------------------------------------------------
         # Link table Case <=> Flag
@@ -1072,7 +1074,7 @@ class DVRCaseFlagModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"dvr_case_flag_id": S3ReusableField.dummy("flag_id"),
+        return {"dvr_case_flag_id": FieldTemplate.dummy("flag_id"),
                 }
 
 # =============================================================================
@@ -1172,21 +1174,21 @@ class DVRNeedsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        need_id = S3ReusableField("need_id", "reference %s" % tablename,
-                                  label = T("Need Type"),
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        need_id = FieldTemplate("need_id", "reference %s" % tablename,
+                                label = T("Need Type"),
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvr_need.id",
                                                           represent,
                                                           )),
-                                  comment = S3PopupLink(c = "dvr",
-                                                        f = "need",
-                                                        title = ADD_NEED,
-                                                        tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
-                                                        ),
-                                  widget = widget
-                                  )
+                                comment = S3PopupLink(c = "dvr",
+                                                      f = "need",
+                                                      title = ADD_NEED,
+                                                      tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
+                                                      ),
+                                widget = widget
+                                )
 
         # ---------------------------------------------------------------------
         # Link table Case <=> Need
@@ -1212,7 +1214,7 @@ class DVRNeedsModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"dvr_need_id": S3ReusableField.dummy("need_id"),
+        return {"dvr_need_id": FieldTemplate.dummy("need_id"),
                 }
 
 # =============================================================================
@@ -1277,14 +1279,15 @@ class DVRNotesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        note_type_id = S3ReusableField("note_type_id", "reference %s" % tablename,
-                                       label = T("Note Type"),
-                                       ondelete = "RESTRICT",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        note_type_id = FieldTemplate("note_type_id", "reference %s" % tablename,
+                                     label = T("Note Type"),
+                                     ondelete = "RESTRICT",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "dvr_note_type.id",
-                                                              represent)),
-                                       )
+                                                              represent,
+                                                              )),
+                                     )
 
         # ---------------------------------------------------------------------
         # Notes
@@ -1391,17 +1394,17 @@ class DVRReferralModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        referral_type_id = S3ReusableField("referral_type_id",
-                                           "reference %s" % tablename,
-                                           label = T("Type of Referral"),
-                                           ondelete = "RESTRICT",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
+        referral_type_id = FieldTemplate("referral_type_id",
+                                         "reference %s" % tablename,
+                                         label = T("Type of Referral"),
+                                         ondelete = "RESTRICT",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "%s.id" % tablename,
                                                                   represent,
                                                                   )),
-                                           )
+                                         )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1414,7 +1417,7 @@ class DVRReferralModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"dvr_referral_type_id": S3ReusableField.dummy("referral_type_id"),
+        return {"dvr_referral_type_id": FieldTemplate.dummy("referral_type_id"),
                 }
 
 # =============================================================================
@@ -1512,7 +1515,7 @@ class DVRResponseModel(DataModel):
                 requires.set_filter(filterby = "organisation_id",
                                     filter_opts = (root_org,),
                                     )
-        response_theme_ids = S3ReusableField(
+        response_theme_ids = FieldTemplate(
                                 "response_theme_ids",
                                 "list:reference %s" % tablename,
                                 label = T("Themes"),
@@ -1591,7 +1594,7 @@ class DVRResponseModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        response_type_id = S3ReusableField(
+        response_type_id = FieldTemplate(
                                 "response_type_id",
                                 "reference %s" % tablename,
                                 label = T("Response Type"),
@@ -1657,7 +1660,7 @@ class DVRResponseModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        response_status_id = S3ReusableField(
+        response_status_id = FieldTemplate(
                                 "status_id",
                                 "reference %s" % tablename,
                                 label = T("Status"),
@@ -2456,17 +2459,17 @@ class DVRCaseActivityModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename)
-        provider_type_id = S3ReusableField("provider_type_id", "reference %s" % tablename,
-                                           label = T("Provider Type"),
-                                           ondelete = "CASCADE",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
+        provider_type_id = FieldTemplate("provider_type_id", "reference %s" % tablename,
+                                         label = T("Provider Type"),
+                                         ondelete = "CASCADE",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   sort = True,
                                                                   )),
-                                           sortby = "name",
-                                           )
+                                         sortby = "name",
+                                         )
 
         # ---------------------------------------------------------------------
         # Termination Types (=how a case activity ended)
@@ -2508,17 +2511,17 @@ class DVRCaseActivityModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename)
-        termination_type_id = S3ReusableField("termination_type_id", "reference %s" % tablename,
-                                              label = T("Termination Type"),
-                                              ondelete = "CASCADE",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
+        termination_type_id = FieldTemplate("termination_type_id", "reference %s" % tablename,
+                                            label = T("Termination Type"),
+                                            ondelete = "CASCADE",
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
                                                             IS_ONE_OF(db, "%s.id" % tablename,
                                                                       represent,
                                                                       sort = True,
                                                                       )),
-                                              sortby = "name",
-                                              )
+                                            sortby = "name",
+                                            )
 
         # ---------------------------------------------------------------------
         # Case Activity Status
@@ -2565,18 +2568,18 @@ class DVRCaseActivityModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        activity_status_id = S3ReusableField("status_id",
-                                             "reference %s" % tablename,
-                                             label = T("Status"),
-                                             represent = represent,
-                                             requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                                  represent,
-                                                                  orderby = "workflow_position",
-                                                                  sort = False,
-                                                                  zero = None,
-                                                                  ),
-                                             sortby = "workflow_position",
-                                             )
+        activity_status_id = FieldTemplate("status_id",
+                                           "reference %s" % tablename,
+                                           label = T("Status"),
+                                           represent = represent,
+                                           requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                                represent,
+                                                                orderby = "workflow_position",
+                                                                sort = False,
+                                                                zero = None,
+                                                                ),
+                                           sortby = "workflow_position",
+                                           )
 
         # ---------------------------------------------------------------------
         # Case Activity (case-specific)
@@ -2932,15 +2935,15 @@ class DVRCaseActivityModel(DataModel):
 
         # Reusable field
         represent = dvr_CaseActivityRepresent(show_link=True)
-        case_activity_id = S3ReusableField("case_activity_id",
-                                           "reference %s" % tablename,
-                                           ondelete = "CASCADE",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "%s.id" % tablename,
-                                                          represent,
-                                                          )),
-                                           )
+        case_activity_id = FieldTemplate("case_activity_id",
+                                         "reference %s" % tablename,
+                                         ondelete = "CASCADE",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                         )
 
         # ---------------------------------------------------------------------
         # Case Activity <=> Needs
@@ -3004,16 +3007,16 @@ class DVRCaseActivityModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        update_type_id = S3ReusableField("update_type_id",
-                                         "reference %s" % tablename,
-                                         label = T("Update Type"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(
-                                                        IS_ONE_OF(db, "%s.id" % tablename,
-                                                                  represent,
-                                                                  )),
-                                         sortby = "name",
-                                         )
+        update_type_id = FieldTemplate("update_type_id",
+                                       "reference %s" % tablename,
+                                       label = T("Update Type"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                       sortby = "name",
+                                       )
 
         # ---------------------------------------------------------------------
         # Case Activity Updates
@@ -3044,7 +3047,7 @@ class DVRCaseActivityModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"dvr_case_activity_id": dummy("case_activity_id"),
                 }
@@ -3459,15 +3462,15 @@ class DVRCaseAppointmentModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        appointment_type_id = S3ReusableField("type_id", "reference %s" % tablename,
-                                              label = T("Appointment Type"),
-                                              ondelete = "RESTRICT",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
-                                                              IS_ONE_OF(db, "dvr_case_appointment_type.id",
-                                                                        represent,
-                                                                        )),
-                                              )
+        appointment_type_id = FieldTemplate("type_id", "reference %s" % tablename,
+                                            label = T("Appointment Type"),
+                                            ondelete = "RESTRICT",
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "dvr_case_appointment_type.id",
+                                                                      represent,
+                                                                      )),
+                                            )
 
         # ---------------------------------------------------------------------
         # Case Appointments
@@ -3561,7 +3564,7 @@ class DVRCaseAppointmentModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_appointment_status_opts": {},
-                "dvr_appointment_type_id": S3ReusableField.dummy("type_id"),
+                "dvr_appointment_type_id": FieldTemplate.dummy("type_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -3819,16 +3822,16 @@ class DVRCaseEconomyInformationModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        income_source_id = S3ReusableField("income_source_id", "reference %s" % tablename,
-                                           label = T("Income Source"),
-                                           ondelete = "RESTRICT",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
+        income_source_id = FieldTemplate("income_source_id", "reference %s" % tablename,
+                                         label = T("Income Source"),
+                                         ondelete = "RESTRICT",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "dvr_income_source.id",
                                                                   represent,
                                                                   )),
-                                           )
+                                         )
 
         # Table configuration
         configure(tablename,
@@ -4012,21 +4015,20 @@ class DVRLegalStatusModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_type_id = S3ReusableField("status_type_id",
-                                         "reference %s" % tablename,
-                                         label = T("Residence Status"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(IS_ONE_OF(
-                                            db, "%s.id" % tablename,
-                                            represent,
-                                            )),
-                                         sortby = "name",
-                                         comment = S3PopupLink(
-                                                c="dvr",
-                                                f="residence_status_type",
-                                                tooltip=T("Create a new status type"),
-                                                ),
-                                         )
+        status_type_id = FieldTemplate("status_type_id",
+                                       "reference %s" % tablename,
+                                       label = T("Residence Status"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                       sortby = "name",
+                                       comment = S3PopupLink(c = "dvr",
+                                                             f = "residence_status_type",
+                                                             tooltip = T("Create a new status type"),
+                                                             ),
+                                       )
 
         # ---------------------------------------------------------------------
         # Residence Permit Types
@@ -4060,21 +4062,20 @@ class DVRLegalStatusModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        permit_type_id = S3ReusableField("permit_type_id",
-                                         "reference %s" % tablename,
-                                         label = T("Residence Permit Type"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(IS_ONE_OF(
-                                                        db, "%s.id" % tablename,
-                                                        represent,
-                                                        )),
-                                         sortby = "name",
-                                         comment = S3PopupLink(
-                                                        c="dvr",
-                                                        f="residence_permit_type",
-                                                        tooltip=T("Create a new permit type"),
-                                                        ),
-                                                   )
+        permit_type_id = FieldTemplate("permit_type_id",
+                                       "reference %s" % tablename,
+                                       label = T("Residence Permit Type"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                       sortby = "name",
+                                       comment = S3PopupLink(c = "dvr",
+                                                             f = "residence_permit_type",
+                                                             tooltip = T("Create a new permit type"),
+                                                             ),
+                                       )
 
         # ---------------------------------------------------------------------
         # Residence Status
@@ -4493,19 +4494,19 @@ class DVRCaseEventModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        event_type_id = S3ReusableField("type_id", "reference %s" % tablename,
-                                        label = T("Event Type"),
-                                        ondelete = "RESTRICT",
-                                        represent = represent,
-                                        requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                             represent,
-                                                             ),
-                                        sortby = "name",
-                                        comment = S3PopupLink(c = "dvr",
-                                                              f = "case_event_type",
-                                                              tooltip = T("Create a new event type"),
-                                                              ),
-                                        )
+        event_type_id = FieldTemplate("type_id", "reference %s" % tablename,
+                                      label = T("Event Type"),
+                                      ondelete = "RESTRICT",
+                                      represent = represent,
+                                      requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                           represent,
+                                                           ),
+                                      sortby = "name",
+                                      comment = S3PopupLink(c = "dvr",
+                                                            f = "case_event_type",
+                                                            tooltip = T("Create a new event type"),
+                                                            ),
+                                      )
 
         # ---------------------------------------------------------------------
         # Case Event Types, Impermissible Combinations
@@ -5069,22 +5070,21 @@ class DVRVulnerabilityModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        vulnerability_type_id = S3ReusableField("vulnerability_type_id",
-                                                "reference %s" % tablename,
-                                                label = T("Type of Vulnerability"),
-                                                represent = represent,
-                                                requires = IS_EMPTY_OR(
-                                                                IS_ONE_OF(db,
-                                                                    "%s.id" % tablename,
-                                                                    represent,
-                                                                    )),
-                                                sortby = "name",
-                                                comment = S3PopupLink(c="dvr",
-                                                                      f="vulnerability_type",
-                                                                      tooltip=T("Create a new vulnerability type"),
-                                                                      ),
-                                                widget = widget,
-                                                )
+        vulnerability_type_id = FieldTemplate("vulnerability_type_id",
+                                              "reference %s" % tablename,
+                                              label = T("Type of Vulnerability"),
+                                              represent = represent,
+                                              requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "%s.id" % tablename,
+                                                                      represent,
+                                                                      )),
+                                              sortby = "name",
+                                              comment = S3PopupLink(c = "dvr",
+                                                                    f = "vulnerability_type",
+                                                                    tooltip = T("Create a new vulnerability type"),
+                                                                    ),
+                                              widget = widget,
+                                              )
 
         # ---------------------------------------------------------------------
         # Link tables vulnerability type <=> case activity
@@ -5175,16 +5175,16 @@ class DVRServiceContactModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        type_id = S3ReusableField("type_id", "reference %s" % tablename,
-                                  label = T("Service Contact Type"),
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        type_id = FieldTemplate("type_id", "reference %s" % tablename,
+                                label = T("Service Contact Type"),
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                  sortby = "name",
-                                  )
+                                sortby = "name",
+                                )
 
         # ---------------------------------------------------------------------
         # Service Contacts of Beneficiaries

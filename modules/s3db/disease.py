@@ -107,17 +107,17 @@ class DiseaseDataModel(DataModel):
                      )
 
         represent = S3Represent(lookup=tablename)
-        disease_id = S3ReusableField("disease_id", "reference %s" % tablename,
-                                     label = T("Disease"),
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db, "disease_disease.id",
-                                                          represent,
-                                                          ),
-                                     sortby = "name",
-                                     comment = S3PopupLink(f = "disease",
-                                                           tooltip = T("Add a new disease to the catalog"),
-                                                           ),
-                                     )
+        disease_id = FieldTemplate("disease_id", "reference %s" % tablename,
+                                   label = T("Disease"),
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db, "disease_disease.id",
+                                                        represent,
+                                                        ),
+                                   sortby = "name",
+                                   comment = S3PopupLink(f = "disease",
+                                                         tooltip = T("Add a new disease to the catalog"),
+                                                         ),
+                                   )
 
         self.add_components(tablename,
                             disease_symptom = "disease_id",
@@ -159,14 +159,14 @@ class DiseaseDataModel(DataModel):
 
         # @todo: refine to include disease name?
         represent = S3Represent(lookup=tablename)
-        symptom_id = S3ReusableField("symptom_id", "reference %s" % tablename,
-                                     label = T("Symptom"),
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db, "disease_symptom.id",
-                                                          represent,
-                                                          ),
-                                     sortby = "name",
-                                     )
+        symptom_id = FieldTemplate("symptom_id", "reference %s" % tablename,
+                                   label = T("Symptom"),
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db, "disease_symptom.id",
+                                                        represent,
+                                                        ),
+                                   sortby = "name",
+                                   )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -254,16 +254,16 @@ class DiseaseDataModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        device_id = S3ReusableField("device_id", "reference %s" % tablename,
-                                    label = T("Testing Device"),
-                                    represent = represent,
-                                    requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                         represent,
-                                                         filterby = "available",
-                                                         filter_opts = [True],
-                                                         ),
-                                    sortby = "name",
-                                    )
+        device_id = FieldTemplate("device_id", "reference %s" % tablename,
+                                  label = T("Testing Device"),
+                                  represent = represent,
+                                  requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                       represent,
+                                                       filterby = "available",
+                                                       filter_opts = [True],
+                                                       ),
+                                  sortby = "name",
+                                  )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -278,7 +278,7 @@ class DiseaseDataModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"disease_disease_id": dummy("disease_id"),
                 "disease_symptom_id": dummy("symptom_id"),
@@ -426,17 +426,17 @@ class DiseaseMonitoringModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename)
-        demographic_id = S3ReusableField("demographic_id", "reference %s" % tablename,
-                                         label = T("Demographic"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(
+        demographic_id = FieldTemplate("demographic_id", "reference %s" % tablename,
+                                       label = T("Demographic"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   filterby = "obsolete",
                                                                   filter_opts = (False,),
                                                                   )),
-                                         sortby = "name",
-                                         )
+                                       sortby = "name",
+                                       )
 
         # ---------------------------------------------------------------------
         # Testing Site Daily Summary Report
@@ -689,7 +689,7 @@ class DiseaseMonitoringModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"disease_demographic_id": dummy("demographic_id"),
                 }
@@ -920,7 +920,7 @@ class DiseaseCertificateModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField.dummy
+        #dummy = FieldTemplate.dummy
 
         return None
 
@@ -1077,17 +1077,17 @@ class DiseaseCaseTrackingModel(DataModel):
 
         # Reusable Field
         represent = disease_CaseRepresent()
-        case_id = S3ReusableField("case_id", "reference %s" % tablename,
-                                  label = T("Case"),
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                           "disease_case.id",
-                                                           represent,
-                                                           )),
-                                  comment = S3PopupLink(f = "case",
-                                                        tooltip = T("Add a new case"),
-                                                        ),
-                                  )
+        case_id = FieldTemplate("case_id", "reference %s" % tablename,
+                                label = T("Case"),
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "disease_case.id",
+                                                          represent,
+                                                          )),
+                                comment = S3PopupLink(f = "case",
+                                                      tooltip = T("Add a new case"),
+                                                      ),
+                                )
 
         # Components
         add_components(tablename,
@@ -1432,7 +1432,7 @@ class DiseaseCaseTrackingModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"disease_case_id": S3ReusableField.dummy("case_id"),
+        return {"disease_case_id": FieldTemplate.dummy("case_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1781,18 +1781,18 @@ class DiseaseContactTracingModel(DataModel):
 
         # @todo: implement specific S3Represent class
         represent = S3Represent(lookup=tablename, fields=["case_id"])
-        tracing_id = S3ReusableField("tracing_id", "reference %s" % tablename,
-                                     label = T("Tracing Record"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        tracing_id = FieldTemplate("tracing_id", "reference %s" % tablename,
+                                   label = T("Tracing Record"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "disease_tracing.id",
                                                               represent,
                                                               )),
-                                     sortby = "date",
-                                     comment = S3PopupLink(f = "tracing",
-                                                           tooltip = T("Add a new contact tracing information"),
-                                                           ),
-                                     )
+                                   sortby = "date",
+                                   comment = S3PopupLink(f = "tracing",
+                                                         tooltip = T("Add a new contact tracing information"),
+                                                         ),
+                                   )
 
         self.add_components(tablename,
                             disease_exposure = "tracing_id",

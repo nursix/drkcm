@@ -42,7 +42,7 @@ from gluon.storage import Storage
 
 from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
                  S3Report, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
-                 S3Represent, S3ReusableField, S3SQLCustomForm, \
+                 S3Represent, FieldTemplate, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
                  get_form_record_id, CommentsField, \
                  s3_str, get_filter_options, \
@@ -69,10 +69,10 @@ class CRReceptionCenterModel(DataModel):
         configure = self.configure
 
         # Reusable field for population-type fields
-        population = S3ReusableField("population", "integer",
-                                     default = 0,
-                                     requires = IS_INT_IN_RANGE(0),
-                                     )
+        population = FieldTemplate("population", "integer",
+                                   default = 0,
+                                   requires = IS_INT_IN_RANGE(0),
+                                   )
 
         # ---------------------------------------------------------------------
         # Reception Center Types
@@ -115,15 +115,15 @@ class CRReceptionCenterModel(DataModel):
                        ("SB", T("standby")),
                        ("NA", T("closed")),
                        )
-        status = S3ReusableField("status",
-                                 default = "OP",
-                                 requires = IS_IN_SET(status_opts, zero=None),
-                                 represent = S3PriorityRepresent(dict(status_opts),
-                                                                 {"OP": "green",
-                                                                  "SB": "amber",
-                                                                  "NA": "grey"
-                                                                  }).represent,
-                                 )
+        status = FieldTemplate("status",
+                               default = "OP",
+                               requires = IS_IN_SET(status_opts, zero=None),
+                               represent = S3PriorityRepresent(dict(status_opts),
+                                                               {"OP": "green",
+                                                                "SB": "amber",
+                                                                "NA": "grey"
+                                                                }).represent,
+                               )
 
         tablename = "cr_reception_center"
         define_table(tablename,
