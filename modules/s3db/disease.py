@@ -1329,7 +1329,7 @@ class DiseaseCaseTrackingModel(DataModel):
                         }
 
         project_id = self.project_project_id
-        project_represent = project_id.attr.represent
+        project_represent = project_id().represent
 
         tablename = "disease_case_diagnostics"
         define_table(tablename,
