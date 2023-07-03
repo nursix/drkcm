@@ -682,7 +682,7 @@ class CurrencyField(Field):
     """
 
     def __init__(self,
-                 fieldname = "language",
+                 fieldname = "currency",
                  length = 3,
                  default = DEFAULT,
                  label = DEFAULT,
