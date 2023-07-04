@@ -45,7 +45,7 @@ from gluon.utils import web2py_uuid
 from s3dal import Row, Rows, Query, Field, original_tablename
 
 from ..controller import CRUDRequest
-from ..model import S3MetaFields, CommentsField
+from ..model import MetaFields, CommentsField
 from ..tools import IS_ISO639_2_LANGUAGE_CODE, S3Represent, S3Tracker, \
                     s3_addrow, s3_mark_required, s3_str
 
@@ -302,10 +302,10 @@ Thank you"""
                       readable=False, writable=False),
                 CommentsField(readable=False, writable=False),
                 # Additional meta fields required for sync:
-                S3MetaFields.uuid(),
-                #S3MetaFields.mci(),
-                S3MetaFields.created_on(),
-                S3MetaFields.modified_on(),
+                MetaFields.uuid(),
+                #MetaFields.mci(),
+                MetaFields.created_on(),
+                MetaFields.modified_on(),
                 ]
 
             userfield = settings.login_userfield
@@ -366,11 +366,11 @@ Thank you"""
                       label = messages.label_description,
                       ),
                 # Additional meta fields required for sync:
-                S3MetaFields.created_on(),
-                S3MetaFields.modified_on(),
-                S3MetaFields.deleted(),
-                #S3MetaFields.deleted_fk(),
-                #S3MetaFields.deleted_rb(),
+                MetaFields.created_on(),
+                MetaFields.modified_on(),
+                MetaFields.deleted(),
+                #MetaFields.deleted_fk(),
+                #MetaFields.deleted_rb(),
                 migrate = migrate,
                 fake_migrate = fake_migrate,
                 )
@@ -398,7 +398,7 @@ Thank you"""
                       ),
                 migrate = migrate,
                 fake_migrate = fake_migrate,
-                *S3MetaFields.sync_meta_fields())
+                *MetaFields.sync_meta_fields())
             settings.table_membership = db[settings.table_membership_name]
 
         # Define Eden permission table
@@ -461,7 +461,7 @@ Thank you"""
                       ),
                 migrate = migrate,
                 fake_migrate = fake_migrate,
-                *S3MetaFields.sync_meta_fields())
+                *MetaFields.sync_meta_fields())
             settings.table_event = db[settings.table_event_name]
 
     # -------------------------------------------------------------------------

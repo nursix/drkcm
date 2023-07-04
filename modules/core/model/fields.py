@@ -32,7 +32,7 @@ __all__ = ("CommentsField",
            "LanguageField",
            "TimeField",
            "FieldTemplate",
-           "S3MetaFields",
+           "MetaFields",
            "s3_fieldmethod",
            "s3_meta_fields",
            "s3_all_meta_field_names",
@@ -239,7 +239,7 @@ ALL_META_FIELD_NAMES = ("uuid",
                         )
 
 # -----------------------------------------------------------------------------
-class S3MetaFields:
+class MetaFields:
     """ Class to standardize meta-fields """
 
     # -------------------------------------------------------------------------
@@ -550,7 +550,7 @@ def s3_meta_fields():
             tuple of Field instances
     """
 
-    return S3MetaFields.all_meta_fields()
+    return MetaFields.all_meta_fields()
 
 def s3_all_meta_field_names():
     """

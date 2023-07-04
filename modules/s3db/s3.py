@@ -57,7 +57,7 @@ class S3HierarchyModel(DataModel):
                                 default = False,
                                 ),
                           Field("hierarchy", "json"),
-                          *S3MetaFields.timestamps(),
+                          *MetaFields.timestamps(),
                           meta = False,
                           )
 

@@ -40,7 +40,7 @@ from ..tools import IS_ONE_OF
 from ..ui import S3ScriptItem
 
 from .dynamic import DynamicTableModel, DYNAMIC_PREFIX
-from .fields import S3MetaFields
+from .fields import MetaFields
 
 DEFAULT = lambda: None
 MODULE_TYPE = type(sys)
@@ -467,7 +467,7 @@ class DataModel:
             table = getattr(db, tablename)
         else:
             if meta:
-                fields = fields + S3MetaFields.all_meta_fields()
+                fields = fields + MetaFields.all_meta_fields()
             table = db.define_table(tablename, *fields, **args)
         return table
 

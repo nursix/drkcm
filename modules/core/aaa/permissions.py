@@ -35,7 +35,7 @@ from gluon.storage import Storage
 
 from s3dal import Field, Row, Table, original_tablename
 
-from ..model import S3MetaFields
+from ..model import MetaFields
 from ..errors import S3PermissionError
 from ..tools import s3_get_extension
 
@@ -226,7 +226,7 @@ class S3Permission:
                                   ),
                             migrate = migrate,
                             fake_migrate = fake_migrate,
-                            *S3MetaFields.sync_meta_fields()
+                            *MetaFields.sync_meta_fields()
                             )
             self.table = db[self.tablename]
 

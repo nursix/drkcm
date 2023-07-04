@@ -3159,7 +3159,7 @@ class OrgSiteModel(DataModel):
                                 writable = False,
                                 ),
                           Field("comments", "text"),
-                          *S3MetaFields.owner_meta_fields())
+                          *MetaFields.owner_meta_fields())
 
         # ---------------------------------------------------------------------
         settings = current.deployment_settings

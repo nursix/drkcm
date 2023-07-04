@@ -143,7 +143,7 @@ class MsgChannelModel(DataModel):
         define_table(tablename,
                      # @ToDo: Make it per-channel
                      #channel_id(),
-                     *S3MetaFields.timestamps(),
+                     *MetaFields.timestamps(),
                      meta = False,
                      )
 

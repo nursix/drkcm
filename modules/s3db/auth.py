@@ -607,9 +607,9 @@ class AuthUserTempModel(DataModel):
                           Field("custom", "json",
                                 requires = IS_EMPTY_OR(IS_JSONS3()),
                                 ),
-                          S3MetaFields.uuid(),
-                          S3MetaFields.created_on(),
-                          S3MetaFields.modified_on(),
+                          MetaFields.uuid(),
+                          MetaFields.created_on(),
+                          MetaFields.modified_on(),
                           meta = False,
                           )
 
