@@ -1,0 +1,12 @@
+First Name,Last Name,Email,Password,Role,Organisation,Facility Type,Office,Language
+BEA,Administration,administration@example.com,eden,ADMINISTRATION,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Head of Administration,admin_head@example.com,eden,ADMIN_HEAD,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Head of Security,security_head@example.com,eden,SECURITY_HEAD,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Medical,medical@example.com,eden,MEDICAL,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Quartiermanager,quartier@example.com,eden,QUARTIER,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Scan,scan@example.com,eden,SCAN,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Security,security@example.com,eden,SECURITY,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+BEA,Staff,staff@example.com,eden,STAFF,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+Caterer,User,caterer@example.com,eden,"SCAN,FOOD_STATS",Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+Police,User,police@example.com,eden,POLICE,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
+RP,User,rp@example.com,eden,RP,Johanniter-Unfall-Hilfe,Shelter,Erstaufnahme Mannheim,de
