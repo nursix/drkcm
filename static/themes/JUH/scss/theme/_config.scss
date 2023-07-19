@@ -15,7 +15,7 @@ $topbar-link-bg-hover: $jblue-light; //scale-color($topbar-background, $lightnes
 $topbar-link-bg-active: $jred;
 $topbar-link-bg-active-hover: $jred-light; //scale-color($topbar-link-bg-active, $lightness: +10%);
 
-$topbar-arrow-color: rgba(255,255,255,0.4);
+$topbar-arrow-color: rgba(150,150,150,0.5);
 
 // Side bar colors
 //$side-bar-link-color: #666 !default;
@@ -124,7 +124,7 @@ $topbar-arrow-color: rgba(255,255,255,0.4);
 
 // Render page titles with background color
 // $title_background: true;
-//$title_bgcolor: #f7f8f9;
+$title_bgcolor: #cacfff;
 
 // Footer
 //$footer_bgcolor: transparent;

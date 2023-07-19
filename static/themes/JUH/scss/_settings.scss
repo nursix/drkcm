@@ -76,7 +76,7 @@ $global-font-size: 100%;
 $global-width: rem-calc(2000);
 $global-lineheight: 1.5;
 $foundation-palette: (
-  primary: scale-color($jblue-light, $lightness: -10%),
+  primary: $jblue, //scale-color($jblue-light, $lightness: -10%),
   secondary: #f0f0f0,
   success: #43AC6A,
   warning: #f08a24,
@@ -308,7 +308,7 @@ $button-padding: .875rem 1.75rem .9375rem 1.75rem;
 $button-margin: 0 0 $global-margin 0;
 $button-fill: solid;
 $button-background: $primary-color;
-$button-background-hover: scale-color($button-background, $lightness: -15%);
+$button-background-hover: $jblue-light; //scale-color($button-background, $lightness: -10%);
 $button-color: $white;
 $button-color-alt: $black;
 $button-radius: $global-radius;
@@ -321,9 +321,9 @@ $button-sizes: (
   large: 1.25rem,
 );
 $button-opacity-disabled: 0.25;
-$button-background-hover-lightness: -20%;
+$button-background-hover-lightness: -10%;
 $button-hollow-hover-lightness: -50%;
-$button-transition: background-color 0.25s ease-out, color 0.25s ease-out;
+$button-transition: background-color 0.1s ease-out, color 0.1s ease-out;
 $button-responsive-expanded: false;
 
 // 12. Button Group

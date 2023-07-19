@@ -1,6 +1,8 @@
 """
     PROJECT module customisations for MRCMS
 
+    TODO Drop?
+
     License: MIT
 """
 

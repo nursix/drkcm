@@ -6,7 +6,98 @@
 
 from gluon import current
 
+from ..config import PROVIDERS
+
 # -------------------------------------------------------------------------
+def org_group_controller(**attr):
+
+    s3 = current.response.s3
+
+    standard_prep = s3.prep
+    def prep(r):
+
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        resource = r.resource
+        table = resource.table
+
+        record = r.record
+        if record and record.name == PROVIDERS:
+            # Group name cannot be changed
+            field = table.name
+            field.writable = False
+
+            # Group cannot be deleted
+            resource.configure(deletable = False)
+
+        # Cannot create new groups unless Admin or site-wide OrgGroupAdmin
+        from ..helpers import get_role_realms
+        if not current.auth.s3_has_role("ADMIN") and \
+           get_role_realms("ORG_GROUP_ADMIN") is not None:
+            resource.configure(insertable = False)
+
+        if r.interactive:
+            if not r.component:
+                from core import S3SQLCustomForm
+                crud_form = S3SQLCustomForm("name", "comments")
+                resource.configure(crud_form = crud_form)
+            elif r.component_name == "organisation":
+                r.component.configure(insertable = False,
+                                      editable = False,
+                                      deletable = False,
+                                      )
+
+        list_fields = ["name", "comments"]
+        resource.configure(list_fields = list_fields,
+                           )
+
+        # TODO filter form
+        # TODO CRUD string translations
+
+        return result
+    s3.prep = prep
+
+    # TODO postp to remove DELETE-button for PROVIDERS
+
+    # Custom rheader
+    from ..rheaders import mrcms_org_rheader
+    attr["rheader"] = mrcms_org_rheader
+
+    return attr
+
+# -------------------------------------------------------------------------
+def org_organisation_resource(r, tablename):
+
+    # TODO implement
+    # use branches
+    # customise form+filters
+    # only OrgGroupAdmin can create new root orgs, but org admin can create branches
+    # org group mandatory when any org group exists
+    # default org group by tag?
+    pass
+
+def org_organisation_controller(**attr):
+
+    # TODO if not OrgGroupAdmin or OrgAdmin for multiple orgs, and staff of only one org => open that org
+
+    # TODO not insertable on main tab unless OrgGroupAdmin
+
+    # TODO form with reduced fields
+    #      => also customise component forms (via resource)
+
+    # TODO custom list fields
+
+    # TODO filters
+
+    # Custom rheader
+    from ..rheaders import mrcms_org_rheader
+    attr["rheader"] = mrcms_org_rheader
+
+    return attr
+
+# -------------------------------------------------------------------------
+# TODO drop?
 def org_facility_resource(r, tablename):
 
     T = current.T
@@ -76,6 +167,7 @@ def org_facility_resource(r, tablename):
                    )
 
 # -------------------------------------------------------------------------
+# TODO drop?
 def org_facility_controller(**attr):
 
     # Allow selection of all countries

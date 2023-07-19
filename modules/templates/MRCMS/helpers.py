@@ -9,27 +9,173 @@ from gluon import current
 from core import FS, S3DateTime, s3_str
 
 # =============================================================================
+def get_role_realms(role):
+    """
+        Get all realms for which a role has been assigned
+
+        Args:
+            role: the role ID or role UUID
+
+        Returns:
+            - list of pe_ids the current user has the role for,
+            - None if the role is assigned site-wide, or an
+            - empty list if the user does not have the role, or has the role
+              without realm
+    """
+
+    auth = current.auth
+
+    if isinstance(role, str):
+        role_id = auth.get_role_id(role)
+    else:
+        role_id = role
+
+    role_realms = []
+    user = auth.user
+    if user and role_id:
+        role_realms = user.realms.get(role_id, role_realms)
+
+    return role_realms
+
+# -----------------------------------------------------------------------------
+def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
+    """
+        Get organisations managed by the current user
+
+        Args:
+            role: the managing user role (default: ORG_ADMIN)
+            group: the organisation group
+            cacheable: whether the result can be cached
+
+        Returns:
+            list of organisation_ids
+    """
+
+    s3db = current.s3db
+
+    otable = s3db.org_organisation
+    query = (otable.deleted == False)
+
+    realms = get_role_realms(role)
+    if realms:
+        query = (otable.realm_entity.belongs(realms)) & query
+    elif realms is not None:
+        # User does not have the required role, or at least not for any realms
+        return []
+
+    if group:
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        join = [gtable.on((mtable.organisation_id == otable.id) & \
+                          (mtable.deleted == False) & \
+                          (gtable.id == mtable.group_id) & \
+                          (gtable.name == group)
+                          )]
+    else:
+        join = None
+
+    orgs = current.db(query).select(otable.id,
+                                    cache = s3db.cache if cacheable else None,
+                                    join = join,
+                                    )
+    return [o.id for o in orgs]
+
+# -----------------------------------------------------------------------------
+def get_user_orgs(roles=None, cacheable=True, limit=None):
+    """
+        Get the IDs of all organisations the user has any of the
+        given roles for (default: STAFF|ORG_ADMIN)
+
+        Args:
+            roles: tuple|list of role IDs/UIDs
+            cacheable: the result can be cached
+            limit: limit to this number of organisation IDs
+
+        Returns:
+            list of organisation_ids (can be empty)
+    """
+
+    s3db = current.s3db
+
+    if not roles:
+        roles = ("STAFF", "ORG_ADMIN")
+
+    realms = set()
+
+    for role in roles:
+        role_realms = get_role_realms(role)
+        if role_realms is None:
+            realms = None
+            break
+        if role_realms:
+            realms.update(role_realms)
+
+    otable = s3db.org_organisation
+    query = (otable.deleted == False)
+    if realms:
+        query = (otable.pe_id.belongs(realms)) & query
+    elif realms is not None:
+        return []
+
+    rows = current.db(query).select(otable.id,
+                                    cache = s3db.cache if cacheable else None,
+                                    limitby = (0, limit) if limit else None,
+                                    )
+
+    return [row.id for row in rows]
+
+# -----------------------------------------------------------------------------
+def get_user_sites(roles=None, site_type="cr_shelter", cacheable=True, limit=None):
+    """
+        Get the instance record IDs of all sites of the given type
+        that belong to any of the user organisations
+
+        Args:
+            roles: tuple|list of role IDs/UIDs (see get_user_orgs)
+            site_type: the instance table name
+            cacheable: the result can be cached
+            limit: limit to this number of organisation IDs
+
+        Returns:
+            list of instance record IDs (can be empty)
+    """
+
+    organisation_ids = get_user_orgs(roles=roles, cacheable=cacheable)
+
+    if organisation_ids:
+        s3db = current.s3db
+        table = s3db.table(site_type)
+        query = (table.organisation_id.belongs(organisation_ids)) & \
+                (table.deleted == False)
+        rows = current.db(query).select(table.id,
+                                        cache = s3db.cache if cacheable else None,
+                                        limitby = (0, limit) if limit else None,
+                                        )
+        site_ids = [row.id for row in rows]
+    else:
+        site_ids = []
+
+    return site_ids
+
+# =============================================================================
 def mrcms_default_shelter():
     """
         Lazy getter for the default shelter_id
     """
 
+    if current.auth.s3_has_role("ADMIN"):
+        return None
+
     s3 = current.response.s3
     shelter_id = s3.mrcms_default_shelter
 
-    if not shelter_id:
-        default_site = current.deployment_settings.get_org_default_site()
+    if shelter_id is None:
 
-        # Get the shelter_id for default site
-        if default_site:
-            stable = current.s3db.cr_shelter
-            query = (stable.site_id == default_site)
-            shelter = current.db(query).select(stable.id,
-                                            limitby=(0, 1),
-                                            ).first()
-            if shelter:
-                shelter_id = shelter.id
-
+        shelter_ids = get_user_sites(site_type="cr_shelter", limit=2)
+        if len(shelter_ids) == 1:
+            shelter_id = shelter_ids[0]
+        else:
+            shelter_id = None
         s3.mrcms_default_shelter = shelter_id
 
     return shelter_id

@@ -198,6 +198,18 @@ def site_check_out(site_id, person_id):
     s3db.onaccept("cr_shelter_registration", registration, method="update")
 
 # -------------------------------------------------------------------------
+def cr_shelter_resource(r, tablename):
+
+    s3db = current.s3db
+
+    # Configure components to inherit realm_entity from the shelter
+    # upon forced realm update
+    s3db.configure("cr_shelter",
+                   realm_components = ("shelter_unit",
+                                       ),
+                   )
+
+# -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
 
     s3 = current.response.s3
@@ -377,6 +389,7 @@ def cr_shelter_registration_controller(**attr):
     s3.prep = custom_prep
 
     return attr
+
 
 # -------------------------------------------------------------------------
 def profile_header(r):

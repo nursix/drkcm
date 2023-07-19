@@ -11,6 +11,9 @@ from collections import OrderedDict
 from gluon import current
 from gluon.storage import Storage
 
+PROVIDERS = "Johanniter-Unfall-Hilfe"
+
+# =============================================================================
 def config(settings):
 
     T = current.T
@@ -36,9 +39,9 @@ def config(settings):
     #settings.auth.registration_requires_approval = True
     settings.auth.registration_requests_organisation = True
     settings.auth.registration_link_user_to = {"staff": T("Staff"),
-                                               "volunteer": T("Volunteer"),
+                                               #"volunteer": T("Volunteer"),
                                                }
-    #settings.auth.registration_link_user_to_default = ["staff"]
+    settings.auth.registration_link_user_to_default = ["staff"]
 
     # Approval emails get sent to all admins
     settings.mail.approver = "ADMIN"
@@ -103,9 +106,8 @@ def config(settings):
     # 5: Apply Controller, Function & Table ACLs
     # 6: Apply Controller, Function, Table ACLs and Entity Realm
     # 7: Apply Controller, Function, Table ACLs and Entity Realm + Hierarchy
-    # 8: Apply Controller, Function, Table ACLs, Entity Realm + Hierarchy and Delegations
     #
-    settings.security.policy = 5 # Controller, Function & Table ACLs
+    settings.security.policy = 7 # Controller, Function, Table rules with hierarchical realms
 
     # Version details on About-page require login
     settings.security.version_info_requires_login = True
@@ -127,8 +129,10 @@ def config(settings):
     # -------------------------------------------------------------------------
     # AUTH Settings
     #
-    from .customise.auth import auth_user_resource
+    from .customise.auth import realm_entity, \
+                                auth_user_resource
 
+    settings.auth.realm_entity = realm_entity
     settings.customise_auth_user_resource = auth_user_resource
 
     # -------------------------------------------------------------------------
@@ -147,13 +151,22 @@ def config(settings):
     settings.cr.shelter_inspection_tasks = True
     settings.cr.shelter_inspection_task_active_statuses = (2, 3, 6)
 
-    from .customise.cr import cr_shelter_controller, \
+    from .customise.cr import cr_shelter_resource, \
+                              cr_shelter_controller, \
                               cr_shelter_registration_resource, \
                               cr_shelter_registration_controller
 
+    settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
     settings.customise_cr_shelter_registration_resource = cr_shelter_registration_resource
     settings.customise_cr_shelter_registration_controller = cr_shelter_registration_controller
+
+    # -------------------------------------------------------------------------
+    # DOC Settings and Customizations
+    #
+    from .customise.doc import doc_document_resource
+
+    settings.customise_doc_document_resource = doc_document_resource
 
     # -------------------------------------------------------------------------
     # DVR Settings and Customizations
@@ -216,6 +229,7 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     # Inventory Module Settings
+    # TODO Remove since inv disabled?
     #
     settings.inv.facility_label = "Facility"
     settings.inv.facility_manage_staff = False
@@ -223,14 +237,23 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Organisations Module Settings
     #
-    settings.org.default_organisation = "Johanniter-Unfall-Hilfe"
-    settings.org.default_site = "Erstaufnahme Mannheim"
+    # TODO default organisation is the user organisation
+    #      - if org group admin, then all orgs the user can update
+    #      - if org admin, then all orgs the user can update
+    #      - the organisation the user has the staff role for
+    #settings.org.default_organisation = "Johanniter-Unfall-Hilfe"
+    #settings.org.default_site = "Erstaufnahme Mannheim"
+    #settings.org.branches = True
 
     settings.org.site_check_in_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
 
-    from .customise.org import org_facility_resource, \
+    from .customise.org import org_group_controller, \
+                               org_organisation_controller, \
+                               org_facility_resource, \
                                org_facility_controller
 
+    settings.customise_org_group_controller = org_group_controller
+    settings.customise_org_organisation_controller = org_organisation_controller
     settings.customise_org_facility_resource = org_facility_resource
     settings.customise_org_facility_controller = org_facility_controller
 
@@ -251,6 +274,7 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     # Project Module Settings
+    # TODO Remove since project disabled?
     #
     settings.project.mode_task = True
     settings.project.sectors = False
@@ -279,6 +303,7 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     # Requests Module Settings
+    # TODO Remove since REQ disabled
     #
     settings.req.req_type = ("Stock",)
     settings.req.use_commit = False
@@ -391,12 +416,12 @@ def config(settings):
            restricted = True,
            module_type = 2,
         )),
-        ("vol", Storage(
-           name_nice = T("Volunteers"),
-           #description = "Human Resources Management",
-           restricted = True,
-           module_type = 2,
-        )),
+        #("vol", Storage(
+        #   name_nice = T("Volunteers"),
+        #   #description = "Human Resources Management",
+        #   restricted = True,
+        #   module_type = 2,
+        #)),
         ("cms", Storage(
          name_nice = T("Content Management"),
         #description = "Content Management System",
@@ -409,43 +434,43 @@ def config(settings):
            restricted = True,
            module_type = 10,
         )),
-        ("msg", Storage(
-           name_nice = T("Messaging"),
-           #description = "Sends & Receives Alerts via Email & SMS",
-           restricted = True,
-           # The user-visible functionality of this module isn't normally required. Rather it's main purpose is to be accessed from other modules.
-           module_type = None,
-        )),
-        ("supply", Storage(
-           name_nice = T("Supply Chain Management"),
-           #description = "Used within Inventory Management, Request Management and Asset Management",
-           restricted = True,
-           module_type = None, # Not displayed
-        )),
-        ("inv", Storage(
-           name_nice = T("Warehouses"),
-           #description = "Receiving and Sending Items",
-           restricted = True,
-           module_type = 4
-        )),
-        ("asset", Storage(
-           name_nice = T("Assets"),
-           #description = "Recording and Assigning Assets",
-           restricted = True,
-           module_type = 5,
-        )),
-        ("req", Storage(
-           name_nice = T("Requests"),
-           #description = "Manage requests for supplies, assets, staff or other resources. Matches against Inventories where supplies are requested.",
-           restricted = True,
-           module_type = 10,
-        )),
-        ("project", Storage(
-           name_nice = T("Projects"),
-           #description = "Tracking of Projects, Activities and Tasks",
-           restricted = True,
-           module_type = 2
-        )),
+        #("msg", Storage(
+        #   name_nice = T("Messaging"),
+        #   #description = "Sends & Receives Alerts via Email & SMS",
+        #   restricted = True,
+        #   # The user-visible functionality of this module isn't normally required. Rather it's main purpose is to be accessed from other modules.
+        #   module_type = None,
+        #)),
+        #("supply", Storage(
+        #   name_nice = T("Supply Chain Management"),
+        #   #description = "Used within Inventory Management, Request Management and Asset Management",
+        #   restricted = True,
+        #   module_type = None, # Not displayed
+        #)),
+        #("inv", Storage(
+        #   name_nice = T("Warehouses"),
+        #   #description = "Receiving and Sending Items",
+        #   restricted = True,
+        #   module_type = 4
+        #)),
+        #("asset", Storage(
+        #   name_nice = T("Assets"),
+        #   #description = "Recording and Assigning Assets",
+        #   restricted = True,
+        #   module_type = 5,
+        #)),
+        #("req", Storage(
+        #   name_nice = T("Requests"),
+        #   #description = "Manage requests for supplies, assets, staff or other resources. Matches against Inventories where supplies are requested.",
+        #   restricted = True,
+        #   module_type = 10,
+        #)),
+        #("project", Storage(
+        #   name_nice = T("Projects"),
+        #   #description = "Tracking of Projects, Activities and Tasks",
+        #   restricted = True,
+        #   module_type = 2
+        #)),
         ("cr", Storage(
             name_nice = T("Shelters"),
             #description = "Tracks the location, capacity and breakdown of victims in Shelters",
@@ -458,23 +483,23 @@ def config(settings):
           restricted = True,
           module_type = 10,
         )),
-        ("event", Storage(
-           name_nice = T("Events"),
-           #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
-           restricted = True,
-           module_type = 10,
-        )),
+        #("event", Storage(
+        #   name_nice = T("Events"),
+        #   #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
+        #   restricted = True,
+        #   module_type = 10,
+        #)),
         ("security", Storage(
            name_nice = T("Security"),
            restricted = True,
            module_type = 10,
         )),
-        ("stats", Storage(
-           name_nice = T("Statistics"),
-           #description = "Manages statistics",
-           restricted = True,
-           module_type = None,
-        )),
+        #("stats", Storage(
+        #   name_nice = T("Statistics"),
+        #   #description = "Manages statistics",
+        #   restricted = True,
+        #   module_type = None,
+        #)),
     ])
 
 # END =========================================================================

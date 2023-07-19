@@ -52,7 +52,7 @@ def user():
         ADMIN = True
         pe_ids = None
 
-    elif s3_has_role("ORG_ADMIN"):
+    elif auth.s3_has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN")):
         pe_ids = auth.get_managed_orgs()
         if pe_ids is None:
             # OrgAdmin with default realm, but user not affiliated with any org

@@ -1461,6 +1461,18 @@ class OrgOrganisationGroupModel(DataModel):
         else:
             # Functionality is disabled but model is being loaded via load_all_models()
             label = "Group"
+            crud_strings[tablename] = Storage(
+                label_create = T("Create Organization Group"),
+                title_display = T("Organization Group Details"),
+                title_list = T("Organization Groups"),
+                title_update = T("Edit Organization Group"),
+                label_list_button = T("List Organization Groups"),
+                label_delete_button = T("Delete Organization Group"),
+                msg_record_created = T("Organization Group added"),
+                msg_record_modified = T("Organization Group updated"),
+                msg_record_deleted = T("Organization Group deleted"),
+                msg_list_empty = T("No Organization Groups currently registered"),
+                )
 
         configure(tablename,
                   list_fields = ["name",

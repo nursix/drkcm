@@ -171,7 +171,30 @@ def mrcms_org_rheader(r, tabs=None):
     if record:
         T = current.T
 
-        if tablename == "org_facility":
+        if tablename == "org_group":
+
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Member Organizations"), "organisation"),
+                        (T("Documents"), "document"), # TODO customise docs (see rlpptm)
+                        ]
+
+            rheader_fields = []
+            rheader_title = "name"
+
+        elif tablename == "org_organisation":
+
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Offices"), "office"),
+                        (T("Staff"), "human_resource"),
+                        (T("Documents"), "document"), # TODO customise docs (see rlpptm)
+                        ]
+
+            rheader_fields = []
+            rheader_title = "name"
+
+        elif tablename == "org_facility":
 
             if not tabs:
                 tabs = [(T("Basic Details"), None),
@@ -181,11 +204,11 @@ def mrcms_org_rheader(r, tabs=None):
                               ["organisation_id", "phone1"],
                               ["location_id", "phone2"],
                               ]
+            rheader_title = None
 
-        rheader = S3ResourceHeader(rheader_fields, tabs)(r,
-                                                         table=resource.table,
-                                                         record=record,
-                                                         )
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
+
     return rheader
 
 # =============================================================================
@@ -213,21 +236,21 @@ def mrcms_cr_rheader(r, tabs=None):
             if not tabs:
                 tabs = [(T("Basic Details"), None),
                         (T("Housing Units"), "shelter_unit"),
-                        (T("Client Registration"), "shelter_registration"),
+                        #(T("Client Registration"), "shelter_registration"),
+                        (T("Images"), "image"),
+                        (T("Documents"), "document"),
                         ]
 
-            rheader_fields = [["name",
-                               ],
-                              ["organisation_id",
+            rheader_fields = [["organisation_id",
                                ],
                               ["location_id",
                                ],
                               ]
+            rheader_title = "name"
 
-        rheader = S3ResourceHeader(rheader_fields, tabs)(r,
-                                                         table=resource.table,
-                                                         record=record,
-                                                         )
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
+
     return rheader
 
 # END =========================================================================

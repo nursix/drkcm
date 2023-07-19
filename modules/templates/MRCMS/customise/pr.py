@@ -179,6 +179,28 @@ def pr_person_resource(r, tablename):
     field = table.organisation_id
     field.represent = s3db.org_OrganisationRepresent(parent=False, acronym=False)
 
+    # Configure components to inherit realm_entity from the person
+    # record upon forced realm update
+    s3db.configure("pr_person",
+                   realm_components = ("case_activity",
+                                       "case_details",
+                                       "case_flag_case",
+                                       "case_language",
+                                       "case_note",
+                                       "residence_status",
+                                       "response_action",
+                                       "group_membership",
+                                       "person_details",
+                                       "person_tag",
+                                       "shelter_registration",
+                                       "shelter_registration_history",
+                                       "address",
+                                       "contact",
+                                       "contact_emergency",
+                                       "image",
+                                       ),
+                   )
+
 # -------------------------------------------------------------------------
 def configure_person_tags():
     """
@@ -258,7 +280,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
                 # Will always default & be hidden
                 "dvr_case.organisation_id",
                 # Will always default & be hidden
-                "dvr_case.site_id",
+                #"dvr_case.site_id",
                 (T("EA Arrival"), "dvr_case.date"),
                 "dvr_case.origin_site_id",
                 "dvr_case.destination_site_id",
@@ -335,7 +357,8 @@ def configure_case_form(resource, privileged=False, cancel=False):
 
         subheadings = {"dvr_case_status_id": T("Case Status"),
                        "pe_label": T("Person Details"),
-                       "dvr_case_date": T("Registration"),
+                       "dvr_case_organisation_id": T("Registration"),
+                       #"dvr_case_date": T("Registration"),
                        "shelter_registration_shelter_unit_id": T("Lodging"),
                        "person_details_occupation": T("Other Details"),
                        "dvr_case_archived": T("File Status")
@@ -662,6 +685,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
         configure_person_tags()
 
         # Set default shelter for shelter registration
+        # TODO alternative when multiple shelters
         from ..helpers import mrcms_default_shelter
         shelter_id = mrcms_default_shelter()
         if shelter_id:
@@ -940,26 +964,22 @@ def pr_person_controller(**attr):
     auth = current.auth
     s3 = current.response.s3
 
-    ADMINISTRATION = ("ADMIN_HEAD",
-                      "ADMINISTRATION",
+    ADMINISTRATION = ("ORG_ADMIN",
+                      "CASE_MANAGER",
                       )
     administration = auth.s3_has_roles(ADMINISTRATION)
 
-    PRIVILEGED = ("INFO_POINT",
-                  "MEDICAL",
-                  "POLICE",
-                  "RP",
-                  "SECURITY_HEAD",
+    PRIVILEGED = ("SHELTER_MANAGER",
                   )
     privileged = administration or auth.s3_has_roles(PRIVILEGED)
 
-    QUARTIERMANAGER = auth.s3_has_role("QUARTIER") and not privileged
+    QUARTERMASTER = auth.s3_has_role("QUARTERMASTER") and not privileged
 
     # Custom prep
     standard_prep = s3.prep
     def prep(r):
 
-        if QUARTIERMANAGER:
+        if QUARTERMASTER:
             # Enforce closed=0
             r.vars["closed"] = r.get_vars["closed"] = "0"
 
@@ -995,7 +1015,7 @@ def pr_person_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        if QUARTIERMANAGER:
+        if QUARTERMASTER:
             # Add Action Button to assign Housing Unit to the Resident
             s3.actions = [dict(label=s3_str(T("Assign Shelter")),
                                _class="action-btn",

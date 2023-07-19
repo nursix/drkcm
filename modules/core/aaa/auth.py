@@ -3856,8 +3856,6 @@ Please go to %(url)s to approve this user."""
         """
             Get the pe_ids of all managed organisations (to authorize
             role assignments)
-
-            TODO use this in admin/user controller
         """
 
         user = self.user
@@ -3870,7 +3868,7 @@ Please go to %(url)s to approve this user."""
         if has_role(sr.ADMIN):
             return True
 
-        elif has_role(sr.ORG_ADMIN):
+        elif self.s3_has_roles((sr.ORG_ADMIN, sr.ORG_GROUP_ADMIN)):
             if not self.permission.entity_realm:
                 organisation_id = user.organisation_id
                 if not organisation_id:
@@ -3886,9 +3884,15 @@ Please go to %(url)s to approve this user."""
                                                  )
                 pe_ids.append(pe_id)
             else:
-                pe_ids = self.user.realms[sr.ORG_ADMIN]
-                if pe_ids is None:
-                    return True
+                pe_ids = set()
+                for role in (sr.ORG_ADMIN, sr.ORG_GROUP_ADMIN):
+                    if role not in self.user.realms:
+                        continue
+                    realm = self.user.realms[role]
+                    if realm is None:
+                        return True
+                    pe_ids.update(realm)
+                pe_ids = list(pe_ids) if pe_ids else None
             return pe_ids
 
         else:
