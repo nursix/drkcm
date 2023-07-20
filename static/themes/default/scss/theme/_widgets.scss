@@ -641,6 +641,9 @@ div.s3-groupedopts-widget {
         display: inline-block;
         width: 1.2rem;
     }
+    input {
+        max-width: 14rem;
+    }
 }
 .qrinput-success {
     text-align: center;

@@ -474,6 +474,9 @@
                 e.preventDefault();
                 self._clearForm();
             });
+            $('.qrscan-btn', form).on('click' + ns, function(e) {
+                self._clearForm();
+            });
 
             // Events for the label input
             var labelInput = $(prefix + '_label');

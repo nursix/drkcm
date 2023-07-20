@@ -7012,12 +7012,22 @@ class DVRRegisterCaseEvent(CRUDMethod):
         # Whether the event registration is actionable
         actionable = event_code is not None
 
+        label_input = self.label_input
+        use_qr_code = settings.get_org_site_check_in_qrcode()
+        if use_qr_code:
+            if use_qr_code is True:
+                label_input = S3QRInput()
+            elif isinstance(use_qr_code, tuple):
+                pattern, index = use_qr_code[:2]
+                label_input = S3QRInput(pattern=pattern, index=index)
+
         # Standard form fields and data
         formfields = [Field("label",
                             label = T("ID"),
                             requires = [IS_NOT_EMPTY(error_message=T("Enter or scan an ID")),
                                         IS_LENGTH(512, minsize=1),
                                         ],
+                            widget = label_input,
                             ),
                       Field("person",
                             label = "",
@@ -7079,7 +7089,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
             buttons = [check_btn, submit_btn]
 
         # Add the cancel-action
-        buttons.append(A(T("Cancel"), _class = "cancel-action action-lnk"))
+        buttons.append(A(T("Cancel"), _class = "cancel-action cancel-form-btn action-lnk"))
 
         resourcename = r.resource.name
 
@@ -7112,7 +7122,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
         output.update(header)
 
         # ZXing Barcode Scanner Launch Button
-        output["zxing"] = self.get_zxing_launch_button(event_code)
+        #output["zxing"] = self.get_zxing_launch_button(event_code)
+        output["zxing"] = ""
 
         # Custom view
         response.view = self._view(r, "dvr/register_case_event.html")
@@ -7133,6 +7144,43 @@ class DVRRegisterCaseEvent(CRUDMethod):
         self.inject_js(widget_id, options)
 
         return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def label_input(field, value, **attributes):
+        """
+            Custom widget for label input, providing a clear-button
+            (for ease of use on mobile devices where no ESC exists)
+
+            Args:
+                field: the Field
+                value: the current value
+                attributes: HTML attributes
+
+            Note:
+                expects Foundation theme
+        """
+
+        from gluon.sqlhtml import StringWidget
+
+        default = {"value": (value is not None and str(value)) or ""}
+        attr = StringWidget._attributes(field, default, **attributes)
+
+        placeholder = current.T("Enter or scan ID")
+        attr["_placeholder"] = placeholder
+
+        postfix = ICON("fa fa-close")
+
+        widget = DIV(DIV(INPUT(**attr),
+                         _class="small-11 columns",
+                         ),
+                     DIV(SPAN(postfix, _class="postfix clear-btn"),
+                         _class="small-1 columns",
+                         ),
+                     _class="row collapse",
+                     )
+
+        return widget
 
     # -------------------------------------------------------------------------
     # Configuration

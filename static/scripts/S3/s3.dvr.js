@@ -137,6 +137,7 @@
             var labelInput = $(prefix + '_label');
             labelInput.trigger('focus').val(labelInput.val());
 
+            this._clearForm();
             this._bindEvents();
         },
 
@@ -392,7 +393,7 @@
             var numFlags = flagInfo.length;
             if (numFlags) {
 
-                flagInfoContainer.addClass('has-flaginfo');
+                flagInfoContainer.addClass('has-flaginfo').show();
 
                 var advise = $('<div class="checkpoint-advise">').hide().appendTo(flagInfoContainer),
                     flag,
@@ -663,6 +664,7 @@
 
             // Hide person info
             $(prefix + '_person__row .controls').hide().empty();
+            $(prefix + '_flaginfo__row .controls').hide().empty();
 
             // Remove profile picture
             this._removeProfilePicture();
@@ -750,8 +752,11 @@
             });
 
             // Cancel-button to clear the form
-            form.find('a.cancel-action').on('click' + ns, function(e) {
+            form.find('a.cancel-action, .clear-btn').on('click' + ns, function(e) {
                 e.preventDefault();
+                self._clearForm();
+            });
+            $('.qrscan-btn', form).on('click' + ns, function(e) {
                 self._clearForm();
             });
 
