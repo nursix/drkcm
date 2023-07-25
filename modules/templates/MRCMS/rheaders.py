@@ -58,11 +58,8 @@ def mrcms_dvr_rheader(r, tabs=None):
                             (T("Notes"), "case_note"),
                             (T("Confiscation"), "seized_item"),
                             ]
-                    if current.auth.s3_has_roles(("ADMIN_HEAD",
-                                                  "ADMINISTRATION",
-                                                  "MEDICAL",
-                                                  "POLICE",
-                                                  "SECURITY_HEAD",
+                    if current.auth.s3_has_roles(("ORG_ADMIN",
+                                                  "CASE_MANAGER",
                                                   )):
                         tabs.insert(-3, (T("Events"), "case_event"))
 
