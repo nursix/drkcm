@@ -2676,6 +2676,492 @@ class TestFacilityInfo(CRUDMethod):
         return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
 
 # =============================================================================
+class TestProviderInfo(CRUDMethod):
+    """
+        REST Method to report details/activities of a test provider
+    """
+
+    # -------------------------------------------------------------------------
+    def apply_method(self, r, **attr):
+        """
+            Report test provider information
+
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
+        """
+
+        if r.http == "POST":
+            if r.representation == "json":
+                output = self.provider_info(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def provider_info(cls, r, **attr):
+        """
+            Respond to a POST .json request, request body format:
+
+                {"client": "CLIENT",        - the client identity (ocert)
+                 "appkey": "APPKEY",        - the client app key  (ocert)
+                 "providerCode": "ORGANISATION-ID",
+                 "siteCode": "TESTSTATION-ID",
+                 "bsnr": "BSNR",
+                 "report": ["start","end"], - the date interval to report
+                                              activities for (optional)
+                                              (ISO-format dates YYYY-MM-DD)
+                 }
+
+            Output format:
+
+                {
+                "provider": {
+                    "name": "ORG-NAME",    - the provider name
+                    "type": "ORG-TYPE",    - the provider organisation type
+                    "code": "ORG-ID",      - the provider organisation ID
+                    "bsnr": "BSNR",        - the provider BSNR
+                    "website": "URL"       - the provider website
+                    "commission": [        - commissioning details
+                        {"start": YYYY-MM-DD,
+                         "end": YYYY-MM-DD,
+                         "status": CURRENT|SUSPENDED|REVOKED|EXPIRED,
+                         "status_date": YYYY-MM-DD,
+                         }, ...
+                        ],
+                    "activity": {           - activity totals for all sites
+                        "interval": ["start", "end"],
+                        "testsTotal": NN,
+                        "testsPositive": NN,
+                        },
+                    },
+
+                 "sites": [
+                    {"name": "FACILITY-NAME",   - the facility name
+                     "code": "FACILITY-ID",     - the facility ID
+                     "phone": "phone #",        - the facility phone number
+                     "email": "email",          - the facility email address
+                     "location":
+                        {"L1": "L1-NAME",       - the L1 name (state)
+                         "L2": "L2-NAME",       - the L2 name (district)
+                         "L3": "L3-NAME",       - the L3 name (commune/city)
+                         "L4": "L4-NAME",       - the L4 name (village/town)
+                         "address": "STREET",   - the street address
+                         "postcode": "XXXXX"    - the postcode
+                         },
+                     "activity": {              - activity data for this site
+                        "interval": ["start", "end"],
+                        "testsTotal": NN,
+                        "testsPositive": NN,
+                        }
+                     }, ...
+                    ],
+                 }
+        """
+
+        settings = current.deployment_settings
+
+        # Get the configured, permitted clients
+        ocert = settings.get_custom("ocert")
+        if not ocert:
+            r.error(501, current.ERROR.METHOD_DISABLED)
+
+        # Read the body JSON of the request
+        body = r.body
+        body.seek(0)
+        try:
+            s = body.read().decode("utf-8")
+        except (ValueError, AttributeError, UnicodeDecodeError):
+            r.error(400, current.ERROR.BAD_REQUEST)
+        try:
+            ref = json.loads(s)
+        except JSONERRORS:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        # Verify the client
+        client = ref.get("client")
+        if not client or client not in ocert:
+            r.error(403, current.ERROR.NOT_PERMITTED)
+        key, _ = ocert.get(client)
+        if key:
+            appkey = ref.get("appkey")
+            if not appkey or appkey.upper() != key.upper():
+                r.error(403, current.ERROR.NOT_PERMITTED)
+
+        # Identify the organisation from providerCode, siteCode or bsnr or combinations thereof
+        organisation_id = r.record.id if r.record else None
+        provider_id = ref.get("providerCode")
+        site_code = ref.get("siteCode")
+        bsnr = ref.get("bsnr")
+
+        # Look up provider
+        organisation_id, provider_info = cls.lookup_provider(organisation_id,
+                                                             provider_id = provider_id,
+                                                             site_code = site_code,
+                                                             bsnr = bsnr,
+                                                             )
+        if not organisation_id:
+            r.error(404, current.ERROR.BAD_RECORD)
+
+        # Look up sites
+        sites = cls.get_sites(organisation_id)
+
+        # Retrieve activity data (if requested)
+        report = ref.get("report")
+        activity = interval = None
+        if report:
+            if isinstance(report, list) and len(report) == 2:
+
+                start, end = report
+                parse_date = current.calendar.parse_date
+
+                start = parse_date(start) if start else False
+                end = parse_date(end) if end else False
+
+                if start is None or end is None:
+                    r.error(400, "Invalid date format in report parameter")
+                if start and end and start > end:
+                    start, end = end, start
+
+                site_ids = [site.org_facility.site_id for site in sites]
+
+                activity = cls.get_site_activity(site_ids, start=start, end=end)
+                interval = [start.isoformat() if start else None,
+                            end.isoformat() if end else None,
+                            ]
+            else:
+                r.error(400, "Invalid report parameter format")
+
+        # Compile sites info
+        sites_info = []
+        total_tests, total_positive = 0, 0
+        for site in sites:
+            facility = site.org_facility
+            location = site.gis_location
+
+            site_data = {
+                "name": facility.name,
+                "code": facility.code,
+                "phone": facility.phone1,
+                "email": facility.email,
+                }
+
+            if location:
+                site_data["location"] = {
+                    "L1": location.L1,
+                    "L2": location.L2,
+                    "L3": location.L3,
+                    "L4": location.L4,
+                    "address": location.addr_street,
+                    "postcode": location.addr_postcode,
+                    }
+            else:
+                site_data["location"] = None
+
+            if activity is not None:
+                site_activity = activity.get(facility.site_id)
+                if site_activity:
+                    tests_total, tests_positive = site_activity
+                else:
+                    tests_total, tests_positive = 0, 0
+                site_data["activity"] = {"interval": interval,
+                                         "testsTotal": tests_total,
+                                         "testsPositive": tests_positive,
+                                         }
+                total_tests += tests_total
+                total_positive += tests_positive
+
+            sites_info.append(site_data)
+
+        if activity is not None:
+            # Add provider activity (totals)
+            provider_info["activity"] = {"interval": interval,
+                                         "testsTotal": total_tests,
+                                         "testsPositive": total_positive,
+                                         }
+
+        # Complete response
+        output = {"provider": provider_info,
+                  "sites": sites_info,
+                  }
+
+        # Return as JSON
+        response = current.response
+        if response:
+            response.headers["Content-Type"] = "application/json; charset=utf-8"
+        return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def lookup_provider(cls, organisation_id, provider_id=None, bsnr=None, site_code=None):
+        """
+            Identify a test provider organisation
+
+            Args:
+                organisation_id: the organisation record ID
+                provider_id: the OrgID tag of the organisation
+                bsnr: the BSNR tag of the organisation
+                site_code: a test station ID of the organisation
+            Returns:
+                the organisation record, or None
+
+            Notes:
+                - at least one search parameter must be provided
+                - if multiple parameters are provided, all of them must apply
+                - multiple matches will be treated as no match
+        """
+
+        # Must have at least one search parameter
+        if not any((organisation_id, provider_id, site_code, bsnr)):
+            return None
+
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup the organisation
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        ttable = s3db.org_organisation_tag
+        btable = s3db.org_bsnr
+
+        # Organisation must belong to TESTSTATIONS group
+        from .config import TESTSTATIONS
+        join = [mtable.on((mtable.organisation_id == otable.id) & \
+                          (mtable.deleted == False)),
+                gtable.on((gtable.id == mtable.group_id) & \
+                          (gtable.name == TESTSTATIONS) & \
+                          (gtable.deleted == False)),
+                ]
+
+        # Base query
+        query = (otable.deleted == False)
+        if organisation_id:
+            query = (otable.id == organisation_id) & query
+
+        # Additional parameters
+        if provider_id:
+            join.append(
+                ttable.on((ttable.organisation_id == otable.id) & \
+                          (ttable.tag == "OrgID") & \
+                          (ttable.value.upper() == provider_id.upper()) & \
+                          (ttable.deleted == False))
+                )
+        if bsnr:
+            join.append(
+                btable.on((btable.organisation_id == otable.id) & \
+                          (btable.bsnr.upper() == bsnr.upper()) & \
+                          (btable.deleted == False))
+                )
+        if site_code:
+            ftable = s3db.org_facility
+            sites = db((ftable.code.upper() == site_code.upper()) & \
+                       (ftable.deleted == False))._select(ftable.organisation_id)
+            query &= otable.id.belongs(sites)
+
+
+        rows = db(query).select(otable.id,
+                                otable.name,
+                                otable.website,
+                                join = join,
+                                limitby = (0, 2),
+                                )
+        organisation = rows.first() if len(rows) == 1 else None
+
+        if organisation:
+            organisation_id = organisation.id
+            provider_info = {"name": organisation.name,
+                             "website": organisation.website,
+                             }
+
+            provider_info["type"] = cls.get_provider_type(organisation_id)
+            provider_info.update(cls.get_provider_tags(organisation_id))
+            provider_info["commission"] = cls.get_commission_data(organisation_id)
+        else:
+            organisation_id = provider_info = None
+
+        return organisation_id, provider_info
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_provider_tags(organisation_id):
+        """
+            Retrieves the organisation tags (OrgID, BSNR) of a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                the tags as dict
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        values = {}
+
+        ttable = s3db.org_organisation_tag
+        query = (ttable.organisation_id == organisation_id) & \
+                (ttable.tag == "OrgID") & \
+                (ttable.deleted == False)
+        row = db(query).select(ttable.value, limitby=(0, 1)).first()
+        values["code"] = row.value if row else None
+
+        btable = s3db.org_bsnr
+        query = (btable.organisation_id == organisation_id) & \
+                (btable.deleted == False)
+        row = db(query).select(btable.bsnr, limitby=(0, 1)).first()
+        values["bsnr"] = row.bsnr if row else None
+
+        return values
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_provider_type(organisation_id):
+        """
+            Looks up the organisation type(s) of a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                the type name(s) as string (comma-separated if multiple)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ttable = s3db.org_organisation_type
+        ltable = s3db.org_organisation_organisation_type
+
+        join = ttable.on(ttable.id == ltable.organisation_type_id)
+        query = (ltable.organisation_id == organisation_id) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ttable.id,
+                                ttable.name,
+                                join = join,
+                                )
+        return ", ".join(row.name for row in rows) if rows else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_commission_data(organisation_id):
+        """
+            Retrieves details of all commissions for a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                a list of dicts with commission details
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ctable = s3db.org_commission
+        query = (ctable.organisation_id == organisation_id) & \
+                (ctable.deleted == False)
+        commissions = db(query).select(ctable.date,
+                                       ctable.end_date,
+                                       ctable.status,
+                                       ctable.status_date,
+                                       )
+        dtfmt = lambda dt: dt.isoformat() if dt else '--'
+
+        clist = []
+        for commission in commissions:
+            clist.append({"start": dtfmt(commission.date),
+                          "end": dtfmt(commission.end_date),
+                          "status": commission.status,
+                          "status_date": dtfmt(commission.status_date),
+                          })
+
+        return clist
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_sites(organisation_id):
+        """
+            Retrieves all sites (test stations) belonging to a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                Rows (joined org_facility+gis_location)
+        """
+
+        s3db = current.s3db
+
+        ftable = s3db.org_facility
+        ltable = s3db.gis_location
+
+        left = ltable.on(ltable.id == ftable.location_id)
+
+        query = (ftable.organisation_id == organisation_id) & \
+                (ftable.deleted == False)
+        return current.db(query).select(ftable.id,
+                                        ftable.name,
+                                        ftable.code,
+                                        ftable.phone1,
+                                        ftable.email,
+                                        ftable.site_id,
+                                        ltable.id,
+                                        ltable.L1,
+                                        ltable.L2,
+                                        ltable.L3,
+                                        ltable.L4,
+                                        ltable.addr_street,
+                                        ltable.addr_postcode,
+                                        left = left,
+                                        )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_site_activity(site_ids, start=None, end=None):
+        """
+            Reports the testing activity of sites in a certain date interval
+
+            Args:
+                site_ids: list|set of site IDs
+                start: the start date
+                end: the end date
+            Returns:
+                a dict {site_id: (tests_total, tests_positive)}
+
+            Notes:
+                - interval includes both start and end date
+                - no start date means all available reports (before end)
+                - no end date means all available reports (after start)
+        """
+
+        table = current.s3db.disease_testing_report
+
+        query = (table.site_id.belongs(site_ids))
+        if start:
+            query &= (table.date >= start)
+        if end:
+            query &= (table.date <= end)
+        query &= (table.deleted == False)
+
+        site_id = table.site_id
+        tests_total = table.tests_total.sum()
+        tests_positive = table.tests_positive.sum()
+
+        rows = current.db(query).select(site_id,
+                                        tests_total,
+                                        tests_positive,
+                                        groupby=site_id,
+                                        )
+
+        activity = {}
+        for row in rows:
+            activity[row[site_id]] = (row[tests_total], row[tests_positive])
+
+        return activity
+
+# =============================================================================
 class PersonRepresentDetails(pr_PersonRepresentContact):
     """
         Custom representation of person_id in read-perspective on

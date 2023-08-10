@@ -40,6 +40,7 @@ def config(settings):
     settings.base.models = "templates.RLPPTM.models"
     settings.base.rest_controllers = {("disease", "daycare_testing"): ("disease", "daycare_testing"),
                                       ("audit", "organisation"): ("org", "organisation"),
+                                      ("org", "provider"): ("org", "organisation"),
                                       }
 
     # Custom Logo

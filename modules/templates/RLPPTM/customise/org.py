@@ -342,6 +342,18 @@ def org_organisation_controller(**attr):
         # Configure organisation tags
         configure_org_tags(resource)
 
+        if r.controller == "org" and r.function == "provider":
+            # Special controller for anonymous provider query
+            from ..helpers import TestProviderInfo
+            s3db.set_method("org_organisation",
+                            method = "info",
+                            action = TestProviderInfo,
+                            )
+            # Only supports "info" end point
+            if r.method != "info":
+                r.error(404, current.ERROR.BAD_RESOURCE)
+            return result
+
         # Add invite-method for ORG_GROUP_ADMIN role
         from ..helpers import InviteUserOrg
         s3db.set_method("org_organisation",
