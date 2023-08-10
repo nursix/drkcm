@@ -3854,8 +3854,18 @@ Please go to %(url)s to approve this user."""
     # -------------------------------------------------------------------------
     def get_managed_orgs(self):
         """
-            Get the pe_ids of all managed organisations (to authorize
-            role assignments)
+            Get the pe_ids of all managed organisations, e.g. for filters
+
+            Returns:
+                - True if unrestricted (i.e. site-wide role)
+                - list of pe_ids if restricted
+                - None if user does not manage any orgs
+
+            Note:
+                The result only means that the user has a *_ADMIN role
+                for those organisations, but that does not imply any
+                particular permissions =>
+                use auth.permission.permitted_realms for access control
         """
 
         user = self.user
