@@ -2730,7 +2730,7 @@ class TestProviderInfo(CRUDMethod):
                         {"start": YYYY-MM-DD,
                          "end": YYYY-MM-DD,
                          "status": CURRENT|SUSPENDED|REVOKED|EXPIRED,
-                         "status_date": YYYY-MM-DD,
+                         "statusDate": YYYY-MM-DD,
                          }, ...
                         ],
                     "activity": {           - activity totals for all sites
@@ -3075,7 +3075,7 @@ class TestProviderInfo(CRUDMethod):
             clist.append({"start": dtfmt(commission.date),
                           "end": dtfmt(commission.end_date),
                           "status": commission.status,
-                          "status_date": dtfmt(commission.status_date),
+                          "statusDate": dtfmt(commission.status_date),
                           })
 
         return clist
