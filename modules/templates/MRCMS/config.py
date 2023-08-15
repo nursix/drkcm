@@ -18,8 +18,8 @@ def config(settings):
 
     T = current.T
 
-    settings.base.system_name = "MRCMS"
-    settings.base.system_name_short = "MRCMS"
+    settings.base.system_name = "Refugion"
+    settings.base.system_name_short = "Refugion"
 
     # PrePopulate data
     settings.base.prepopulate += ("MRCMS",)
