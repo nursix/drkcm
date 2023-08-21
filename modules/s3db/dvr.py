@@ -30,18 +30,16 @@ __all__ = ("DVRCaseModel",
            "DVRCaseActivityModel",
            "DVRCaseAllowanceModel",
            "DVRCaseAppointmentModel",
-           "DVRCaseEconomyInformationModel",
-           "DVRLegalStatusModel",
+           "DVRResidenceStatusModel",
            "DVRCaseEffortModel",
            "DVRCaseEventModel",
-           "DVRCaseEvaluationModel",
            "DVRNeedsModel",
            "DVRNotesModel",
            "DVRReferralModel",
            "DVRResponseModel",
            "DVRServiceContactModel",
            "DVRSiteActivityModel",
-           "DVRVulnerabilityModel",
+           "DVRDiagnosisModel",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
@@ -513,12 +511,6 @@ class DVRCaseModel(DataModel):
                                                 "multiple": False,
                                                 },
                             dvr_case_event = "case_id",
-                            dvr_economy = {"joinby": "case_id",
-                                           "multiple": False,
-                                           },
-                            dvr_evaluation = {"joinby": "case_id",
-                                              "multiple": False,
-                                              },
                             dvr_need =  {"link": "dvr_case_need",
                                          "joinby": "case_id",
                                          "key": "need_id",
@@ -2801,16 +2793,16 @@ class DVRCaseActivityModel(DataModel):
                                 "key": "response_type_id",
                                 },
                             dvr_case_activity_update = "case_activity_id",
-                            dvr_vulnerability_type = (
-                                    {"name": "vulnerability_type",
-                                     "link": "dvr_vulnerability_type_case_activity",
+                            dvr_diagnosis = (
+                                    {"name": "suspected_diagnosis",
+                                     "link": "dvr_suspected_diagnosis",
                                      "joinby": "case_activity_id",
-                                     "key": "vulnerability_type_id",
+                                     "key": "diagnosis_id",
                                      },
-                                    {"name": "diagnosis",
-                                     "link": "dvr_diagnosis_case_activity",
+                                    {"name": "confirmed_diagnosis",
+                                     "link": "dvr_confirmed_diagnosis",
                                      "joinby": "case_activity_id",
-                                     "key": "vulnerability_type_id",
+                                     "key": "diagnosis_id",
                                      },
                                     ),
                             supply_distribution = {
@@ -3740,233 +3732,8 @@ class DVRCaseAppointmentModel(DataModel):
                     dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEconomyInformationModel(DataModel):
-    """ Model for Household Economy Information """
-
-    names = ("dvr_economy",
-             "dvr_income_source",
-             "dvr_income_source_economy",
-             "dvr_housing_type",
-             )
-
-    def model(self):
-
-        T = current.T
-        db = current.db
-
-        crud_strings = current.response.s3.crud_strings
-
-        configure = self.configure
-        define_table = self.define_table
-
-        float_represent = lambda v: \
-                          IS_FLOAT_AMOUNT.represent(v, precision=2)
-
-        # ---------------------------------------------------------------------
-        # Housing Types
-        #
-        tablename = "dvr_housing_type"
-        define_table(tablename,
-                     Field("name",
-                           label = T("Type"),
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     CommentsField(),
-                     )
-
-        # CRUD Strings
-        ADD_HOUSING_TYPE = T("Create Housing Type")
-        crud_strings[tablename] = Storage(
-            label_create = ADD_HOUSING_TYPE,
-            title_display = T("Housing Type"),
-            title_list = T("Housing Types"),
-            title_update = T("Edit Housing Type"),
-            label_list_button = T("List Housing Types"),
-            label_delete_button = T("Delete Housing Type"),
-            msg_record_created = T("Housing Type added"),
-            msg_record_modified = T("Housing Type updated"),
-            msg_record_deleted = T("Housing Type deleted"),
-            msg_list_empty = T("No Housing Types currently defined")
-            )
-
-        # Represent for reference
-        housing_type_represent = S3Represent(lookup = "dvr_housing_type",
-                                             translate = True,
-                                             )
-
-        # ---------------------------------------------------------------------
-        # Income sources
-        #
-        tablename = "dvr_income_source"
-        define_table(tablename,
-                     Field("name",
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     CommentsField(),
-                     )
-
-        # CRUD Strings
-        ADD_INCOME_SOURCE = T("Create Income Source")
-        crud_strings[tablename] = Storage(
-            label_create = ADD_INCOME_SOURCE,
-            title_display = T("Income Source"),
-            title_list = T("Income Sources"),
-            title_update = T("Edit Income Source"),
-            label_list_button = T("List Income Sources"),
-            label_delete_button = T("Delete Income Source"),
-            msg_record_created = T("Income Source added"),
-            msg_record_modified = T("Income Source updated"),
-            msg_record_deleted = T("Income Source deleted"),
-            msg_list_empty = T("No Income Sources currently defined")
-            )
-
-        # Reusable field
-        represent = S3Represent(lookup=tablename, translate=True)
-        income_source_id = FieldTemplate("income_source_id", "reference %s" % tablename,
-                                         label = T("Income Source"),
-                                         ondelete = "RESTRICT",
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(
-                                                        IS_ONE_OF(db,
-                                                                  "dvr_income_source.id",
-                                                                  represent,
-                                                                  )),
-                                         )
-
-        # Table configuration
-        configure(tablename,
-                  deduplicate = S3Duplicate(),
-                  )
-
-        # ---------------------------------------------------------------------
-        # Household Economy Information
-        #
-        tablename = "dvr_economy"
-        define_table(tablename,
-                     # Beneficiary (component link):
-                     # @todo: populate from case and hide in case perspective
-                     self.pr_person_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
-                     self.dvr_case_id(empty = False,
-                                      label = T("Case Number"),
-                                      ondelete = "CASCADE",
-                                      ),
-                     Field("housing_type_id", "reference dvr_housing_type",
-                           label = T("Housing Type"),
-                           represent = housing_type_represent,
-                           requires = IS_EMPTY_OR(IS_ONE_OF(
-                                            db, "dvr_housing_type.id",
-                                            housing_type_represent,
-                                            )),
-                           sortby = "name",
-                           comment = S3PopupLink(c = "dvr",
-                                                 f = "housing_type",
-                                                 title = ADD_HOUSING_TYPE,
-                                                 tooltip = T("Choose the housing type from the drop-down, or click the link to create a new type"),
-                                                 ),
-                           ),
-                     Field("monthly_costs", "double",
-                           label = T("Monthly Costs"),
-                           represent = float_represent,
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("average_weekly_income", "double",
-                           label = T("Average Weekly Income"),
-                           represent = float_represent,
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("monthly_income", "double",
-                           label = T("Average Monthly Income"),
-                           represent = float_represent,
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     CurrencyField(),
-                     CommentsField(),
-                     )
-
-        # Components
-        self.add_components(tablename,
-                            dvr_income_source = {"link": "dvr_income_source_economy",
-                                                 "joinby": "economy_id",
-                                                 "key": "income_source_id",
-                                                 "actuate": "link",
-                                                 "autodelete": False,
-                                                 },
-                            )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Economy Information"),
-            title_display = T("Economy Information"),
-            title_list = T("Economy Information"),
-            title_update = T("Edit Economy Information"),
-            label_list_button = T("List Economy Information"),
-            label_delete_button = T("Delete Economy Information"),
-            msg_record_created = T("Economy Information added"),
-            msg_record_modified = T("Economy Information updated"),
-            msg_record_deleted = T("Economy Information deleted"),
-            msg_list_empty = T("No Economy Information currently registered"),
-            )
-
-        # CRUD Form
-        crud_form = S3SQLCustomForm("housing_type_id",
-                                    "monthly_costs",
-                                    #"average_weekly_income",
-                                    "monthly_income",
-                                    "currency",
-                                    S3SQLInlineLink("income_source",
-                                                    field = "income_source_id",
-                                                    label = T("Income Sources"),
-                                                    cols = 3,
-                                                    ),
-                                    "comments",
-                                    )
-
-        # List fields
-        list_fields = ["housing_type_id",
-                       "monthly_costs",
-                       "income_source_economy.income_source_id",
-                       #"average_weekly_income",
-                       "monthly_income",
-                       "comments",
-                       ]
-
-        # Table configuration
-        configure(tablename,
-                  crud_form = crud_form,
-                  list_fields = list_fields,
-                  )
-
-        # ---------------------------------------------------------------------
-        # Link table Economy Information <=> Income Sources
-        #
-        tablename = "dvr_income_source_economy"
-        define_table(tablename,
-                     Field("economy_id", "reference dvr_economy",
-                           ondelete = "CASCADE",
-                           requires = IS_ONE_OF(db, "dvr_economy.id"),
-                           ),
-                     income_source_id(),
-                     CommentsField(),
-                     )
-
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
-
-        return None
-
-# =============================================================================
-class DVRLegalStatusModel(DataModel):
-    """ Models to document the legal status of a beneficiary """
+class DVRResidenceStatusModel(DataModel):
+    """ Models to document the residence status of a client """
 
     names = ("dvr_residence_status_type",
              "dvr_residence_permit_type",
@@ -4874,123 +4641,12 @@ class DVRCaseEventModel(DataModel):
                 dvr_update_last_seen(person_id)
 
 # =============================================================================
-class DVRCaseEvaluationModel(DataModel):
-    """
-        Evaluation of Cases
-        - Flexible Questions (Dynamic Data Model)
-    """
+class DVRDiagnosisModel(DataModel):
+    """ Diagnoses, e.g. in Psychosocial Support """
 
-    names = ("dvr_evaluation_question",
-             "dvr_evaluation",
-             "dvr_evaluation_data",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        crud_strings = current.response.s3.crud_strings
-        define_table = self.define_table
-
-        # ---------------------------------------------------------------------
-        # Questions
-        #
-        tablename = "dvr_evaluation_question"
-        define_table(tablename,
-                     Field("section",
-                           label = T("Section"),
-                           ),
-                     #Field("header",
-                     #      label = T("Header"),
-                     #      ),
-                     Field("number", "integer",
-                           label = T("Number"),
-                           ),
-                     Field("name",
-                           label = T("Question"),
-                           ),
-                     )
-
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Question"),
-            title_display = T("Question Details"),
-            title_list = T("Questions"),
-            title_update = T("Edit Question"),
-            label_list_button = T("List Questions"),
-            label_delete_button = T("Delete Question"),
-            msg_record_created = T("Question added"),
-            msg_record_modified = T("Question updated"),
-            msg_record_deleted = T("Question removed"),
-            msg_list_empty = T("No Questions currently registered"))
-
-        # ---------------------------------------------------------------------
-        # Case Evaluations
-        #
-        tablename = "dvr_evaluation"
-        define_table(tablename,
-                     # Beneficiary (component link):
-                     # @todo: populate from case and hide in case perspective
-                     self.pr_person_id(empty = False,
-                                       ondelete = "CASCADE",
-                                       ),
-                     self.dvr_case_id(empty = False,
-                                      label = T("Case Number"),
-                                      ondelete = "CASCADE",
-                                      ),
-                     #DateField(future=0),
-                     CommentsField(),
-                     )
-
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Evaluation"),
-            title_display = T("Evaluation Details"),
-            title_list = T("Evaluations"),
-            title_update = T("Edit Evaluation"),
-            label_list_button = T("List Evaluations"),
-            label_delete_button = T("Delete Evaluation"),
-            msg_record_created = T("Evaluation added"),
-            msg_record_modified = T("Evaluation updated"),
-            msg_record_deleted = T("Evaluation removed"),
-            msg_list_empty = T("No Evaluations currently registered"))
-
-        # Components
-        self.add_components(tablename,
-                            dvr_evaluation_data = {"name": "data",
-                                                   "joinby": "evaluation_id",
-                                                   },
-                            )
-
-        # ---------------------------------------------------------------------
-        # Case Evaluation Data
-        #
-        tablename = "dvr_evaluation_data"
-        define_table(tablename,
-                     Field("evaluation_id", "reference dvr_evaluation",
-                           readable = False,
-                           writable = False,
-                           ),
-                     Field("question_id", "reference dvr_evaluation_question",
-                           represent = S3Represent(lookup="dvr_evaluation_question",
-                                                   fields=["number", "name"],
-                                                   field_sep=". "),
-                           writable = False,
-                           ),
-                     Field("answer", "boolean",
-                           label = T("Answer"),
-                           represent = s3_yes_no_represent,
-                           ),
-                     )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        return None
-
-# =============================================================================
-class DVRVulnerabilityModel(DataModel):
-    """ Targeted vulnerabilities for activities """
-
-    names = ("dvr_vulnerability_type",
-             "dvr_vulnerability_type_case_activity",
+    names = ("dvr_diagnosis",
+             "dvr_suspected_diagnosis",
+             "dvr_confirmed_diagnosis",
              )
 
     def model(self):
@@ -5004,113 +4660,72 @@ class DVRVulnerabilityModel(DataModel):
         define_table = self.define_table
         crud_strings = s3.crud_strings
 
-        hierarchical_vulnerability_types = settings.get_dvr_vulnerability_types_hierarchical()
-
         # ---------------------------------------------------------------------
-        # Types of vulnerability
+        # Diagnoses
         #
-        tablename = "dvr_vulnerability_type"
+        tablename = "dvr_diagnosis"
         define_table(tablename,
                      Field("name",
-                           label = T("Type of Vulnerability"),
+                           label = T("Diagnosis"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     # This form of hierarchy may not work on all Databases:
-                     Field("parent", "reference dvr_vulnerability_type",
-                           label = T("Subtype of"),
-                           ondelete = "RESTRICT",
-                           represent = S3Represent(lookup = tablename,
-                                                   translate = True,
-                                                   hierarchy = True,
-                                                   ),
-                           readable = hierarchical_vulnerability_types,
-                           writable = hierarchical_vulnerability_types,
-                           ),
-                     Field("required", "boolean",
-                           default = False,
-                           label = T("Required Category"),
-                           represent = s3_yes_no_represent,
-                           readable = False,
-                           writable = False,
                            ),
                      CommentsField(),
                      )
 
-        # Hierarchy
-        if hierarchical_vulnerability_types:
-            hierarchy = "parent"
-            widget = S3HierarchyWidget(multiple = False,
-                                       leafonly = True,
-                                       )
-        else:
-            hierarchy = None
-            widget = None
-
         # Table configuration
         self.configure(tablename,
-                       deduplicate = S3Duplicate(primary = ("name",),
-                                                 secondary = ("parent",),
-                                                 ),
-                       hierarchy = hierarchy,
+                       deduplicate = S3Duplicate(),
                        )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
-            label_create = T("Create Vulnerability Type"),
-            title_display = T("Vulnerability Type"),
-            title_list = T("Vulnerability Types"),
-            title_update = T("Edit Vulnerability Type"),
-            label_list_button = T("List Vulnerability Types"),
-            label_delete_button = T("Delete Vulnerability Type"),
-            msg_record_created = T("Vulnerability Type created"),
-            msg_record_modified = T("Vulnerability Type updated"),
-            msg_record_deleted = T("Vulnerability Type deleted"),
-            msg_list_empty = T("No Vulnerability Types currently defined"),
+            label_create = T("Create Diagnosis"),
+            title_display = T("Diagnosis Details"),
+            title_list = T("Diagnoses"),
+            title_update = T("Edit Diagnosis"),
+            label_list_button = T("List Diagnoses"),
+            label_delete_button = T("Delete Diagnosis"),
+            msg_record_created = T("Diagnosis created"),
+            msg_record_modified = T("Diagnosis updated"),
+            msg_record_deleted = T("Diagnosis deleted"),
+            msg_list_empty = T("No Diagnoses currently defined"),
         )
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        vulnerability_type_id = FieldTemplate("vulnerability_type_id",
-                                              "reference %s" % tablename,
-                                              label = T("Type of Vulnerability"),
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db, "%s.id" % tablename,
-                                                                      represent,
-                                                                      )),
-                                              sortby = "name",
-                                              comment = S3PopupLink(c = "dvr",
-                                                                    f = "vulnerability_type",
-                                                                    tooltip = T("Create a new vulnerability type"),
-                                                                    ),
-                                              widget = widget,
-                                              )
+        diagnosis_id = FieldTemplate("diagnosis_id",
+                                     "reference %s" % tablename,
+                                     label = T("Diagnosis"),
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
+                                                 IS_ONE_OF(db, "%s.id" % tablename,
+                                                           represent,
+                                                           )),
+                                     sortby = "name",
+                                     )
 
         # ---------------------------------------------------------------------
-        # Link tables vulnerability type <=> case activity
-        # - in the context of psycho-social support, this could be
-        #   diagnoses => when differentiating into suspected / confirmed
-        #   diagnoses, we use the diagnosis-link for the confirmed ones
+        # Link tables for diagnosis <=> case activity (suspected and confirmed)
         #
-        tablename = "dvr_vulnerability_type_case_activity"
+        tablename = "dvr_suspected_diagnosis"
         define_table(tablename,
                      self.dvr_case_activity_id(
                          empty = False,
                          ondelete = "CASCADE",
                          ),
-                     vulnerability_type_id(
+                     diagnosis_id(
                          empty = False,
                          ondelete = "RESTRICT",
                          ),
                      )
 
-        tablename = "dvr_diagnosis_case_activity"
+        tablename = "dvr_confirmed_diagnosis"
         define_table(tablename,
                      self.dvr_case_activity_id(
                          empty = False,
                          ondelete = "CASCADE",
                          ),
-                     vulnerability_type_id(
+                     diagnosis_id(
                          empty = False,
                          ondelete = "RESTRICT",
                          ),
@@ -9168,10 +8783,8 @@ def dvr_rheader(r, tabs=None):
         if tablename == "pr_person":
 
             if not tabs:
-                # Defaults used by? (Not used by DRK, STL or SCPHIMS)
                 tabs = [(T("Basic Details"), None),
                         (T("Activities"), "case_activity"),
-                        (T("Economy"), "economy"),
                         (T("Identity"), "identity"),
                         ]
 

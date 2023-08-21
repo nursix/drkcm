@@ -795,24 +795,22 @@ def dvr_case_activity_resource(r, tablename):
         field = table.need_details
         field.readable = field.writable = ui_options_get("activity_need_details")
 
-        # Embed PSS vulnerability
-        # - separate suspected diagnosis / (confirmed) diagnosis
-        if ui_options_get("activity_pss_vulnerability"):
-            vulnerability = S3SQLInlineLink("vulnerability_type",
-                                            label = T("Suspected Diagnosis"),
-                                            field = "vulnerability_type_id",
-                                            selectedList = 5,
-                                            #multiple = False,
-                                            )
-            diagnosis = S3SQLInlineLink("diagnosis",
-                                        label = T("Diagnosis"),
-                                        field = "vulnerability_type_id",
-                                        selectedList = 5,
-                                        #multiple = False,
-                                        )
+        # Embed PSS Diagnoses
+        if ui_options_get("activity_pss_diagnoses"):
+            suspected_diagnosis = S3SQLInlineLink("suspected_diagnosis",
+                                                  label = T("Suspected Diagnosis"),
+                                                  field = "diagnosis_id",
+                                                  selectedList = 5,
+                                                  #multiple = False,
+                                                  )
+            confirmed_diagnosis = S3SQLInlineLink("confirmed_diagnosis",
+                                                  label = T("Diagnosis"),
+                                                  field = "diagnosis_id",
+                                                  selectedList = 5,
+                                                  #multiple = False,
+                                                  )
         else:
-            vulnerability = None
-            diagnosis = None
+            suspected_diagnosis = confirmed_diagnosis = None
 
         # Customise Priority
         from ..helpers import PriorityRepresent
@@ -860,8 +858,8 @@ def dvr_case_activity_resource(r, tablename):
                            "sector_id",
                            need_id,
                            subject,
-                           vulnerability,
-                           diagnosis,
+                           suspected_diagnosis,
+                           confirmed_diagnosis,
                            (T("Initial Situation Details"), ("need_details")),
                            "start_date",
                            priority_field,
@@ -907,8 +905,8 @@ def dvr_case_activity_resource(r, tablename):
                            "sector_id",
                            need_id,
                            subject,
-                           vulnerability,
-                           diagnosis,
+                           suspected_diagnosis,
+                           confirmed_diagnosis,
                            (T("Initial Situation Details"), ("need_details")),
                            "start_date",
                            priority_field,
@@ -1391,15 +1389,15 @@ def configure_response_action_reports(ui_options,
         themes = need = None
 
     # Vulnerability Axis
-    if ui_options_get("activity_pss_vulnerability"):
-        vulnerability = (T("Suspected Diagnosis"),
-                         "case_activity_id$vulnerability_type__link.vulnerability_type_id",
-                         )
-        diagnosis = (T("Diagnosis"),
-                     "case_activity_id$diagnosis__link.vulnerability_type_id",
-                     )
+    if ui_options_get("activity_pss_diagnoses"):
+        suspected_diagnosis = (T("Suspected Diagnosis"),
+                               "case_activity_id$suspected_diagnosis__link.diagnosis_id",
+                               )
+        confirmed_diagnosis = (T("Diagnosis"),
+                               "case_activity_id$confirmed_diagnosis__link.diagnosis_id",
+                               )
     else:
-        vulnerability = diagnosis = None
+        suspected_diagnosis = confirmed_diagnosis = None
 
     # Custom Report Options
     facts = ((T("Number of Actions"), "count(id)"),
@@ -1411,8 +1409,8 @@ def configure_response_action_reports(ui_options,
             "person_id$person_details.nationality",
             "person_id$person_details.marital_status",
             (T("Size of Family"), "person_id$dvr_case.household_size"),
-            vulnerability,
-            diagnosis,
+            suspected_diagnosis,
+            confirmed_diagnosis,
             response_type,
             themes,
             need,
@@ -2195,30 +2193,5 @@ def dvr_service_contact_resource(r, tablename):
 
     field = table.organisation
     field.readable = field.writable = True
-
-# -------------------------------------------------------------------------
-def dvr_vulnerability_type_resource(r, tablename):
-
-    T = current.T
-
-    table = current.s3db.dvr_vulnerability_type
-
-    # Adjust labels
-    field = table.name
-    field.label = T("Diagnosis")
-
-    # Custom CRUD Strings
-    current.response.s3.crud_strings["dvr_vulnerability_type"] = Storage(
-        label_create = T("Create Diagnosis"),
-        title_display = T("Diagnosis Details"),
-        title_list = T("Diagnoses"),
-        title_update = T("Edit Diagnosis"),
-        label_list_button = T("List Diagnoses"),
-        label_delete_button = T("Delete Diagnosis"),
-        msg_record_created = T("Diagnosis created"),
-        msg_record_modified = T("Diagnosis updated"),
-        msg_record_deleted = T("Diagnosis deleted"),
-        msg_list_empty = T("No Diagnoses currently defined"),
-        )
 
 # END =========================================================================

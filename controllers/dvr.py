@@ -320,56 +320,6 @@ def person():
                             field.writable = False
                             field.comment = None
 
-            elif r.component_name == "evaluation":
-
-                from core import S3SQLInlineComponent
-
-                crud_fields = [#"person_id",
-                               #"case_id",
-                               #"date",
-                               ]
-                cappend = crud_fields.append
-
-                table = s3db.dvr_evaluation_question
-                rows = db(table.deleted != True).select(table.id,
-                                                        table.section,
-                                                        #table.header,
-                                                        table.number,
-                                                        table.name,
-                                                        orderby = table.number,
-                                                        )
-
-                #subheadings = {}
-
-                section = None
-                for row in rows:
-                    name = "number%s" % row.number
-                    if row.section != section:
-                        label = section = row.section
-                        #subheadings["sub_%sdata" % name] = T(section)
-                    else:
-                        label = ""
-                    cappend(S3SQLInlineComponent("data",
-                                                 name = name,
-                                                 label = label,
-                                                 fields = (("", "question_id"),
-                                                           ("", "answer"),
-                                                           ),
-                                                 filterby = dict(field = "question_id",
-                                                                 options = row.id
-                                                                 ),
-                                                 multiple = False,
-                                                 ),
-                            )
-
-                cappend("comments")
-                crud_form = s3base.S3SQLCustomForm(*crud_fields)
-
-                s3db.configure("dvr_evaluation",
-                               crud_form = crud_form,
-                               #subheadings = subheadings,
-                               )
-
         # Module-specific list fields (must be outside of r.interactive)
         list_fields = [#"dvr_case.reference",
                        #"pe_label",
@@ -973,16 +923,8 @@ def termination_type():
     return crud_controller()
 
 # -----------------------------------------------------------------------------
-def vulnerability_type():
-    """ Vulnerability Types: RESTful CRUD Controller """
-
-    def prep(r):
-        field = r.table.parent
-        field.requires = IS_EMPTY_OR(IS_ONE_OF(db, "%s.id" % r.tablename,
-                                               field.represent,
-                                               ))
-        return True
-    s3.prep = prep
+def diagnosis():
+    """ Diagnoses: RESTful CRUD Controller """
 
     return crud_controller()
 
@@ -1202,30 +1144,7 @@ def note_type():
     return crud_controller()
 
 # =============================================================================
-# Economy
-#
-def housing():
-    """ Housing: RESTful CRUD Controller for option lookups """
-
-    s3.prep = lambda r: r.method == "options" and \
-                        r.representation == "s3json"
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def housing_type():
-    """ Housing Types: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def income_source():
-    """ Income Sources: RESTful CRUD Controller """
-
-    return crud_controller()
-
-# =============================================================================
-# Legal Status
+# Residence Status
 #
 def residence_status_type():
     """ Residence Status Types: RESTful CRUD controller """
@@ -1243,77 +1162,6 @@ def residence_permit_type():
 #
 def service_contact_type():
     """ Service Contact Types: RESTful CRUD controller """
-
-    return crud_controller()
-
-# =============================================================================
-# Evaluations
-#
-def evaluation():
-    """
-        RESTful CRUD Controller
-        - unused
-    """
-
-    S3SQLInlineComponent = s3base.S3SQLInlineComponent
-
-    crud_fields = ["person_id",
-                   "case_id",
-                   #"date",
-                   ]
-    cappend = crud_fields.append
-
-    table = s3db.dvr_evaluation_question
-    rows = db(table.deleted != True).select(table.id,
-                                            table.section,
-                                            #table.header,
-                                            table.number,
-                                            table.name,
-                                            orderby = table.number,
-                                            )
-
-    #subheadings = {}
-
-    section = None
-    for row in rows:
-        name = "number%s" % row.number
-        if row.section != section:
-            label = section = row.section
-            #subheadings[T(section)] = "sub_%sdata" % name
-        else:
-            label = ""
-        cappend(S3SQLInlineComponent("data",
-                                     name = name,
-                                     label = label,
-                                     fields = (("", "question_id"),
-                                               ("", "answer"),
-                                               ),
-                                     filterby = dict(field = "question_id",
-                                                     options = row.id
-                                                     ),
-                                     multiple = False,
-                                     ),
-                )
-
-    cappend("comments")
-    crud_form = s3base.S3SQLCustomForm(*crud_fields)
-
-    s3db.configure("dvr_evaluation",
-                   crud_form = crud_form,
-                   #subheadings = subheadings,
-                   )
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def evaluation_question():
-    """ RESTful CRUD Controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def evaluation_data():
-    """ RESTful CRUD Controller """
 
     return crud_controller()
 
