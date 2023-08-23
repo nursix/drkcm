@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3AddPersonWidget",
+__all__ = ("PersonSelector",
            "S3AgeWidget",
            "S3AutocompleteWidget",
            "S3CascadeSelectWidget",
@@ -98,7 +98,7 @@ DEFAULT = lambda:None
 repr_select = lambda l: len(l.name) > 48 and "%s..." % l.name[:44] or l.name
 
 # =============================================================================
-class S3AddPersonWidget(FormWidget):
+class PersonSelector(FormWidget):
     """
         Widget for person_id or human_resource_id fields that
         allows to either select an existing person/hrm (autocomplete), or to
@@ -117,36 +117,32 @@ class S3AddPersonWidget(FormWidget):
     def __init__(self,
                  controller = None,
                  separate_name_fields = None,
-                 father_name = None,
-                 grandfather_name = None,
-                 year_of_birth = None,
                  first_name_only = None,
+                 occupation = False,
                  pe_label = False,
+                 nationality = False,
                  ):
         """
             Args:
                 controller: controller for autocomplete
                 separate_name_fields: use separate name fields, overrides
                                       deployment setting
-                father_name: expose father name field, overrides
-                             deployment setting
-                grandfather_name: expose grandfather name field, overrides
-                                  deployment setting
-                year_of_birth: use just year-of-birth field instead of full
-                               date-of-birth, overrides deployment setting
                 first_name_only: treat single name field entirely as
                                  first name (=do not split into name parts),
                                  overrides auto-detection, otherwise default
                                  for right-to-left written languages
+                occupation: expose free-text occupation field
                 pe_label: expose ID label field
+                nationality: expose nationality field
         """
 
         self.controller = controller
+
         self.separate_name_fields = separate_name_fields
-        self.father_name = father_name
-        self.grandfather_name = grandfather_name
-        self.year_of_birth = year_of_birth
         self.first_name_only = first_name_only
+
+        self.nationality = nationality
+        self.occupation = occupation
         self.pe_label = pe_label
 
         self.hrm = False
@@ -154,6 +150,8 @@ class S3AddPersonWidget(FormWidget):
         self.fields = {}
         self.labels = {}
         self.required = {}
+
+        self.editable_fields = None
 
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
@@ -189,18 +187,17 @@ class S3AddPersonWidget(FormWidget):
             self.hrm = hrm = True
             fn = "human_resource"
         else:
-            raise TypeError("S3AddPersonWidget: unsupported field type %s" % field.type)
+            raise TypeError("PersonSelector: unsupported field type %s" % field.type)
 
         settings = current.deployment_settings
 
         # Field label overrides
         # (all other labels are looked up from the corresponding Field)
-        labels = {
-            "full_name": T(settings.get_pr_label_fullname()),
-            "email": T("Email"),
-            "mobile_phone": settings.get_ui_label_mobile_phone(),
-            "home_phone": T("Home Phone"),
-            }
+        labels = {"full_name": T(settings.get_pr_label_fullname()),
+                  "email": T("Email"),
+                  "mobile_phone": settings.get_ui_label_mobile_phone(),
+                  "home_phone": T("Home Phone"),
+                  }
 
         # Tag labels (...and tags, in order as configured)
         tags = []
@@ -213,14 +210,13 @@ class S3AddPersonWidget(FormWidget):
 
         # Fields which, if enabled, are required
         # (all other fields are assumed to not be required)
-        required = {
-            "full_name": True,
-            "first_name": True,
-            "middle_name": settings.get_L10n_mandatory_middlename(),
-            "last_name": settings.get_L10n_mandatory_lastname(),
-            "date_of_birth": settings.get_pr_dob_required(),
-            "email": settings.get_hrm_email_required() if hrm else False,
-        }
+        required = {"full_name": True,
+                    "first_name": True,
+                    "middle_name": settings.get_L10n_mandatory_middlename(),
+                    "last_name": settings.get_L10n_mandatory_lastname(),
+                    "date_of_birth": settings.get_pr_dob_required(),
+                    "email": settings.get_hrm_email_required() if hrm else False,
+                    }
 
         # Determine controller for autocomplete
         controller = self.controller
@@ -296,41 +292,18 @@ class S3AddPersonWidget(FormWidget):
             fields["full_name"] = True
             fappend("full_name")
 
-        # Additional name fields
-        father_name = self.father_name
-        if father_name is None:
-            # Not specified => apply deployment setting
-            father_name = settings.get_pr_request_father_name()
-        if father_name:
-            f = dtable.father_name
-            i18n["father_name_label"] = f.label
-            fields["father_name"] = f
-            details = True
-            fappend("father_name")
-
-        grandfather_name = self.grandfather_name
-        if grandfather_name is None:
-            # Not specified => apply deployment setting
-            grandfather_name  = settings.get_pr_request_grandfather_name()
-        if grandfather_name:
-            f = dtable.grandfather_name
-            i18n["grandfather_name_label"] = f.label
-            fields["grandfather_name"] = f
-            details = True
-            fappend("grandfather_name")
-
-        # Date of Birth / Year of birth
-        year_of_birth = self.year_of_birth
-        if year_of_birth is None:
-            # Use Global deployment_setting
-            year_of_birth = settings.get_pr_request_year_of_birth()
-        if year_of_birth:
-            fields["year_of_birth"] = dtable.year_of_birth
-            details = True
-            fappend("year_of_birth")
-        elif settings.get_pr_request_dob():
+        if settings.get_pr_request_dob():
             fields["date_of_birth"] = ptable.date_of_birth
             fappend("date_of_birth")
+
+        # Nationality
+        nationality = self.nationality
+        if nationality is None:
+            nationality = settings.get_pr_request_nationality()
+        if nationality:
+            fields["nationality"] = dtable.nationality
+            details = True
+            fappend("nationality")
 
         # Gender
         if settings.get_pr_request_gender():
@@ -341,7 +314,7 @@ class S3AddPersonWidget(FormWidget):
             fappend("gender")
 
         # Occupation
-        if controller == "vol":
+        if self.occupation or controller == "vol":
             fields["occupation"] = dtable.occupation
             details = True
             fappend("occupation")
@@ -366,7 +339,7 @@ class S3AddPersonWidget(FormWidget):
                 # This error would be very hard to diagnose because it only
                 # messes up the data without ever hitting an exception, so
                 # we raise one right here before it can do any harm:
-                raise RuntimeError("AddPersonWidget person field <-> tag name collision")
+                raise RuntimeError("PersonSelector person field <-> tag name collision")
 
         self.fields = fields
         editable_fields = settings.get_pr_editable_fields()
@@ -629,7 +602,6 @@ class S3AddPersonWidget(FormWidget):
 
         T = current.T
         s3 = current.response.s3
-        settings = current.deployment_settings
 
         # Test the formstyle
         formstyle = s3.crud.formstyle
@@ -680,7 +652,6 @@ class S3AddPersonWidget(FormWidget):
         get_label = self.get_label
         get_widget = self.get_widget
         for fname in formfields:
-
             field = fields_get(fname)
             if not field:
                 continue # Field is disabled
@@ -704,18 +675,7 @@ class S3AddPersonWidget(FormWidget):
                                 _id = field_id,
                                 old_value = value,
                                 )
-
-                if fname == "organisation_id":
-                    from s3layouts import S3PopupLink
-                    comment = S3PopupLink(c = "org",
-                                          f = "organisation",
-                                          vars = {"prefix": "hrm",
-                                                  "parent": "human_resource",
-                                                  "child": "organisation_id",
-                                                  },
-                                          )
-                else:
-                    comment = None
+                comment = None
             else:
                 value = s3_str(value)
                 widget = INPUT(_id = field_id,
@@ -791,6 +751,7 @@ class S3AddPersonWidget(FormWidget):
         widget = None
 
         if fieldname in ("organisation_id",
+                         "nationality",
                          "gender",
                          ):
             widget = OptionsWidget.widget
@@ -1172,10 +1133,8 @@ class S3AddPersonWidget(FormWidget):
 
         # Add details as provided
         details = {}
-        for fname in ("occupation",
-                      "father_name",
-                      "grandfather_name",
-                      "year_of_birth",
+        for fname in ("nationality",
+                      "occupation",
                       ):
             value = data_get(fname)
             if value:
@@ -1277,10 +1236,8 @@ class S3AddPersonWidget(FormWidget):
 
         # Add/Update details as provided
         details = {}
-        for fname in ("occupation",
-                      "father_name",
-                      "grandfather_name",
-                      "year_of_birth",
+        for fname in ("nationality",
+                      "occupation",
                       ):
             if fname not in editable_fields:
                 continue

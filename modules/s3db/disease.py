@@ -1006,9 +1006,9 @@ class DiseaseCaseTrackingModel(DataModel):
                            ),
                      person_id(empty = False,
                                ondelete = "CASCADE",
-                               widget = S3AddPersonWidget(controller = "pr",
-                                                          pe_label = use_case_id,
-                                                          ),
+                               widget = PersonSelector(controller = "pr",
+                                                       pe_label = use_case_id,
+                                                       ),
                                ),
                      self.disease_disease_id(comment = None),
                      #DateField(), # date registered == created_on?
@@ -1849,9 +1849,9 @@ class DiseaseContactTracingModel(DataModel):
         tablename = "disease_exposure"
         define_table(tablename,
                      self.pr_person_id(empty = False,
-                                       widget = S3AddPersonWidget(controller = "pr",
-                                                                  pe_label = use_case_id,
-                                                                  ),
+                                       widget = PersonSelector(controller = "pr",
+                                                               pe_label = use_case_id,
+                                                               ),
                                        ),
                      DateTimeField(
                          comment = DIV(_class="tooltip",

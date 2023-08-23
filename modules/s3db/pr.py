@@ -982,7 +982,7 @@ class PRPersonModel(DataModel):
                                   widget = S3PersonAutocompleteWidget(),
                                   )
 
-        # Custom Methods for S3PersonAutocompleteWidget and S3AddPersonWidget
+        # Custom Methods for S3PersonAutocompleteWidget and PersonSelector
         set_method = self.set_method
         set_method("pr_person",
                    method = "search_ac",
@@ -1563,7 +1563,7 @@ class PRPersonModel(DataModel):
     @staticmethod
     def pr_person_lookup(r, **attr):
         """
-            JSON lookup method for S3AddPersonWidget:
+            JSON lookup method for PersonSelector:
             - extract form data for a match in duplicate list
         """
 
@@ -1615,8 +1615,10 @@ class PRPersonModel(DataModel):
         tags = settings.get_pr_request_tags()
         get_pe_label = get_vars.get("label") == "1"
 
-        ptable = db.pr_person
+        ptable = s3db.pr_person
+        dtable = s3db.pr_person_details
         ctable = s3db.pr_contact
+
         fields = [ptable.pe_id,
                   # We have these already from the search_ac unless we separate_name_fields
                   #ptable.first_name,
@@ -1643,33 +1645,24 @@ class PRPersonModel(DataModel):
             fields.append(ptable.gender)
         if tags:
             fields.append(ptable.id)
-        if current.request.controller == "vol":
-            dtable = s3db.pr_person_details
-            fields.append(dtable.occupation)
-            # @ToDo: deployment_settings? Args passed into fn?
-            fields += [dtable.father_name,
-                       dtable.grandfather_name,
-                       dtable.year_of_birth,
-                       ]
-            left = dtable.on((dtable.person_id == ptable.id) & \
-                             (accessible_query("read", dtable)))
 
-        row = db(ptable.id == record_id).select(left=left,
-                                                *fields
-                                                ).first()
+        # Details fields
+        fields += [dtable.occupation,
+                   dtable.nationality
+                   ]
+        left = dtable.on((dtable.person_id == ptable.id) & \
+                         (accessible_query("read", dtable)))
+
+        row = db(ptable.id == record_id).select(left=left, *fields).first()
 
         if left:
             details = row.pr_person_details
             occupation = details.occupation
-            father_name = details.father_name
-            grandfather_name = details.grandfather_name
-            year_of_birth = details.year_of_birth
+            nationality = details.nationality
             row = row.pr_person
         else:
             occupation = None
-            father_name = None
-            grandfather_name = None
-            year_of_birth = None
+            nationality = None
 
         if separate_name_fields:
             first_name = row.first_name
@@ -1756,14 +1749,12 @@ class PRPersonModel(DataModel):
         if date_of_birth:
             represent = ptable.date_of_birth.represent
             item["dob"] = represent(date_of_birth)
+
         if occupation:
             item["occupation"] = occupation
-        if father_name:
-            item["father_name"] = father_name
-        if grandfather_name:
-            item["grandfather_name"] = grandfather_name
-        if year_of_birth:
-            item["year_of_birth"] = year_of_birth
+        if nationality:
+            item["nationality"] = nationality
+
         for row in tags:
             item[row.tag] = row.value
         output = json.dumps(item, separators=JSONSEPARATORS)
@@ -1775,7 +1766,7 @@ class PRPersonModel(DataModel):
     @staticmethod
     def pr_person_check_duplicates(r, **attr):
         """
-            JSON lookup method for S3AddPersonWidget:
+            JSON lookup method for PersonSelector:
             - find potential duplicates from the current input data
         """
 
@@ -1791,10 +1782,7 @@ class PRPersonModel(DataModel):
                 dob = dob.isoformat()
             else:
                 dob = None
-        gender = post_vars.get("sex")
-        father_name = post_vars.get("father_name")
-        grandfather_name = post_vars.get("grandfather_name")
-        occupation = post_vars.get("occupation")
+        #gender = post_vars.get("sex")
         mobile_phone = post_vars.get("mphone")
         home_phone = post_vars.get("hphone")
         email = post_vars.get("email")
@@ -1959,8 +1947,7 @@ class PRPersonModel(DataModel):
                   "last_name",
                   "date_of_birth",
                   "gender",
-                  "person_details.father_name",
-                  "person_details.grandfather_name",
+                  "person_details.nationality",
                   "person_details.occupation",
                   "image.image",
                   ]
@@ -2095,12 +2082,9 @@ class PRPersonModel(DataModel):
             if gender in (2, 3, 4):
                 # 1 = unknown
                 item["sex"] = gender
-            father_name = row.get("pr_person_details.father_name")
-            if father_name:
-                item["father_name"] = father_name
-            grandfather_name = row.get("pr_person_details.grandfather_name")
-            if grandfather_name:
-                item["grandfather_name"] = grandfather_name
+            nationality = row.get("pr_person_details.nationality")
+            if nationality:
+                item["nationality"] = nationality
             occupation = row.get("pr_person_details.occupation")
             if occupation:
                 item["job"] = occupation

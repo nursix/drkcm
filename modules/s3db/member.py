@@ -158,7 +158,7 @@ class MemberModel(DataModel):
                       self.pr_person_id(
                         comment = None,
                         ondelete = "CASCADE",
-                        widget = S3AddPersonWidget(controller="member"),
+                        widget = PersonSelector(controller="member"),
                         empty = False,
                       ),
                       membership_type_id(),

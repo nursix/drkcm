@@ -1476,7 +1476,7 @@ class StatsPeopleModel(DataModel):
                      self.gis_location_id(label = T("Address"),
                                           ),
                      self.pr_person_id(label = T("Contact Person"),
-                                       widget = S3AddPersonWidget(controller="pr"),
+                                       widget = PersonSelector(controller="pr"),
                                        ),
                      CommentsField(),
                      )

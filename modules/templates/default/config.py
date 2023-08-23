@@ -765,17 +765,17 @@ def config(settings):
     #settings.pr.import_update_requires_email = False
     # Uncomment this to enable support for third gender
     #settings.pr.hide_third_gender = False
-    # Uncomment to a fuzzy search for duplicates in the new AddPersonWidget2
+    # Uncomment to a fuzzy search for duplicates in the new PersonSelector
     #settings.pr.lookup_duplicates = True
-    # Uncomment to hide fields in S3AddPersonWidget[2]
+    # Uncomment to hide fields in PersonSelector
     #settings.pr.request_dob = False
     #settings.pr.request_email = False
     #settings.pr.request_gender = False
-    # Uncomment to show field in S3AddPersonWidget
+    # Uncomment to show field in PersonSelector
     #settings.pr.request_home_phone = True
     # Uncomment to modify the order of Names
     #settings.pr.name_format = "%(last_name)s, %(first_name)s %(middle_name)s"
-    # Uncomment to prevent selecting existing users in the old S3AddPersonWidget
+    # Uncomment to prevent selecting existing users in the old PersonSelector
     #settings.pr.select_existing = False
     # Uncomment to prevent showing HR details in S3PersonAutocompleteWidget results
     #settings.pr.search_shows_hr_details = False

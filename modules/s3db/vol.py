@@ -1427,7 +1427,7 @@ def vol_volunteer_controller():
 
                 elif not r.component and r.method != "delete":
                     # Use vol controller for person_id widget
-                    table.person_id.widget = S3AddPersonWidget(controller="vol")
+                    table.person_id.widget = PersonSelector(controller="vol")
                     # Show location ID
                     location_id.writable = location_id.readable = True
                     # Hide unwanted fields

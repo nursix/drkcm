@@ -458,7 +458,7 @@ class IRSModel(DataModel):
                                   "key": "person_id",
                                   "actuate": "link",
                                   #"actuate": "embed",
-                                  #"widget": S3AddPersonWidget(),
+                                  #"widget": PersonSelector(),
                                   "autodelete": False,
                                  },
                       )

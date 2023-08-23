@@ -941,13 +941,14 @@ def pr_group_membership_controller(**attr):
             if r.interactive:
                 table = resource.table
 
-                from core import S3AddPersonWidget
+                from core import PersonSelector
 
                 field = table.person_id
                 field.represent = s3db.pr_PersonRepresent(show_link=True)
-                field.widget = S3AddPersonWidget(controller = "dvr",
-                                                 pe_label = bool(pe_label),
-                                                 )
+                field.widget = PersonSelector(controller = "dvr",
+                                              pe_label = bool(pe_label),
+                                              nationality = True,
+                                              )
 
                 field = table.role_id
                 field.readable = field.writable = True

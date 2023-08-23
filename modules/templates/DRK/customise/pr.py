@@ -1074,15 +1074,15 @@ def pr_group_membership_controller(**attr):
                 table = resource.table
 
                 from gluon import IS_EMPTY_OR
-                from core import S3AddPersonWidget
+                from core import PersonSelector
 
                 s3db.pr_person.pe_label.label = T("ID")
 
                 field = table.person_id
                 field.represent = s3db.pr_PersonRepresent(show_link=True)
-                field.widget = S3AddPersonWidget(controller = "dvr",
-                                                 pe_label = True,
-                                                 )
+                field.widget = PersonSelector(controller = "dvr",
+                                              pe_label = True,
+                                              )
 
                 field = table.role_id
                 field.readable = field.writable = True

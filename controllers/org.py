@@ -235,7 +235,7 @@ def sites_for_org():
 
 # -----------------------------------------------------------------------------
 def person():
-    """ Person controller for AddPersonWidget """
+    """ Person controller for PersonSelector """
 
     def prep(r):
         if r.representation != "s3json":

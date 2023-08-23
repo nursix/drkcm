@@ -434,7 +434,7 @@ class HRModel(DataModel):
                         comment = None,
                         empty = False,
                         ondelete = "CASCADE",
-                        widget = S3AddPersonWidget(controller="hrm"),
+                        widget = PersonSelector(controller="hrm"),
                         ),
                      Field("type", "integer",
                            default = 1,
@@ -615,7 +615,7 @@ class HRModel(DataModel):
                                           comment = comment,
                                           )
 
-        # Custom Method for S3HumanResourceAutocompleteWidget and S3AddPersonWidget
+        # Custom Method for S3HumanResourceAutocompleteWidget and PersonSelector
         set_method = self.set_method
         set_method("hrm_human_resource",
                    method = "search_ac",
@@ -1116,7 +1116,7 @@ class HRModel(DataModel):
     @staticmethod
     def hrm_search_ac(r, **attr):
         """
-            JSON search method for S3HumanResourceAutocompleteWidget and S3AddPersonWidget
+            JSON search method for S3HumanResourceAutocompleteWidget and PersonSelector
             - full name search
             - include Organisation & Job Role in the output
         """
@@ -1222,7 +1222,7 @@ class HRModel(DataModel):
     @staticmethod
     def hrm_lookup(r, **attr):
         """
-            JSON lookup method for S3AddPersonWidget
+            JSON lookup method for PersonSelector
         """
 
         hrm_id = r.id
@@ -4287,7 +4287,7 @@ class HRAppraisalModel(DataModel):
                            ),
                      person_id("supervisor_id",
                                label = T("Supervisor"),
-                               widget = S3AddPersonWidget(),
+                               widget = PersonSelector(),
                                ),
                      CommentsField(),
                      )
@@ -4548,7 +4548,7 @@ class HRExperienceModel(DataModel):
                           self.gis_location_id(),
                           person_id("supervisor_id",
                                     label = T("Supervisor"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           CommentsField(),
                           )
@@ -8027,7 +8027,7 @@ def hrm_human_resource_controller(extra_filter = None):
     """
         Human Resources Controller, defined in the model for use from
         multiple controllers for unified menus
-         - used for Summary & Profile views, Imports and S3AddPersonWidget
+         - used for Summary & Profile views, Imports and PersonSelector
     """
 
     T = current.T
@@ -8437,7 +8437,7 @@ def hrm_human_resource_controller(extra_filter = None):
 
             # Now done in core/methods/merge
             #elif method == "deduplicate":
-            #    # Don't use AddPersonWidget here
+            #    # Don't use PersonSelector here
             #    from gluon.sqlhtml import OptionsWidget
             #    field = r.table.person_id
             #    field.requires = IS_ONE_OF(db, "pr_person.id",

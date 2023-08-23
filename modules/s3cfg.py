@@ -5153,7 +5153,7 @@ class S3Config(Storage):
 
     def get_pr_editable_fields(self):
         """
-            Fields which are editable in the AddPersonWidget
+            Fields which are editable in the PersonSelector
         """
         return self.pr.get("editable_fields", [])
 
@@ -5180,64 +5180,56 @@ class S3Config(Storage):
 
     def get_pr_label_fullname(self):
         """
-            Label for the AddPersonWidget's 'Name' field
+            Label for the PersonSelector's 'Name' field
         """
         return self.__lazy("pr", "label_fullname", default="Name")
 
     def get_pr_lookup_duplicates(self):
         """
-            Whether the AddPersonWidget does a fuzzy search for duplicates
+            Whether the PersonSelector does a fuzzy search for duplicates
         """
         return self.pr.get("lookup_duplicates", False)
 
     def get_pr_request_dob(self):
-        """ Include Date of Birth in the AddPersonWidget """
+        """ Include Date of Birth in the PersonSelector """
         return self.__lazy("pr", "request_dob", default=True)
 
     def get_pr_dob_required(self):
-        """ Whether Date of Birth is Mandatory, including in the AddPersonWidget """
+        """ Whether Date of Birth is Mandatory, including in the PersonSelector """
         return self.__lazy("pr", "dob_required", default=False)
 
     def get_pr_request_email(self):
-        """ Include Email in the AddPersonWidget """
+        """ Include Email in the PersonSelector """
         return self.__lazy("pr", "request_email", default=True)
 
-    def get_pr_request_father_name(self):
-        """ Include Father Name in the AddPersonWidget """
-        return self.__lazy("pr", "request_father_name", default=False)
-
-    def get_pr_request_grandfather_name(self):
-        """ Include GrandFather Name in the AddPersonWidget """
-        return self.__lazy("pr", "request_grandfather_name", default=False)
-
     def get_pr_request_gender(self):
-        """ Include Gender in the AddPersonWidget """
+        """ Include Gender in the PersonSelector """
         return self.__lazy("pr", "request_gender", default=True)
 
     def get_pr_request_home_phone(self):
-        """ Include Home Phone in the AddPersonWidget """
+        """ Include Home Phone in the PersonSelector """
         return self.__lazy("pr", "request_home_phone", default=False)
 
     def get_pr_request_mobile_phone(self):
-        """ Include Mobile Phone in the AddPersonWidget """
+        """ Include Mobile Phone in the PersonSelector """
         return self.__lazy("pr", "request_mobile_phone", default=True)
+
+    def get_pr_request_nationality(self):
+        """ Include Nationality in the PersonSelector """
+        return self.__lazy("pr", "request_nationality", default=False)
 
     def get_pr_request_tags(self):
         """
-            Include Tags in the AddPersonWidget
+            Include Tags in the PersonSelector
             List of Tuples: (label, tag)
         """
         return self.__lazy("pr", "request_tags", default=[])
-
-    def get_pr_request_year_of_birth(self):
-        """ Include Year of Birth in the AddPersonWidget """
-        return self.__lazy("pr", "request_year_of_birth", default=False)
 
     def get_pr_name_format(self):
         """
             Format with which to represent Person Names
 
-            Generally want an option in AddPersonWidget to handle the input like this too
+            Generally want an option in PersonSelector to handle the input like this too
         """
         return self.__lazy("pr", "name_format", default="%(first_name)s %(middle_name)s %(last_name)s")
 
@@ -5249,7 +5241,7 @@ class S3Config(Storage):
 
     def get_pr_separate_name_fields(self):
         """
-            Whether the AddPersonWidget provides separate name fields or not
+            Whether the PersonSelector provides separate name fields or not
             Options:
                 False (single field)
                 2 (first/last)

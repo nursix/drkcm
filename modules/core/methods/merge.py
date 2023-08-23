@@ -35,7 +35,7 @@ from s3dal import Field
 from ..resource import FS
 from ..tools import IS_ONE_OF, s3_get_foreign_key, s3_represent_value, \
                     s3_str
-from ..ui import S3AddPersonWidget, DataTable, S3LocationAutocompleteWidget, \
+from ..ui import PersonSelector, DataTable, S3LocationAutocompleteWidget, \
                  S3LocationSelector
 
 from .base import CRUDMethod
@@ -753,7 +753,7 @@ class S3Merge(CRUDMethod):
             field_widget = field.widget
             if isinstance(field_widget, S3LocationSelector):
                 inp = S3LocationAutocompleteWidget()(field, value, **attr)
-            elif isinstance(field_widget, S3AddPersonWidget):
+            elif isinstance(field_widget, PersonSelector):
                 inp = widgets.options.widget(field, value, **attr)
                 field.requires = IS_ONE_OF(current.db, "pr_person.id",
                                            label = field.represent)

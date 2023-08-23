@@ -28,17 +28,12 @@
             url += '&link=' + link;
         }
 
-        var real_input = $('#' + input);
-        // Bootstrap overrides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            label: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, label: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -77,22 +72,23 @@
                         term: request.term
                     }
                 }).done(function (data) {
+                    var extra = {id: 0};
                     if (data.length == 0) {
                         // No Match
                         real_input.val('').trigger('change');
+
                         // New Entry?
                         //if (create.length) {
                             // Open popup to create new entry
                             // @ToDo: prepopulate name field
                         //    create.trigger('click');
                         //} else {
-                            // No link to create new (e.g. no permission to do so)
-                            var extra = {id: 0};
-                            extra[fieldname] = i18n.no_matching_records;
-                            data.push(extra);
+
+                        // No link to create new (e.g. no permission to do so)
+                        extra[fieldname] = i18n.no_matching_records;
+                        data.push(extra);
                         //}
                     } else {
-                        var extra = {id: 0};
                         extra[fieldname] = i18n.none_of_the_above;
                         data.push(extra);
                     }
@@ -133,11 +129,12 @@
             }
         })
         .data('ui-autocomplete')._renderItem = function(ul, item) {
+            var label;
             if (item.label) {
                 // No Match or Too Many Results
-                var label = item.label;
+                label = item.label;
             } else {
-               var label = item[fieldname];
+                label = item[fieldname];
             }
             return $('<li>').data('item.autocomplete', item)
                             .append('<a>' + label + '</a>')
@@ -169,17 +166,12 @@
             return;
         }
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -274,18 +266,19 @@
             }
         })
         .data('ui-autocomplete')._renderItem = function(ul, item) {
+            var label;
             if (item.label) {
                 // No Match
-                var label = item.label;
+                label = item.label;
             } else if (item.matchString) {
                 // back-ends upgraded like org_search_ac
-                var label = item.matchString + '<b>' + item.nextString + '</b>'
+                label = item.matchString + '<b>' + item.nextString + '</b>';
                 if (item.context) {
                     label += ' - ' + item.context;
                 }
             } else {
                 // Legacy AC
-                var label = item.name;
+                label = item.name;
             }
             return $('<li>').data('item.autocomplete', item)
                             .append('<a>' + label + '</a>')
@@ -313,8 +306,8 @@
             // No Match or too many results
             return item.label;
         }
+        var name;
         if (item.name) {
-            var name;
             if (item.match_type) {
                 if (item.next_string) {
                     name = item.match_string + '<b>' + item.next_string + '</b>';
@@ -328,7 +321,7 @@
             }
         } else {
             // Site contents
-            var name = ''
+            name = '';
         }
         if (item.addr) {
             if (name) {
@@ -380,7 +373,7 @@
             }
         }
         return name;
-    }
+    };
 
     /**
      * S3LocationAutocompleteWidget
@@ -397,17 +390,12 @@
         var represent = represent_location;
         var url = S3.Ap.concat('/gis/location/search_ac.json');
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -532,17 +520,18 @@
             // No Match or too many results
             return item.label;
         }
+        var name;
         if (item.org || item.job) {
             // Represent the Person as an HR
-            var name = represent_hr(item);
+            name = represent_hr(item);
         } else {
-            var name = item.name;
+            name = item.name;
         }
         return name;
-    }
+    };
 
     /**
-     * S3PersonAutocompleteWidget & hence S3AddPersonWidget
+     * S3PersonAutocompleteWidget & hence PersonSelector
      * - used first/middle/last, but anything non-generic left?
      */
     S3.autocomplete.person = function(controller, fn, input, ajax_filter, postprocess, delay, min_length) {
@@ -560,17 +549,12 @@
             url += "?" + ajax_filter;
         }
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -697,17 +681,12 @@
 
         var url = S3.Ap.concat('/', controller, '/', fn, '/search_ac.json');
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -736,7 +715,7 @@
             delay: delay,
             minLength: min_length,
             source: function(request, response) {
-                url = real_input.data('url')
+                url = real_input.data('url');
                 if (types) {
                     url += '?types=' + types;
                 }
@@ -808,11 +787,12 @@
             }
         })
         .data('ui-autocomplete')._renderItem = function(ul, item) {
+            var label;
             if (item.label) {
                 // No Match
-                var label = item.label;
+                label = item.label;
             } else {
-                var label = item.name;
+                label = item.name;
             }
             return $('<li>').data('item.autocomplete', item)
                             .append('<a>' + label + '</a>')
@@ -855,7 +835,7 @@
             }
         }
         return name;
-    }
+    };
 
     /**
      * S3HumanResourceAutocompleteWidget
@@ -869,31 +849,27 @@
             return;
         }
 
+        var url;
         if (group == 'staff') {
             // Search Staff
-            var url = S3.Ap.concat('/hrm/hr_search/search_ac?group=staff');
+            url = S3.Ap.concat('/hrm/hr_search/search_ac?group=staff');
         } else if (group == 'volunteer') {
             // Search Volunteers
-            var url = S3.Ap.concat('/vol/hr_search/search_ac');
+            url = S3.Ap.concat('/vol/hr_search/search_ac');
         } else if (group == 'deploy') {
             // Search Deployables
-            var url = S3.Ap.concat('/deploy/hr_search/search_ac');
+            url = S3.Ap.concat('/deploy/hr_search/search_ac');
         } else {
             // Search all HRs
-            var url = S3.Ap.concat('/hrm/hr_search/search_ac');
+            url = S3.Ap.concat('/hrm/hr_search/search_ac');
         }
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup
@@ -1016,18 +992,20 @@
             // No Match or too many results
             return item.label;
         }
+
+        var label;
         if (item.matchString) {
             // org_search_ac
             // http://eden.sahanafoundation.org/ticket/1412
             if (item.match == 'acronym') {
-                var label = item.name;
+                label = item.name;
                 if (item.parent) {
                     label = item.parent + ' > ' + label;
                 }
                 label += ' - ' + item.matchString + '<b>' + item.nextString + '</b>';
             } else {
                 // Name match
-                var label = item.matchString + '<b>' + item.nextString + '</b>';
+                label = item.matchString + '<b>' + item.nextString + '</b>';
                 if (item.parent) {
                     label = item.parent + ' > ' + label;
                 } else if (item.acronym) {
@@ -1036,7 +1014,7 @@
             }
         } else {
             // Non org_search_ac (no cases yet)
-            var label = item.name;
+            label = item.name;
             if (item.parent) {
                 label = item.parent + ' > ' + item.name;
             } else if (item.acronym) {
@@ -1044,7 +1022,7 @@
             }
         }
         return label;
-    }
+    };
 
     /**
      * S3OrganisationAutocompleteWidget
@@ -1059,17 +1037,12 @@
 
         var url = S3.Ap.concat('/org/organisation/search_ac.json');
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup (e.g. to Filter by Organisation)
@@ -1197,9 +1170,15 @@
             return item.label;
         }
 
+        var label,
+            instance_type,
+            org,
+            Lx,
+            addr,
+            context;
         if (item.match_type) {
             // Use next gen site autocomplete
-            var label = '<b>' + item.match_string + '</b>';
+            label = '<b>' + item.match_string + '</b>';
             if (item.pre_string) {
                 // i.e. Address match
                 label = item.pre_string + label;
@@ -1209,8 +1188,8 @@
             }
             if (item.match_type == 'name') {
                 // Provide the rest of the data as context
-                var addr = item.addr;
-                var Lx = item.L4 || item.L3 || item.L2 || item.L1;
+                addr = item.addr;
+                Lx = item.L4 || item.L3 || item.L2 || item.L1;
                 if (addr || Lx) {
                     if (addr) {
                         label += ' (' + addr;
@@ -1222,8 +1201,8 @@
                         label += ' (' + Lx + ')';
                     }
                 }
-                var org = item.org;
-                var instance_type = item.instance_type;
+                org = item.org;
+                instance_type = item.instance_type;
                 if (org || instance_type) {
                     if (instance_type) {
                         label += ' (' + S3.org_site_types[instance_type];
@@ -1238,14 +1217,14 @@
             } else if (item.match_type == 'addr') {
                 // Provide the rest of the data as context
                 label = item.name + ' (' + label;
-                var Lx = item.L4 || item.L3 || item.L2 || item.L1;
+                Lx = item.L4 || item.L3 || item.L2 || item.L1;
                 if (Lx) {
                     label += ', ' + Lx + ')';
                 } else {
                     label += ')';
                 }
-                var org = item.org;
-                var instance_type = item.instance_type;
+                org = item.org;
+                instance_type = item.instance_type;
                 if (org || instance_type) {
                     if (instance_type) {
                         label += ' (' + S3.org_site_types[instance_type];
@@ -1259,9 +1238,9 @@
                 }
             } else if (item.match_type == 'org') {
                 // Provide the rest of the data as context
-                var context = item.name;
-                var addr = item.addr;
-                var Lx = item.L4 || item.L3 || item.L2 || item.L1;
+                context = item.name;
+                addr = item.addr;
+                Lx = item.L4 || item.L3 || item.L2 || item.L1;
                 if (addr || Lx) {
                     if (addr) {
                         context += ' (' + addr;
@@ -1273,7 +1252,7 @@
                         context += ' (' + Lx + ')';
                     }
                 }
-                var instance_type = item.instance_type;
+                instance_type = item.instance_type;
                 if (instance_type) {
                     label = context + ' (' + S3.org_site_types[instance_type] + ', ' + label + ')';
                 } else {
@@ -1282,15 +1261,15 @@
             } else {
                 // Match = Lx
                 // Provide the rest of the data as context
-                var context = item.name;
-                var addr = item.addr;
+                context = item.name;
+                addr = item.addr;
                 if (addr) {
                     label = context + ' (' + addr + ', ' + label + ')';
                 } else {
                     label = context + ' (' + label + ')';
                 }
-                var org = item.org;
-                var instance_type = item.instance_type;
+                org = item.org;
+                instance_type = item.instance_type;
                 if (org || instance_type) {
                     if (instance_type) {
                         label += ' (' + S3.org_site_types[instance_type];
@@ -1308,7 +1287,7 @@
             label = item.name;
         }
         return label;
-    }
+    };
 
     /**
      * S3SiteAutocompleteWidget
@@ -1324,17 +1303,12 @@
 
         var url = S3.Ap.concat('/org/site/search_ac.json');
 
-        var real_input = $('#' + input);
-        // Bootstrap overides .hide :/
-        real_input.hide();
-        var value = real_input.val();
+        var real_input = $('#' + input).hide(),
+            value = real_input.val(),
+            existing;
         if (value) {
             // Store existing data in case of cancel
-            var existing = {value: value,
-                            name: dummy_input.val()
-                            };
-        } else {
-            var existing;
+            existing = {value: value, name: dummy_input.val()};
         }
         real_input.data('existing', existing);
         // Have the URL editable after setup (e.g. to Filter by Organisation)

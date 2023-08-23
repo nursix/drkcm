@@ -3203,7 +3203,7 @@ class OrgSiteModel(DataModel):
                    method = "search_ac",
                    action = self.site_search_ac)
 
-        # Custom Method for S3AddPersonWidget
+        # Custom Method for PersonSelector
         # @ToDo: One for HRMs
         set_method("org_site",
                    method = "site_contact_person",
@@ -3567,7 +3567,7 @@ class OrgSiteModel(DataModel):
     @staticmethod
     def site_contact_person(r, **attr):
         """
-            JSON lookup method for S3AddPersonWidget
+            JSON lookup method for PersonSelector
         """
 
         site_id = r.id

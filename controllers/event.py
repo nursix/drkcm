@@ -362,7 +362,7 @@ def resource():
 
 # -----------------------------------------------------------------------------
 def person():
-    """ Person controller for AddPersonWidget """
+    """ Person controller for PersonSelector """
 
     def prep(r):
         if r.representation != "s3json":

@@ -2860,7 +2860,7 @@ def cms_configure_newsfeed_post_fields():
         field.readable = True
         field.writable = True
         field.comment = None
-        field.widget = S3AddPersonWidget(controller="pr")
+        field.widget = PersonSelector(controller="pr")
 
     field = table.location_id
     field.label = ""

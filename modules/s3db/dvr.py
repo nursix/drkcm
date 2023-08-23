@@ -313,7 +313,7 @@ class DVRCaseModel(DataModel):
 
                      # The primary case beneficiary
                      person_id(represent = self.pr_PersonRepresent(show_link=True),
-                               widget = S3AddPersonWidget(controller="dvr"),
+                               widget = PersonSelector(controller="dvr"),
                                empty = False,
                                ),
 

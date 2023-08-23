@@ -63,7 +63,7 @@ class PatientModel(DataModel):
                           person_id(empty = False,
                                     comment = None,
                                     label = T("Patient"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           Field("country",
                                 label = T("Current Location Country"),
@@ -165,7 +165,7 @@ class PatientModel(DataModel):
                           person_id(empty = False,
                                     comment = None,
                                     label = T("Accompanying Relative"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           CommentsField(),
                           )
@@ -196,7 +196,7 @@ class PatientModel(DataModel):
                                      writable = False),
                           person_id(comment = None,
                                     label = T("Home Relative"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           #person_id(label = T("Home Relative")),
                           self.gis_location_id(
