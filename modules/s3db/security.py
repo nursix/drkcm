@@ -73,7 +73,7 @@ class SecurityZonesModel(DataModel):
         define_table(tablename,
                      location_id(
                         #label = T("Security Level Area"),
-                        widget = S3LocationSelector(show_map = False),
+                        widget = LocationSelector(show_map = False),
                         ),
                      # Overall Level
                      Field("level", "integer",
@@ -185,10 +185,10 @@ class SecurityZonesModel(DataModel):
                                                  ),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    ),
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  ),
                      ),
                      CommentsField(),
                      )

@@ -1012,7 +1012,7 @@ def org_facility_resource(r, tablename):
     from core import (S3SQLCustomForm,
                       S3SQLInlineLink,
                       LocationFilter,
-                      S3LocationSelector,
+                      LocationSelector,
                       OptionsFilter,
                       TextFilter,
                       )
@@ -1037,14 +1037,14 @@ def org_facility_resource(r, tablename):
     # - except for OrgGroupAdmin, who need to be able to
     #   update the record even when this detail is missing
     address_required = not is_org_group_admin
-    field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                      required_levels = ("L1", "L2", "L3"),
-                                      show_address = True,
-                                      show_postcode = True,
-                                      address_required = address_required,
-                                      postcode_required = address_required,
-                                      show_map = True,
-                                      )
+    field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                    required_levels = ("L1", "L2", "L3"),
+                                    show_address = True,
+                                    show_postcode = True,
+                                    address_required = address_required,
+                                    postcode_required = address_required,
+                                    show_map = True,
+                                    )
     current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
     # Custom tooltip for comments field

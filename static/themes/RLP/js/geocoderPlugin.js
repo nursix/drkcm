@@ -1,5 +1,5 @@
 /*
- * Plugin for the S3LocationSelector to Geocode the Lx from the Postcode
+ * Plugin for the LocationSelector to Geocode the Lx from the Postcode
  */
 
 $(function(){

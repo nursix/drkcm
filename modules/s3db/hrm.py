@@ -2709,7 +2709,7 @@ class HRSkillModel(DataModel):
                            ),
                      course_id(empty = not course_mandatory),
                      organisation_id(label = T("Organized By")),
-                     location_id(widget = S3LocationSelector(), # show_address = False
+                     location_id(widget = LocationSelector(), # show_address = False
                                  readable = not event_site,
                                  writable = not event_site,
                                  ),
@@ -2912,8 +2912,8 @@ class HRSkillModel(DataModel):
                                        ),
                      location_id(empty = False,
                                  ondelete = "CASCADE",
-                                 widget = S3LocationSelector(#show_address = False,
-                                                             ),
+                                 widget = LocationSelector(#show_address = False,
+                                                           ),
                                  ),
                      #CommentsField(),
                      )

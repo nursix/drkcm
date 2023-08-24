@@ -5180,7 +5180,7 @@ S3.gis.yx = [
                 if (map.s3.lastDraftFeature) {
                     map.s3.lastDraftFeature.destroy();
                 } else if (draftLayer.features.length > 1) {
-                    // Clear the one from the Current Location in S3LocationSelector
+                    // Clear the one from the Current Location in LocationSelector
                     draftLayer.features[0].destroy();
                 }
                 // Destroy all popups
@@ -5259,7 +5259,7 @@ S3.gis.yx = [
                 if (map.s3.lastDraftFeature) {
                     map.s3.lastDraftFeature.destroy();
                 } else if (draftLayer.features.length > 1) {
-                    // Clear the one from the Current Location in S3LocationSelector
+                    // Clear the one from the Current Location in LocationSelector
                     draftLayer.features[0].destroy();
                 }
                 // Destroy all popups
@@ -5345,13 +5345,13 @@ S3.gis.yx = [
                 if (s3.lastDraftFeature) {
                     s3.lastDraftFeature.destroy();
                 } else if (draftLayer.features.length > 1) {
-                    // Clear the one from the Current Location in S3LocationSelector
+                    // Clear the one from the Current Location in LocationSelector
                     draftLayer.features[0].destroy();
                 }
                 var wkt_field = $('#gis_location_wkt');
                 if (wkt_field.length) {
                     // Update form fields in S3LocationSelectorWidget
-                    // (S3LocationSelector uses the map.s3.pointPlaced hook in s3.ui.locationselector.js, which is a better design)
+                    // (LocationSelector uses the map.s3.pointPlaced hook in s3.ui.locationselector.js, which is a better design)
                     var WKT = feature.geometry.transform(map.getProjectionObject(), proj4326).toString();
                     wkt_field.val(WKT);
                     $('#gis_location_lat').val('');
@@ -5414,7 +5414,7 @@ S3.gis.yx = [
                         if (s3.lastDraftFeature) {
                             s3.lastDraftFeature.destroy();
                         } else if (draftLayer.features.length > 1) {
-                            // Clear the one from the Current Location in S3LocationSelector
+                            // Clear the one from the Current Location in LocationSelector
                             draftLayer.features[0].destroy();
                         }
                         if (undefined !== s3.polygonButtonOff) {
@@ -5481,7 +5481,7 @@ S3.gis.yx = [
                 if (s3.lastDraftFeature) {
                     s3.lastDraftFeature.destroy();
                 } else if (s3.draftLayer.features.length > 1) {
-                    // Clear the one from the Current Location in S3LocationSelector
+                    // Clear the one from the Current Location in LocationSelector
                     s3.draftLayer.features[0].destroy();
                 }
                 control.deactivate();
@@ -5493,7 +5493,7 @@ S3.gis.yx = [
             if (s3.lastDraftFeature) {
                 s3.lastDraftFeature.destroy();
             } else if (s3.draftLayer.features.length > 1) {
-                // Clear the one from the Current Location in S3LocationSelector
+                // Clear the one from the Current Location in LocationSelector
                 s3.draftLayer.features[0].destroy();
             }
             control.deactivate();
@@ -5540,15 +5540,15 @@ S3.gis.yx = [
                 if (map.s3.lastDraftFeature) {
                     map.s3.lastDraftFeature.destroy();
                 } else if (draftLayer.features.length > 1) {
-                    // Clear the one from the Current Location in S3LocationSelector
+                    // Clear the one from the Current Location in LocationSelector
                     draftLayer.features[0].destroy();
                 }
                 // Enable this if adding Circle tool support to S3LocationSelectorWidget
-                // NB For S3LocationSelector we use a POINT with a radius instead
+                // NB For LocationSelector we use a POINT with a radius instead
                 /*var wkt_field = $('#gis_location_wkt');
                 if (wkt_field.length) {
                     // Update form fields in S3LocationSelectorWidget
-                    // (S3LocationSelector does this in s3.ui.locationselector.js, which is a better design)
+                    // (LocationSelector does this in s3.ui.locationselector.js, which is a better design)
                     var WKT = feature.geometry.transform(map.getProjectionObject(), proj4326).toString();
                     var linearRing = new OpenLayers.Geometry.LinearRing(feature.geometry.components[0].components);
                     var polygon = new OpenLayers.Geometry.Polygon([linearRing]);

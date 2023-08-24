@@ -41,7 +41,7 @@ from gluon.contenttype import contenttype
 from gluon.storage import Storage
 
 from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
-                 S3Report, S3Duplicate, S3LocationSelector, S3PriorityRepresent, \
+                 S3Report, S3Duplicate, LocationSelector, S3PriorityRepresent, \
                  S3Represent, FieldTemplate, S3SQLCustomForm, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, \
                  get_form_record_id, CommentsField, \
@@ -138,12 +138,12 @@ class CRReceptionCenterModel(DataModel):
                                                                   ),
                         ),
                      self.gis_location_id(
-                        widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                                    required_levels = ("L1", "L2", "L3"),
-                                                    show_address = True,
-                                                    show_postcode = True,
-                                                    show_map = True,
-                                                    ),
+                        widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                                  required_levels = ("L1", "L2", "L3"),
+                                                  show_address = True,
+                                                  show_postcode = True,
+                                                  show_map = True,
+                                                  ),
                         ),
                      Field("type_id", "reference cr_reception_center_type",
                            label = T("Facility Type"),

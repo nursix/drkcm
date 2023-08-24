@@ -133,7 +133,7 @@ def cr_shelter_resource(r, tablename):
     from core import LocationFilter, \
                      OptionsFilter, \
                      RangeFilter, \
-                     S3LocationSelector, \
+                     LocationSelector, \
                      S3PriorityRepresent, \
                      S3SQLCustomForm, \
                      S3SQLInlineComponent, \
@@ -184,12 +184,12 @@ def cr_shelter_resource(r, tablename):
     requires = field.requires
     if isinstance(requires, IS_EMPTY_OR):
         field.requires = requires.other
-    field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                      required_levels = ("L1", "L2", "L3"),
-                                      show_address = True,
-                                      show_postcode = True,
-                                      show_map = True,
-                                      )
+    field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                    required_levels = ("L1", "L2", "L3"),
+                                    show_address = True,
+                                    show_postcode = True,
+                                    show_map = True,
+                                    )
     current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
     # Color-coded status representation

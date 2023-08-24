@@ -1480,7 +1480,7 @@ class ProjectLocationModel(DataModel):
                      self.gis_location_id(
                         represent = self.gis_LocationRepresent(sep=", "),
                         requires = IS_LOCATION(),
-                        # S3LocationSelector doesn't support adding new locations dynamically
+                        # LocationSelector doesn't support adding new locations dynamically
                         # - if this isn't required, can set to use this widget in the template
                         widget = S3LocationAutocompleteWidget(),
                         comment = S3PopupLink(c = "gis",

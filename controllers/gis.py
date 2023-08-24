@@ -666,8 +666,7 @@ def location():
 # -----------------------------------------------------------------------------
 def ldata():
     """
-        Return JSON of location hierarchy suitable for use by
-        S3LocationSelector:
+        Return JSON of location hierarchy suitable for use by LocationSelector:
             GET '/eden/gis/ldata/' + id
         If requesting data for a level after a missed level:
             GET '/eden/gis/ldata/' + id + '/' + level
@@ -680,7 +679,7 @@ def ldata():
                }
          }
 
-        @ToDo: DRY with S3LocationSelector _locations()
+        @ToDo: DRY with LocationSelector _locations()
     """
 
     req_args = request.args
@@ -825,8 +824,7 @@ def ldata():
 # -----------------------------------------------------------------------------
 def hdata():
     """
-        Return JSON of hierarchy labels suitable for use by
-        S3LocationSelector:
+        Return JSON of hierarchy labels suitable for use by LocationSelector:
             GET '/eden/gis/hdata/' + l0_id
 
         Response JSON:
@@ -3253,7 +3251,7 @@ def geocode():
     else:
         # Lx: Lookup Bounds in our own database
         # @ToDo
-        # Not needed by S3LocationSelector as it downloads bounds with options
+        # Not needed by LocationSelector as it downloads bounds with options
         results = "NotImplementedError"
 
     results = json.dumps(results, separators=SEPARATORS)

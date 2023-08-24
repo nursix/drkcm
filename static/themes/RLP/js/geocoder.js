@@ -1,5 +1,5 @@
 /*
- * Shim for the S3LocationSelector to Geocode the Lx from the Postcode
+ * Shim for the LocationSelector to Geocode the Lx from the Postcode
  */
 
 $(function(){

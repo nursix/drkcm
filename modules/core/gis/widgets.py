@@ -379,7 +379,7 @@ class MAP(DIV):
                     #i18n["gis_search_no_internet"] = T("Geonames.org search requires Internet connectivity!")
 
             # Show NAV controls?
-            # e.g. removed within S3LocationSelector[Widget]
+            # e.g. removed within LocationSelector
             nav = opts_get("nav", None)
             if nav is None:
                 nav = settings.get_gis_nav_controls()
@@ -415,7 +415,7 @@ class MAP(DIV):
                 i18n["gis_print_tip"] = T("Take a screenshot of the map which can be printed")
 
             # Show Save control?
-            # e.g. removed within S3LocationSelector[Widget]
+            # e.g. removed within LocationSelector
             if opts_get("save") is True and auth.s3_logged_in():
                 options["save"] = True
                 i18n["gis_save"] = T("Save: Default Lat, Lon & Zoom for the Viewport")
@@ -442,7 +442,7 @@ class MAP(DIV):
                 self.opts["save"] = "float"
 
         # Show Save control?
-        # e.g. removed within S3LocationSelector[Widget]
+        # e.g. removed within LocationSelector
         if opts_get("save") == "float" and auth.s3_logged_in():
             permit = auth.s3_has_permission
             if permit("create", ctable):

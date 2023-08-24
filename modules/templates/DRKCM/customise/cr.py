@@ -105,7 +105,7 @@ def cr_shelter_resource(r, tablename):
     s3db = current.s3db
     auth = current.auth
 
-    from core import S3LocationSelector, \
+    from core import LocationSelector, \
                      S3SQLCustomForm
 
     # Field configurations
@@ -121,9 +121,9 @@ def cr_shelter_resource(r, tablename):
 
     # Hide L2 Government District
     field = table.location_id
-    field.widget = S3LocationSelector(levels = GIS_LEVELS,
-                                      show_address = True,
-                                      )
+    field.widget = LocationSelector(levels = GIS_LEVELS,
+                                    show_address = True,
+                                    )
 
     # Custom form
     crud_form = S3SQLCustomForm("name",

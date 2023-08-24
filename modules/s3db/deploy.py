@@ -125,7 +125,7 @@ class DeployModel(DataModel):
                      # @ToDo: Link to location via link table
                      # link table could be event_event_location for IFRC
                      # (would still allow 1 multi-country event to have multiple missions)
-                     self.gis_location_id(widget = S3LocationSelector(),
+                     self.gis_location_id(widget = LocationSelector(),
                                           ),
                      # @ToDo: Link to event_type via event_id link table instead of duplicating
                      self.event_type_id(),

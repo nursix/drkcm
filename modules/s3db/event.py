@@ -948,7 +948,7 @@ class EventLocationModel(DataModel):
                                               ondelete = "CASCADE",
                                               ),
                           self.gis_location_id(
-                            widget = S3LocationSelector(show_map=False),
+                            widget = LocationSelector(show_map=False),
                             #widget = S3LocationAutocompleteWidget(),
                             requires = IS_LOCATION(),
                             represent = self.gis_LocationRepresent(sep=", "),
@@ -4801,9 +4801,9 @@ class EventSitRepModel(DataModel):
                                 #writable = not sitrep_edxl,
                                 ),
                           self.gis_location_id(
-                            widget = S3LocationSelector(show_map = False,
-                                                        show_postcode = False,
-                                                        ),
+                            widget = LocationSelector(show_map = False,
+                                                      show_postcode = False,
+                                                      ),
                             ),
                           #Field("action_plan", "text",
                           #      label = T("Action Plan"),

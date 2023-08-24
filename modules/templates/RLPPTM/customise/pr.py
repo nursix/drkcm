@@ -108,14 +108,14 @@ def pr_person_controller(**attr):
             ctable = r.component.table
 
             # Configure location selector and geocoder
-            from core import S3LocationSelector
+            from core import LocationSelector
             field = ctable.location_id
-            field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                              required_levels = ("L1", "L2", "L3"),
-                                              show_address = True,
-                                              show_postcode = True,
-                                              show_map = True,
-                                              )
+            field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                            required_levels = ("L1", "L2", "L3"),
+                                            show_address = True,
+                                            show_postcode = True,
+                                            show_map = True,
+                                            )
             s3.scripts.append("/%s/static/themes/RLP/js/geocoderAllStates.js" % r.application)
             s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 

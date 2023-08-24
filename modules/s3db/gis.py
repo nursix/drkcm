@@ -320,8 +320,7 @@ class GISLocationModel(DataModel):
                                     represent = gis_location_represent,
                                     requires = IS_EMPTY_OR(IS_LOCATION()),
                                     sortby = "name",
-                                    widget = S3LocationSelector(show_address = True,
-                                                                ),
+                                    widget = LocationSelector(show_address=True),
                                     # Alternate simple Autocomplete (e.g. used by pr_person_presence)
                                     #widget = S3LocationAutocompleteWidget(),
                                     )
@@ -5348,7 +5347,7 @@ class gis_LocationRepresent(S3Represent):
     # -------------------------------------------------------------------------
     def alt_represent_row(self, row):
         """
-            Different Entry point for S3LocationSelector(intends to use represent_row)
+            Different Entry point for LocationSelector (intends to use represent_row)
             - Lookup L10n, path
             - then call represent_row
         """

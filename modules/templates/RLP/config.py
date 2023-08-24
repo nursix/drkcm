@@ -1363,7 +1363,7 @@ def config(settings):
                               IS_PERSON_GENDER,
                               AgeFilter,
                               LocationFilter,
-                              S3LocationSelector,
+                              LocationSelector,
                               OptionsFilter,
                               RangeFilter,
                               S3SQLCustomForm,
@@ -1397,13 +1397,13 @@ def config(settings):
             atable = s3db.pr_address
             field = atable.location_id
             field.requires = IS_LOCATION() # Mandatory
-            field.widget = S3LocationSelector(levels = ("L1", "L2", "L3"),
-                                              required_levels = ("L1", "L2", "L3"),
-                                              show_address = True,
-                                              show_postcode = True,
-                                              postcode_required = True,
-                                              show_map = False,
-                                              )
+            field.widget = LocationSelector(levels = ("L1", "L2", "L3"),
+                                            required_levels = ("L1", "L2", "L3"),
+                                            show_address = True,
+                                            show_postcode = True,
+                                            postcode_required = True,
+                                            show_map = False,
+                                            )
 
             hrcomponent = resource.components.get("volunteer_record")
             hrtable = hrcomponent.table

@@ -2267,7 +2267,7 @@ S3.search = {};
                             if (s3.lastDraftFeature) {
                                 s3.lastDraftFeature.destroy();
                             } else if (s3.draftLayer.features.length > 1) {
-                                // Clear the one from the Current Location in S3LocationSelector
+                                // Clear the one from the Current Location in LocationSelector
                                 s3.draftLayer.features[0].destroy();
                             }
                             // Deactivate Control

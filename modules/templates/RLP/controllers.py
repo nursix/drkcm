@@ -16,7 +16,7 @@ from gluon.storage import Storage
 
 from core import ConsentTracking, CustomController, DateField, \
                  IS_ONE_OF, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-                 S3GroupedOptionsWidget, S3LocationSelector, S3MultiSelectWidget, \
+                 S3GroupedOptionsWidget, LocationSelector, S3MultiSelectWidget, \
                  S3WeeklyHoursWidget, WithAdvice, \
                  JSONERRORS, S3Represent, s3_comments_widget, \
                  s3_mark_required, s3_str
@@ -605,7 +605,7 @@ class register(CustomController):
                       #      ),
                       # --------------------------------------------
                       s3db.gis_location_id("location_id",
-                                           widget = S3LocationSelector(
+                                           widget = LocationSelector(
                                                        levels = ("L1", "L2", "L3"),
                                                        required_levels = ("L1", "L2", "L3"),
                                                        show_address = False,

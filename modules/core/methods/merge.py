@@ -36,7 +36,7 @@ from ..resource import FS
 from ..tools import IS_ONE_OF, s3_get_foreign_key, s3_represent_value, \
                     s3_str
 from ..ui import PersonSelector, DataTable, S3LocationAutocompleteWidget, \
-                 S3LocationSelector
+                 LocationSelector
 
 from .base import CRUDMethod
 
@@ -751,7 +751,7 @@ class S3Merge(CRUDMethod):
             #                                download_url=download_url, **attr)
         elif field.widget:
             field_widget = field.widget
-            if isinstance(field_widget, S3LocationSelector):
+            if isinstance(field_widget, LocationSelector):
                 inp = S3LocationAutocompleteWidget()(field, value, **attr)
             elif isinstance(field_widget, PersonSelector):
                 inp = widgets.options.widget(field, value, **attr)

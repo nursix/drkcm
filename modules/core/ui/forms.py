@@ -56,7 +56,8 @@ from ..resource import FS
 from ..tools import s3_mark_required, set_last_record_id, s3_str, \
                     s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
-from .widgets import S3Selector, S3UploadWidget
+from .widgets import S3UploadWidget
+from .selectors import LocationSelector
 
 # Compact JSON encoding
 DEFAULT = lambda: None
@@ -633,7 +634,7 @@ class S3SQLDefaultForm(S3SQLForm):
                 def parse_key(value):
                     key = s3_str(value)
                     if key.startswith("{"):
-                        # JSON-based selector (e.g. S3LocationSelector)
+                        # JSON-based selector (e.g. LocationSelector)
                         return json.loads(key).get("id")
                     else:
                         # Normal selector (e.g. OptionsWidget)
@@ -2821,7 +2822,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                 field = rfield.field
 
                 widget = field.widget
-                if isinstance(widget, S3Selector):
+                if isinstance(widget, LocationSelector):
                     # Use the widget extraction/serialization method
                     value = widget.serialize(widget.extract(row[colname]))
                 elif hasattr(field, "formatter"):
@@ -3293,7 +3294,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                                     filename = self._store_file(table, f, rowindex)
                                     if filename:
                                         values[f] = filename
-                            elif isinstance(widget, S3Selector):
+                            elif isinstance(widget, LocationSelector):
                                 # Value must be processed by widget post-process
                                 value, error = widget.postprocess(d["value"])
                                 if not error:
@@ -3606,7 +3607,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                     if type(value) is str:
                         value = s3_str(value)
                     widget = formfield.widget
-                    if isinstance(widget, S3Selector):
+                    if isinstance(widget, LocationSelector):
                         # Use the widget parser to get at the selected ID
                         value, error = widget.parse(value).get("id"), None
                     else:

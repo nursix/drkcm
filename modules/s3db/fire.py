@@ -110,10 +110,10 @@ class FireModel(DataModel):
                                                  ),
                            label=T("Type")),
                      self.gis_location_id(
-                       widget = S3LocationSelector(catalog_layers = True,
-                                                   points = False,
-                                                   polygons = True,
-                                                   )
+                       widget = LocationSelector(catalog_layers = True,
+                                                 points = False,
+                                                 polygons = True,
+                                                 )
                      ),
                      CommentsField(),
                      )

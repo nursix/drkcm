@@ -110,10 +110,10 @@ class WaterModel(DataModel):
                                                  ),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    ),
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  ),
                      ),
                      CommentsField(),
                      )
@@ -141,10 +141,10 @@ class WaterModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    )
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  )
                      ),
                      CommentsField(),
                      )

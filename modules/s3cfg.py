@@ -2440,7 +2440,7 @@ class S3Config(Storage):
     def get_ui_multiselect_widget(self):
         """
             Whether all dropdowns should use the S3MultiSelectWidget
-            - currently respected by Auth Registration & S3LocationSelector
+            - currently respected by Auth Registration & LocationSelector
 
             Options:
                 False (default): No widget

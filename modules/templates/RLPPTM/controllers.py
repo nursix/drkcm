@@ -15,7 +15,7 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 from gluon.storage import Storage
 
 from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
-                 ICON, S3GroupedOptionsWidget, S3LocationSelector, \
+                 ICON, S3GroupedOptionsWidget, LocationSelector, \
                  CRUDRequest, S3CRUD, CustomController, FS, JSONERRORS, \
                  S3Represent, WithAdvice, s3_comments_widget, \
                  s3_get_extension, s3_mark_required, s3_str, \
@@ -1213,7 +1213,7 @@ class register(CustomController):
 
                       # -- Address --
                       Field("location", "json",
-                            widget = S3LocationSelector(
+                            widget = LocationSelector(
                                         levels = ("L1", "L2", "L3", "L4"),
                                         required_levels = ("L1", "L2", "L3"),
                                         show_address = True,

@@ -685,7 +685,7 @@ def config(settings):
             s3.crud_strings["br_assistance_offer"]["title_list"] = title_list
 
             from core import LocationFilter, \
-                             S3LocationSelector, \
+                             LocationSelector, \
                              OptionsFilter, \
                              TextFilter, \
                              get_filter_options
@@ -724,13 +724,13 @@ def config(settings):
                 requires = field.requires
                 if isinstance(requires, IS_EMPTY_OR):
                     field.requires = requires.other
-                field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                                  required_levels = ("L1", "L2", "L3"),
-                                                  filter_lx = settings.get_custom("regional"),
-                                                  show_address = False,
-                                                  show_postcode = False,
-                                                  show_map = False,
-                                                  )
+                field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                                required_levels = ("L1", "L2", "L3"),
+                                                filter_lx = settings.get_custom("regional"),
+                                                show_address = False,
+                                                show_postcode = False,
+                                                show_map = False,
+                                                )
 
                 # TODO End date mandatory
                 # => default to 4 weeks from now
@@ -993,7 +993,7 @@ def config(settings):
 
         # Location is visible
         from .helpers import get_current_location
-        from core import S3LocationSelector
+        from core import LocationSelector
 
         field = table.location_id
         field.readable = field.writable = True
@@ -1004,13 +1004,13 @@ def config(settings):
         else:
             # Default to current user's tracking location
             field.default = get_current_location()
-        field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                          required_levels = ("L1", "L2", "L3"),
-                                          filter_lx = settings.get_custom("regional"),
-                                          show_address = False,
-                                          show_postcode = False,
-                                          show_map = False,
-                                          )
+        field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                        required_levels = ("L1", "L2", "L3"),
+                                        filter_lx = settings.get_custom("regional"),
+                                        show_address = False,
+                                        show_postcode = False,
+                                        show_map = False,
+                                        )
 
         if case_file or ours:
             # Custom form to change field order
@@ -1438,7 +1438,7 @@ def config(settings):
                                            ))
 
         from core import LocationFilter, \
-                         S3LocationSelector, \
+                         LocationSelector, \
                          OptionsFilter, \
                          S3PriorityRepresent, \
                          S3SQLCustomForm, \
@@ -1487,12 +1487,12 @@ def config(settings):
         requires = field.requires
         if isinstance(requires, IS_EMPTY_OR):
             field.requires = requires.other
-        field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                          required_levels = ("L1", "L2", "L3"),
-                                          show_address = True,
-                                          show_postcode = True,
-                                          show_map = True,
-                                          )
+        field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                        required_levels = ("L1", "L2", "L3"),
+                                        show_address = True,
+                                        show_postcode = True,
+                                        show_map = True,
+                                        )
 
         # Color-coded status representation
         field = table.status

@@ -454,7 +454,7 @@ class GIS:
     def geocode(address, postcode=None, Lx_ids=None, geocoder=None):
         """
             Geocode an Address
-            - used by S3LocationSelector
+            - used by LocationSelector
                       settings.get_gis_geocode_imported_addresses
 
             Args:
@@ -683,7 +683,7 @@ class GIS:
     def geocode_r(lat, lon):
         """
             Reverse Geocode a Lat/Lon
-            - used by S3LocationSelector
+            - used by LocationSelector
         """
 
         if lat is None or lon is None:
