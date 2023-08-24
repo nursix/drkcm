@@ -2795,12 +2795,12 @@ class DVRCaseActivityModel(DataModel):
                             dvr_case_activity_update = "case_activity_id",
                             dvr_diagnosis = (
                                     {"name": "suspected_diagnosis",
-                                     "link": "dvr_suspected_diagnosis",
+                                     "link": "dvr_diagnosis_suspected",
                                      "joinby": "case_activity_id",
                                      "key": "diagnosis_id",
                                      },
                                     {"name": "confirmed_diagnosis",
-                                     "link": "dvr_confirmed_diagnosis",
+                                     "link": "dvr_diagnosis_confirmed",
                                      "joinby": "case_activity_id",
                                      "key": "diagnosis_id",
                                      },
@@ -4645,8 +4645,8 @@ class DVRDiagnosisModel(DataModel):
     """ Diagnoses, e.g. in Psychosocial Support """
 
     names = ("dvr_diagnosis",
-             "dvr_suspected_diagnosis",
-             "dvr_confirmed_diagnosis",
+             "dvr_diagnosis_suspected",
+             "dvr_diagnosis_confirmed",
              )
 
     def model(self):
@@ -4707,7 +4707,7 @@ class DVRDiagnosisModel(DataModel):
         # ---------------------------------------------------------------------
         # Link tables for diagnosis <=> case activity (suspected and confirmed)
         #
-        tablename = "dvr_suspected_diagnosis"
+        tablename = "dvr_diagnosis_suspected"
         define_table(tablename,
                      self.dvr_case_activity_id(
                          empty = False,
@@ -4719,7 +4719,7 @@ class DVRDiagnosisModel(DataModel):
                          ),
                      )
 
-        tablename = "dvr_confirmed_diagnosis"
+        tablename = "dvr_diagnosis_confirmed"
         define_table(tablename,
                      self.dvr_case_activity_id(
                          empty = False,

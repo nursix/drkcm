@@ -1391,10 +1391,10 @@ def configure_response_action_reports(ui_options,
     # Vulnerability Axis
     if ui_options_get("activity_pss_diagnoses"):
         suspected_diagnosis = (T("Suspected Diagnosis"),
-                               "case_activity_id$suspected_diagnosis__link.diagnosis_id",
+                               "case_activity_id$diagnosis_suspected__link.diagnosis_id",
                                )
         confirmed_diagnosis = (T("Diagnosis"),
-                               "case_activity_id$confirmed_diagnosis__link.diagnosis_id",
+                               "case_activity_id$diagnosis_confirmed__link.diagnosis_id",
                                )
     else:
         suspected_diagnosis = confirmed_diagnosis = None
