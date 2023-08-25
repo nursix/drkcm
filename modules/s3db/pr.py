@@ -7769,7 +7769,7 @@ class pr_Templates(CRUDMethod):
                                                      orderby = table.name,
                                                      )
                 if not templates:
-                    buttons = P(T("No document templates found."))
+                    buttons = P(T("No document templates found"))
                 else:
                     person_id = r.id
                     buttons = UL()
@@ -7783,7 +7783,7 @@ class pr_Templates(CRUDMethod):
                                      _target = "_top",
                                      )))
 
-                output["item"] = buttons
+                output["item"] = DIV(buttons, _style="padding:1rem;")
                 current.response.view = "plain.html"
 
             else:

@@ -3880,6 +3880,7 @@
 'No Diagnoses currently defined': 'Zur Zeit keine Diagnosen definiert',
 'No Direct Offers currently registered': 'Zurzeit keine Direktangebote registriert',
 'No Documents found': 'Keine Dokumente gefunden',
+'No document templates found': 'Keine Dokumentvorlagen gefunden',
 'No Donors currently registered': 'Zurzeit sind keine Spender registriert',
 'No Eligibility Types currently defined': 'Zurzeit keine Anspruchsarten definiert',
 'No Events currently registered': 'Zurzeit sind keine Ereignisse registriert',
