@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Org Unit Tests
 #
 # To run this script use:

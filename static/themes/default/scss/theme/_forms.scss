@@ -17,13 +17,15 @@ $form_error_bgcolor: #c60f13 !default;
 
 // ============================================================================
 // STYLES
-
+//
+// Forms and Form Elements
+//
 form {
     font-size: 0.8rem;
     .form-row {
         &.row {
             padding: 0 0.3rem;
-            margin-top: 0.7rem;
+            margin-top: 0.5rem;
         }
         .button {
             [dir=ltr] & {
@@ -60,6 +62,13 @@ form {
             min-width: 4rem;
         }
         .controls span.postfix {
+            display: inline-block;
+            padding: 0 0.3rem;
+            border: 1px solid #ccc;
+            border-left: none;
+            text-align: center;
+            vertical-align: top;
+            background-color: #f2f2f2;
             height: 1.75rem;
             line-height: 1.5rem;
             font-size: 0.8rem;
@@ -85,7 +94,6 @@ form {
         margin-left: 0.125rem;
         &.inline {
             padding: 0;
-            line-height: normal;
             margin: 0 0 0.5rem;
         }
     }
@@ -134,6 +142,7 @@ form {
         margin-bottom: 0.125rem;
         border: 1px solid #dddddd;
         border-collapse: separate;
+        border-spacing: 0;
         td {
             border: none;
             padding: 0.15rem 5px 0.05rem;
@@ -285,11 +294,11 @@ form {
         border-top: solid 1px #FFD7A3;
         [dir=ltr] & {
             border-left: solid 1px #FFD7A3;
-            padding: 0.5rem 0.25rem 0.25rem 0.75rem;
+            padding: 0.25rem 0.25rem 0.25rem 0.75rem;
         }
         [dir=rtl] & {
             border-right: solid 1px #FFD7A3;
-            padding: 0.5rem 0.75rem 0.25rem 0.25rem;
+            padding: 0.25rem 0.75rem 0.25rem 0.25rem;
         }
         margin: 1.5rem 0 0.75rem;
         &:first-of-type {
@@ -303,7 +312,13 @@ form {
     }
 }
 
-/* -------------------------------------------------------------------------------- */
+// ----------------------------------------------------------------------------
+// Containers
+//
+.form-info {
+    height: 1.2rem;
+}
+
 .form-container,
 .item-container {
     width: auto;
@@ -371,7 +386,7 @@ form {
         }
         input[type="checkbox"],
         input[type="radio"] {
-            margin: 2px 5px;
+            margin: 5px 5px;
         }
         fieldset {
             margin: 0 0 10px 0;
@@ -410,7 +425,9 @@ form {
     }
 }
 
-/* -------------------------------------------------------------------------------- */
+// ----------------------------------------------------------------------------
+// Author Info / Last Update / Mark Duplicate
+//
 #last_update,
 #markDuplicate {
     float: right;
@@ -422,7 +439,7 @@ form {
         text-align: left;
     }
 }
-.authorinfo, // Record merger
+.authorinfo,
 #last_update {
     font-style: italic;
     font-size: 80%;
@@ -431,7 +448,7 @@ form {
 #markDuplicate {
     padding-bottom: 8px;
     margin-bottom: 0;
-    margin-top: -0.5rem;
+    margin-top: -0.25rem;
 }
 
 .crud-actions {
@@ -439,16 +456,15 @@ form {
 }
 
 // ----------------------------------------------------------------------------
-/* Help Popup Icon */
-.inline-tooltip {
+// Tooltip Icon
+//
+.s3_add_resource_link {
     display: inline-block;
+    margin: 0.3rem 0.5rem;
+}
+.inline-tooltip {
     vertical-align: top;
-    padding-left: 0.75rem;
-    .s3_add_resource_link {
-        display: inline-block;
-        margin: -3px 0 -3px 0.7rem;
-        padding-right: 0.3rem;
-    }
+    margin: 0.2rem 0.5rem;
 }
 .tooltip,
 .tooltipbody,
@@ -457,11 +473,6 @@ form {
 .htmltip {
     display: inline-block;
     position: static;
-    &.inline-tooltip {
-        margin-left: 1rem;
-        vertical-align: middle;
-    }
-    padding: 0 0.3rem;
     text-transform: uppercase;
     width: auto;
     background: none;
@@ -476,6 +487,9 @@ form {
     }
     &:hover {
         cursor: help;
+        &:before {
+            color: $warning-color;
+        }
     }
 }
 

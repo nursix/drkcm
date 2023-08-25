@@ -30,7 +30,6 @@ def realm_entity(table, row):
                        "pr_contact_emergency",
                        "pr_image",
                        ):
-
         # Inherit from person via PE
         table = s3db.table(tablename)
         ptable = s3db.pr_person
@@ -46,7 +45,6 @@ def realm_entity(table, row):
                        "pr_person_details",
                        "pr_person_tag",
                        ):
-
         # Inherit from person via person_id
         table = s3db.table(tablename)
         ptable = s3db.pr_person
@@ -58,8 +56,9 @@ def realm_entity(table, row):
         if person:
             realm_entity = person.realm_entity
 
-    elif tablename == "cr_shelter_population":
-
+    elif tablename in ("cr_shelter_population",
+                       "cr_shelter_status",
+                       ):
         # Inherit from shelter
         table = s3db.table(tablename)
         stable = s3db.cr_shelter
@@ -70,6 +69,18 @@ def realm_entity(table, row):
                                    ).first()
         if shelter:
             realm_entity = shelter.realm_entity
+
+    elif tablename == "cr_reception_center_status":
+        # Inherit from reception center
+        table = s3db.table(tablename)
+        rtable = s3db.cr_reception_center
+        query = (table._id == row.id) & \
+                (rtable.id == table.facility_id)
+        rcenter = db(query).select(rtable.realm_entity,
+                                   limitby = (0, 1),
+                                   ).first()
+        if rcenter:
+            realm_entity = rcenter.realm_entity
 
     return realm_entity
 

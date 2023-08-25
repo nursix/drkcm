@@ -8,7 +8,7 @@
 
     "use strict";
 
-    $(document).ready(function() {
+    $(function() {
 
         var path = window.location.pathname.split('/');
         var handler = function(method, confirmation) {

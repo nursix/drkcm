@@ -66,12 +66,12 @@ To install web2py, clone it directly from GitHub:
    the clone - just remember to use the correct path in subsequent commands.
 
 Change into the *web2py* directory, and reset the repository (including
-all submodules) to the supported stable version (currently 2.22.3):
+all submodules) to the supported stable version (currently 2.24.1):
 
 .. code-block:: bash
 
    cd ~/web2py
-   git reset --hard 9863a9386
+   git reset --hard 7685d373
    git submodule update --recursive
 
 Installing Eden ASP
@@ -205,13 +205,13 @@ Once the server is running, it will give you a localhost URL to access it:
    :caption: Console output of web2py after launch
 
    web2py Web Framework
-   Created by Massimo Di Pierro, Copyright 2007-2022
-   Version 2.22.3-stable+timestamp.2022.02.15.07.07.56
+   Created by Massimo Di Pierro, Copyright 2007-2023
+   Version 2.24.1-stable+timestamp.2023.03.22.21.39.14
    Database drivers available: sqlite3, MySQLdb, psycopg2, imaplib, pymysql, pyodbc
 
    please visit:
            http://127.0.0.1:8000/
-   use "kill -SIGTERM 8455" to shutdown the web2py server
+   use "kill -SIGTERM 10921" to shutdown the web2py server
 
 Append the application name *eden* to the URL (http://127.0.0.1:8000/eden),
 and open that address in your web browser to access Eden ASP.

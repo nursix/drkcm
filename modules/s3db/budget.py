@@ -155,7 +155,7 @@ class BudgetModel(DataModel):
                            represent = amount_represent,
                            requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
                            ),
-                     s3_currency(required = True),
+                     CurrencyField(required = True),
                      Field("monitoring_frequency", "integer",
                            default = 1,
                            label = T("Monitoring Frequency"),
@@ -169,8 +169,7 @@ class BudgetModel(DataModel):
                                        status_opts.get(opt, UNKNOWN_OPT),
                            requires = IS_IN_SET(status_opts),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields()
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -193,21 +192,21 @@ class BudgetModel(DataModel):
         #budget_budget_represent = S3Represent(lookup=tablename, show_link=True)
 
         # Reusable Field
-        #budget_budget_id = S3ReusableField("budget_id", "reference %s" % tablename,
-        #    label = T("Budget"),
-        #    ondelete = "CASCADE",
-        #    represent = budget_budget_represent,
-        #    requires = IS_ONE_OF(db, "budget_budget.id",
-        #                         budget_budget_represent,
-        #                         ),
-        #    comment = S3PopupLink(
-        #        c = "budget",
-        #        f = "budget",
-        #        label = ADD_BUDGET,
-        #        title = T("Budget"),
-        #        tooltip = T("You can create a new budget by clicking link '%s'.") % ADD_BUDGET
-        #        ),
-        #    )
+        #budget_budget_id = FieldTemplate("budget_id", "reference %s" % tablename,
+        #                                 label = T("Budget"),
+        #                                 ondelete = "CASCADE",
+        #                                 represent = budget_budget_represent,
+        #                                 requires = IS_ONE_OF(db, "budget_budget.id",
+        #                                                      budget_budget_represent,
+        #                                                      ),
+        #                                 comment = S3PopupLink(
+        #                                    c = "budget",
+        #                                    f = "budget",
+        #                                    label = ADD_BUDGET,
+        #                                    title = T("Budget"),
+        #                                    tooltip = T("You can create a new budget by clicking link '%s'.") % ADD_BUDGET
+        #                                    ),
+        #                                 )
 
         # Configuration
         configure(tablename,
@@ -245,7 +244,7 @@ class BudgetModel(DataModel):
                            represent = amount_represent,
                            requires = IS_FLOAT_AMOUNT(0, 100),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -278,8 +277,8 @@ class BudgetModel(DataModel):
                            default = 0.0,
                            label = T("Hazard Pay"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_LOCATION = T("Create Location")
@@ -301,21 +300,21 @@ class BudgetModel(DataModel):
                                                 fields=["code"])
 
         # Reusable Field
-        budget_location_id = S3ReusableField("location_id", "reference %s" % tablename,
-            label = T("Location"),
-            ondelete = "CASCADE",
-            represent = budget_location_represent,
-            requires = IS_ONE_OF(db, "budget_location.id",
-                                 budget_location_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "location",
-                label = ADD_LOCATION,
-                title = T("Location"),
-                tooltip = T("You can create a new location by clicking link '%s'.") % ADD_LOCATION
-                ),
-            )
+        budget_location_id = FieldTemplate("location_id", "reference %s" % tablename,
+                                           label = T("Location"),
+                                           ondelete = "CASCADE",
+                                           represent = budget_location_represent,
+                                           requires = IS_ONE_OF(db, "budget_location.id",
+                                                                budget_location_represent,
+                                                                ),
+                                           comment = S3PopupLink(
+                                                c = "budget",
+                                                f = "location",
+                                                label = ADD_LOCATION,
+                                                title = T("Location"),
+                                                tooltip = T("You can create a new location by clicking link '%s'.") % ADD_LOCATION
+                                                ),
+                                           )
 
         # Configuration
         configure(tablename,
@@ -344,7 +343,7 @@ class BudgetModel(DataModel):
                                         IS_INT_IN_RANGE(0, None),
                                         ],
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      Field("travel", "integer",
                            default = 0,
                            label = T("Travel Cost"),
@@ -361,8 +360,8 @@ class BudgetModel(DataModel):
                      #Field("hazard_pay", "double",
                      #      default=0.00,
                      #     ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_STAFF_TYPE = T("Create Staff Type")
@@ -384,21 +383,21 @@ class BudgetModel(DataModel):
                                              fields=["name"])
 
         # Reusable Field
-        budget_staff_id = S3ReusableField("staff_id", "reference %s" % tablename,
-            label = T("Staff"),
-            ondelete = "RESTRICT",
-            represent = budget_staff_represent,
-            requires = IS_ONE_OF(db, "budget_staff.id",
-                                 budget_staff_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "staff",
-                label = ADD_STAFF_TYPE,
-                title = T("Staff"),
-                tooltip = T("You can create new staff by clicking link '%s'.") % ADD_STAFF_TYPE
-                ),
-            )
+        budget_staff_id = FieldTemplate("staff_id", "reference %s" % tablename,
+                                        label = T("Staff"),
+                                        ondelete = "RESTRICT",
+                                        represent = budget_staff_represent,
+                                        requires = IS_ONE_OF(db, "budget_staff.id",
+                                                            budget_staff_represent,
+                                                            ),
+                                        comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "staff",
+                                            label = ADD_STAFF_TYPE,
+                                            title = T("Staff"),
+                                            tooltip = T("You can create new staff by clicking link '%s'.") % ADD_STAFF_TYPE
+                                            ),
+                                        )
 
         # Configuration
         configure(tablename,
@@ -425,7 +424,7 @@ class BudgetModel(DataModel):
                            label = T("Months"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Configuration
         configure(tablename,
@@ -447,7 +446,7 @@ class BudgetModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"budget_budget_id": dummy("budget_id"),
                 "budget_location_id": dummy("location_id"),
@@ -609,8 +608,8 @@ class BudgetKitModel(DataModel):
                            label = T("Total Cost per Megabyte"),
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_KIT = T("Create Kit")
@@ -631,21 +630,21 @@ class BudgetKitModel(DataModel):
         budget_kit_represent = S3Represent(lookup=tablename, fields=["code"])
 
         # Reusable Field
-        budget_kit_id = S3ReusableField("kit_id", "reference %s" % tablename,
-            ondelete = "RESTRICT",
-            label = T("Kit"),
-            represent = budget_kit_represent,
-            requires = IS_ONE_OF(db, "budget_kit.id",
-                                 budget_kit_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "kit",
-                label = ADD_KIT,
-                title = T("Kit"),
-                tooltip = T("You can create a new kit by clicking link '%s'.") % ADD_KIT
-                ),
-            )
+        budget_kit_id = FieldTemplate("kit_id", "reference %s" % tablename,
+                                      ondelete = "RESTRICT",
+                                      label = T("Kit"),
+                                      represent = budget_kit_represent,
+                                      requires = IS_ONE_OF(db, "budget_kit.id",
+                                                           budget_kit_represent,
+                                                           ),
+                                      comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "kit",
+                                            label = ADD_KIT,
+                                            title = T("Kit"),
+                                            tooltip = T("You can create a new kit by clicking link '%s'.") % ADD_KIT
+                                            ),
+                                      )
 
         # Configuration
         configure(tablename,
@@ -734,8 +733,8 @@ class BudgetKitModel(DataModel):
                            default = 0.00,
                            label = T("Cost per Megabyte"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_ITEM = T("Create Item")
@@ -758,21 +757,21 @@ class BudgetKitModel(DataModel):
                                             fields=["description"])
 
         # Reusable Field
-        budget_item_id = S3ReusableField("item_id", "reference %s" % tablename,
-            label = T("Item"),
-            ondelete = "RESTRICT",
-            represent = budget_item_represent,
-            requires = IS_ONE_OF(db, "budget_item.id",
-                                 budget_item_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "item",
-                label = ADD_ITEM,
-                title = T("Item"),
-                tooltip = T("You can create a new item by clicking link '%s'.") % ADD_ITEM
-                ),
-            )
+        budget_item_id = FieldTemplate("item_id", "reference %s" % tablename,
+                                       label = T("Item"),
+                                       ondelete = "RESTRICT",
+                                       represent = budget_item_represent,
+                                       requires = IS_ONE_OF(db, "budget_item.id",
+                                                            budget_item_represent,
+                                                            ),
+                                       comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "item",
+                                            label = ADD_ITEM,
+                                            title = T("Item"),
+                                            tooltip = T("You can create a new item by clicking link '%s'.") % ADD_ITEM
+                                            ),
+                                       )
 
         # Configuration
         configure(tablename,
@@ -794,7 +793,7 @@ class BudgetKitModel(DataModel):
                            label = T("Quantity"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.budget_kit_item_onaccept,
@@ -814,7 +813,7 @@ class BudgetKitModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"budget_kit_id": dummy("kit_id"),
                 "budget_item_id": dummy("item_id"),
@@ -967,8 +966,8 @@ class BudgetBundleModel(DataModel):
                            label = T("Recurring cost"),
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_BUNDLE = T("Create Bundle")
@@ -1011,21 +1010,21 @@ class BudgetBundleModel(DataModel):
                                              fields=["name"])
 
         # Reusable Field
-        budget_bundle_id = S3ReusableField("bundle_id", "reference %s" % tablename,
-            label = T("Bundle"),
-            ondelete = "RESTRICT",
-            represent = budget_bundle_represent,
-            requires = IS_ONE_OF(db, "budget_bundle.id",
-                                 budget_bundle_represent,
-                                 ),
-            comment = S3PopupLink(
-                c = "budget",
-                f = "bundle",
-                label = ADD_BUNDLE,
-                title = T("Bundle"),
-                tooltip = T("You can create a new bundle by clicking link '%s'.") % ADD_BUNDLE
-                ),
-            )
+        budget_bundle_id = FieldTemplate("bundle_id", "reference %s" % tablename,
+                                         label = T("Bundle"),
+                                         ondelete = "RESTRICT",
+                                         represent = budget_bundle_represent,
+                                         requires = IS_ONE_OF(db, "budget_bundle.id",
+                                                              budget_bundle_represent,
+                                                              ),
+                                         comment = S3PopupLink(
+                                            c = "budget",
+                                            f = "bundle",
+                                            label = ADD_BUNDLE,
+                                            title = T("Bundle"),
+                                            tooltip = T("You can create a new bundle by clicking link '%s'.") % ADD_BUNDLE
+                                            ),
+                                         )
 
         # ---------------------------------------------------------------------
         # Bundle<>Kit Many2Many
@@ -1049,7 +1048,7 @@ class BudgetBundleModel(DataModel):
                            label = T("Megabytes per Month"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1093,7 +1092,7 @@ class BudgetBundleModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            label = T("Megabytes per Month"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1135,7 +1134,7 @@ class BudgetBundleModel(DataModel):
                            label = T("Months"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1169,7 +1168,7 @@ class BudgetBundleModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"budget_bundle_id": S3ReusableField.dummy("bundle_id"),
+        return {"budget_bundle_id": FieldTemplate.dummy("bundle_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1361,17 +1360,16 @@ class BudgetAllocationModel(DataModel):
                                      writable = True,
                                      represent = self.budget_CostItemRepresent(),
                                      ),
-                          s3_datetime("start_date",
-                                      label = T("Start Date"),
-                                      widget = "date",
-                                      ),
-                          s3_datetime("end_date",
-                                      label = T("End Date"),
-                                      # Not supported by s3_datetime
-                                      #start_field = "budget_allocation_start_date",
-                                      #default_interval = 12,
-                                      widget = "date",
-                                      ),
+                          DateTimeField("start_date",
+                                        label = T("Start Date"),
+                                        widget = "date",
+                                        ),
+                          DateTimeField("end_date",
+                                        label = T("End Date"),
+                                        #start_field = "budget_allocation_start_date",
+                                        #default_interval = 12,
+                                        widget = "date",
+                                        ),
                           Field("unit_cost", "double",
                                 default = 0.00,
                                 label = T("One-Time Cost"),
@@ -1381,8 +1379,8 @@ class BudgetAllocationModel(DataModel):
                                 default = 0.00,
                                 label = T("Daily Cost"),
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         self.configure(tablename,
                        deduplicate = self.budget_allocation_duplicate,
@@ -1469,14 +1467,14 @@ class BudgetMonitoringModel(DataModel):
                           self.super_link("budget_entity_id", "budget_entity"),
                           # Populated Automatically
                           # Used for Timeplot &, in future, to ease changing the monitoring frequency
-                          s3_date("start_date",
-                                  readable = False,
-                                  writable = False,
-                                  ),
-                          s3_date("end_date",
-                                  empty = False,
-                                  label = T("Date"),
-                                  ),
+                          DateField("start_date",
+                                    readable = False,
+                                    writable = False,
+                                    ),
+                          DateField("end_date",
+                                    empty = False,
+                                    label = T("Date"),
+                                    ),
                           Field("planned", "double", notnull=True,
                                 default = 0.00,
                                 label = T("Planned Spend"),
@@ -1492,13 +1490,13 @@ class BudgetMonitoringModel(DataModel):
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 requires = IS_FLOAT_AMOUNT(),
                                 ),
-                          s3_currency(required = True,
-                                      # Normally set at Budget level
-                                      writable = False,
-                                      ),
+                          CurrencyField(required = True,
+                                        # Normally set at Budget level
+                                        writable = False,
+                                        ),
                           Field.Method("percentage", self.budget_monitoring_percentage),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # CRUD Strings
         #current.response.s3.crud_strings[tablename] = Storage(

@@ -728,12 +728,11 @@ def claim_create_onaccept(form):
 
     if not error:
         # Lookup the template variables
-        base_url = current.deployment_settings.get_base_public_url()
-        appname = current.request.application
+        app_url = current.deployment_settings.get_base_app_url()
         data = {"program": program.name,
                 "date": btable.date.represent(billing.date),
                 "organisation": provider.name,
-                "url": "%s/%s/fin/voucher_claim/%s" % (base_url, appname, claim.id),
+                "url": "%s/fin/voucher_claim/%s" % (app_url, claim.id),
                 }
 
         # Send the email notification
@@ -965,13 +964,12 @@ def invoice_onsettled(invoice):
 
     if not error:
         # Lookup the template variables
-        base_url = current.deployment_settings.get_base_public_url()
-        appname = current.request.application
+        app_url = current.deployment_settings.get_base_app_url()
         data = {"program": program.name,
                 "date": btable.date.represent(billing.date),
                 "invoice": invoice_no,
                 "organisation": provider.name,
-                "url": "%s/%s/fin/voucher_claim/%s" % (base_url, appname, claim.id),
+                "url": "%s/fin/voucher_claim/%s" % (app_url, claim.id),
                 }
 
         # Send the email notification

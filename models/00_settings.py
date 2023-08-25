@@ -28,6 +28,7 @@ s3.download_url = "%s/default/download" % s3.base_url
 messages["UNKNOWN_OPT"] = "Unknown"
 messages["NONE"] = "-"
 messages["OBSOLETE"] = "Obsolete"
+messages["OPEN"] = settings.get_ui_label_open()
 messages["READ"] = settings.get_ui_label_read()
 messages["UPDATE"] = settings.get_ui_label_update()
 messages["DELETE"] = "Delete"
@@ -45,7 +46,8 @@ for u in messages:
         globals()[u] = T(messages[u])
 
 # CRUD Labels
-s3.crud_labels = Storage(READ = READ,
+s3.crud_labels = Storage(OPEN = OPEN,
+                         READ = READ,
                          UPDATE = UPDATE,
                          DELETE = DELETE,
                          COPY = COPY,
@@ -131,10 +133,12 @@ else:
 # -----------------------------------------------------------------------------
 # Auth
 #
-_settings = auth.settings
-_settings.lock_keys = False
+auth_settings = auth.settings
 
-_settings.expiration = 28800  # seconds
+auth_settings.lock_keys = False
+
+auth_settings.logging_enabled = settings.get_auth_logging()
+auth_settings.expiration = 28800 # seconds
 
 if settings.get_auth_openid():
     # Requires http://pypi.python.org/pypi/python-openid/
@@ -142,67 +146,58 @@ if settings.get_auth_openid():
         from gluon.contrib.login_methods.openid_auth import OpenIDAuth
         openid_login_form = OpenIDAuth(auth)
         from gluon.contrib.login_methods.extended_login_form import ExtendedLoginForm
-        _settings.login_form = ExtendedLoginForm(auth, openid_login_form,
-                                                 signals=["oid", "janrain_nonce"])
+        auth_settings.login_form = ExtendedLoginForm(auth, openid_login_form,
+                                                     signals=["oid", "janrain_nonce"])
     except ImportError:
         session.warning = "Library support not available for OpenID"
 
 # Allow use of LDAP accounts for login
 # NB Currently this means that change password should be disabled:
-#_settings.actions_disabled.append("change_password")
+#auth_settings.actions_disabled.append("change_password")
 # (NB These are not automatically added to PR or to Authenticated role since they enter via the login() method not register())
 #from gluon.contrib.login_methods.ldap_auth import ldap_auth
 # Require even alternate login methods to register users 1st
-#_settings.alternate_requires_registration = True
+#auth_settings.alternate_requires_registration = True
 # Active Directory
-#_settings.login_methods.append(ldap_auth(mode="ad", server="dc.domain.org", base_dn="ou=Users,dc=domain,dc=org"))
+#auth_settings.login_methods.append(ldap_auth(mode="ad", server="dc.domain.org", base_dn="ou=Users,dc=domain,dc=org"))
 # or if not wanting local users at all (no passwords saved within DB):
-#_settings.login_methods = [ldap_auth(mode="ad", server="dc.domain.org", base_dn="ou=Users,dc=domain,dc=org")]
+#auth_settings.login_methods = [ldap_auth(mode="ad", server="dc.domain.org", base_dn="ou=Users,dc=domain,dc=org")]
 # Domino
-#_settings.login_methods.append(ldap_auth(mode="domino", server="domino.domain.org"))
+#auth_settings.login_methods.append(ldap_auth(mode="domino", server="domino.domain.org"))
 # OpenLDAP
-#_settings.login_methods.append(ldap_auth(server="directory.sahanafoundation.org", base_dn="ou=users,dc=sahanafoundation,dc=org"))
+#auth_settings.login_methods.append(ldap_auth(server="directory.sahanafoundation.org", base_dn="ou=users,dc=sahanafoundation,dc=org"))
+
 # Allow use of Email accounts for login
-#_settings.login_methods.append(email_auth("smtp.gmail.com:587", "@gmail.com"))
+#auth_settings.login_methods.append(email_auth("smtp.gmail.com:587", "@gmail.com"))
 
 # Require captcha verification for registration
 #auth.settings.captcha = RECAPTCHA(request, public_key="PUBLIC_KEY", private_key="PRIVATE_KEY")
+
 # Require Email Verification
-_settings.registration_requires_verification = settings.get_auth_registration_requires_verification()
-_settings.on_failed_authorization = URL(c="default", f="user",
-                                        args="not_authorized")
-_settings.reset_password_requires_verification = True
-_settings.verify_email_next = URL(c="default", f="index")
+auth_settings.registration_requires_verification = settings.get_auth_registration_requires_verification()
+auth_settings.reset_password_requires_verification = True
 
 # Require Admin approval for self-registered users
-_settings.registration_requires_approval = settings.get_auth_registration_requires_approval()
+auth_settings.registration_requires_approval = settings.get_auth_registration_requires_approval()
 
 # We don't wish to clutter the groups list with 1 per user.
-_settings.create_user_groups = False
-# We need to allow basic logins for Webservices
-_settings.allow_basic_login = True
+auth_settings.create_user_groups = False
 
-_settings.logout_onlogout = s3_auth_on_logout
-_settings.login_onaccept = s3_auth_on_login
-# Now read in auth.login() to avoid setting unneccesarily in every request
-#_settings.login_next = settings.get_auth_login_next()
+# We need to allow basic logins for Webservices
+auth_settings.allow_basic_login = True
+
+auth_settings.logout_onlogout = s3_auth_on_logout
+auth_settings.login_onaccept = s3_auth_on_login
+
+# Redirection URLs
+auth_settings.on_failed_authorization = URL(c="default", f="user", args="not_authorized")
+auth_settings.verify_email_next = URL(c="default", f="index")
+
 if settings.has_module("vol") and \
    settings.get_auth_registration_volunteer():
-    _settings.register_next = URL(c="vol", f="person")
+    auth_settings.register_next = URL(c="vol", f="person")
 
-# Languages available in User Profiles
-#if len(s3.l10n_languages) > 1:
-#    _settings.table_user.language.requires = s3base.IS_ISO639_2_LANGUAGE_CODE(sort = True,
-#                                                                              translate = True,
-#                                                                              zero = None,
-#                                                                              )
-#else:
-#    field = _settings.table_user.language
-#    field.default = s3.l10n_languages.keys()[0]
-#    field.readable = False
-#    field.writable = False
-
-_settings.lock_keys = True
+auth_settings.lock_keys = True
 
 # -----------------------------------------------------------------------------
 # Mail
@@ -218,7 +213,7 @@ if sender:
     if mail_server_login:
         mail.settings.login = mail_server_login
     # Email settings for registration verification and approval
-    _settings.mailer = mail
+    auth_settings.mailer = mail
 
 # -----------------------------------------------------------------------------
 # Session
@@ -268,7 +263,6 @@ s3_crud.navigate_away_confirm = settings.get_ui_navigate_away_confirm()
 # and text/x-json for JSON formats, other content types must be
 # specified here:
 s3.content_type = Storage(
-    tc = "application/atom+xml", # TableCast feeds
     rss = "application/rss+xml", # RSS
     georss = "application/rss+xml", # GeoRSS
     kml = "application/vnd.google-earth.kml+xml", # KML
@@ -278,7 +272,7 @@ s3.content_type = Storage(
 s3.json_formats = ["geojson", "s3json"]
 
 # CSV Formats
-s3.csv_formats = ["hrf", "s3csv"]
+s3.csv_formats = ["s3csv"]
 
 # Datatables default number of rows per page
 s3.ROWSPERPAGE = 20

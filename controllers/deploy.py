@@ -222,7 +222,7 @@ def group():
                 settings.pr.request_gender = False
 
                 field = ctable.person_id
-                field.widget = s3base.S3AddPersonWidget(controller="deploy")
+                field.widget = s3base.PersonSelector(controller="deploy")
 
                 # Configure list_fields for this context
                 list_fields = ["person_id",

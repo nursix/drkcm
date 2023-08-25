@@ -481,7 +481,9 @@ class TimePlotForm(S3ReportForm):
             "ajaxURL": ajaxurl,
             "autoSubmit": settings.get_ui_report_auto_submit(),
             "emptyMessage": str(empty),
-        }
+            "labelGrouped": str(T("Grouped##barchart")),
+            "labelStacked": str(T("Stacked##barchart")),
+            }
         script = """$("#%(widget_id)s").timeplot(%(options)s)""" % \
                     {"widget_id": widget_id,
                      "options": json.dumps(options),

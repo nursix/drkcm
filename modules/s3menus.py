@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Menu Structure and Layout
+"""
+    Sahana Eden Menu Structure and Layout
 
     @copyright: 2011-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -40,7 +39,7 @@ from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout
 
 # =============================================================================
-class S3MainMenu(object):
+class S3MainMenu:
     """ The default configurations for the main application menu """
 
     # -------------------------------------------------------------------------
@@ -258,7 +257,7 @@ class S3MainMenu(object):
                 )
 
 # =============================================================================
-class S3OptionsMenu(object):
+class S3OptionsMenu:
     """
         The default configurations for options menus
 
@@ -286,19 +285,18 @@ class S3OptionsMenu(object):
             self.menu = None
 
     # -------------------------------------------------------------------------
-    def admin(self):
+    @staticmethod
+    def admin():
         """ ADMIN menu """
 
         if not current.auth.s3_has_role("ADMIN"):
             # OrgAdmin: No Side-menu
             return None
 
-        settings_messaging = self.settings_messaging()
-
         settings = current.deployment_settings
         consent_tracking = lambda i: settings.get_auth_consent_tracking()
         is_data_repository = lambda i: settings.get_sync_data_repository()
-        translate = settings.has_module("translate")
+        #translate = settings.has_module("translate")
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -322,67 +320,28 @@ class S3OptionsMenu(object):
                     M("Database", c="appadmin", f="index")(
                         M("Raw Database access", c="appadmin", f="index")
                     ),
+                    M("Event Log", c="admin", f="event"),
                     M("Error Tickets", c="admin", f="errors"),
                     M("Scheduler", c="admin", f="task"),
-                    M("Settings", c="admin", f="setting")(
-                        settings_messaging,
-                    ),
+                    M("Settings", c="admin", f="setting"),
                     M("Synchronization", c="sync", f="index")(
                         M("Settings", f="config", args=[1], m="update"),
                         M("Repositories", f="repository"),
                         M("Public Data Sets", f="dataset", check=is_data_repository),
                         M("Log", f="log"),
                     ),
-                    #M("Edit Application", a="admin", c="default", f="design",
-                      #args=[request.application]),
-                    M("Translation", c="admin", f="translate", check=translate)(
-                       M("Select Modules for translation", c="admin", f="translate",
-                         m="create", vars={"opt": "1"}),
-                       M("Upload translated files", c="admin", f="translate",
-                         m="create", vars={"opt": "2"}),
-                       M("View Translation Percentage", c="admin", f="translate",
-                         m="create", vars={"opt": "3"}),
-                       M("Add strings manually", c="admin", f="translate",
-                         m="create", vars={"opt": "4"})
-                    ),
-                    #M("View Test Result Reports", c="admin", f="result"),
-                    #M("Portable App", c="admin", f="portable")
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def assess():
-        """ ASSESS Menu """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="assess")(
-                    M("Building Assessments", f="building")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    M("Canvassing", f="canvass")(
-                        M("Create", m="create"),
-                        M("Map", m="map"),
-                    ),
-                    #M("Rapid Assessments", f="rat")(
-                    #    M("Create", m="create"),
+                    # TODO setting to enable:
+                    #M("Translation", c="admin", f="translate", check=translate)(
+                    #   M("Select Modules for translation", c="admin", f="translate",
+                    #     m="create", vars={"opt": "1"}),
+                    #   M("Upload translated files", c="admin", f="translate",
+                    #     m="create", vars={"opt": "2"}),
+                    #   M("View Translation Percentage", c="admin", f="translate",
+                    #     m="create", vars={"opt": "3"}),
+                    #   M("Add strings manually", c="admin", f="translate",
+                    #     m="create", vars={"opt": "4"})
                     #),
-                    #M("Impact Assessments", f="assess")(
-                    #    #M("Create", m="create"),
-                    #    M("Create", f="basic_assess", p="create"),
-                    #    #M("Search"),
-                    #    M("Mobile", f="mobile_basic_assess"),
-                    #),
-                    ##M("Baseline Data")(
-                    #    #M("Population", f="population"),
-                    ##),
-                    #M("Edit Options", restrict=ADMIN)(
-                    #    M("List / Add Baseline Types", f="baseline_type"),
-                    #    M("List / Add Impact Types", f="impact_type"),
-                    #)
                 )
-
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -523,27 +482,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def building():
-        """ BUILDING Controller """
-
-        return M(c="building")(
-                    M("NZSEE Level 1", f="nzseel1")(
-                        M("Submit New (triage)", m="create",
-                          vars={"triage":1}),
-                        M("Submit New (full form)", m="create"),
-                    ),
-                    M("NZSEE Level 2", f="nzseel2")(
-                        M("Submit New", m="create"),
-                    ),
-                    M("Report", f="index")(
-                        M("Snapshot", f="report"),
-                        M("Assessment timeline", f="timeline"),
-                        M("Assessment admin level", f="adminLevel"),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def cap():
         """ CAP menu """
 
@@ -625,27 +563,6 @@ class S3OptionsMenu(object):
                         #M("Compose and Send", f="newsletter", p="create"),
                         #),
                     )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def dc():
-        """ Data Collection Tool """
-
-        #ADMIN = current.session.s3.system_roles.ADMIN
-
-        return M(c="dc")(
-                    M("Templates", f="template")(
-                        M("Create", m="create"),
-                        M("Import", f="question", m="import"),
-                    ),
-                    M("Targets", f="target")(
-                        M("Create", m="create"),
-                    ),
-                    # @ToDo: Use settings for label
-                    M("Responses", f="respnse")(
-                        M("Create", m="create"),
-                    ),
-                )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -742,14 +659,13 @@ class S3OptionsMenu(object):
         """ DVI / Disaster Victim Identification """
 
         return M(c="dvi")(
-                    #M("Home", f="index"),
                     M("Recovery Requests", f="recreq")(
                         M("New Request", m="create"),
                         M("List Current",
                           vars={"recreq.status":"1,2,3"}),
                     ),
                     M("Dead Bodies", f="body")(
-                        M("Add", m="create"),
+                        M("Register Body", m="create"),
                         M("List unidentified",
                           vars={"identification.status": "None"}),
                         M("Report by Age/Gender", m="report",
@@ -765,7 +681,6 @@ class S3OptionsMenu(object):
                     M("Morgues", f="morgue")(
                         M("Create", m="create"),
                     ),
-                    M("Dashboard", f="index"),
                 )
 
     # -------------------------------------------------------------------------
@@ -927,7 +842,7 @@ class S3OptionsMenu(object):
             config = current.db(query).select(table.id,
                                               limitby=(0, 1),
                                               cache=s3db.cache).first()
-            return True if config else False
+            return bool(config)
 
         def config_args():
             auth = current.auth
@@ -1187,12 +1102,10 @@ class S3OptionsMenu(object):
                     ),
                     M(inv_recv_list, c="inv", f="recv", translate=False)( # Already T()
                         M("Create", m="create"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Sent Shipments", c="inv", f="send")(
                         M("Create", m="create"),
                         M("Search Shipped Items", f="track_item"),
-                        M("Timeline", args="timeline"),
                     ),
                     M("Distributions", c="supply", f="distribution")(
                         M("Create", m="create"),
@@ -1251,7 +1164,6 @@ class S3OptionsMenu(object):
                         M("Create Incident Report", m="create"),
                         M("Open Incidents", vars={"open":1}),
                         M("Map", m="map"),
-                        M("Timeline", args="timeline"),
                         M("Import", m="import"),
                         M("Report", m="report")
                     ),
@@ -1316,46 +1228,6 @@ class S3OptionsMenu(object):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def survey():
-        """ SURVEY / Survey """
-
-        ADMIN = current.session.s3.system_roles.ADMIN
-
-        # Do we have a series_id?
-        series_id = False
-        get_vars = Storage()
-        try:
-            series_id = int(current.request.args[0])
-        except (IndexError, ValueError):
-            try:
-                series_id = int(current.request.get_vars["viewing"].split(".")[1])
-            except (AttributeError, IndexError, ValueError):
-                pass
-        if series_id:
-            get_vars.viewing = "survey_complete.%s" % series_id
-
-        return M(c="survey")(
-                    M("Assessment Templates", f="template")(
-                        M("Create", m="create"),
-                    ),
-                    #M("Section", f="section")(
-                    #    M("Create", args="create"),
-                    #),
-                    M("Disaster Assessments", f="series")(
-                        M("Create", m="create"),
-                    ),
-                    M("Administration", f="admin", restrict=[ADMIN])(
-                        M("Import Templates", f="question_list",
-                          m="import", p="create"),
-                        M("Import Template Layout", f="formatter",
-                          m="import", p="create"),
-                        M("Import Completed Assessment Forms", f="complete",
-                          m="import", p="create", vars=get_vars, check=series_id),
-                    ),
-                )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def member():
         """ Membership Management """
 
@@ -1385,22 +1257,11 @@ class S3OptionsMenu(object):
                 )
 
     # -------------------------------------------------------------------------
-    def msg(self):
+    @staticmethod
+    def msg():
         """ MSG / Messaging """
 
         ADMIN = current.session.s3.system_roles.ADMIN
-
-        if current.request.function in ("sms_outbound_gateway",
-                                        "email_channel",
-                                        "facebook_channel",
-                                        "sms_modem_channel",
-                                        "sms_smtp_channel",
-                                        "sms_webapi_channel",
-                                        "tropo_channel",
-                                        "twitter_channel"):
-            return self.admin()
-
-        settings_messaging = self.settings_messaging()
 
         return M(c="msg")(
                     M("Compose", f="compose"),
@@ -1426,8 +1287,20 @@ class S3OptionsMenu(object):
                        M("Results", f="twitter_result"),
                        # @ToDo KeyGraph Results
                     ),
-                    M("Administration", restrict=[ADMIN])(settings_messaging)
-                )
+                    M("Administration", restrict=[ADMIN], link=False)(
+                        M("Email Channels (Inbound)", c="msg", f="email_channel"),
+                        M("Facebook Channels", c="msg", f="facebook_channel"),
+                        M("RSS Channels", c="msg", f="rss_channel"),
+                        M("SMS Outbound Gateways", c="msg", f="sms_outbound_gateway"),
+                        M("SMS Modem Channels", c="msg", f="sms_modem_channel"),
+                        M("SMS SMTP Channels", c="msg", f="sms_smtp_channel"),
+                        M("SMS WebAPI Channels", c="msg", f="sms_webapi_channel"),
+                        M("Mobile Commons Channels", c="msg", f="mcommons_channel"),
+                        M("Twilio Channels", c="msg", f="twilio_channel"),
+                        M("Twitter Channels", c="msg", f="twitter_channel"),
+                        M("Parsers", c="msg", f="parser"),
+                        ),
+                    )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1827,32 +1700,6 @@ class S3OptionsMenu(object):
                         #M("Import", m="import"),
                     ),
                 )
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def settings_messaging(cls):
-        """ Messaging settings menu items:
-
-            These items are used in multiple menus, but each item instance can
-            always only belong to one parent, so we need to re-instantiate
-            with the same parameters, and therefore this is defined as a
-            function here.
-        """
-
-        return [
-            M("Email Channels (Inbound)", c="msg", f="email_channel"),
-            M("Facebook Channels", c="msg", f="facebook_channel"),
-            M("RSS Channels", c="msg", f="rss_channel"),
-            M("SMS Outbound Gateways", c="msg", f="sms_outbound_gateway")(
-                M("SMS Modem Channels", c="msg", f="sms_modem_channel"),
-                M("SMS SMTP Channels", c="msg", f="sms_smtp_channel"),
-                M("SMS WebAPI Channels", c="msg", f="sms_webapi_channel"),
-            ),
-            M("Mobile Commons Channels", c="msg", f="mcommons_channel"),
-            M("Twilio Channels", c="msg", f="twilio_channel"),
-            M("Twitter Channels", c="msg", f="twitter_channel"),
-            M("Parsers", c="msg", f="parser"),
-        ]
 
     # -------------------------------------------------------------------------
     @classmethod

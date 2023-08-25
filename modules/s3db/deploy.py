@@ -61,8 +61,8 @@ class DeployOrganisationModel(DataModel):
         tablename = "deploy_organisation"
         self.define_table(tablename,
                           self.org_organisation_id(),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -120,12 +120,12 @@ class DeployModel(DataModel):
                            represent = self.deploy_mission_name_represent,
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_date(default = "now",
-                             ),
+                     DateField(default = "now",
+                               ),
                      # @ToDo: Link to location via link table
                      # link table could be event_event_location for IFRC
                      # (would still allow 1 multi-country event to have multiple missions)
-                     self.gis_location_id(widget = S3LocationSelector(),
+                     self.gis_location_id(widget = LocationSelector(),
                                           ),
                      # @ToDo: Link to event_type via event_id link table instead of duplicating
                      self.event_type_id(),
@@ -144,8 +144,8 @@ class DeployModel(DataModel):
                                   deploy_mission_hrquantity),
                      Field.Method("response_count",
                                   deploy_mission_response_count),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
 
         # Profile
@@ -333,18 +333,19 @@ class DeployModel(DataModel):
                                 show_link = True,
                                 )
 
-        mission_id = S3ReusableField("mission_id", "reference %s" % tablename,
-                                     label = T("Mission"),
-                                     ondelete = "CASCADE",
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db,
-                                                          "deploy_mission.id",
-                                                          represent),
-                                     comment = S3PopupLink(c = "deploy",
-                                                           f = "mission",
-                                                           label = label_create,
-                                                           ),
-                                     )
+        mission_id = FieldTemplate("mission_id", "reference %s" % tablename,
+                                   label = T("Mission"),
+                                   ondelete = "CASCADE",
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db,
+                                                        "deploy_mission.id",
+                                                        represent,
+                                                        ),
+                                   comment = S3PopupLink(c = "deploy",
+                                                         f = "mission",
+                                                         label = label_create,
+                                                         ),
+                                   )
 
         # ---------------------------------------------------------------------
         # Link table to link documents to missions, responses or assignments
@@ -354,7 +355,7 @@ class DeployModel(DataModel):
                      mission_id(),
                      self.msg_message_id(),
                      self.doc_document_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Application of human resources
@@ -390,7 +391,7 @@ class DeployModel(DataModel):
                                                        UNKNOWN_OPT),
                            requires = IS_IN_SET(status_opts),
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   delete_next = URL(c="deploy", f="human_resource", args="summary"),
@@ -405,16 +406,16 @@ class DeployModel(DataModel):
         tablename = "deploy_unavailability"
         define_table(tablename,
                      self.pr_person_id(ondelete="CASCADE"),
-                     s3_date("start_date",
-                             label = T("Start Date"),
-                             set_min = "#deploy_unavailability_end_date",
-                             ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             set_max = "#deploy_unavailability_start_date",
-                             ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     DateField("start_date",
+                               label = T("Start Date"),
+                               set_min = "#deploy_unavailability_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               set_max = "#deploy_unavailability_start_date",
+                               ),
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -456,15 +457,17 @@ class DeployModel(DataModel):
                            ),
                      # These get copied to hrm_experience
                      # rest of fields may not be filled-out, but are in attachments
-                     s3_date("start_date", # Only field visible when deploying from Mission profile
-                             label = T("Start Date"),
-                             ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             start_field = "deploy_assignment_start_date",
-                             default_interval = 12,
-                             ),
-                     *s3_meta_fields())
+                     DateField("start_date", # Only field visible when deploying from Mission profile
+                               label = T("Start Date"),
+                               set_min = "#deploy_assignment_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               set_max = "#deploy_assignment_start_date",
+                               #start_field = "deploy_assignment_start_date",
+                               #default_interval = 12,
+                               ),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -530,10 +533,10 @@ class DeployModel(DataModel):
                                          },
                        )
 
-        assignment_id = S3ReusableField("assignment_id",
-                                        "reference %s" % tablename,
-                                        ondelete = "CASCADE",
-                                        )
+        assignment_id = FieldTemplate("assignment_id",
+                                      "reference %s" % tablename,
+                                      ondelete = "CASCADE",
+                                      )
 
         # ---------------------------------------------------------------------
         # Link Assignments to Appraisals
@@ -542,7 +545,7 @@ class DeployModel(DataModel):
         define_table(tablename,
                      assignment_id(empty = False),
                      Field("appraisal_id", self.hrm_appraisal),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   ondelete_cascade = \
@@ -556,7 +559,7 @@ class DeployModel(DataModel):
         define_table(tablename,
                      assignment_id(empty = False),
                      Field("experience_id", self.hrm_experience),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   ondelete_cascade = \
@@ -577,7 +580,7 @@ class DeployModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"deploy_mission_id": S3ReusableField.dummy("mission_id"),
+        return {"deploy_mission_id": FieldTemplate.dummy("mission_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -898,13 +901,13 @@ class DeployAlertModel(DataModel):
                         label = T("Requesting Manager"),
                         widget = S3HumanResourceAutocompleteWidget(group="staff"),
                         ),
-                     s3_date("date_requested",
-                             default = "now",
-                             label = T("Date Requested"),
-                             ),
-                     s3_date("expected_start_date",
-                             label = T("Expected Start Date"),
-                             ),
+                     DateField("date_requested",
+                               default = "now",
+                               label = T("Date Requested"),
+                               ),
+                     DateField("expected_start_date",
+                               label = T("Expected Start Date"),
+                               ),
                      Field("contact_method", "integer",
                            default = 1,
                            label = T("Send By"),
@@ -930,27 +933,27 @@ class DeployAlertModel(DataModel):
                            represent = lambda v: v or NONE,
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_date("date_alert_sent",
-                             default = "now",
-                             label = T("Date Alert Sent"),
-                             ),
-                     s3_date("date_cvs_sent",
-                             label = T("Date CVs sent to DM"),
-                             ),
-                     s3_date("date_approval_meeting",
-                             label = T("Date DM talked to President"),
-                             ),
-                     s3_date("date_approved",
-                             label = T("Date President approved"),
-                             ),
-                     s3_date("date_selected",
-                             label = T("Date Applicant selected"),
-                             ),
+                     DateField("date_alert_sent",
+                               default = "now",
+                               label = T("Date Alert Sent"),
+                               ),
+                     DateField("date_cvs_sent",
+                               label = T("Date CVs sent to DM"),
+                               ),
+                     DateField("date_approval_meeting",
+                               label = T("Date DM talked to President"),
+                               ),
+                     DateField("date_approved",
+                               label = T("Date President approved"),
+                               ),
+                     DateField("date_selected",
+                               label = T("Date Applicant selected"),
+                               ),
                      # Link to the Message once sent
                      message_id(readable = False,
                                 writable = False,
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -999,14 +1002,14 @@ class DeployAlertModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        alert_id = S3ReusableField("alert_id", "reference %s" % tablename,
-                                   label = T("Alert"),
-                                   ondelete = "CASCADE",
-                                   represent = represent,
-                                   requires = IS_ONE_OF(db, "deploy_alert.id",
-                                                        represent,
-                                                        ),
-                                   )
+        alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
+                                 label = T("Alert"),
+                                 ondelete = "CASCADE",
+                                 represent = represent,
+                                 requires = IS_ONE_OF(db, "deploy_alert.id",
+                                                      represent,
+                                                      ),
+                                 )
 
         # ---------------------------------------------------------------------
         # Recipients of the Alert
@@ -1017,7 +1020,7 @@ class DeployAlertModel(DataModel):
                      human_resource_id(empty = False,
                                        label = T(hr_label),
                                        ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Recipient"),
@@ -1054,8 +1057,8 @@ class DeployAlertModel(DataModel):
                      Field("approval_letter", "upload",
                            label = T("Approval Letter"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         insertable = settings.get_deploy_responses_via_web()
 
@@ -3015,15 +3018,9 @@ class deploy_MissionProfileLayout(S3DataListLayout):
             if documents:
                 if not isinstance(documents, list):
                     documents = [documents]
-                bootstrap = current.response.s3.formstyle == "bootstrap"
-                if bootstrap:
-                    docs = UL(_class="dropdown-menu",
-                              _role="menu",
-                              )
-                else:
-                    docs = SPAN(_id="attachments",
-                                _class="profile-data-value",
-                                )
+                docs = SPAN(_id="attachments",
+                            _class="profile-data-value",
+                            )
                 retrieve = db.doc_document.file.retrieve
                 for doc in documents:
                     try:
@@ -3034,42 +3031,22 @@ class deploy_MissionProfileLayout(S3DataListLayout):
                                   f = "download",
                                   args=[doc],
                                   )
-                    if bootstrap:
-                        doc_item = LI(A(ICON("file"),
-                                        " ",
-                                        doc_name,
-                                        _href = doc_url,
-                                        ),
-                                      _role="menuitem",
-                                      )
-                    else:
-                        doc_item = A(ICON("file"),
-                                     " ",
-                                     doc_name,
-                                     _href = doc_url,
-                                     )
+                    doc_item = A(ICON("file"),
+                                 " ",
+                                 doc_name,
+                                 _href = doc_url,
+                                 )
                     docs.append(doc_item)
                     docs.append(", ")
-                if bootstrap:
-                    docs = DIV(A(ICON("attachment"),
-                                 SPAN(_class="caret"),
-                                 _class = "btn dropdown-toggle",
-                                 _href = "#",
-                                 data = {"toggle": "dropdown"},
+                # Remove final comma
+                docs.components.pop()
+                docs = DIV(LABEL("%s:" % T("Attachments"),
+                                 _class = "profile-data-label",
+                                 _for = "attachments",
                                  ),
-                               docs,
-                               _class = "btn-group attachments dropdown pull-right",
-                               )
-                else:
-                    # Remove final comma
-                    docs.components.pop()
-                    docs = DIV(LABEL("%s:" % T("Attachments"),
-                                     _class = "profile-data-label",
-                                     _for = "attachments",
-                                     ),
-                               docs,
-                               _class = "profile-data",
-                               )
+                           docs,
+                           _class = "profile-data",
+                           )
             else:
                 docs = ""
 

@@ -85,12 +85,12 @@ class PROCProcurementPlansModel(DataModel):
                                      #                                messages.AUTOCOMPLETE_HELP)),
                                      represent = self.org_site_represent,
                                      ),
-                     s3_date("order_date",
-                             label = T("Order Date")
-                             ),
-                     s3_date("eta",
-                             label = T("Date Expected"),
-                             ),
+                     DateField("order_date",
+                               label = T("Order Date")
+                               ),
+                     DateField("eta",
+                               label = T("Date Expected"),
+                               ),
                      # @ToDo: Do we want more than 1 supplier per Plan?
                      # @ToDo: Filter to orgs of type 'supplier'
                      self.org_organisation_id(label = T("Supplier")),
@@ -101,8 +101,8 @@ class PROCProcurementPlansModel(DataModel):
                            default = 0,
                            ),
                      # @ToDo: Add estimated shipping costs
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -127,17 +127,18 @@ class PROCProcurementPlansModel(DataModel):
                   )
 
         proc_plan_represent = self.proc_plan_represent
-        plan_id = S3ReusableField("plan_id", "reference %s" % tablename,
-                                  sortby = "date",
-                                  requires = IS_EMPTY_OR(
+        plan_id = FieldTemplate("plan_id", "reference %s" % tablename,
+                                sortby = "date",
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "proc_plan.id",
                                                           proc_plan_represent,
-                                                          orderby="proc_plan.date",
-                                                          sort=True)),
-                                  represent = proc_plan_represent,
-                                  label = T("Procurement Plan"),
-                                  ondelete = "CASCADE",
-                                  )
+                                                          orderby = "proc_plan.date",
+                                                          sort = True,
+                                                          )),
+                                represent = proc_plan_represent,
+                                label = T("Procurement Plan"),
+                                ondelete = "CASCADE",
+                                )
 
         # Items as a component of Plans
         self.add_components(tablename,
@@ -158,9 +159,9 @@ class PROCProcurementPlansModel(DataModel):
                            ),
                      # @ToDo: Move this into a Currency Widget
                      #        for the pack_value field
-                     s3_currency(readable=False,
-                                 writable=False
-                                 ),
+                     CurrencyField(readable=False,
+                                   writable=False
+                                   ),
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            readable = False,
@@ -171,8 +172,8 @@ class PROCProcurementPlansModel(DataModel):
                      #      compute = record_pack_quantity), # defined in supply
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -286,11 +287,11 @@ class PROCPurchaseOrdersModel(DataModel):
 
         SITE_LABEL = settings.get_org_site_label()
         string_represent = lambda s: s if s else current.messages["NONE"]
-        purchase_ref = S3ReusableField("purchase_ref",
-                                       label = T("%(PO)s Number") % \
-                                               {"PO": settings.get_proc_shortname()},
-                                       represent = string_represent,
-                                       )
+        purchase_ref = FieldTemplate("purchase_ref",
+                                     label = T("%(PO)s Number") % \
+                                             {"PO": settings.get_proc_shortname()},
+                                     represent = string_represent,
+                                     )
 
         # =====================================================================
         # Purchase Orders
@@ -312,9 +313,9 @@ class PROCPurchaseOrdersModel(DataModel):
                                      #                                messages.AUTOCOMPLETE_HELP)),
                                      represent = self.org_site_represent,
                                      ),
-                     s3_date(default = "now"),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     DateField(default = "now"),
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -342,17 +343,18 @@ class PROCPurchaseOrdersModel(DataModel):
         proc_order_represent = S3Represent(lookup = tablename,
                                            fields = ["purchase_ref"],
                                            )
-        order_id = S3ReusableField("order_id", "reference %s" % tablename,
-                                   sortby = "date",
-                                   requires = IS_EMPTY_OR(
+        order_id = FieldTemplate("order_id", "reference %s" % tablename,
+                                 sortby = "date",
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "proc_order.id",
                                                           proc_order_represent,
-                                                          orderby="proc_order.date",
-                                                          sort=True)),
-                                   represent = proc_order_represent,
-                                   label = T("Purchase Order"),
-                                   ondelete = "CASCADE",
-                                   )
+                                                          orderby = "proc_order.date",
+                                                          sort = True,
+                                                          )),
+                                 represent = proc_order_represent,
+                                 label = T("Purchase Order"),
+                                 ondelete = "CASCADE",
+                                 )
 
         # Items as a component of Plans
         self.add_components(tablename,
@@ -376,9 +378,9 @@ class PROCPurchaseOrdersModel(DataModel):
                            ),
                      # @ToDo: Move this into a Currency Widget
                      #        for the pack_value field
-                     s3_currency(readable=False,
-                                 writable=False
-                                ),
+                     CurrencyField(readable=False,
+                                   writable=False
+                                   ),
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            readable = False,
@@ -389,8 +391,8 @@ class PROCPurchaseOrdersModel(DataModel):
                      #      compute = record_pack_quantity), # defined in supply
                      #Field.Method("pack_quantity",
                      #             self.supply_item_pack_quantity(tablename=tablename)),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -458,8 +460,8 @@ class PROCPurchaseOrdersModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("order_id",
@@ -480,7 +482,7 @@ class PROCPurchaseOrdersModel(DataModel):
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"proc_order_id": S3ReusableField.dummy("order_id"),
+        return {"proc_order_id": FieldTemplate.dummy("order_id"),
                 }
 
     # -------------------------------------------------------------------------

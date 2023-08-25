@@ -5,16 +5,17 @@
 
 // Foundation variables used:
 //$primary-color
-//$button-bg-color
-//$button-bg-hover
+//$button-background
+//$button-background-hover
 //$alert-color
-//$alert-button-bg-hover
+
+$alert-button-bg-hover: scale-color($alert-color, $lightness: $button-background-hover-lightness);
 
 // Action buttons defaults
-$action_btn_bgcolor: $button-bg-color !default;
-$action_btn_bgcolor_hover: $button-bg-hover !default;
-$action_btn_fgcolor: white !default;
-$action_btn_fgcolor_hover: white !default;
+$action_btn_bgcolor: $button-background !default;
+$action_btn_bgcolor_hover: $button-background-hover !default;
+$action_btn_fgcolor: $white !default;
+$action_btn_fgcolor_hover: $white !default;
 
 // Standard action button
 $action_btn_bgcolor_default: $action_btn_bgcolor !default;
@@ -40,8 +41,8 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 
 // ============================================================================
 // STYLES
-
-/* Action buttons */
+//
+// Action buttons
 .action-btn,
 .delete-btn-ajax,
 .delete-btn,
@@ -54,7 +55,7 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
     }
 }
 
-/* Standard action buttons */
+// Standard action buttons
 .action-btn,
 .selected-action {
     background-color: $action_btn_bgcolor_default;
@@ -65,7 +66,7 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
     }
 }
 
-/* Alert-style action buttons (e.g. delete) */
+// Alert-style action buttons (e.g. delete)
 .delete-btn-ajax,
 .delete-btn {
     background-color: $action_btn_bgcolor_alert;
@@ -77,7 +78,8 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Action buttons in datatables */
+// Action buttons in datatables
+//
 .dataTable {
     // need to override datatables CSS as that has more specific selectors
     .action-btn,
@@ -94,7 +96,8 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Action links */
+// Action links
+//
 .action-lnk {
     font-size: 85%;
     cursor: pointer;
@@ -112,23 +115,32 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Form-cancel button */
+// Form-cancel button
+//
 .cancel-form-btn {
-    padding: 0.9375rem;
+    display: inline-block;
+    padding: $button-padding;
+    line-height: 1;
+    vertical-align: middle;
+    margin-bottom: 0.3rem;
+
+    border: 1px solid transparent;
     &:hover {
-        color: white;
-        background-color: $primary-color;
+        background-color: $white;
+        border-color: $primary-color;
     }
 }
 
 // ----------------------------------------------------------------------------
-/* Delete-button in read/update view */
+// Delete-button in read/update view
+//
 #delete-btn {
     margin-bottom: 0.5rem;
 }
 
 // ----------------------------------------------------------------------------
-/* Full screen map button */
+// Full screen map button
+//
 .map_home .gis_fullscreen_map-btn {
     font-weight: normal;
     font-size: 0.8rem;
@@ -136,20 +148,33 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Toggle button */
+// Toggle button
+//
 button.toggle-text {
+    color: $action_btn_fgcolor;
+    background-color: $action_btn_bgcolor;
     font-size: 0.7rem;
-    margin-left: 0.7rem;
+    margin: 0 0 0 0.7rem;
     [dir=rtl] & {
-        margin-left: 0;
-        margin-right: 0.7rem;
+        margin: 0 0.7rem 0 0;
     }
     line-height: 1.0;
     padding: 0.2rem 0.3rem;
 }
 
 // ----------------------------------------------------------------------------
-/* Debug buttons in footer */
+// prContacts editable-buttons
+//
+.pr-contacts-editable button {
+    @include tiny_button_style();
+    background-color: $action_btn_bgcolor_default;
+    color: $action_btn_fgcolor_default !important;
+    margin: 2px;
+}
+
+// ----------------------------------------------------------------------------
+// Debug buttons in footer
+//
 #footer {
     button.btn {
         @include tiny_button_style();
@@ -163,7 +188,8 @@ button.toggle-text {
 }
 
 // ----------------------------------------------------------------------------
-/* Caret */
+// Caret
+//
 .caret {
     display: inline-block;
     width: 0;

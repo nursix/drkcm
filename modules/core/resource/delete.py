@@ -507,7 +507,11 @@ class DeleteProcess:
         # Reset foreign keys to resolve constraints
         fk = {}
         for fname in self.foreign_keys:
-            value = row[fname]
+            if fname == "modified_by":
+                user = current.auth.user
+                value = user.id if user else None
+            else:
+                value = row[fname]
             if value:
                 fk[fname] = value
             if not table[fname].notnull:

@@ -63,8 +63,8 @@ class WaterModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_ZONE_TYPE = T("Create Zone Type")
@@ -110,13 +110,13 @@ class WaterModel(DataModel):
                                                  ),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    ),
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  ),
                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -141,13 +141,13 @@ class WaterModel(DataModel):
                            requires = IS_NOT_EMPTY(),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    )
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  )
                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_RIVER = T("Create River")
@@ -163,16 +163,16 @@ class WaterModel(DataModel):
             msg_list_empty = T("No Rivers currently registered"))
 
         #represent = S3Represent(lookup = tablename)
-        #river_id = S3ReusableField("river_id", "reference %s" % tablename,
-        #                           label = T("River"),
-        #                           ondelete = "RESTRICT",
-        #                           represent = represent,
-        #                           requires = IS_EMPTY_OR(IS_ONE_OF(db, "water_river.id", represent)),
-        #                           comment = S3PopupLink(c = "water",
-        #                                                 f = "river",
-        #                                                 title = ADD_RIVER,
-        #                                                 ),
-        #                           )
+        #river_id = FieldTemplate("river_id", "reference %s" % tablename,
+        #                         label = T("River"),
+        #                         ondelete = "RESTRICT",
+        #                         represent = represent,
+        #                         requires = IS_EMPTY_OR(IS_ONE_OF(db, "water_river.id", represent)),
+        #                         comment = S3PopupLink(c = "water",
+        #                                               f = "river",
+        #                                               title = ADD_RIVER,
+        #                                               ),
+        #                         )
 
         # -----------------------------------------------------------------------------
         # Gauges
@@ -213,8 +213,8 @@ class WaterModel(DataModel):
                             flowstatus_opts.get(opt, opt),
                            requires = IS_EMPTY_OR(IS_IN_SET(flowstatus_opts)),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Gauge"),
@@ -238,8 +238,8 @@ class WaterModel(DataModel):
         #                   label = T("Name"),
         #                   ),
         #             location_id(),
-        #             s3_comments(),
-        #             *s3_meta_fields())
+        #             CommentsField(),
+        #             )
 
         #crud_strings[tablename] = Storage(
         #    label_create = T("Create Debris Basin"),
@@ -263,8 +263,8 @@ class WaterModel(DataModel):
         #                   label = T("Name"),
         #                   ),
         #             location_id(),
-        #             s3_comments(),
-        #             *s3_meta_fields())
+        #             CommentsField(),
+        #             )
 
         #crud_strings[tablename] = Storage(
         #    label_create = T("Create Reservoir"),

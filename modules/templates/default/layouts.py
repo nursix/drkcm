@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from gluon import *
 from gluon.storage import Storage
 from core import *

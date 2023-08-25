@@ -65,8 +65,8 @@ class FireModel(DataModel):
                      Field("mapstyle", "text",
                            label=T("Style"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_ZONE_TYPE = T("Create Zone Type")
@@ -110,13 +110,13 @@ class FireModel(DataModel):
                                                  ),
                            label=T("Type")),
                      self.gis_location_id(
-                       widget = S3LocationSelector(catalog_layers = True,
-                                                   points = False,
-                                                   polygons = True,
-                                                   )
+                       widget = LocationSelector(catalog_layers = True,
+                                                 points = False,
+                                                 polygons = True,
+                                                 )
                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -232,21 +232,22 @@ class FireStationModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         self.configure("fire_station",
                        super_entity = "org_site",
                        )
 
-        station_id = S3ReusableField("station_id", "reference %s" % tablename,
-                                     label = T("Station"),
-                                     ondelete = "CASCADE",
-                                     represent = self.fire_station_represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "fire_station.id",
-                                                              self.fire_station_represent)),
-                                     )
+        station_id = FieldTemplate("station_id", "reference %s" % tablename,
+                                   label = T("Station"),
+                                   ondelete = "CASCADE",
+                                   represent = self.fire_station_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "fire_station.id",
+                                                          self.fire_station_represent,
+                                                          )),
+                                   )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -344,7 +345,6 @@ class FireStationModel(DataModel):
                      self.vehicle_vehicle_id(empty = False,
                                              ondelete = "CASCADE",
                                              ),
-                     *s3_meta_fields()
                      )
 
         # CRUD strings
@@ -413,8 +413,8 @@ class FireStationModel(DataModel):
                      #Field("anti_seismic_construction", "boolean"),
                      #Field("isolated_from_air", "boolean"),
                      #Field("hermetic", "boolean"),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -446,8 +446,8 @@ class FireStationModel(DataModel):
                      # What are the Org & Person for? Contacts?
                      organisation_id(),
                      self.pr_person_id(),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -471,24 +471,25 @@ class FireStationModel(DataModel):
         define_table(tablename,
                      station_id(),
                      Field("name"),
-                     s3_datetime("start_time",
-                                 empty = False,
-                                 default = "now"
-                                 ),
-                     s3_datetime("end_time",
-                                 empty = False,
-                                 default = "now"
-                                 ),
-                     *s3_meta_fields())
+                     DateTimeField("start_time",
+                                   empty = False,
+                                   default = "now"
+                                   ),
+                     DateTimeField("end_time",
+                                   empty = False,
+                                   default = "now"
+                                   ),
+                     )
 
-        shift_id = S3ReusableField("shift_id", "reference %s" % tablename,
-                                   label = T("Shift"),
-                                   ondelete = "CASCADE",
-                                   represent = self.fire_shift_represent,
-                                   requires = IS_EMPTY_OR(
+        shift_id = FieldTemplate("shift_id", "reference %s" % tablename,
+                                 label = T("Shift"),
+                                 ondelete = "CASCADE",
+                                 represent = self.fire_shift_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "fire_shift.id",
-                                                          self.fire_shift_represent)),
-                                   )
+                                                          self.fire_shift_represent,
+                                                          )),
+                                 )
 
         # ---------------------------------------------------------------------
         tablename = "fire_shift_staff"
@@ -497,7 +498,7 @@ class FireStationModel(DataModel):
                      #shift_id(),
                      self.hrm_human_resource_id(empty = False,
                                                 ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

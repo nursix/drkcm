@@ -280,7 +280,7 @@ class GetFieldOptionsTests(unittest.TestCase):
         s3db.define_table("fotest_lookup_table",
                           Field("name"),
                           Field("parent", "reference fotest_lookup_table"),
-                          *s3_meta_fields())
+                          )
 
         data = ({"name": "option1", "uuid": cls.uuids[0]},
                 {"name": "option2", "uuid": cls.uuids[1]},
@@ -306,7 +306,7 @@ class GetFieldOptionsTests(unittest.TestCase):
                                 represent = represent,
                                 ),
                           Field("noopts"),
-                          *s3_meta_fields())
+                          )
         db.commit()
 
     @classmethod

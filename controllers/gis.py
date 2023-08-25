@@ -640,13 +640,14 @@ def location():
         # We've been called from the Location Selector widget
         table.addr_street.readable = table.addr_street.writable = False
 
-    country = S3ReusableField("country", "string", length=2,
-                              label = COUNTRY,
-                              requires = IS_EMPTY_OR(IS_IN_SET_LAZY(
-                                    lambda: gis.get_countries(key_type="code"),
-                                    zero = SELECT_LOCATION)),
-                              represent = lambda code: \
-                                    gis.get_country(code, key_type="code") or UNKNOWN_OPT)
+    country = FieldTemplate("country", "string", length=2,
+                            label = COUNTRY,
+                            requires = IS_EMPTY_OR(IS_IN_SET_LAZY(
+                                            lambda: gis.get_countries(key_type="code"),
+                                            zero = SELECT_LOCATION)),
+                            represent = lambda code: \
+                                            gis.get_country(code, key_type="code") or UNKNOWN_OPT,
+                            )
 
     output = crud_controller(# CSV column headers, so no T()
                              csv_extra_fields = [{"label": "Country",
@@ -665,8 +666,7 @@ def location():
 # -----------------------------------------------------------------------------
 def ldata():
     """
-        Return JSON of location hierarchy suitable for use by
-        S3LocationSelector:
+        Return JSON of location hierarchy suitable for use by LocationSelector:
             GET '/eden/gis/ldata/' + id
         If requesting data for a level after a missed level:
             GET '/eden/gis/ldata/' + id + '/' + level
@@ -679,7 +679,7 @@ def ldata():
                }
          }
 
-        @ToDo: DRY with S3LocationSelector _locations()
+        @ToDo: DRY with LocationSelector _locations()
     """
 
     req_args = request.args
@@ -824,8 +824,7 @@ def ldata():
 # -----------------------------------------------------------------------------
 def hdata():
     """
-        Return JSON of hierarchy labels suitable for use by
-        S3LocationSelector:
+        Return JSON of hierarchy labels suitable for use by LocationSelector:
             GET '/eden/gis/hdata/' + l0_id
 
         Response JSON:
@@ -1531,14 +1530,7 @@ def inject_enable(output):
                       _class="boolean",
                       )
         comment = ""
-        if s3_formstyle == "bootstrap":
-            _controls = DIV(widget, comment, _class="controls")
-            row = DIV(label,
-                      _controls,
-                      _class="control-group",
-                      _id="%s__row" % id
-                      )
-        elif callable(s3_formstyle):
+        if callable(s3_formstyle):
             row = s3_formstyle(id, label, widget, comment)
         else:
             # Unsupported
@@ -2383,7 +2375,7 @@ def layer_shapefile():
                 if settings.get_gis_spatialdb():
                     # Add a spatial field
                     append(Field("the_geom", "geometry()"))
-                s3db.define_table(_tablename, *Fields)
+                s3db.define_table(_tablename, *Fields, meta=False)
                 new_arg = _tablename[4:]
                 extension = test[4:]
                 if extension:
@@ -3259,7 +3251,7 @@ def geocode():
     else:
         # Lx: Lookup Bounds in our own database
         # @ToDo
-        # Not needed by S3LocationSelector as it downloads bounds with options
+        # Not needed by LocationSelector as it downloads bounds with options
         results = "NotImplementedError"
 
     results = json.dumps(results, separators=SEPARATORS)

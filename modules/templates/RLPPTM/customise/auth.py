@@ -31,7 +31,6 @@ def rlpptm_realm_entity(table, row):
     #    realm_entity = 0
     #
     if tablename == "pr_person":
-
         # Human resources belong to their org's realm
         htable = s3db.hrm_human_resource
         otable = s3db.org_organisation
@@ -100,6 +99,10 @@ def rlpptm_realm_entity(table, row):
                                                  organisation_id,
                                                  )
 
+    elif tablename == "doc_document":
+
+        realm_entity = doc_realm_entity(table, row)
+
     #elif tablename == "fin_voucher_program":
     #
     #    # Voucher programs are owned by the organisation managing
@@ -122,7 +125,6 @@ def rlpptm_realm_entity(table, row):
     #    realm_entity = 0
     #
     elif tablename == "fin_voucher_invoice":
-
         # Invoices are owned by the accountant organization of the billing
         table = s3db.table(tablename)
         btable = s3db.fin_voucher_billing
@@ -144,7 +146,6 @@ def rlpptm_realm_entity(table, row):
     elif tablename in ("fin_voucher_billing",
                        "fin_voucher_transaction",
                        ):
-
         # Billings and transactions inherit realm-entity of the program
         table = s3db.table(tablename)
         ptable = s3db.fin_voucher_program
@@ -156,10 +157,26 @@ def rlpptm_realm_entity(table, row):
         if program:
             realm_entity = program.realm_entity
 
+    #elif tablename == "jnl_issue":
+    #
+    #    # Journal issues are owned by the organisation they are about (default ok)
+    #    realm_entity = 0
+    #
+    elif tablename == "jnl_note":
+        # Journal notes inherit from the issue they belong to
+        table = s3db.table(tablename)
+        itable = s3db.jnl_issue
+        query = (table._id == row.id) & \
+                (itable.id == table.issue_id)
+        issue = db(query).select(itable.realm_entity,
+                                 limitby = (0, 1),
+                                 ).first()
+        if issue:
+            realm_entity = issue.realm_entity
+
     elif tablename in ("pr_person_details",
                        "pr_person_tag",
                        ):
-
         # Inherit from person via person_id
         table = s3db.table(tablename)
         ptable = s3db.pr_person
@@ -175,7 +192,6 @@ def rlpptm_realm_entity(table, row):
                        "pr_contact",
                        "pr_contact_emergency",
                        ):
-
         # Inherit from person via PE
         table = s3db.table(tablename)
         ptable = s3db.pr_person
@@ -199,6 +215,64 @@ def rlpptm_realm_entity(table, row):
         if site:
             realm_entity = site.realm_entity
 
+    #elif tablename in ("org_bsnr",
+    #                   "org_commission",
+    #                   "org_representative",
+    #                   "org_verification",
+    #                   ):
+    #   # BSNR/Commission/Representative/Verification
+    #   # are owned by the subject organisation (default ok)
+    #   realm_entity = 0
+
+    return realm_entity
+
+# -------------------------------------------------------------------------
+def doc_realm_entity(table, row):
+    """
+        Realm rule for doc_document
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    realm_entity = 0
+
+    dtable = s3db.doc_document
+    etable = s3db.doc_entity
+
+    # Get the document record including instance type of doc_entity
+    left = etable.on(etable.doc_id == dtable.doc_id)
+    query = (dtable.id == row.id)
+    row = db(query).select(dtable.id,
+                           dtable.doc_id,
+                           dtable.organisation_id,
+                           etable.instance_type,
+                           left = left,
+                           limitby = (0, 1),
+                           ).first()
+    if not row:
+        return realm_entity
+
+    document = row.doc_document
+    instance_type = row.doc_entity.instance_type
+
+    # Inherit the realm entity from instance, if available
+    if document.doc_id and instance_type:
+        itable = s3db.table(instance_type)
+        if itable and "realm_entity" in itable.fields:
+            query = (itable.doc_id == document.doc_id)
+            instance = db(query).select(itable.realm_entity,
+                                        limitby = (0, 1),
+                                        ).first()
+            if instance:
+                realm_entity = instance.realm_entity
+
+    # Fallback: use context organisation as realm entity
+    if realm_entity == 0 and document.organisation_id:
+
+        realm_entity = s3db.pr_get_pe_id("org_organisation",
+                                         document.organisation_id,
+                                         )
     return realm_entity
 
 # -------------------------------------------------------------------------

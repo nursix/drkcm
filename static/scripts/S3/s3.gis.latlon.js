@@ -21,7 +21,7 @@
         return function(v) {
             // clear and focus or set a field
             $e.val(v || '');
-            if (typeof(v) == 'undefined') $e.focus();
+            if (typeof(v) == 'undefined') $e.trigger('focus');
         };
     }
 
@@ -48,7 +48,7 @@
     }
 
     function get_float(d, m, s) {
-        return (d < 0 ? -1 : 1) * 
+        return (d < 0 ? -1 : 1) *
                 (Math.abs(d) +
                  m / 60 +
                  s / 3600);
@@ -126,9 +126,9 @@
         set_s(dms.s || '0');
     }
 
-    $('.gis_coord_dms input').blur(function() {
+    $('.gis_coord_dms input').on('blur', function() {
         to_decimal(get_wrap($(this)));
-    }).keypress(function(e) {
+    }).on('keypress', function(e) {
         if (e.which == 13) e.preventDefault();
     });
 
@@ -139,13 +139,13 @@
         if (dec === '') return;
         if (!isNum(dec)) {
             alert(nanError.decimal);
-            field.val('').focus();
+            field.val('').trigger('focus');
             return;
         }
         dec = Number(dec);
         if (Math.abs(dec) > (isLat ? 90 : 180)) {
             alert(rangeError.decimal[isLat? 'lat' : 'lon']);
-            field.focus();
+            field.trigger('focus');
             return;
         }
         var dms = get_dms(dec);
@@ -157,14 +157,14 @@
     /**
      * document-ready script
      */
-    $(document).ready(function() {
-        $('.gis_coord_decimal input').blur(function() {
+    $(function() {
+        $('.gis_coord_decimal input').on('blur', function() {
             to_dms(get_wrap($(this)));
-        }).keypress(function(e) {
+        }).on('keypress', function(e) {
             if (e.which == 13) e.preventDefault();
         });
 
-        $('.gis_coord_switch_dms').click(function(evt) {
+        $('.gis_coord_switch_dms').on('click', function(evt) {
             $('.gis_coord_dms').show();
             $('.gis_coord_decimal').hide();
             $('.gis_coord_wrap').each(function() {
@@ -173,7 +173,7 @@
             evt.preventDefault();
         });
 
-        $('.gis_coord_switch_decimal').click(function(evt) {
+        $('.gis_coord_switch_decimal').on('click', function(evt) {
             $('.gis_coord_decimal').show();
             $('.gis_coord_dms').hide();
             $('.gis_coord_wrap').each(function() {

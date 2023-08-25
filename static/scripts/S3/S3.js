@@ -23,6 +23,17 @@ S3.timeline = {};
 S3.JSONRequest = {}; // Used to store and abort JSON requests
 //S3.TimeoutVar = {}; // Used to store and abort JSON requests
 
+/**
+ * Some clients encode a space in the URL query as '+', which can
+ * produce invalid Ajax URLs - this function extends decodeURIComponent
+ * to convert the '+' back into a space before decoding (safe because
+ * an actual '+' would be encoded as %2B); to be used in place of
+ * decodeURIComponent, especially for filter parsing:
+ */
+S3.urlDecode = function(str) {
+    return decodeURIComponent(str.replace(/\+/g, ' '));
+};
+
 S3.queryString = {
     // From https://github.com/sindresorhus/query-string
     parse: function(str) {
@@ -41,10 +52,10 @@ S3.queryString = {
             var key = parts[0];
             var val = parts[1];
 
-            key = decodeURIComponent(key);
+            key = S3.urlDecode(key);
             // missing `=` should be `null`:
             // http://w3.org/TR/2012/WD-url-20120524/#collect-url-parameters
-            val = val === undefined ? null : decodeURIComponent(val);
+            val = val === undefined ? null : S3.urlDecode(val);
 
             if (!ret.hasOwnProperty(key)) {
                 ret[key] = val;
@@ -85,7 +96,7 @@ S3.addTooltips = function() {
     $('.tooltip').cluetip({activation: 'hover', sticky: false, splitTitle: '|'});
     $('label[title][title!=""]').cluetip({splitTitle: '|', showTitle:false});
     $('.tooltipbody').cluetip({activation: 'hover', sticky: false, splitTitle: '|', showTitle: false});
-    var tipCloseText = '<img src="' + S3.Ap.concat('/static/img/cross2.png') + '" alt="close" />';
+    var tipCloseText = '<img src="' + S3.Ap.concat('/static/img/cross2.png') + '" alt="close"></img>';
     $('.stickytip').cluetip({
         activation: 'hover',
         sticky: true,
@@ -189,7 +200,7 @@ S3.addModals = function() {
             closeText: '',
             open: function( /* event, ui */ ) {
                 // Clicking outside of the popup closes it
-                $('.ui-widget-overlay').bind('click', function() {
+                $('.ui-widget-overlay').on('click', function() {
                     dialog.dialog('close');
                 });
             },
@@ -301,7 +312,7 @@ S3.confirmClick = function(ElementID, Message) {
     // @param ElementID: the ID of the element which will be clicked
     // @param Message: the Message displayed in the confirm dialog
     if (S3.interactive) {
-        $(ElementID).click( function(event) {
+        $(ElementID).on('click', function(event) {
             if (confirm(Message)) {
                 return true;
             } else {
@@ -324,7 +335,7 @@ S3.showHidden = function(controlField, affectedFields, tablename) {
         tablename = tablename + '_';
     }
     controlField = $('#' + tablename + controlField);
-    controlField.change(function() {
+    controlField.on('change', function() {
         var fieldname,
             selector,
             i;
@@ -388,15 +399,15 @@ S3.maxLength = {
             input.after('<div class="maxLength_status"></div>');
             // Apply current settings
             apply(id, maxLength);
-            input.unbind('keyup.maxLength')
-                 .bind('keyup.maxLength', function() {
+            input.off('keyup.maxLength')
+                 .on('keyup.maxLength', function() {
                 // Apply new settings
                 apply(id, maxLength);
             });
         } else {
             // Remove the limits & cleanup
             $('#' + id).removeClass('maxLength')
-                       .unbind('keyup.maxLength')
+                       .off('keyup.maxLength')
                        .next('div.maxLength_status').remove();
         }
     },
@@ -429,7 +440,7 @@ S3.maxLength = {
  * @param {Event} event - the event triggering the activation
  * @param {string} trigger - event parameter indicating the trigger
  *
- * Use element.trigger('change', 'implicit') instead of element.change()
+ * Use element.trigger('change', 'implicit') instead of element.trigger('change')
  * to prevent activation if the event must be triggered for other reasons
  * than user input
  */
@@ -450,7 +461,7 @@ var S3ClearNavigateAwayConfirm = function() {
 };
 
 var S3EnableNavigateAwayConfirm = function() {
-    $(document).ready(function() {
+    $(function() {
         if ($('[class=error]').length > 0) {
             // If there are errors, ensure the unsaved form is still protected
             S3SetNavigateAwayConfirm();
@@ -461,7 +472,7 @@ var S3EnableNavigateAwayConfirm = function() {
                                   // This gets triggered by browsers' Autofill:
                                   //.on('change', S3SetNavigateAwayConfirm);
         $('select', form).change(S3SetNavigateAwayConfirm);
-        form.submit(S3ClearNavigateAwayConfirm);
+        form.on('submit', S3ClearNavigateAwayConfirm);
     });
 };
 
@@ -872,14 +883,14 @@ var s3_viewMap = function(location_id, iframe_height, popup, controller, func) {
 
         if ($iframe_map.length==0) {
             // 1st iframe to be loaded in 'map'
-            var iframe = $("<iframe id='iframe-map' data-feature='" + location_id + "' style='border-style:none' width='100%' height='" + iframe_height + "' src='" + url + "' />"),
-                closelink = $("<a class='button tiny' id='close-iframe-map'>" + i18n.close_map + "</a>");
+            var iframe = $("<iframe id='iframe-map' data-feature='" + location_id + "' style='border-style:none' width='100%' height='" + iframe_height + "' marginWidth='0' marginHeight='0' src='" + url + "' >"),
+                closelink = $("<a class='action-btn' id='close-iframe-map'>" + i18n.close_map + "</a>");
 
-            closelink.bind('click', closeMap);
+            closelink.on('click', closeMap);
             // Display Map
             $map.slideDown('medium');
             $map.append(iframe);
-            $map.append($('<div style="margin-bottom:10px" />').append(closelink));
+            $map.append($('<div style="margin-bottom:10px">').append(closelink));
         } else {
             var fid = $iframe_map.attr('data-feature');
             if (fid == location_id) {
@@ -903,13 +914,13 @@ var s3_viewMapMulti = function(module, resource, instance, jresource) {
     var closelink = $('<a href=\"#\">' + i18n.close_map + '</a>');
 
     // @ToDo: Also make the represent link act as a close
-    closelink.bind('click', function(evt) {
+    closelink.on('click', function(evt) {
         $('#map').html(oldhtml);
         evt.preventDefault();
     });
 
     $('#map').html(iframe);
-    $('#map').append($("<div style='margin-bottom:10px' />").append(closelink));
+    $('#map').append($("<div style='margin-bottom:10px'>").append(closelink));
 };
 S3.popupWin = null;
 S3.openPopup = function(url, center) {
@@ -921,7 +932,7 @@ S3.openPopup = function(url, center) {
         }
         S3.popupWin = window.open(url, 'popupWin', params);
     } else {
-        S3.popupWin.focus();
+        S3.popupWin.trigger('focus');
     }
 };
 
@@ -993,7 +1004,7 @@ S3.openPopup = function(url, center) {
 
         var throbber = widget.siblings('.' + resourceName + '-throbber');
         if (!throbber.length) {
-            widget.after('<div class="' + resourceName + '-throbber throbber"/>');
+            widget.after('<div class="' + resourceName + '-throbber throbber">');
         }
     };
 
@@ -1028,7 +1039,7 @@ S3.openPopup = function(url, center) {
             if (search) {
                 var items = search.substring(1).split('&');
                 items.forEach(function(item) {
-                    if (decodeURIComponent(item.split('=')[0]) != key) {
+                    if (S3.urlDecode(item.split('=')[0]) != key) {
                         queries.push(item);
                     }
                 });
@@ -1151,7 +1162,7 @@ S3.openPopup = function(url, center) {
                     // Options list not populated yet?
                     currentValue = widget.prop('value');
                 }
-                if (!$.isArray(currentValue)) {
+                if (!Array.isArray(currentValue)) {
                     currentValue = [currentValue];
                 }
                 for (var i = 0, len = currentValue.length, val; i < len; i++) {
@@ -1170,11 +1181,11 @@ S3.openPopup = function(url, center) {
         // Convert IS_ONE_OF_EMPTY <input> into a <select>
         // (Better use IS_ONE_OF_EMPTY_SELECT where possible)
         if (widget.prop('tagName') == 'INPUT') {
-            var select = $('<select/>').addClass(widget.attr('class'))
-                                       .attr('id', widget.attr('id'))
-                                       .attr('name', widget.attr('name'))
-                                       .data('visible', widget.data('visible'))
-                                       .hide();
+            var select = $('<select>').addClass(widget.attr('class'))
+                                      .attr('id', widget.attr('id'))
+                                      .attr('name', widget.attr('name'))
+                                      .data('visible', widget.data('visible'))
+                                      .hide();
             widget.replaceWith(select);
             widget = select;
         }
@@ -1183,7 +1194,7 @@ S3.openPopup = function(url, center) {
         var disable = options === '';
         widget.html(options)
               .val(newValue)
-              .change()
+              .trigger('change')
               .prop('disabled', disable);
 
         // Refresh groupedopts or multiselect
@@ -1230,7 +1241,7 @@ S3.openPopup = function(url, center) {
 
             // Replace the widget with the HTML returned
             widget.html(data)
-                  .change()
+                  .trigger('change')
                   .prop('disabled', false);
 
             // Restore selected values if the options are still available
@@ -1243,7 +1254,7 @@ S3.openPopup = function(url, center) {
                             new_value.push(val);
                         }
                     }
-                    widget.val(new_value).change();
+                    widget.val(new_value).trigger('change');
                 }
                 // Refresh groupedopts/multiselect
                 if (is_groupedopts) {
@@ -1311,7 +1322,7 @@ S3.openPopup = function(url, center) {
                       .multiselect('disable');
             }
             // Trigger change-event on target for filter cascades
-            target.change();
+            target.trigger('change');
             updateAddResourceLink(lookupResource, lookupKey);
             return;
         }
@@ -1632,8 +1643,8 @@ S3.openPopup = function(url, center) {
         // inserted triggers (e.g. inline forms)
         var changeEventName = 'change.s3options',
             triggerEventName = 'triggerUpdate.' + triggerName;
-        targetForm.undelegate(triggerSelector, changeEventName)
-                  .delegate(triggerSelector, changeEventName, function() {
+        targetForm.off(changeEventName, triggerSelector)
+                  .on(changeEventName, triggerSelector, function() {
             var triggerData = getTriggerData($(this));
             targetForm.trigger(triggerEventName, triggerData);
         });
@@ -1751,7 +1762,7 @@ S3.slider = function(fieldname, min, max, step, value) {
                   .after('<p>' + i18n.slider_help + '</p>');
     }
     // Enable the field before form is submitted
-    real_input.closest('form').submit(function() {
+    real_input.closest('form').on('submit', function() {
         real_input.prop('disabled', false);
         // Normal Submit
         return true;
@@ -1834,7 +1845,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
 (function () {
     var deduplication = function() {
         // Deduplication event handlers
-        $('.mark-deduplicate').click(function() {
+        $('.mark-deduplicate').on('click', function() {
             var url = $('#markDuplicateURL').attr('href');
             if (url) {
                 $.ajaxS3({
@@ -1849,7 +1860,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
                 });
             }
         });
-        $('.unmark-deduplicate').click(function() {
+        $('.unmark-deduplicate').on('click', function() {
             var url = $('#markDuplicateURL').attr('href');
             if (url) {
                 $.ajaxS3({
@@ -1864,7 +1875,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
                 });
             }
         });
-        $('.swap-button').click(function() {
+        $('.swap-button').on('click', function() {
             // Swap widgets between original and duplicate side
             var id = this.id;
             var name = id.slice(5);
@@ -1907,29 +1918,29 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
     };
 
     // ========================================================================
-    $(document).ready(function() {
+    $(function() {
         // Web2Py Layer
         $('.alert-error').hide().slideDown(300);
-        $('.alert-error').click(function() {
+        $('.alert-error').on('click', function() {
             $(this).fadeOut('fast');
             return false;
         });
         $('.alert-warning').hide().slideDown(300);
-        $('.alert-warning').click(function() {
+        $('.alert-warning').on('click', function() {
             $(this).fadeOut('fast');
             return false;
         });
         $('.alert-info').hide().slideDown(300);
-        $('.alert-info').click(function() {
+        $('.alert-info').on('click', function() {
             $(this).fadeOut('fast');
             return false;
         });
         $('.alert-success').hide().slideDown(300);
-        $('.alert-success').click(function() {
+        $('.alert-success').on('click', function() {
             $(this).fadeOut('fast');
             return false;
         });
-        $("input[type='checkbox'].delete").click(function() {
+        $("input[type='checkbox'].delete").on('click', function() {
             if ((this.checked) && (!confirm(i18n.delete_confirmation))) {
                 this.checked = false;
             }
@@ -1967,24 +1978,24 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
             if (S3.FocusOnFirstField != false) {
                 // Focus On First Field
                 var s = 'select:visible,input:text:visible';
-                $(s, '.form-container form:not(".auth_login")').first().not('select').focus();
+                $(s, '.form-container form:not(".auth_login")').first().not('select').trigger('focus');
             }
         }
 
         // Accept comma as thousands separator
-        $('input.int_amount').keyup(function() {
+        $('input.int_amount').on('keyup', function() {
             this.value = this.value.reverse()
                                    .replace(/[^0-9\-,]|\-(?=.)/g, '')
                                    .reverse();
         });
-        $('input.float_amount').keyup(function() {
+        $('input.float_amount').on('keyup', function() {
             this.value = this.value.reverse()
                                    .replace(/[^0-9\-\.,]|[\-](?=.)|[\.](?=[0-9]*[\.])/g, '')
                                    .reverse();
         });
 
         // Auto-capitalize first names
-        $('input[name="first_name"]').focusout(function() {
+        $('input[name="first_name"]').on('focusout', function() {
             this.value = this.value.charAt(0).toLocaleUpperCase() + this.value.substring(1);
         });
 
@@ -1998,7 +2009,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
                     this.value = '\u200E' + value;
                 }
             });
-            $('.phone-widget').focusout(function() {
+            $('.phone-widget').on('focusout', function() {
                 var value = this.value;
                 if (value) {
                     // When new data is entered then:
@@ -2020,7 +2031,7 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
         }
 
         // ListCreate Views
-        $('#show-add-btn').click(function() {
+        $('#show-add-btn').on('click', function() {
             // Hide the Button
             $('#show-add-btn').hide(10, function() {
                 // Show the Form
@@ -2041,19 +2052,19 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
         if (anyform.length) {
             var now = new Date(),
                 tz;
-            anyform.append("<input type='hidden' value='" + now.getTimezoneOffset() + "' name='_utc_offset'/>");
+            anyform.append("<input type='hidden' value='" + now.getTimezoneOffset() + "' name='_utc_offset'>");
             try {
                 tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
             } catch(e) {
                 // not supported
             }
             if (tz) {
-                anyform.append("<input type='hidden' value='" + tz + "' name='_timezone'/>");
+                anyform.append("<input type='hidden' value='" + tz + "' name='_timezone'>");
             }
         }
 
         // Form toggle (e.g. S3Profile update-form)
-        $('.form-toggle').click(function() {
+        $('.form-toggle').on('click', function() {
             var self = $(this),
                 hidden = $(this).data('hidden');
             hidden = hidden && hidden != 'False';
@@ -2078,12 +2089,12 @@ S3.reloadWithQueryStringVars = function(queryStringVars) {
                 menu = $('#list-filter');
             }
             if (status == 'off') {
-                menu.hide().removeClass('hide-for-small').slideDown(400, function() {
+                menu.hide().removeClass('hide-for-small-only').slideDown(200, function() {
                     $this.data('status', 'on').text($this.data('on'));
                 });
             } else {
-                menu.slideUp(400, function() {
-                    menu.addClass('hide-for-small').show();
+                menu.slideUp(200, function() {
+                    menu.addClass('hide-for-small-only').show();
                     $this.data('status', 'off').text($this.data('off'));
                 });
             }

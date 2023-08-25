@@ -27,6 +27,12 @@ def domain():
     redirect(URL(c="admin", args=request.args, vars=request.vars))
 
 # =============================================================================
+def event():
+    "Defined in admin module, so redirect there"
+
+    redirect(URL(c="admin", args=request.args, vars=request.vars))
+
+# =============================================================================
 def consent():
     "Defined in admin module, so redirect there"
 

@@ -48,16 +48,17 @@ class Daily():
         from .dcc import DCC
         DCC.cleanup()
 
+        # Check for expired commissions
+        self.expire_commissions()
+
+        # Check/update verification status for changed org type requirements
+        self.check_verification_status()
+
         # On Sundays, cleanup public test station registry
         settings = current.deployment_settings
         if settings.get_custom(key="test_station_cleanup") and \
            now.weekday() == 6:
             errors = self.cleanup_public_registry()
-
-        # If test station manager info is required, update the
-        # workflow-status for sites with incomplete manager info
-        if settings.get_custom(key="test_station_manager_required"):
-            self.check_teststation_manager()
 
         return errors if errors else None
 
@@ -181,7 +182,7 @@ class Daily():
         s3db = current.s3db
 
         ftable = s3db.org_facility
-        ttable = s3db.org_site_tag
+        atable = s3db.org_site_approval
         otable = s3db.org_organisation
         gtable = s3db.org_group
         mtable = s3db.org_group_membership
@@ -192,9 +193,9 @@ class Daily():
         four_weeks_ago = today - datetime.timedelta(days=28)
 
         from .config import TESTSTATIONS
-        join = [ttable.on((ttable.site_id == ftable.site_id) & \
-                          (ttable.tag == "PUBLIC") & \
-                          (ttable.deleted == False)),
+        join = [atable.on((atable.site_id == ftable.site_id) & \
+                          (atable.public == "Y") & \
+                          (atable.deleted == False)),
                 otable.on((otable.id == ftable.organisation_id)),
                 gtable.on((mtable.organisation_id == otable.id) & \
                           (mtable.deleted == False) & \
@@ -207,7 +208,6 @@ class Daily():
                 ltable.on((ltable.id == ftable.location_id)),
                 ]
         query = (rtable.id == None) & \
-                (ttable.value == "Y") & \
                 (ftable.created_on < four_weeks_ago) & \
                 (ftable.obsolete == False) & \
                 (ftable.deleted == False)
@@ -281,45 +281,95 @@ class Daily():
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def check_teststation_manager():
+    def expire_commissions():
         """
-            Update workflow status of test stations with incomplete
-            manager information
+            Check for expired test station commissions
         """
+
+        from .config import TESTSTATIONS
+        from .models.org import TestProvider
 
         db = current.db
         s3db = current.s3db
 
-        from .config import TESTSTATIONS
+        today = datetime.datetime.utcnow().date()
 
+        # Look up affected organisations in the TESTSTATIONS group
+        ctable = s3db.org_commission
         gtable = s3db.org_group
         mtable = s3db.org_group_membership
-        otable = s3db.org_organisation
-        ottable = s3db.org_organisation_tag
 
-        # All organisations in the TESTSTATIONS group with MGRINFO!=COMPLETE
-        join =  [gtable.on((mtable.organisation_id == otable.id) & \
-                           (mtable.deleted == False) & \
-                           (gtable.id == mtable.group_id) & \
-                           (gtable.name == TESTSTATIONS)),
-                 ]
-        left = ottable.on((ottable.organisation_id == otable.id) & \
-                          (ottable.tag == "MGRINFO") & \
-                          (ottable.deleted == False))
+        join = gtable.on((mtable.organisation_id == ctable.organisation_id) & \
+                         (gtable.id == mtable.group_id) & \
+                         (gtable.name == TESTSTATIONS) & \
+                         (mtable.deleted == False)
+                         )
 
-        query = (ottable.value != "COMPLETE") & \
-                (otable.deleted == False)
-        rows = db(query).select(otable.id,
-                                ottable.value,
+        query = (ctable.status in ("CURRENT", "SUSPENDED")) & \
+                (ctable.end_date != None) & \
+                (ctable.end_date < today) & \
+                (ctable.deleted == False)
+        rows = db(query).select(ctable.id,
+                                ctable.status,
+                                ctable.organisation_id,
                                 join = join,
-                                left = left,
                                 )
-
-        from .customise.org import facility_approval_update_mgrinfo
         for row in rows:
-            facility_approval_update_mgrinfo(row.org_organisation.id,
-                                             row.org_organisation_tag.value,
-                                             notify_unlist = True,
-                                             )
+            TestProvider(row.organisation_id).expire_commission()
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def check_verification_status():
+        """
+            Check verification status of all test stations for which
+            organisation type requirements have changed
+        """
+
+        from .config import TESTSTATIONS
+        from .models.org import TestProvider
+
+        db = current.db
+        s3db = current.s3db
+
+        # New organisation type requirements will be enforced for
+        # existing organisations after a grace period of 3 days
+        delay = 3 # days
+        now = datetime.datetime.utcnow()
+        earliest = now - datetime.timedelta(days=delay + 1)
+        latest   = now - datetime.timedelta(days=delay)
+
+        ttable = s3db.org_organisation_type
+        rtable = s3db.org_requirements
+
+        join = rtable.on((rtable.organisation_type_id == ttable.id) & \
+                         (rtable.modified_on >= earliest) & \
+                         (rtable.modified_on < latest) & \
+                         (rtable.deleted == False))
+        query = (ttable.deleted == False)
+        types = db(query)._select(ttable.id, join=join)
+
+        # Look up affected organisations in the TESTSTATIONS group
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        ltable = s3db.org_organisation_organisation_type
+
+        join = [gtable.on((mtable.organisation_id == otable.id) & \
+                          (gtable.id == mtable.group_id) & \
+                          (gtable.name == TESTSTATIONS) & \
+                          (mtable.deleted == False)
+                          ),
+                ltable.on((ltable.organisation_id == otable.id) & \
+                          (ltable.organisation_type_id.belongs(types)) & \
+                          (ltable.deleted == False)
+                          ),
+                ]
+        query = (otable.deleted == False)
+        rows = db(query).select(otable.id, join=join)
+        organisation_ids = {row.id for row in rows}
+
+        # Update verification status for these organisations
+        for organisation_id in organisation_ids:
+            TestProvider(organisation_id).update_verification()
 
 # END =========================================================================

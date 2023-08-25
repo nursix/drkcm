@@ -1,0 +1,35 @@
+main {
+    min-height: 80%
+}
+.scan, .loading {
+    position: absolute;
+    top: 2rem;
+    right: 1rem;
+}
+.wide-button {
+    vertical-align: top;
+    padding: 0.4rem 0.8rem;
+    margin: 0 0.5rem;
+}
+.wide-button .fa {
+    font-size: 16px;
+    margin: 0 0.2rem;
+    vertical-align: middle;
+}
+.data, .data-empty {
+    margin: 2rem;
+    min-height: 70%;
+}
+#status {
+    max-width: 12rem;
+}
+.data label {
+    font-size: 0.7rem;
+}
+.data .data-value {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+.loading, .reset, .data {
+    display: none;
+}

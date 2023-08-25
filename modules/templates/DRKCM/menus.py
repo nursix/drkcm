@@ -4,11 +4,11 @@
     License: MIT
 """
 
-from gluon import current
-from core import *
-from s3layouts import *
+from gluon import current, URL
+from core import IS_ISO639_2_LANGUAGE_CODE
+from s3layouts import MM, M, ML, MP, MA, SEP
 try:
-    from .layouts import *
+    from ..DRK.layouts import OM
 except ImportError:
     pass
 import s3menus as default
@@ -79,12 +79,11 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        OM = S3OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_lang(cls):
+    def menu_lang(cls, **attr):
         """ Language Selector """
 
         languages = current.deployment_settings.get_L10n_languages()
@@ -360,7 +359,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         #M("Residence Status Types", f="residence_status_type"),
                         M("Residence Permit Types", f="residence_permit_type"),
                         #M("Service Contact Types", f="service_contact_type"),
-                        M("Diagnoses", f="vulnerability_type"),
+                        M("Diagnoses", f="diagnosis"),
                         ),
                     )
 

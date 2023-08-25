@@ -109,7 +109,7 @@ def rlpcm_br_rheader(r, tabs=None):
 
             rheader_fields = [[(T("ID"), "pe_label"),
                                (T("Case Status"), case_status),
-                               (T("Organisation"), organisation),
+                               (T("Organization"), organisation),
                                ],
                               [household_size,
                                ],
@@ -241,7 +241,7 @@ def rlpcm_org_rheader(r, tabs=None):
             is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
             if not tabs:
-                tabs = [(T("Organisation"), None),
+                tabs = [(T("Organization"), None),
                         (T("Offices"), "office"),
                         ]
                 if auth.s3_has_permission("update", "org_organisation", record_id=record.id):

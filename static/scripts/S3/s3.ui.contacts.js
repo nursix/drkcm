@@ -103,16 +103,16 @@
                 }
                 var form = frame.find('form').attr('action', url2);
                 // Add a cancel button
-                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').bind('click', function() {
-                        form.slideUp('mediun', function() { frame.remove(); });
-                        $(button).show();
+                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').on('click', function() {
+                        form.slideUp('fast', function() { frame.remove(); });
+                        $button.show();
                     });
                 form.find('input[type="submit"]').after(cancelButton);
                 // Show the form
-                frame.find('#popup').show();
-                form.show();
-                frame.insertAfter(button).slideDown('medium', function() {
-                    $(button).siblings('.throbber').hide();
+                frame.insertAfter($button).slideDown('fast', function() {
+                    $button.siblings('.throbber').hide();
+                    frame.find('#popup').show();
+                    form.show();
                 });
             });
         },
@@ -150,16 +150,16 @@
                 }
                 var form = frame.find('form').attr('action', url2);
                 // Add a cancel button
-                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').bind('click', function() {
-                        form.slideUp('mediun', function() { frame.remove(); });
+                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').on('click', function() {
+                        form.slideUp('fast', function() { frame.remove(); });
                         $(button).show();
                     });
                 form.find('input[type="submit"]').after(cancelButton);
                 // Show the form
-                frame.find('#popup').show();
-                form.show();
-                frame.insertAfter(button).slideDown('medium', function() {
-                    $(button).siblings('.throbber').hide();
+                frame.insertAfter(button).slideDown('fast', function() {
+                    $button.siblings('.throbber').hide();
+                    frame.find('#popup').show();
+                    form.show();
                 });
             });
         },
@@ -200,16 +200,17 @@
                 }
                 var form = frame.find('form').attr('action', url2);
                 // Add a cancel button
-                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').bind('click', function() {
-                        form.slideUp('mediun', function() { frame.remove(); });
+                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').on('click', function() {
+                        form.slideUp('fast', function() { frame.remove(); });
                         self._showAll();
                     });
                 form.find('input[type="submit"]').after(cancelButton);
                 // Show the form
                 contact.after(frame).hide();
-                frame.find('#popup').show();
-                form.show();
-                frame.slideDown('medium');
+                frame.slideDown('fast', function() {
+                    frame.find('#popup').show();
+                    form.show();
+                });
             });
         },
 
@@ -249,16 +250,17 @@
                 }
                 var form = frame.find('form').attr('action', url2);
                 // Add a cancel button
-                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').bind('click', function() {
-                        form.slideUp('mediun', function() { frame.remove(); });
+                var cancelButton = $('<a class="cancel action-lnk">' + opts.cancelButtonText + '</a>').on('click', function() {
+                        form.slideUp('fast', function() { frame.remove(); });
                         self._showAll();
                     });
                 form.find('input[type="submit"]').after(cancelButton);
                 // Show the form
                 contact.after(frame).hide();
-                frame.find('#popup').show();
-                form.show();
-                frame.slideDown('medium');
+                frame.slideDown('fast', function() {
+                    form.show();
+                    frame.find('#popup').show();
+                });
             });
         },
 
@@ -381,34 +383,34 @@
                 element = $(this.element),
                 ns = this.eventNamespace;
 
-            element.find('.pr-contacts .contact-add-btn').bind('click' + ns, function() {
+            element.find('.pr-contacts .contact-add-btn').on('click' + ns, function() {
                 // Add new contact
                 self._addContact(this);
                 return false;
             });
 
-            element.find('.pr-emergency-contacts .contact-add-btn').bind('click' + ns, function() {
+            element.find('.pr-emergency-contacts .contact-add-btn').on('click' + ns, function() {
                 // Add new emergency contact
                 self._addEmergencyContact(this);
                 return false;
             });
 
-            element.delegate('.pr-contacts .edit-btn', 'click' + ns, function() {
+            element.on('click' + ns, '.pr-contacts .edit-btn', function() {
                 // Edit contact
                 self._editContact($(this).closest('.pr-contact'));
                 return false;
 
-            }).delegate('.pr-emergency-contacts .edit-btn', 'click' + ns, function() {
+            }).on('click' + ns, '.pr-emergency-contacts .edit-btn', function() {
                 // Edit emergency contact
                 self._editEmergencyContact($(this).closest('.pr-emergency-contact'));
                 return false;
 
-            }).delegate('.pr-contacts .delete-btn-ajax', 'click' + ns, function() {
+            }).on('click' + ns, '.pr-contacts .delete-btn-ajax', function() {
                 // Delete contact
                 self._deleteContact($(this).closest('.pr-contact'));
                 return false;
 
-            }).delegate('.pr-emergency-contacts .delete-btn-ajax', 'click' + ns, function() {
+            }).on('click' + ns, '.pr-emergency-contacts .delete-btn-ajax', function() {
                 // Delete emergency contact
                 self._deleteEmergencyContact($(this).closest('.pr-emergency-contact'));
                 return false;
@@ -527,8 +529,8 @@
             var element = $(this.element),
                 ns = this.eventNamespace;
 
-            element.undelegate(ns);
-            element.find('.pr-contact-add, .pr-emergency-add, .pr-contact-form').unbind(ns);
+            element.off(ns);
+            element.find('.pr-contact-add, .pr-emergency-add, .pr-contact-form').off(ns);
 
             return true;
         }

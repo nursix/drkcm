@@ -6,9 +6,9 @@
 
 from gluon import current, URL
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M
+from s3layouts import MM, M, ML, MP, MA
 try:
-    from .layouts import *
+    from ..RLP.layouts import OM
 except ImportError:
     pass
 import s3menus as default
@@ -49,12 +49,16 @@ class S3MainMenu(default.S3MainMenu):
                     MM("My Organizations", vars={"mine": "1"}),
                     MM("All Organizations"),
                     ),
-                MM("Shelters", c="cr", f="shelter",
+                MM("Shelters", c="cr", f=("shelter",
+                                          "shelter_population",
+                                          ),
                    restrict=("SHELTER_MANAGER", "SHELTER_READER"),
                    ),
-                MM("Reception Centers", c="cr", f="reception_center",
-                   restrict=("AFA_MANAGER", "AFA_READER"),
-                   ),
+                MM("Reception Centers", c="cr", f=("reception_center", "reception_center_status"),
+                   restrict=("AFA_MANAGER", "AFA_READER"), link=False)(
+                    MM("Overview", f="reception_center", m="overview"),
+                    MM("Facilities", f="reception_center"),
+                    ),
                 MM("Newsletters", c="cms", f="read_newsletter"),
                 ]
 
@@ -63,12 +67,11 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        OM = S3OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_lang(cls):
+    def menu_lang(cls, **attr):
         """ Language Selector """
 
         languages = current.deployment_settings.get_L10n_languages()
@@ -195,13 +198,14 @@ class S3OptionsMenu(default.S3OptionsMenu):
         if current.request.function in rc_functions:
             # Reception center perspective
             menu = M(c="cr")(
+                        M("Overview", f="reception_center", m="overview"),
                         M("Facilities", f="reception_center")(
-                            M("Create", m="create"),
+                            M("Create Facility", m="create"),
                             M("Map", m="map"),
                             ),
                         M("Statistics", link=False)(
                             M("Capacity / Occupancy", f="reception_center", m="report"),
-                            #M("Status History", f="reception_center_status", m="timeplot"),
+                            M("Status History", f="reception_center_status", m="timeplot"),
                             ),
                         M("Administration", link=False, restrict=(ADMIN,))(
                             M("Facility Types", f="reception_center_type"),

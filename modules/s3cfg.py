@@ -150,7 +150,7 @@ class S3Config(Storage):
 
     def __init__(self):
 
-        super(S3Config, self).__init__()
+        super().__init__()
 
         self.asset = Storage()
         self.auth = Storage()
@@ -165,7 +165,6 @@ class S3Config(Storage):
         self.cr = Storage()
         self.custom = Storage()
         self.database = Storage()
-        self.dc = Storage()
         self.deploy = Storage()
         self.disease = Storage()
         self.doc = Storage()
@@ -326,8 +325,8 @@ class S3Config(Storage):
             try:
                 # Import the template
                 template = getattr(__import__(package, fromlist=[config]), config)
-            except ImportError:
-                raise RuntimeError("Template not found: %s" % name)
+            except ImportError as e:
+                raise RuntimeError("Template not found: %s" % name) from e
             else:
                 template.config(self)
 
@@ -542,11 +541,27 @@ class S3Config(Storage):
 
     # -------------------------------------------------------------------------
     # Authentication settings
+    # -------------------------------------------------------------------------
     def get_auth_hmac_key(self):
         """
             Salt to encrypt passwords - normally randomised during 1st run
         """
         return self.auth.get("hmac_key", "akeytochange")
+
+    def get_auth_logging(self):
+        """
+            Whether auth events should be logged
+        """
+        return self.auth.get("logging", True)
+
+    def get_auth_log_failed_logins(self):
+        """
+            Log failed logins, options:
+                - True          : log all failed logins
+                - "VALIDONLY"   : log failed logins for valid accounts
+                - False         : do not log failed logins
+        """
+        return self.auth.get("log_failed_logins", False)
 
     def get_auth_password_changes(self):
         """
@@ -691,33 +706,6 @@ class S3Config(Storage):
         """
         return self.auth.get("masterkey_context")
 
-    def get_security_self_registration(self):
-        """
-            Whether Users can register themselves
-            - False to disable self-registration
-            - True to use the default registration page at default/user/register
-            - "index" to use a cyustom registration page defined in private/templates/<template>/controllers.py
-
-        """
-        return self.security.get("self_registration", True)
-
-    def get_security_registration_visible(self):
-        visible = self.get_security_self_registration() and \
-                  self.security.get("registration_visible", True)
-        return visible
-
-    def get_security_version_info(self):
-        """
-            Whether to show version info on the about page
-        """
-        return self.security.get("version_info", True)
-
-    def get_security_version_info_requires_login(self):
-        """
-            Whether the version info on the About page requires login
-        """
-        return self.security.get("version_info_requires_login", False)
-
     def get_auth_registration_requires_verification(self):
         return self.auth.get("registration_requires_verification", False)
 
@@ -767,15 +755,6 @@ class S3Config(Storage):
             Should be an iterable.
         """
         return self.auth.get("registration_link_user_to_default")
-
-    def get_auth_opt_in_team_list(self):
-        return self.auth.get("opt_in_team_list", [])
-
-    def get_auth_opt_in_to_email(self):
-        return self.get_auth_opt_in_team_list() != []
-
-    def get_auth_opt_in_default(self):
-        return self.auth.get("opt_in_default", False)
 
     def get_auth_registration_requests_home_phone(self):
         return self.auth.get("registration_requests_home_phone", False)
@@ -988,7 +967,6 @@ class S3Config(Storage):
             ("inv", T("Warehouses")),
             ("asset", T("Assets")),
             ("project", T("Projects")),
-            ("survey", T("Assessments")),
             ("irs", T("Incidents"))
         ]))
 
@@ -1014,15 +992,49 @@ class S3Config(Storage):
     def get_auth_create_unknown_locations(self):
         return self.auth.get("create_unknown_locations", False)
 
+    # -------------------------------------------------------------------------
+    # System Security Settings
+    # -------------------------------------------------------------------------
+    def get_security_self_registration(self):
+        """
+            Whether Users can register themselves
+            - False to disable self-registration
+            - True to use the default registration page at default/user/register
+            - "index" to use a cyustom registration page defined in private/templates/<template>/controllers.py
+
+        """
+        return self.security.get("self_registration", True)
+
+    def get_security_registration_visible(self):
+        visible = self.get_security_self_registration() and \
+                  self.security.get("registration_visible", True)
+        return visible
+
+    def get_security_version_info(self):
+        """
+            Whether to show version info on the about page
+        """
+        return self.security.get("version_info", True)
+
+    def get_security_version_info_requires_login(self):
+        """
+            Whether the version info on the About page requires login
+        """
+        return self.security.get("version_info_requires_login", False)
+
     def get_security_archive_not_delete(self):
         return self.security.get("archive_not_delete", True)
+
     def get_security_audit_read(self):
         return self.security.get("audit_read", False)
+
     def get_security_audit_write(self):
         return self.security.get("audit_write", False)
+
     def get_security_policy(self):
         " Default is Simple Security Policy "
         return self.security.get("policy", 1)
+
     def get_security_strict_ownership(self):
         """
             Ownership-rule for records without owner:
@@ -1030,6 +1042,7 @@ class S3Config(Storage):
             False = owned by any authenticated user
         """
         return self.security.get("strict_ownership", True)
+
     def get_security_map(self):
         return self.security.get("map", False)
 
@@ -1098,7 +1111,8 @@ class S3Config(Storage):
 
     def get_base_public_url(self):
         """
-            The Public URL for the site - for use in email links, etc
+            The public URL for the site
+                - for use in email links, etc
         """
         public_url = self.base.get("public_url")
         if not public_url:
@@ -1107,6 +1121,15 @@ class S3Config(Storage):
             host = env.get("http_host") or "127.0.0.1:8000"
             self.base.public_url = public_url = "%s://%s" % (scheme, host)
         return public_url
+
+    def get_base_app_url(self):
+        """
+            The public URL for the site, including the main application path
+                - for construction of links in emails etc
+        """
+
+        host = self.get_base_public_url().rstrip("/")
+        return "%s/%s" % (host, current.request.application)
 
     def get_base_bigtable(self):
         """
@@ -1174,12 +1197,6 @@ class S3Config(Storage):
             between multiple instances?
         """
         return self.base.get("session_memcache", False)
-
-    def get_base_solr_url(self):
-        """
-            URL to connect to solr server
-        """
-        return self.base.get("solr_url", False)
 
     def get_xml_formats(self):
         """
@@ -1968,8 +1985,8 @@ class S3Config(Storage):
         """
             e.g. Apellido Paterno in Hispanic names
 
-            Setting this means that auth_user.last_name matches with pr_person.middle_name
-            e.g. RMS
+            Setting this means that auth_user.last_name matches
+            with pr_person.middle_name
         """
         return self.__lazy("L10n", "mandatory_middlename", False)
 
@@ -2115,12 +2132,10 @@ class S3Config(Storage):
         if callable(setting):
             # A custom formstyle defined in the template
             formstyle = setting
-        elif setting in FORMSTYLES:
-            # One of the standard supported formstyles
-            formstyle = FORMSTYLES[setting]
         else:
-            # A default web2py formstyle
-            formstyle = setting
+            # One of the standard supported formstyles,
+            # or a default web2py formstyle
+            formstyle = FORMSTYLES.get(setting, setting)
         return formstyle
 
     def get_ui_formstyle(self):
@@ -2390,22 +2405,42 @@ class S3Config(Storage):
         """
         return current.T(self.ui.get("label_postcode", "Postcode"))
 
+    def get_ui_label_open(self):
+        """
+            Label for datatable action-buttons that open records for
+            either read or update, depending on record-specific permissions
+
+            Note:
+                Using the same action-label for all records in the list
+                reduces cognitive load, even if the label is ambiguous
+        """
+        return self.ui.get("open_label", "Open")
+
     def get_ui_label_read(self):
         """
-            Label for buttons in list views which lead to a Read-only 'Display' page
+            Label for datatable action-buttons that open records read-only
+
+            Note:
+                Differentiating explicit "View" from ambiguous "Open" does
+                not improve UX, even if it would appear more consistent.
         """
         return self.ui.get("read_label", "Open")
 
     def get_ui_label_update(self):
         """
-            Label for buttons in list views which lead to an Editable 'Update' page
+            Label for action buttons in single-record perspectives to open
+            the record for editing
+
+            Note:
+                This label should be explicit about editing, not ambiguous
+                as the two above
         """
-        return self.ui.get("update_label", "Open")
+        return self.ui.get("update_label", "Edit")
 
     def get_ui_multiselect_widget(self):
         """
             Whether all dropdowns should use the S3MultiSelectWidget
-            - currently respected by Auth Registration & S3LocationSelector
+            - currently respected by Auth Registration & LocationSelector
 
             Options:
                 False (default): No widget
@@ -2651,6 +2686,18 @@ class S3Config(Storage):
         """
         return self.__lazy("ui", "organizer_snap_duration", None)
 
+    def get_ui_organizer_week_numbers(self):
+        """
+            Show week numbers in organizer
+        """
+        return self.ui.get("organizer_week_numbers", True)
+
+    def get_ui_organizer_year_view(self):
+        """
+            Enable year view in organizer
+        """
+        return self.ui.get("organizer_year_view", False)
+
     # =========================================================================
     # Messaging
     #
@@ -2735,71 +2782,6 @@ class S3Config(Storage):
             Which template folder to use to load parser.py
         """
         return self.msg.get("parser", "default")
-
-    # -------------------------------------------------------------------------
-    # Notifications
-    def get_msg_notify_check_subscriptions(self):
-        """
-            Whether to Check Subscriptions
-        """
-        return self.msg.get("notify_check_subscriptions", False)
-
-    def get_msg_notify_subject(self):
-        """
-            Template for the subject line in update notifications.
-
-            Available placeholders:
-                $S = System Name (long)
-                $s = System Name (short)
-                $r = Resource Name
-
-            Use {} to separate the placeholder from immediately following
-            identifier characters (like: ${placeholder}text).
-        """
-        return self.msg.get("notify_subject",
-                            "$s %s: $r" % current.T("Update Notification"))
-
-    def get_msg_notify_email_format(self):
-        """
-            The preferred email format for update notifications,
-            "text" or "html".
-        """
-        return self.msg.get("notify_email_format", "text")
-
-    def get_msg_notify_renderer(self):
-        """
-            Custom content renderer function for update notifications,
-            function()
-        """
-        return self.msg.get("notify_renderer")
-
-    def get_msg_notify_attachment(self):
-        """
-            Custom function that returns the list of document_ids to be sent
-            as attachment in email
-
-            The function may be of the form:
-            custom_msg_notify_attachment(resource, data, meta_data), where
-            resource is the CRUDResource, data: the data returned from
-            CRUDResource.select and meta_data: the meta data for the notification
-            (see S3Notifications for the metadata)
-        """
-
-        return self.msg.get("notify_attachment")
-
-    def get_msg_notify_send_data(self):
-        """
-            Custom function that returns additional arguments to pass to
-            S3Msg.send_by_pe_id
-
-            The function should be of the form:
-            custom_msg_notify_send_data(resource, data, meta_data), where
-            resource is the CRUDResource, data: the data returned from
-            CRUDResource.select and meta_data: the meta data for the notification
-            (see S3Notifications for the metadata)
-        """
-
-        return self.msg.get("notify_send_data")
 
     # -------------------------------------------------------------------------
     # SMS
@@ -3522,6 +3504,15 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_allocation", False)
 
+    def get_org_site_check_in_qrcode(self):
+        """
+            Use QRInput for site check-in/out
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for QR contents parsing
+                - False to disable
+        """
+        return self.org.get("site_check_in_qrcode", False)
+
     def get_cr_check_out_is_final(self):
         """
             Whether checking out of a shelter frees up the place
@@ -3559,102 +3550,6 @@ class S3Config(Storage):
             flag is marked as resolved
         """
         return self.cr.get("shelter_inspection_tasks_completed_status", 12)
-
-    # -------------------------------------------------------------------------
-    # DC: Data Collection
-    #
-    def get_dc_mobile_data(self):
-        """
-            Whether Mobile Clients should download Assessments (Data not just Forms)
-            - e.g. when these are created through Targetting
-        """
-        return self.dc.get("mobile_data", False)
-
-    def get_dc_mobile_inserts(self):
-        """
-            Whether Mobile Clients should create Assessments locally
-        """
-        return self.dc.get("mobile_inserts", True)
-
-    def get_dc_response_label(self):
-        """
-            Label for Responses
-            - 'Assessment;
-            - 'Response' (default if set to None)
-            - 'Survey'
-        """
-        return self.dc.get("response_label", "Assessment")
-
-    def get_dc_response_mobile(self):
-        """
-            Whether Assessments are filled-out on the EdenMobile App
-        """
-        return self.dc.get("response_mobile", True)
-
-    def get_dc_response_web(self):
-        """
-            Whether Assessments are filled-out on the Web interface
-        """
-        return self.dc.get("response_web", True)
-
-    def get_dc_target_status(self):
-        """
-            Whether Assessment Targets have Statuses
-        """
-        return self.dc.get("target_status", False)
-
-    def get_dc_unique_question_names_per_template(self):
-        """
-            Deduplicate Questions by Name/Template
-             - needed for importing multiple translations
-        """
-        return self.dc.get("unique_question_names_per_template", False)
-
-    def get_dc_likert_options(self):
-        """
-            Likert Scales & Options
-        """
-        return self.dc.get("likert_options", {1: ["Very appropriate",
-                                                  "Somewhat appropriate",
-                                                  "Neither appropriate nor inappropriate",
-                                                  "Somewhat inappropriate",
-                                                  "Very inappropriate",
-                                                  ],
-                                              2: ["Extremely confident",
-                                                  "Very confident",
-                                                  "Moderately confident",
-                                                  "Slightly confident",
-                                                  "Not confident at all",
-                                                  ],
-                                              3: ["Always",
-                                                  "Often",
-                                                  "Occasionally",
-                                                  "Rarely",
-                                                  "Never",
-                                                  ],
-                                              4: ["Extremely safe",
-                                                  "Very safe",
-                                                  "Moderately safe",
-                                                  "Slightly safe",
-                                                  "Not safe at all",
-                                                  ],
-                                              5: ["Very satisfied",
-                                                  "Somewhat satisfied",
-                                                  "Neither satisfied nor dissatisfied",
-                                                  "Somewhat dissatisfied",
-                                                  "Very dissatisfied",
-                                                  ],
-                                              6: ["smiley-1",
-                                                  "smiley-2",
-                                                  "smiley-3",
-                                                  "smiley-4",
-                                                  "smiley-6",
-                                                  ],
-                                              7: ["smiley-3",
-                                                  "smiley-4",
-                                                  "smiley-5",
-                                                  ],
-                                              })
 
     # -------------------------------------------------------------------------
     # Deployments
@@ -3950,12 +3845,6 @@ class S3Config(Storage):
         """
         return self.dvr.get("needs_hierarchical", False)
 
-    def get_dvr_vulnerability_types_hierarchical(self):
-        """
-            Vulnerability types are hierarchical
-        """
-        return self.dvr.get("vulnerability_types_hierarchical", False)
-
     def get_dvr_manage_response_actions(self):
         """
             Manage individual response actions in case activities
@@ -4066,12 +3955,6 @@ class S3Config(Storage):
         """
         return self.event.get("exercise", False)
 
-    def get_event_sitrep_dynamic(self):
-        """
-            Whether the SitRep resource should include a Dynamic Table section
-        """
-        return self.event.get("sitrep_dynamic", False)
-
     def get_event_sitrep_edxl(self):
         """
             Whether the SitRep resource should be configured for EDXL-Sitrep mode
@@ -4098,18 +3981,6 @@ class S3Config(Storage):
             Options: None, contact_method (e.g. "SMS", "EMAIL")
         """
         return self.event.get("task_notification", "EMAIL")
-
-    def get_event_dc_response_tab(self):
-        """
-            Whether to show the DC response tab for events
-        """
-        return self.event.get("dc_response_tab", True)
-
-    def get_event_dc_target_tab(self):
-        """
-            Whether to show the DC target tab for events
-        """
-        return self.event.get("dc_target_tab", True)
 
     def get_event_dispatch_tab(self):
         """
@@ -5282,7 +5153,7 @@ class S3Config(Storage):
 
     def get_pr_editable_fields(self):
         """
-            Fields which are editable in the AddPersonWidget
+            Fields which are editable in the PersonSelector
         """
         return self.pr.get("editable_fields", [])
 
@@ -5309,64 +5180,56 @@ class S3Config(Storage):
 
     def get_pr_label_fullname(self):
         """
-            Label for the AddPersonWidget's 'Name' field
+            Label for the PersonSelector's 'Name' field
         """
         return self.__lazy("pr", "label_fullname", default="Name")
 
     def get_pr_lookup_duplicates(self):
         """
-            Whether the AddPersonWidget does a fuzzy search for duplicates
+            Whether the PersonSelector does a fuzzy search for duplicates
         """
         return self.pr.get("lookup_duplicates", False)
 
     def get_pr_request_dob(self):
-        """ Include Date of Birth in the AddPersonWidget """
+        """ Include Date of Birth in the PersonSelector """
         return self.__lazy("pr", "request_dob", default=True)
 
     def get_pr_dob_required(self):
-        """ Whether Date of Birth is Mandatory, including in the AddPersonWidget """
+        """ Whether Date of Birth is Mandatory, including in the PersonSelector """
         return self.__lazy("pr", "dob_required", default=False)
 
     def get_pr_request_email(self):
-        """ Include Email in the AddPersonWidget """
+        """ Include Email in the PersonSelector """
         return self.__lazy("pr", "request_email", default=True)
 
-    def get_pr_request_father_name(self):
-        """ Include Father Name in the AddPersonWidget """
-        return self.__lazy("pr", "request_father_name", default=False)
-
-    def get_pr_request_grandfather_name(self):
-        """ Include GrandFather Name in the AddPersonWidget """
-        return self.__lazy("pr", "request_grandfather_name", default=False)
-
     def get_pr_request_gender(self):
-        """ Include Gender in the AddPersonWidget """
+        """ Include Gender in the PersonSelector """
         return self.__lazy("pr", "request_gender", default=True)
 
     def get_pr_request_home_phone(self):
-        """ Include Home Phone in the AddPersonWidget """
+        """ Include Home Phone in the PersonSelector """
         return self.__lazy("pr", "request_home_phone", default=False)
 
     def get_pr_request_mobile_phone(self):
-        """ Include Mobile Phone in the AddPersonWidget """
+        """ Include Mobile Phone in the PersonSelector """
         return self.__lazy("pr", "request_mobile_phone", default=True)
+
+    def get_pr_request_nationality(self):
+        """ Include Nationality in the PersonSelector """
+        return self.__lazy("pr", "request_nationality", default=False)
 
     def get_pr_request_tags(self):
         """
-            Include Tags in the AddPersonWidget
+            Include Tags in the PersonSelector
             List of Tuples: (label, tag)
         """
         return self.__lazy("pr", "request_tags", default=[])
-
-    def get_pr_request_year_of_birth(self):
-        """ Include Year of Birth in the AddPersonWidget """
-        return self.__lazy("pr", "request_year_of_birth", default=False)
 
     def get_pr_name_format(self):
         """
             Format with which to represent Person Names
 
-            Generally want an option in AddPersonWidget to handle the input like this too
+            Generally want an option in PersonSelector to handle the input like this too
         """
         return self.__lazy("pr", "name_format", default="%(first_name)s %(middle_name)s %(last_name)s")
 
@@ -5378,7 +5241,7 @@ class S3Config(Storage):
 
     def get_pr_separate_name_fields(self):
         """
-            Whether the AddPersonWidget provides separate name fields or not
+            Whether the PersonSelector provides separate name fields or not
             Options:
                 False (single field)
                 2 (first/last)

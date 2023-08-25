@@ -814,10 +814,8 @@ class S3RoleManager(CRUDMethod):
             r.unauthorised()
 
         # Require that the target user record belongs to a managed organisation
-        pe_ids = auth.get_managed_orgs()
-        if not pe_ids:
-            r.unauthorised()
-        elif pe_ids is not True:
+        pe_ids = auth.permission.permitted_realms("auth_user", "update")
+        if pe_ids:
             otable = current.s3db.org_organisation
             utable = auth.settings.table_user
             query = (utable.id == r.id) & \
@@ -828,6 +826,8 @@ class S3RoleManager(CRUDMethod):
                                            ).first()
             if not row:
                 r.unauthorised()
+        elif pe_ids is not None:
+            r.unauthorised()
 
         # Which roles can the current user manage for this user?
         managed_roles = self.get_managed_roles(r.id)
@@ -1125,12 +1125,13 @@ class S3RoleManager(CRUDMethod):
 
         users = {}
 
-        pe_ids = auth.get_managed_orgs()
-        if pe_ids:
+        pe_ids = auth.permitted_realms("auth_user", "update")
+        if pe_ids or pe_ids is None:
             utable = auth_settings.table_user
             query = (utable.deleted == False)
 
-            if pe_ids is not True:
+            if pe_ids is not None:
+                # Restricted to certain organisations
                 otable = current.s3db.org_organisation
                 query &= (otable.id == utable.organisation_id) & \
                          (otable.pe_id.belongs(pe_ids))

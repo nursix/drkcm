@@ -27,14 +27,14 @@ class SimpleHierarchyTests(unittest.TestCase):
                           Field("category"),
                           Field("type"),
                           Field("parent", "reference test_hierarchy"),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("test_hierarchy_reference",
                           Field("test_hierarchy_id", "reference test_hierarchy",
                                 ondelete = "RESTRICT",
                                 ),
                           Field("test_hierarchy_multi_id", "list:reference test_hierarchy"),
-                          *s3_meta_fields())
+                          )
 
         xmlstr = """
 <s3xml>
@@ -685,12 +685,12 @@ class LinkedHierarchyTests(unittest.TestCase):
                           Field("name"),
                           Field("category"),
                           Field("type"),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("test_lhierarchy_link",
                           Field("parent_id", "reference test_lhierarchy"),
                           Field("child_id", "reference test_lhierarchy"),
-                          *s3_meta_fields())
+                          )
 
         # Component for import
         s3db.add_components("test_lhierarchy",
@@ -1163,7 +1163,7 @@ class TypeOfTests(unittest.TestCase):
 
         s3db.define_table("typeof_nonhierarchy",
                           Field("name"),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("typeof_hierarchy",
                           Field("name"),
@@ -1172,12 +1172,12 @@ class TypeOfTests(unittest.TestCase):
                           Field("typeof_nonhierarchy_multi_id", "list:reference typeof_nonhierarchy"),
                           Field.Method("vsfield", lambda row: "test"),
                           Field.Method("vmfield", lambda row: ["test1", "test2", "test3"]),
-                          *s3_meta_fields())
+                          )
 
         s3db.define_table("typeof_hierarchy_reference",
                           Field("typeof_hierarchy_id", "reference typeof_hierarchy"),
                           Field("typeof_hierarchy_multi_id", "list:reference typeof_hierarchy"),
-                          *s3_meta_fields())
+                          )
 
         xmlstr = """
 <s3xml>

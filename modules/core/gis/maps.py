@@ -342,9 +342,43 @@ class LayerWMS(Layer):
         return offerings
 
 # =============================================================================
+class LayerWFS(Layer):
+    """ WFS Layer """
+
+    # -------------------------------------------------------------------------
+    @property
+    def offerings(self):
+
+        attr = self.attr
+        offerings = []
+
+        base_url = attr.get("url")
+        if base_url:
+            url = base_url.rstrip("?").rstrip("/")
+            version = attr.get("version", "1.1.0")
+
+            # Layer parameters for feature requests
+            layer_arg = "TYPENAME" if version == "1.0.0" else "TYPENAMES"
+            layer_name = ":".join(a.strip() for a in map(attr.get, ("featureNS", "featureType")) if a)
+
+            service = Offering("wfs")
+            service.add_operation("GetCapabilities",
+                                  href = "%s?REQUEST=GetCapabilities&SERVICE=wfs&VERSION=%s" %
+                                         (url, version),
+                                  )
+            service.add_operation("GetFeature",
+                                  href = "%s?REQUEST=GetFeature&SERVICE=wfs&VERSION=%s&%s=%s" %
+                                         (url, version, layer_arg, layer_name),
+                                  )
+            offerings.append(service)
+
+        return offerings
+
+# =============================================================================
 # Specific layer classes by tablename
 #
 LAYERS = {"gis_layer_wms": LayerWMS,
+          "gis_layer_wfs": LayerWFS,
           "gis_layer_openstreetmap": LayerOSM,
           }
 

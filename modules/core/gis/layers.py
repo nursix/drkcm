@@ -709,7 +709,7 @@ class LayerGoogle(Layer):
             apikey = settings.get_gis_api_google()
             s3 = current.response.s3
             debug = s3.debug
-            # Google scripts use document.write so cannot be loaded async via yepnope.js
+            # Google scripts use document.write so cannot be loaded async
             s3_scripts = s3.scripts
 
             ldict = {}

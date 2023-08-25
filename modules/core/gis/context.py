@@ -30,6 +30,8 @@ from gluon import current
 
 from ..tools import JSONSEPARATORS
 
+DEFAULT_MIME_TYPE = "application/xml"
+
 # =============================================================================
 class MapContext:
     """
@@ -185,16 +187,55 @@ class Offering:
         return bool(self.operations) or bool(self.contents)
 
     # -------------------------------------------------------------------------
-    def add_operation(self, code, href=None):
+    def add_operation(self, code, method="GET", href=None, mime=None, request=None, result=None):
+        """
+            Add an operation to this offering
 
-        # TODO implement properly
-        self.operations.append(Operation(code, href=href))
+            Args:
+                code: the name of the operation
+                href: the URL to access the operation
+                method: the HTTP method to access the operation
+                mime: the MIME-type of the expected results
+                request: the request body (for method=POST)
+                result: the result of the service request as str
+                        (e.g. if the request was performed server-side)
+
+            Notes:
+                - to specify the MIME-types of request and/or result,
+                  use tuples like (MIME-type, content); otherwise the
+                  respective content type will default to DEFAULT_MIME_TYPE
+        """
+
+        # TODO prevent duplication?
+        #self.operations = [op for op in self.operations if op.code != code]
+
+        op = Operation(code,
+                       method = method,
+                       href = href,
+                       mime = mime,
+                       request = request,
+                       result = result,
+                       )
+        self.operations.append(op)
+        return op
 
     # -------------------------------------------------------------------------
-    def add_content(self):
+    def add_content(self, content=None, href=None, mime=DEFAULT_MIME_TYPE):
+        """
+            Add inline-content to this offering
 
-        # TODO implement
-        pass
+            Args:
+                content: the inline-content (as str)
+                href: the URL to access the content (overrides content)
+                mime: the MIME-type of the content
+
+            Returns:
+                the generated Content-element
+        """
+
+        c = Content(content=content, href=href, mime=mime)
+        self.contents.append(c)
+        return c
 
     # -------------------------------------------------------------------------
     def as_dict(self):
@@ -212,26 +253,39 @@ class Offering:
 # =============================================================================
 class Operation:
     """
-        Web service operations (i.e. end point+method)
+        Web map service operations (i.e. end point+method)
     """
 
-    def __init__(self, code, method="GET", href=None, body=None, mime="application/xml", result=None):
+    def __init__(self,
+                 code,
+                 method="GET",
+                 href=None,
+                 mime=None,
+                 request=None,
+                 result=None,
+                 ):
         """
             Args:
                 code: the code for the operation
                 method: the HTTP method
                 href: the URL for the service request
-                body: the request body (if method=POST)
-                mime: the request body type (if method=POST)
+                mime: the expected MIME-type of the result
+                request: the request body (for method=POST)
                 result: the result of the service request as str
                         (e.g. if the request was performed server-side)
+
+            Notes:
+                - to specify the MIME-types of request and/or result,
+                  use tuples like (MIME-type, content); otherwise the
+                  respective content type will default to DEFAULT_MIME_TYPE
         """
 
         self.code = code
         self.method = method
         self.href = href
         self.mime = mime
-        self.body = body
+
+        self.request = request
         self.result = result
 
     # -------------------------------------------------------------------------
@@ -250,14 +304,43 @@ class Operation:
               "href": self.href,
               }
 
+        mime = self.mime
+        if mime:
+            op["type"] = mime
+
         if self.method == "POST":
-            op["request"] = {"type": self.mime,
-                             "content": self.body or ""
-                             }
-        if self.result:
-            op["result"] = self.result
+            op["request"] = self.typed(self.request)
+
+        result = self.result
+        if result:
+            if mime and not isinstance(result, tuple):
+                # Default to expected MIME type
+                result = (mime, result)
+            op["result"] = self.typed(result)
 
         return op
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def typed(content):
+        """
+            Helper to produce typed content tags for request/result
+
+            Args:
+                content: the content as str or as tuple (mime-type, content)
+
+            Returns:
+                a dict {"type": mime-type, "content": content-str}
+        """
+
+        if isinstance(content, tuple):
+            mime, content = (content + (None, None))[:2]
+        else:
+            mime = None
+
+        return {"type": mime if mime else DEFAULT_MIME_TYPE,
+                "content": str(content) if content else "",
+                }
 
 # =============================================================================
 class Content:
@@ -265,20 +348,23 @@ class Content:
         Map contents
     """
 
-    def __init__(self, content, mime="application/xml"):
+    def __init__(self, content=None, href=None, mime=DEFAULT_MIME_TYPE):
         """
             Args:
-                the content (as str)
+                content: the inline-content (as str)
+                href: the URL to access the content (overrides inline-content)
                 mime: the MIME type of the content
         """
 
         self.mime = mime
-        self.content = str(content)
+
+        self.href = href
+        self.content = content
 
     # -------------------------------------------------------------------------
     def __bool__(self):
 
-        return bool(self.content)
+        return bool(self.content) or bool(self.href)
 
     # -------------------------------------------------------------------------
     def as_dict(self):
@@ -286,8 +372,15 @@ class Content:
             Returns the content object as JSON-serializable dict
         """
 
-        return {"type": self.mime,
-                "content": self.content,
-                }
+        output = {"type": self.mime if self.mime else DEFAULT_MIME_TYPE,
+                  }
+
+        href, content = self.href, self.content
+        if href:
+            output["href"] = str(href)
+        else:
+            output["content"] = str(content) if content else ""
+
+        return content
 
 # END =========================================================================

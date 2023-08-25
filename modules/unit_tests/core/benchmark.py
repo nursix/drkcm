@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Core Benchmarks
 #
 # To run this script use:

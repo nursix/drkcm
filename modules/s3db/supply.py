@@ -138,8 +138,8 @@ class SupplyModel(DataModel):
                                                      ),
                                        ],
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_BRAND = T("Create Brand")
@@ -157,23 +157,23 @@ class SupplyModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename)
-        brand_id = S3ReusableField("brand_id", "reference %s" % tablename,
-            label = T("Brand"),
-            ondelete = "RESTRICT",
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "supply_brand.id",
-                                  represent,
-                                  sort=True)
-                        ),
-            sortby = "name",
-            comment = S3PopupLink(c = "supply",
-                                  f = "brand",
-                                  label = ADD_BRAND,
-                                  title = T("Brand"),
-                                  tooltip = T("The list of Brands are maintained by the Administrators."),
-                                  ),
-            )
+        brand_id = FieldTemplate("brand_id", "reference %s" % tablename,
+                                 label = T("Brand"),
+                                 ondelete = "RESTRICT",
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "supply_brand.id",
+                                                          represent,
+                                                          sort = True,
+                                                          )),
+                                  sortby = "name",
+                                  comment = S3PopupLink(c = "supply",
+                                                        f = "brand",
+                                                        label = ADD_BRAND,
+                                                        title = T("Brand"),
+                                                        tooltip = T("The list of Brands are maintained by the Administrators."),
+                                                        ),
+                                  )
 
         # =====================================================================
         # Catalog (of Items)
@@ -191,8 +191,8 @@ class SupplyModel(DataModel):
                                        ],
                            ),
                      self.org_organisation_id(),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_CATALOG = T("Create Catalog")
@@ -221,23 +221,23 @@ class SupplyModel(DataModel):
             comment = None
 
         represent = S3Represent(lookup=tablename, translate=translate)
-        catalog_id = S3ReusableField("catalog_id", "reference %s" % tablename,
-            default = 1,
-            label = T("Catalog"),
-            ondelete = "RESTRICT",
-            represent = represent,
-            requires = IS_EMPTY_OR(
-                        IS_ONE_OF(db, "supply_catalog.id",
-                                  represent,
-                                  sort = True,
-                                  # Restrict to catalogs the user can update
-                                  updateable = True,
-                                  )),
-            sortby = "name",
-            readable = catalog_multi,
-            writable = catalog_multi,
-            comment = comment,
-            )
+        catalog_id = FieldTemplate("catalog_id", "reference %s" % tablename,
+                                   default = 1,
+                                   label = T("Catalog"),
+                                   ondelete = "RESTRICT",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "supply_catalog.id",
+                                                              represent,
+                                                              sort = True,
+                                                              # Restrict to catalogs the user can update
+                                                              updateable = True,
+                                                              )),
+                                   sortby = "name",
+                                   readable = catalog_multi,
+                                   writable = catalog_multi,
+                                   comment = comment,
+                                   )
 
         # Components
         add_components(tablename,
@@ -309,8 +309,7 @@ class SupplyModel(DataModel):
                            readable = vehicle,
                            writable = vehicle,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields(),
+                     CommentsField(),
                      on_define = lambda table: \
                         [table.parent_item_category_id.set_attributes(requires = item_category_requires),
                          ]
@@ -338,14 +337,14 @@ class SupplyModel(DataModel):
                                             tooltip = ADD_ITEM_CATEGORY,
                                             )
 
-        item_category_id = S3ReusableField("item_category_id", "reference %s" % tablename,
-                                           comment = item_category_comment,
-                                           label = T("Category"),
-                                           ondelete = "RESTRICT",
-                                           represent = item_category_represent,
-                                           requires = item_category_requires,
-                                           sortby = "name",
-                                           )
+        item_category_id = FieldTemplate("item_category_id", "reference %s" % tablename,
+                                         comment = item_category_comment,
+                                         label = T("Category"),
+                                         ondelete = "RESTRICT",
+                                         represent = item_category_represent,
+                                         requires = item_category_requires,
+                                         sortby = "name",
+                                         )
         item_category_script = '''
 $.filterOptionsS3({
  'trigger':'catalog_id',
@@ -410,9 +409,9 @@ $.filterOptionsS3({
                            writable = track_pack_values,
                            ),
                      # @ToDo: Move this into a Currency Widget for the pack_value field
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values,
-                                 ),
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
                      brand_id(),
                      Field("kit", "boolean",
                            default = False,
@@ -467,8 +466,8 @@ $.filterOptionsS3({
                            writable = False,
                            ),
                      # These comments do *not* pull through to an Inventory's Items or a Request's Items
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Categories in Progress
         #table.item_category_id_0.label = T("Category")
@@ -497,24 +496,24 @@ $.filterOptionsS3({
 
         # Reusable Field
         supply_item_tooltip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
-        supply_item_id = S3ReusableField("item_id",
-            "reference %s" % tablename, # 'item_id' for backwards-compatibility
-            label = T("Item"),
-            ondelete = "RESTRICT",
-            represent = supply_item_represent,
-            requires = IS_ONE_OF(db, "supply_item.id",
-                                 supply_item_represent,
-                                 sort = True,
-                                 ),
-            sortby = "name",
-            widget = S3AutocompleteWidget("supply", "item"),
-            comment = S3PopupLink(c = "supply",
-                                  f = "item",
-                                  label = ADD_ITEM,
-                                  title = T("Item"),
-                                  tooltip = supply_item_tooltip,
-                                  ),
-            )
+        supply_item_id = FieldTemplate("item_id",
+                                       "reference %s" % tablename, # 'item_id' for backwards-compatibility
+                                       label = T("Item"),
+                                       ondelete = "RESTRICT",
+                                       represent = supply_item_represent,
+                                       requires = IS_ONE_OF(db, "supply_item.id",
+                                                            supply_item_represent,
+                                                            sort = True,
+                                                            ),
+                                       sortby = "name",
+                                       widget = S3AutocompleteWidget("supply", "item"),
+                                       comment = S3PopupLink(c = "supply",
+                                                             f = "item",
+                                                             label = ADD_ITEM,
+                                                             title = T("Item"),
+                                                             tooltip = supply_item_tooltip,
+                                                             ),
+                                       )
 
         # ---------------------------------------------------------------------
         filter_widgets = [
@@ -621,8 +620,8 @@ $.filterOptionsS3({
                      item_category_id(script = item_category_script,
                                       ),
                      supply_item_id(script = None), # No Item Pack Filter
-                     s3_comments(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
-                     *s3_meta_fields())
+                     CommentsField(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -717,11 +716,11 @@ $.filterOptionsS3({
                            writable = track_pack_values,
                            ),
                      # @ToDo: Move this into a Currency Widget for the pack_value field
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values,
-                                 ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_ITEM_PACK = T("Create Item Pack")
@@ -741,22 +740,21 @@ $.filterOptionsS3({
         # Reusable Field
         item_pack_represent = supply_ItemPackRepresent(lookup = "supply_item_pack",
                                                        translate = translate)
-        item_pack_id = S3ReusableField("item_pack_id", "reference %s" % tablename,
-                    label = T("Pack"),
-                    ondelete = "RESTRICT",
-                    represent = item_pack_represent,
-                    # Do not display any packs initially
-                    # will be populated by filterOptionsS3
-                    requires = IS_ONE_OF_EMPTY_SELECT(db,
-                                         "supply_item_pack.id",
-                                         item_pack_represent,
-                                         sort=True,
-                                         # @ToDo: Enforce "Required" for imports
-                                         # @ToDo: Populate based on item_id in controller instead of IS_ONE_OF_EMPTY_SELECT
-                                         # filterby = "item_id",
-                                         # filter_opts = (....),
-                                         ),
-                    script = '''
+        item_pack_id = FieldTemplate("item_pack_id", "reference %s" % tablename,
+                                     label = T("Pack"),
+                                     ondelete = "RESTRICT",
+                                     represent = item_pack_represent,
+                                     # Do not display any packs initially
+                                     # will be populated by filterOptionsS3
+                                     requires = IS_ONE_OF_EMPTY_SELECT(db, "supply_item_pack.id",
+                                                                       item_pack_represent,
+                                                                       sort=True,
+                                                                       # @ToDo: Enforce "Required" for imports
+                                                                       # @ToDo: Populate based on item_id in controller instead of IS_ONE_OF_EMPTY_SELECT
+                                                                       # filterby = "item_id",
+                                                                       # filter_opts = (....),
+                                                                       ),
+                                     script = '''
 $.filterOptionsS3({
  'trigger':'item_id',
  'target':'item_pack_id',
@@ -766,14 +764,14 @@ $.filterOptionsS3({
  'fncPrep':S3.supply.fncPrepItem,
  'fncRepresent':S3.supply.fncRepresentItem
 })''',
-                    sortby = "name",
-                    #comment=S3PopupLink(c = "supply",
-                    #                    f = "item_pack",
-                    #                    label = ADD_ITEM_PACK,
-                    #                    title = T("Item Packs"),
-                    #                    tooltip = T("The way in which an item is normally distributed"),
-                    #                    ),
-                    )
+                                     sortby = "name",
+                                     #comment=S3PopupLink(c = "supply",
+                                     #                    f = "item_pack",
+                                     #                    label = ADD_ITEM_PACK,
+                                     #                    title = T("Item Packs"),
+                                     #                    tooltip = T("The way in which an item is normally distributed"),
+                                     #                    ),
+                                     )
 
         configure(tablename,
                   deduplicate = self.supply_item_pack_duplicate,
@@ -805,8 +803,8 @@ $.filterOptionsS3({
                                        float_represent(v, precision=2),
                            ),
                      item_pack_id(),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -853,8 +851,8 @@ $.filterOptionsS3({
                                                                   },
                                                           ),
                                     ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -893,7 +891,7 @@ $.filterOptionsS3({
                                 default = 1.0,
                                 label = T("Quantity"),
                                 ),
-                          *S3MetaFields.owner_meta_fields())
+                          *MetaFields.owner_meta_fields())
 
         # Reusable Field
         item_id = lambda: super_link("item_entity_id", "supply_item_entity",
@@ -956,7 +954,7 @@ $.filterOptionsS3({
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"supply_item_id": dummy("item_id"),
                 "supply_item_category_id": dummy("item_category_id"),
@@ -1317,7 +1315,7 @@ class SupplyDistributionModel(DataModel):
                                                     ),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_ITEM = T("Create Distribution Item")
@@ -1373,24 +1371,24 @@ class SupplyDistributionModel(DataModel):
                            requires = IS_INT_IN_RANGE(0, None),
                            represent = IS_INT_AMOUNT.represent,
                            ),
-                     s3_date("date",
-                             #empty = False,
-                             label = T("Start Date"),
-                             ),
-                     s3_date("end_date",
-                             #empty = False,
-                             label = T("End Date"),
-                             start_field = "supply_distribution_date",
-                             default_interval = 12,
-                             # Most Distributions happen on a single day
-                             # Enable in-template if-required
-                             readable = False,
-                             writable = False,
-                             ),
+                     DateField("date",
+                               #empty = False,
+                               label = T("Start Date"),
+                               ),
+                     DateField("end_date",
+                               #empty = False,
+                               label = T("End Date"),
+                               #start_field = "supply_distribution_date",
+                               #default_interval = 12,
+                               # Most Distributions happen on a single day
+                               # Enable in-template if-required
+                               readable = False,
+                               writable = False,
+                               ),
                      #self.stats_source_id(),
                      Field.Method("year", self.supply_distribution_year),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1410,16 +1408,15 @@ class SupplyDistributionModel(DataModel):
         #represent = S3Represent(lookup=tablename,
         #                        field_sep = " ",
         #                        fields=["value", "parameter_id"])
-        distribution_id = S3ReusableField("distribution_id",
-                                          "reference %s" % tablename,
-                                          ondelete = "CASCADE",
-                                          #represent = represent,
-                                          requires = IS_EMPTY_OR(
-                                                        IS_ONE_OF(db,
-                                                            "%s.id" % tablename,
-                                                            #represent,
-                                                            )),
-                                          )
+        distribution_id = FieldTemplate("distribution_id",
+                                        "reference %s" % tablename,
+                                        ondelete = "CASCADE",
+                                        #represent = represent,
+                                        requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  #represent,
+                                                                  )),
+                                        )
 
         # ---------------------------------------------------------------------
         def year_options():
@@ -1622,8 +1619,8 @@ class SupplyDistributionModel(DataModel):
                            label = T("Received?"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1636,7 +1633,7 @@ class SupplyDistributionModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"supply_distribution_id": S3ReusableField.dummy("distribution_id"),
+        return {"supply_distribution_id": FieldTemplate.dummy("distribution_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1772,7 +1769,7 @@ class SupplyDistributionDVRActivityModel(DataModel):
                           self.supply_distribution_id(empty = False,
                                                       ondelete = "CASCADE",
                                                       ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1807,8 +1804,8 @@ class SupplyPersonModel(DataModel):
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Status"),
@@ -1826,16 +1823,16 @@ class SupplyPersonModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup = tablename)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    label = T("Status"),
-                                    ondelete = "SET NULL",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Status"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(current.db,
                                                           "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                    )
+                                  )
 
         # ---------------------------------------------------------------------
         # Link table between People & Items
@@ -1854,8 +1851,8 @@ class SupplyPersonModel(DataModel):
                      # Requested By / Taken By
                      self.org_organisation_id(ondelete = "SET NULL",
                                               ),
-                     s3_comments(comment = None),
-                     *s3_meta_fields())
+                     CommentsField(comment = None),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Item"),

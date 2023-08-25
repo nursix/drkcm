@@ -1266,7 +1266,7 @@ def system_info():
     os_version = platform.platform()
 
     trows.extend([subheader("Server"),
-                  item("Base Release", base_version),
+                  item("Eden ASP", base_version),
                   item("Web2Py", web2py_version),
                   item("HTTP Server", request.env.server_software),
                   item("Operating System", os_version),
@@ -1338,39 +1338,27 @@ def system_info():
 
     # Python and Libraries
     python_version = platform.python_version()
-    try:
-        from lxml import etree
-        lxml_version = ".".join([str(i) for i in etree.LXML_VERSION])
-    except (ImportError, AttributeError):
-        lxml_version = INCORRECT
-    try:
-        import reportlab
-        reportlab_version = reportlab.Version
-    except (ImportError, AttributeError):
-        reportlab_version = INCORRECT
-    try:
-        import shapely
-        shapely_version = shapely.__version__
-    except (ImportError, AttributeError):
-        shapely_version = INCORRECT
-    try:
-        import xlrd
-        xlrd_version = xlrd.__VERSION__
-    except (ImportError, AttributeError):
-        xlrd_version = INCORRECT
-    try:
-        import xlwt
-        xlwt_version = xlwt.__VERSION__
-    except (ImportError, AttributeError):
-        xlwt_version = INCORRECT
+    #try:
+    #    from lxml import etree
+    #    lxml_version = ".".join([str(i) for i in etree.LXML_VERSION])
+    #except (ImportError, AttributeError):
+    #    lxml_version = INCORRECT
+    #try:
+    #    import reportlab
+    #    reportlab_version = reportlab.Version
+    #except (ImportError, AttributeError):
+    #    reportlab_version = INCORRECT
+    #try:
+    #    import shapely
+    #    shapely_version = shapely.__version__
+    #except (ImportError, AttributeError):
+    #    shapely_version = INCORRECT
 
     trows.extend([subheader("Python"),
                   item("Python", python_version),
-                  item("lxml", lxml_version),
-                  item("ReportLab", reportlab_version),
-                  item("Shapely", shapely_version),
-                  item("xlrd", xlrd_version),
-                  item("xlwt", xlwt_version),
+                  #item("lxml", lxml_version),
+                  #item("ReportLab", reportlab_version),
+                  #item("Shapely", shapely_version),
                   ])
 
     system_info.append(TABLE(*trows))

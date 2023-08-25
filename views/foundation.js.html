@@ -1,22 +1,37 @@
 {{if s3.debug:}}
-<script src="/{{=appname}}/static/scripts/foundation/vendor/fastclick.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.abide.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.core.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.imageLoader.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.keyboard.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.mediaQuery.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.motion.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.nest.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.timer.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.touch.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.triggers.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.util.box.js"></script>
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.abide.js"></script> -->
 <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.accordion.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.alert.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.clearing.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.accordionMenu.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.drilldown.js"></script>
 <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.dropdown.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.equalizer.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.interchange.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.joyride.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.magellan.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.offcanvas.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.reveal.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.tab.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.dropdownMenu.js"></script>
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.equalizer.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.interchange.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.magellan.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.offcanvas.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.orbit.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.positionable.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.responsiveAccordionTabs.js"></script> -->
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.responsiveMenu.js"></script>
+<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.responsiveToggle.js"></script>
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.reveal.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.slider.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.smoothScroll.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.sticky.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.tabs.js"></script> -->
+<!-- <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.toggler.js"></script> -->
 <script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.tooltip.js"></script>
-<script src="/{{=appname}}/static/scripts/foundation/foundation/foundation.topbar.js"></script>
 {{else:}}
-<script src="/{{=appname}}/static/scripts/foundation/vendor/fastclick.js"></script>
 <script src="/{{=appname}}/static/scripts/foundation/foundation.min.js"></script>
 {{pass}}
 <script>$(document).foundation({{if s3.js_foundation:}}{{=XML(s3.js_foundation)}}{{pass}})</script>

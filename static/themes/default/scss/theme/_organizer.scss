@@ -31,9 +31,55 @@
 
 // ---------------------------------------------------------------------------
 /* Full Calendar */
-.fc table,
-.fc table tr {
-    background: transparent;
+:root {
+  --fc-page-bg-color: #{$body-background};
+
+  --fc-button-text-color: #666;
+
+  --fc-button-bg-color: #eaeaea;
+  --fc-button-border-color: #eaeaea;
+
+  --fc-button-hover-bg-color: #dcdcdc;
+  --fc-button-hover-border-color: #ccc;
+
+  --fc-button-active-bg-color: #cfcfcf;
+  --fc-button-active-border-color: #ccc;
+}
+.fc {
+    table {
+        margin-bottom: 0;
+        font-size: 0.95rem;
+    }
+    .fc-timegrid-axis-cushion,
+    .fc-daygrid-week-number {
+        font-size: 0.85rem;
+    }
+    h1, h2 {
+        #content & {
+            background: transparent;
+        }
+    }
+    thead {
+        background-color: #f4f4f4;
+    }
+    tbody, tfoot, tr, th, td {
+        background: transparent;
+    }
+    .fc-button {
+        font-size: 0.9rem;
+        padding: .2rem .65rem;
+    }
+    .fc-button:focus,
+    .fc-button-primary:focus,
+    .fc-button-primary:not(:disabled):active:focus,
+    .fc-button-primary:not(:disabled).fc-button-active:focus {
+        box-shadow: none;
+    }
+    .inline-throbber {
+        display: inline-block;
+        vertical-align: middle;
+        margin-top: 1rem;
+    }
 }
 
 // END ========================================================================

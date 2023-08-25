@@ -119,14 +119,14 @@ class SituationModel(DataModel):
         tablename = "sit_presence"
         self.define_table(tablename,
                           self.super_link("track_id", "sit_trackable"),
-                          s3_datetime("timestmp",
-                                      label = T("Date/Time"),
-                                      ),
+                          DateTimeField("timestmp",
+                                        label = T("Date/Time"),
+                                        ),
                           location_id(
-                            widget = S3LocationSelector(show_address = False,
-                                                        show_postcode = False,
-                                                        show_latlon = True,
-                                                        ),
+                            widget = LocationSelector(show_address = False,
+                                                      show_postcode = False,
+                                                      show_latlon = True,
+                                                      ),
                             ),
                           Field("direction",
                                 label = T("Direction"),
@@ -141,7 +141,7 @@ class SituationModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

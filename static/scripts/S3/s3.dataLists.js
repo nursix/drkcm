@@ -64,9 +64,9 @@
 
                     var box;
                     if ($(opts.contentSelector).is('table')) {
-                        box = $('<tbody/>');
+                        box = $('<tbody>');
                     } else {
-                        box = $('<div/>');
+                        box = $('<div>');
                     }
 
                     var condition = (typeof (jqXHR.isResolved) !== 'undefined') ? (jqXHR.isResolved()) : (textStatus === "success" || textStatus === "notmodified");
@@ -783,7 +783,7 @@
     /**
      * DataLists document-ready script - attach to all .dl
      */
-    $(document).ready(function() {
+    $(function() {
 
         // Initialize infinite scroll
         $('.dl').each(function() {

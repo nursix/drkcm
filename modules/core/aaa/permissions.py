@@ -35,7 +35,7 @@ from gluon.storage import Storage
 
 from s3dal import Field, Row, Table, original_tablename
 
-from ..model import S3MetaFields
+from ..model import MetaFields
 from ..errors import S3PermissionError
 from ..tools import s3_get_extension
 
@@ -226,7 +226,7 @@ class S3Permission:
                                   ),
                             migrate = migrate,
                             fake_migrate = fake_migrate,
-                            *S3MetaFields.sync_meta_fields()
+                            *MetaFields.sync_meta_fields()
                             )
             self.table = db[self.tablename]
 
@@ -535,42 +535,70 @@ class S3Permission:
         elif owners is not None:
             realm_entity, owner_group, owner_user = owners
         elif record:
-            realm_entity, owner_group, owner_user = \
-                    self.get_owners(table, record)
+            realm_entity, owner_group, owner_user = self.get_owners(table, record)
         else:
             # All users own no records
             return True
 
-        # Session ownership?
         if not user_id:
+            # Session ownership?
             if isinstance(record, (Row, dict)):
                 record_id = record[table._id.name]
             else:
                 record_id = record
             return auth.s3_session_owns(table, record_id)
 
-        # Individual record ownership
+        owned = False # default
+
         if owner_user and owner_user == user_id:
-            return True
+            # User owns the record personally
+            owned = True
 
-        # Public record?
-        if not any((realm_entity, owner_group, owner_user)) and not strict:
-            return True
-        elif strict:
-            return False
+        elif owner_group:
 
-        # OrgAuth: apply only group memberships within the realm
-        if self.entity_realm and realm_entity:
             realms = auth.user.realms
-            roles = [sr.ANONYMOUS]
-            append = roles.append
-            for r in realms:
-                realm = realms[r]
-                if realm is None or realm_entity in realm:
-                    append(r)
+            applicable_roles = {sr.ANONYMOUS, sr.AUTHENTICATED}
+            apply_role = applicable_roles.add
 
-        # Ownership based on user role
-        return bool(owner_group and owner_group in roles)
+            if self.entity_realm:
+                # Apply roles by realm
+                if realm_entity:
+                    # Record belongs to a realm:
+                    # - apply both global and realm-specific roles
+                    for r in realms:
+                        realm = realms[r]
+                        if realm is None or realm_entity in realm:
+                            apply_role(r)
+                elif not strict:
+                    # Record belongs to no realm and loose ownership:
+                    # - apply all roles
+                    applicable_roles |= {r for r in realms}
+                else:
+                    # Record belongs to no realm and strict ownership:
+                    # - apply only global roles
+                    for r in realms:
+                        if realms[r] is None:
+                            apply_role(r)
+            else:
+                # Apply all roles
+                applicable_roles |= {r for r in realms}
+
+            # User owns the record by membership in owner group
+            owned = owner_group in applicable_roles
+
+        elif not owner_user: # and not owner_group:
+
+            if self.entity_realm and realm_entity:
+                # Record without designated owner, but belonging to a realm
+                # - cannot be owned
+                owned = False
+
+            else:
+                # Public record
+                # - either owned by everybody (loose) or nobody (strict)
+                owned = not bool(strict)
+
+        return owned
 
     # -------------------------------------------------------------------------
     def owner_query(self,
@@ -909,39 +937,35 @@ class S3Permission:
                 record: the record or record ID (None for any record)
         """
 
-        # Auth override, system roles and login
+        # Auth override
         auth = self.auth
         if auth.override:
             return True
 
         # Multiple methods?
         if isinstance(method, (list, tuple)):
-            for m in method:
-                if self.has_permission(m, c=c, f=f, t=t, record=record):
-                    return True
-            return False
-        else:
-            method = [method]
+            permitted = lambda m: self.has_permission(m, c=c, f=f, t=t, record=record)
+            return any(permitted(m) for m in method)
 
         if record == 0:
             record = None
 
+        # Get system roles, check login and auth settings
         sr = auth.get_system_roles()
         logged_in = auth.s3_logged_in()
         self.check_settings()
 
-        # Required ACL
-        racl = self.required_acl(method)
-
-        # Get realms and delegations
+        # Get assigned roles and their respective realms
         if not logged_in:
             realms = Storage({sr.ANONYMOUS:None})
         else:
             realms = auth.user.realms
-
-        # Administrators have all permissions
         if sr.ADMIN in realms:
+            # Administrators have all permissions
             return True
+
+        # Required ACL
+        racl = self.required_acl([method])
 
         # Fall back to current request
         c = c or self.controller
@@ -983,7 +1007,6 @@ class S3Permission:
                                     t = t,
                                     entity = entity
                                     )
-
         permitted = None
         if acls is None:
             permitted = True
@@ -1017,16 +1040,14 @@ class S3Permission:
 
             # Approval possible for this table?
             if not hasattr(t, "_tablename"):
-                table = current.s3db.table(t)
-                if not table:
-                    raise AttributeError("undefined table %s" % t)
+                table = current.s3db[t]
             else:
                 table = t
             if "approved_by" in table.fields:
 
                 approval_methods = ("approve", "review", "reject")
-                access_approved = not all([m in approval_methods for m in method])
-                access_unapproved = any([m in method for m in approval_methods])
+                access_approved = method not in approval_methods
+                access_unapproved = method in approval_methods
 
                 if access_unapproved:
                     if not access_approved:
@@ -1035,9 +1056,9 @@ class S3Permission:
                     permitted = self.approved(table, record) or \
                                 self.is_owner(table, record, owners, strict=True) or \
                                 self.has_permission("review", t=table, record=record)
-            else:
-                # Approval not possible for this table => no change
-                pass
+            #else:
+            #    # Approval not possible for this table => no change
+            #    pass
 
         # Remember the result for subsequent checks
         permission_cache[key] = permitted
@@ -1111,8 +1132,7 @@ class S3Permission:
             realms = user.realms
 
         # Don't filter out unapproved records owned by the user
-        if requires_approval and not unapproved and \
-           "owned_by_user" in table.fields:
+        if requires_approval and not unapproved and "owned_by_user" in table.fields:
             ALL_RECORDS = (table.approved_by != None)
             if user:
                 owner_query = (table.owned_by_user == user.id)
@@ -1206,6 +1226,10 @@ class S3Permission:
 
         if check_owner_acls:
 
+            # Restricted owner access:
+            # - owner access is limited to the realms for which the user
+            #   has a role that permits it...unless any of the access
+            #   roles applies globally (e.g. AUTHENTICATED)
             use_realm = "ANY" not in oacls
             owner_query = self.owner_query(table,
                                            user,

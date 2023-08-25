@@ -4,11 +4,11 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M
+from s3layouts import MM, M, ML, MP, MA
 try:
-    from ..RLP.layouts import *
+    from ..RLP.layouts import OM
 except ImportError:
     pass
 import s3menus as default
@@ -88,9 +88,9 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Test Stations for Everybody",
                        c = "org", f = "facility", m = "summary", vars={"$$code": "TESTS-PUBLIC"},
                        ),
-                    MM("Test Stations for School and Child Care Staff",
-                       c = "org", f = "facility", m = "summary", vars={"$$code": "TESTS-SCHOOLS"},
-                       ),
+                    #MM("Test Stations for School and Child Care Staff",
+                    #   c = "org", f = "facility", m = "summary", vars={"$$code": "TESTS-SCHOOLS"},
+                    #   ),
                     MM("Test Stations to review",
                        c = "org", f = "facility", vars={"$$review": "1"}, restrict="ORG_GROUP_ADMIN",
                        ),
@@ -127,7 +127,7 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        OM = S3OrgMenuLayout
+        #OM = S3OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
@@ -256,7 +256,14 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     ),
                     M("Scheduler", c="admin", f="task"),
                     M("Error Tickets", c="admin", f="errors"),
+                    M("Event Log", c="admin", f="event"),
                 )
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def audit(cls):
+
+        return cls.org()
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -301,6 +308,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Administration", restrict="ADMIN")(
                         M("Diseases", f="disease"),
                         M("Demographics", f="demographic"),
+                        M("Testing Devices", f="testing_device"),
                         )
                     )
 
@@ -408,8 +416,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
         else:
             cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
 
-        return M(c=("org", "hrm", "cms"))(
+        return M(c=("org", "hrm", "cms", "audit"))(
                     org_menu,
+                    M("Audit", c="audit", link=False, restrict="AUDITOR")(
+                        M("Overview", f="organisation"),
+                        ),
                     M("Test Stations", f="facility", link=False, restrict="ORG_GROUP_ADMIN")(
                         M("Test Stations to review", vars = {"$$review": "1"}),
                         M("Unapproved##actionable", vars = {"$$pending": "1"}),

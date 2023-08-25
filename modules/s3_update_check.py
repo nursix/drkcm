@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 
@@ -249,7 +247,7 @@ def s3_check_python_lib(global_mandatory, template_mandatory, template_optional,
             if "from" in dependency:
                 exec(dependency)
             else:
-                exec("import %s" % dependency)
+                exec("import %s" % dependency.lstrip("python-"))
         except ImportError:
             if err:
                 errors.append(err)

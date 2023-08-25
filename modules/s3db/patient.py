@@ -63,7 +63,7 @@ class PatientModel(DataModel):
                           person_id(empty = False,
                                     comment = None,
                                     label = T("Patient"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           Field("country",
                                 label = T("Current Location Country"),
@@ -85,14 +85,14 @@ class PatientModel(DataModel):
                                 label = T("Injuries"),
                                 widget = s3_comments_widget,
                                 ),
-                          s3_date("treatment_date",
-                                  label = T("Date of Treatment"),
-                                  ),
-                          s3_date("return_date",
-                                  label = T("Expected Return Home"),
-                                  ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          DateField("treatment_date",
+                                    label = T("Date of Treatment"),
+                                    ),
+                          DateField("return_date",
+                                    label = T("Expected Return Home"),
+                                    ),
+                          CommentsField(),
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -110,19 +110,18 @@ class PatientModel(DataModel):
         patient_represent = patient_PatientRepresent(lookup = "patient_patient")
 
         # Reusable Field for Component Link
-        patient_id = S3ReusableField("patient_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     represent = patient_represent,
-                                     requires = IS_ONE_OF(db,
-                                                          "patient_patient.id",
-                                                          patient_represent),
-                                     )
+        patient_id = FieldTemplate("patient_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   represent = patient_represent,
+                                   requires = IS_ONE_OF(db, "patient_patient.id",
+                                                        patient_represent,
+                                                        ),
+                                   )
         # Search method
         filter_widgets = [
             TextFilter(["person_id$first_name",
                         "person_id$middle_name",
                         "person_id$last_name",
-                        "person_id$local_name",
                         ],
                        label = T("Search"),
                        comment=T("To search for a patient, enter any of the first, middle or last names, separated by spaces. You may use % as wildcard. Press 'Search' without input to list all patients."),
@@ -166,10 +165,10 @@ class PatientModel(DataModel):
                           person_id(empty = False,
                                     comment = None,
                                     label = T("Accompanying Relative"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # CRUD strings
         ADD_RELATIVE = T("New Relative")
@@ -197,7 +196,7 @@ class PatientModel(DataModel):
                                      writable = False),
                           person_id(comment = None,
                                     label = T("Home Relative"),
-                                    widget = S3AddPersonWidget(),
+                                    widget = PersonSelector(),
                                     ),
                           #person_id(label = T("Home Relative")),
                           self.gis_location_id(
@@ -209,8 +208,8 @@ class PatientModel(DataModel):
                                 label = T("Home Phone Number"),
                                 requires = IS_EMPTY_OR(IS_PHONE_NUMBER_MULTI()),
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

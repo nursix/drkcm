@@ -8,73 +8,13 @@ if not settings.has_module(module):
     raise HTTP(404, body="Module disabled: %s" % module)
 
 # -----------------------------------------------------------------------------
-def s3_menu_postp():
-    # @todo: rewrite this for new framework
-    menu_selected = []
-    body_id = s3base.get_last_record_id("dvi_body")
-    if body_id:
-        body = s3db.dvi_body
-        query = (body.id == body_id)
-        record = db(query).select(body.id, body.pe_label,
-                                  limitby=(0, 1)).first()
-        if record:
-            label = record.pe_label
-            response.menu_options[-3][-1].append(
-                [T("Candidate Matches for Body %(label)s") % dict(label=label),
-                 False, URL(f="person",
-                            vars=dict(match=record.id))]
-            )
-            menu_selected.append(
-                ["%s: %s" % (T("Body"), label),
-                 False, URL(f="body", args=[record.id])]
-            )
-    person_id = s3base.get_last_record_id("pr_person")
-    if person_id:
-        person = s3db.pr_person
-        query = (person.id == person_id)
-        record = db(query).select(person.id, limitby=(0, 1)).first()
-        if record:
-            name = s3db.pr_person_id().represent(record.id)
-            menu_selected.append(
-                ["%s: %s" % (T("Person"), name),
-                 False, URL(f="person", args=[record.id])]
-            )
-    if menu_selected:
-        menu_selected = [T("Open recent"), True, None, menu_selected]
-        response.menu_options.append(menu_selected)
-
-# -----------------------------------------------------------------------------
 def index():
     """ Module's Home Page """
 
     module_name = settings.modules[module].get("name_nice", T("Disaster Victim Identification"))
 
-    btable = s3db.dvi_body
-    itable = s3db.dvi_identification
-
-    query = (btable.deleted == False)
-    left = itable.on(itable.pe_id == btable.pe_id)
-    body_count = btable.id.count()
-    rows = db(query).select(body_count,
-                            itable.status,
-                            left=left,
-                            groupby=itable.status)
-    numbers = {None: 0}
-    for row in rows:
-        numbers[row[itable.status]] = row[body_count]
-    total = sum(numbers.values())
-
-    dvi_id_status = dict(s3db.dvi_id_status)
-    dvi_id_status[None] = T("unidentified")
-    statistics = []
-    for status in dvi_id_status:
-        count = numbers.get(status) or 0
-        statistics.append((str(dvi_id_status[status]), count))
-
     response.title = module_name
-    return dict(module_name=module_name,
-                total=total,
-                status=json.dumps(statistics))
+    return {"module_name": module_name}
 
 # -----------------------------------------------------------------------------
 def recreq():
@@ -181,10 +121,11 @@ def person():
                    )
 
     def prep(r):
+        btable = s3db.dvi_body
         if not r.id and not r.method and not r.component:
             body_id = r.get_vars.get("match", None)
-            body = db(db.dvi_body.id == body_id).select(
-                      db.dvi_body.pe_label, limitby=(0, 1)).first()
+            body = db(btable.id == body_id).select(
+                      btable.pe_label, limitby=(0, 1)).first()
             label = body and body.pe_label or "#%s" % body_id
             if body_id:
                 query = dvi_match_query(body_id)
@@ -239,9 +180,9 @@ def dvi_match_query(body_id):
     btable = s3db.dvi_body
 
     query = ((ptable.deleted == False) &
-            (ptable.missing == True) &
-            (ntable.pe_id == ptable.pe_id) &
-            (ntable.status == 1))
+             (ptable.missing == True) &
+             (ntable.pe_id == ptable.pe_id) &
+             (ntable.status == 1))
 
     body = btable[body_id]
     if not body:
@@ -250,21 +191,21 @@ def dvi_match_query(body_id):
     # last seen should be before date of recovery
     if body.date_of_recovery:
         q = ((ntable.timestmp <= body.date_of_recovery) |
-            (ntable.timestmp == None))
+             (ntable.timestmp == None))
         query = query & q
 
     # age group should match
     if body.age_group and body.age_group != 1:
         q = ((ptable.age_group == None) |
-            (ptable.age_group == 1) |
-            (ptable.age_group == body.age_group))
+             (ptable.age_group == 1) |
+             (ptable.age_group == body.age_group))
         query = query & q
 
     # gender should match
     if body.gender and body.gender != 1:
         q = ((ptable.gender == None) |
-            (ptable.gender == 1) |
-            (ptable.gender == body.gender))
+             (ptable.gender == 1) |
+             (ptable.gender == body.gender))
 
     return query
 
@@ -275,6 +216,6 @@ def tooltip():
     formfield = request.vars.get("formfield", None)
     if formfield:
         response.view = "pr/ajaxtips/%s.html" % formfield
-    return dict()
+    return {}
 
 # END =========================================================================

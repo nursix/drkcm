@@ -39,6 +39,8 @@ def config(settings):
     # Custom models/controllers
     settings.base.models = "templates.RLPPTM.models"
     settings.base.rest_controllers = {("disease", "daycare_testing"): ("disease", "daycare_testing"),
+                                      ("audit", "organisation"): ("org", "organisation"),
+                                      ("org", "provider"): ("org", "organisation"),
                                       }
 
     # Custom Logo
@@ -70,6 +72,7 @@ def config(settings):
                                       "VOUCHER_PROVIDER": "VOUCHER_PROVIDER",
                                       "TEST_PROVIDER": "TEST_PROVIDER",
                                       "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
+                                      "AUDITOR": "ADMIN",
                                       }
 
     settings.auth.password_min_length = 8
@@ -128,6 +131,7 @@ def config(settings):
     #    "USD" : "United States Dollars",
     }
     settings.fin.currency_default = "EUR"
+    settings.fin.currency_writable = False
 
     # Do not require international phone number format
     settings.msg.require_international_phone_numbers = False
@@ -221,8 +225,6 @@ def config(settings):
     settings.custom.test_station_registration = True
     settings.custom.test_station_cleanup = True
 
-    settings.custom.test_station_manager_required = False
-
     settings.custom.daycare_testing_data = False
     settings.custom.daycare_testing_inquiry = False
 
@@ -265,6 +267,7 @@ def config(settings):
     # -------------------------------------------------------------------------
     from .customise.disease import disease_case_diagnostics_resource, \
                                    disease_case_diagnostics_controller, \
+                                   disease_testing_device_resource, \
                                    disease_testing_report_resource, \
                                    disease_testing_report_controller, \
                                    disease_testing_demographic_resource, \
@@ -273,6 +276,7 @@ def config(settings):
 
     settings.customise_disease_case_diagnostics_resource = disease_case_diagnostics_resource
     settings.customise_disease_case_diagnostics_controller = disease_case_diagnostics_controller
+    settings.customise_disease_testing_device_resource = disease_testing_device_resource
     settings.customise_disease_testing_report_resource = disease_testing_report_resource
     settings.customise_disease_testing_report_controller = disease_testing_report_controller
     settings.customise_disease_testing_demographic_resource = disease_testing_demographic_resource
@@ -347,13 +351,16 @@ def config(settings):
     settings.customise_org_facility_controller = org_facility_controller
 
     # -------------------------------------------------------------------------
-    from .customise.pr import pr_person_resource, \
+    from .customise.pr import pr_address_resource, \
+                              pr_contact_resource, \
                               pr_person_controller, \
-                              pr_contact_resource
+                              pr_person_resource
+
+    settings.customise_pr_address_resource = pr_address_resource
+    settings.customise_pr_contact_resource = pr_contact_resource
 
     settings.customise_pr_person_controller = pr_person_controller
     settings.customise_pr_person_resource = pr_person_resource
-    settings.customise_pr_contact_resource = pr_contact_resource
 
     # -------------------------------------------------------------------------
     from .customise.project import project_project_resource, \
@@ -436,6 +443,11 @@ def config(settings):
             restricted = True,
             module_type = 1,
         )),
+        ("audit", Storage(
+            name_nice = T("Organizations"),
+            restricted = True,
+            module_type = 1,
+        )),
         # HRM is required for access to default realm permissions
         ("hrm", Storage(
             name_nice = T("Staff"),
@@ -493,6 +505,10 @@ def config(settings):
             name_nice = T("Supply Chain Management"),
             #description = "Used within Inventory Management, Request Management and Asset Management",
             module_type = None, # Not displayed
+        )),
+        ("jnl", Storage(
+            name_nice = T("Management Journal"),
+            module_type = None,
         )),
     ])
 

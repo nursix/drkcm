@@ -49,7 +49,7 @@ from ..model import s3_all_meta_field_names
 from .components import S3Components
 from .query import FS, S3ResourceField, S3Joins
 from .rfilter import S3ResourceFilter
-from .select import S3ResourceData
+from .data import ResourceData
 
 #osetattr = object.__setattr__
 ogetattr = object.__getattribute__
@@ -483,22 +483,22 @@ class CRUDResource:
                 raw_data: include raw data in the result
         """
 
-        data = S3ResourceData(self,
-                              fields,
-                              start = start,
-                              limit = limit,
-                              left = left,
-                              orderby = orderby,
-                              groupby = groupby,
-                              distinct = distinct,
-                              virtual = virtual,
-                              count = count,
-                              getids = getids,
-                              as_rows = as_rows,
-                              represent = represent,
-                              show_links = show_links,
-                              raw_data = raw_data,
-                              )
+        data = ResourceData(self,
+                            fields,
+                            start = start,
+                            limit = limit,
+                            left = left,
+                            orderby = orderby,
+                            groupby = groupby,
+                            distinct = distinct,
+                            virtual = virtual,
+                            count = count,
+                            getids = getids,
+                            as_rows = as_rows,
+                            represent = represent,
+                            show_links = show_links,
+                            raw_data = raw_data,
+                            )
         if as_rows:
             return data.rows
         else:

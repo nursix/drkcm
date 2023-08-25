@@ -61,7 +61,7 @@ Check for ticket and catch exception
     ${ticket}=  Run Keyword and Return Status  Page Should Contain  Ticket issued:
     ${serror}=  Run Keyword and Return Status  Page Should Contain  INTERNAL SERVER ERROR
     # If no error found, return
-    Run Keyword Unless  ${ticket} or ${serror}  Return From Keyword  ${0}
+    Run Keyword If  not (${ticket} or ${serror})  Return From Keyword  ${0}
 
     # Get the ticket ID and construct a URL for the internal ticket viewer
     ${Ticket URL}=  Get Element Attribute  xpath=//a[contains(@href,"/ticket/")]  href
@@ -88,7 +88,7 @@ Check for ticket and catch exception
     # Log it
     ${passed}=  Run Keyword and Return Status  Should Not Be Empty  ${Failed URL}
     Run Keyword If  ${passed}  Log  ${With Failed URL}[0] ${With Failed URL}[1]  ERROR
-    Run Keyword Unless  ${passed}  Log  ${Without Failed URL}[0] ${Without Failed URL}[1]  ERROR
+    Run Keyword If  not ${passed}  Log  ${Without Failed URL}[0] ${Without Failed URL}[1]  ERROR
 
     # Return errors if the Failed URL is given
     Return From Keyword if  ${passed}  @{With Failed URL}
@@ -99,7 +99,7 @@ Check for ticket and catch exception
 Login To Admin Interface If Not Logged In
     [Documentation]  Login to the admin interface to access the ticket
     ${passed}=  Run Keyword and Return Status  Page Should Contain  Administrator Password:
-    Run Keyword Unless  ${passed}  Return From Keyword
+    Run Keyword If  not ${passed}  Return From Keyword
     Input Text  password  ${WEB2PY PASSWD}
     Click Button  Login
 

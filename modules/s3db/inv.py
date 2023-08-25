@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Inventory Model
+"""
+    Sahana Eden Inventory Model
 
     @copyright: 2009-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -169,8 +168,8 @@ class InvWarehouseModel(DataModel):
                                      readable = is_admin if org_dependent_wh_types else False,
                                      writable = is_admin if org_dependent_wh_types else False,
                                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_WAREHOUSE_TYPE = T("Create Warehouse Type")
@@ -188,25 +187,25 @@ class InvWarehouseModel(DataModel):
 
         represent = S3Represent(lookup=tablename, translate=True)
 
-        warehouse_type_id = S3ReusableField("warehouse_type_id", "reference %s" % tablename,
-                               label = T("Warehouse Type"),
-                               ondelete = "SET NULL",
-                               represent = represent,
-                               requires = IS_EMPTY_OR(
-                                           IS_ONE_OF(db, "inv_warehouse_type.id",
-                                                     represent,
-                                                     filterby="organisation_id",
-                                                     filter_opts=filter_opts,
-                                                     sort=True
-                                                     )),
-                               sortby = "name",
-                               comment = S3PopupLink(c = "inv",
-                                                     f = "warehouse_type",
-                                                     label = ADD_WAREHOUSE_TYPE,
-                                                     title = T("Warehouse Type"),
-                                                     tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
-                                                     ),
-                               )
+        warehouse_type_id = FieldTemplate("warehouse_type_id", "reference %s" % tablename,
+                                          label = T("Warehouse Type"),
+                                          ondelete = "SET NULL",
+                                          represent = represent,
+                                          requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "inv_warehouse_type.id",
+                                                                  represent,
+                                                                  filterby="organisation_id",
+                                                                  filter_opts=filter_opts,
+                                                                  sort=True
+                                                                  )),
+                                          sortby = "name",
+                                          comment = S3PopupLink(c = "inv",
+                                                                f = "warehouse_type",
+                                                                label = ADD_WAREHOUSE_TYPE,
+                                                                title = T("Warehouse Type"),
+                                                                tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
+                                                                ),
+                                          )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -297,8 +296,8 @@ class InvWarehouseModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -498,13 +497,13 @@ class InventoryModel(DataModel):
                                             IS_IN_SET(inv_item_status_opts)
                                             ),
                                 ),
-                          s3_date("purchase_date",
-                                  label = T("Purchase Date"),
-                                  ),
-                          s3_date("expiry_date",
-                                  label = T("Expiry Date"),
-                                  represent = inv_expiry_date_represent,
-                                  ),
+                          DateField("purchase_date",
+                                    label = T("Purchase Date"),
+                                    ),
+                          DateField("expiry_date",
+                                    label = T("Expiry Date"),
+                                    represent = inv_expiry_date_represent,
+                                    ),
                           Field("pack_value", "double",
                                 label = T("Value per Pack"),
                                 represent = lambda v: \
@@ -513,9 +512,9 @@ class InventoryModel(DataModel):
                                 writable = track_pack_values,
                                 ),
                           # @ToDo: Move this into a Currency Widget for the pack_value field
-                          s3_currency(readable = track_pack_values,
-                                      writable = track_pack_values,
-                                      ),
+                          CurrencyField(readable = track_pack_values,
+                                        writable = track_pack_values,
+                                        ),
                           Field("item_source_no", length=16,
                                 label = inv_itn_label(),
                                 represent = lambda v: v or NONE,
@@ -544,8 +543,8 @@ class InventoryModel(DataModel):
                                        self.inv_item_total_value),
                           Field.Method("pack_quantity",
                                        self.supply_item_pack_quantity(tablename=tablename)),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # CRUD strings
         INV_ITEM = T("Warehouse Stock")
@@ -565,19 +564,21 @@ class InventoryModel(DataModel):
 
         # Reusable Field
         inv_item_represent = inv_InvItemRepresent()
-        inv_item_id = S3ReusableField("inv_item_id", "reference %s" % tablename,
-                                      label = INV_ITEM,
-                                      ondelete = "CASCADE",
-                                      represent = inv_item_represent,
-                                      requires = IS_ONE_OF(db, "inv_inv_item.id",
-                                                           inv_item_represent,
-                                                           orderby = "inv_inv_item.id",
-                                                           sort = True,
-                                                           ),
-                                      comment = DIV(_class="tooltip",
-                                                    _title="%s|%s" % (INV_ITEM,
-                                                                      T("Select Stock from this Warehouse"))),
-                                      script = '''
+        inv_item_id = FieldTemplate("inv_item_id", "reference %s" % tablename,
+                                    label = INV_ITEM,
+                                    ondelete = "CASCADE",
+                                    represent = inv_item_represent,
+                                    requires = IS_ONE_OF(db, "inv_inv_item.id",
+                                                         inv_item_represent,
+                                                         orderby = "inv_inv_item.id",
+                                                         sort = True,
+                                                         ),
+                                    comment = DIV(_class="tooltip",
+                                                  _title="%s|%s" % (INV_ITEM,
+                                                                    T("Select Stock from this Warehouse"),
+                                                                    ),
+                                                  ),
+                                    script = '''
 $.filterOptionsS3({
  'trigger':'inv_item_id',
  'target':'item_pack_id',
@@ -1003,16 +1004,16 @@ class InventoryTrackingModel(DataModel):
         org_site_represent = self.org_site_represent
         s3_string_represent = lambda v: v if v else NONE
 
-        send_ref = S3ReusableField("send_ref",
-                                   label = T(settings.get_inv_send_ref_field_name()),
-                                   represent = self.inv_send_ref_represent,
-                                   writable = False,
-                                   )
-        recv_ref = S3ReusableField("recv_ref",
-                                   label = T("%(GRN)s Number") % {"GRN": recv_shortname},
-                                   represent = self.inv_recv_ref_represent,
-                                   writable = False,
-                                   )
+        send_ref = FieldTemplate("send_ref",
+                                 label = T(settings.get_inv_send_ref_field_name()),
+                                 represent = self.inv_send_ref_represent,
+                                 writable = False,
+                                 )
+        recv_ref = FieldTemplate("recv_ref",
+                                 label = T("%(GRN)s Number") % {"GRN": recv_shortname},
+                                 represent = self.inv_recv_ref_represent,
+                                 writable = False,
+                                 )
 
         ship_doc_status = {SHIP_DOC_PENDING  : T("Pending"),
                            SHIP_DOC_COMPLETE : T("Complete"),
@@ -1128,27 +1129,25 @@ class InventoryTrackingModel(DataModel):
                            label = T("Vehicle Plate Number"),
                            represent = s3_string_represent,
                            ),
-                     Field("time_in", "time",
-                           label = T("Time In"),
-                           represent = s3_string_represent,
-                           readable = time_in,
-                           writable = time_in,
-                           ),
-                     Field("time_out", "time",
-                           label = T("Time Out"),
-                           represent = s3_string_represent,
-                           ),
-                     s3_datetime(label = T("Date Sent"),
-                                 # Not always sent straight away
-                                 #default = "now",
-                                 represent = "date",
-                                 writable = False,
-                                 ),
-                     s3_datetime("delivery_date",
-                                 label = T("Estimated Delivery Date"),
-                                 represent = "date",
-                                 writable = False,
-                                 ),
+                     TimeField("time_in",
+                               label = T("Time In"),
+                               readable = time_in,
+                               writable = time_in,
+                               ),
+                     TimeField("time_out",
+                               label = T("Time Out"),
+                               ),
+                     DateTimeField(label = T("Date Sent"),
+                                   # Not always sent straight away
+                                   #default = "now",
+                                   represent = "date",
+                                   writable = False,
+                                   ),
+                     DateTimeField("delivery_date",
+                                   label = T("Estimated Delivery Date"),
+                                   represent = "date",
+                                   writable = False,
+                                   ),
                      Field("status", "integer",
                            default = SHIP_STATUS_IN_PROCESS,
                            label = T("Status"),
@@ -1174,8 +1173,8 @@ class InventoryTrackingModel(DataModel):
                            readable = document_filing,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Filter Widgets
         filter_widgets = [
@@ -1232,18 +1231,18 @@ class InventoryTrackingModel(DataModel):
             msg_list_empty = T("No Sent Shipments"))
 
         # Reusable Field
-        send_id = S3ReusableField("send_id", "reference %s" % tablename,
-                                  label = T("Send Shipment"),
-                                  ondelete = "RESTRICT",
-                                  represent = self.inv_send_represent,
-                                  requires = IS_EMPTY_OR(
+        send_id = FieldTemplate("send_id", "reference %s" % tablename,
+                                label = T("Send Shipment"),
+                                ondelete = "RESTRICT",
+                                represent = self.inv_send_represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "inv_send.id",
                                                           self.inv_send_represent,
                                                           orderby = "inv_send.date",
                                                           sort = True,
                                                           )),
-                                  sortby = "date",
-                                  )
+                                sortby = "date",
+                                )
 
         # Components
         add_components(tablename,
@@ -1255,10 +1254,6 @@ class InventoryTrackingModel(DataModel):
         set_method("inv_send",
                    method = "form",
                    action = self.inv_send_form)
-
-        set_method("inv_send",
-                   method = "timeline",
-                   action = self.inv_timeline)
 
         # Redirect to the Items tabs after creation
         if current.request.controller == "req":
@@ -1355,16 +1350,17 @@ class InventoryTrackingModel(DataModel):
                                                   )),
                            represent = org_site_represent
                            ),
-                     s3_date("eta",
-                             label = T("Date Expected"),
-                             writable = False),
-                     s3_datetime(label = T("Date Received"),
-                                 represent = "date",
-                                 # Can also be set manually (when catching up with backlog of paperwork)
-                                 #comment = DIV(_class="tooltip",
-                                 #              _title="%s|%s" % (T("Date Received"),
-                                 #                                T("Will be filled automatically when the Shipment has been Received"))),
-                                 ),
+                     DateField("eta",
+                               label = T("Date Expected"),
+                               writable = False,
+                               ),
+                     DateTimeField(label = T("Date Received"),
+                                   represent = "date",
+                                   # Can also be set manually (when catching up with backlog of paperwork)
+                                   #comment = DIV(_class="tooltip",
+                                   #              _title="%s|%s" % (T("Date Received"),
+                                   #                                T("Will be filled automatically when the Shipment has been Received"))),
+                                   ),
                      send_ref(),
                      recv_ref(),
                      Field("purchase_ref",
@@ -1444,8 +1440,8 @@ class InventoryTrackingModel(DataModel):
                            readable = document_filing,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         inv_recv_crud_strings()
@@ -1456,18 +1452,18 @@ class InventoryTrackingModel(DataModel):
 
         # Reusable Field
         inv_recv_represent = self.inv_recv_represent
-        recv_id = S3ReusableField("recv_id", "reference %s" % tablename,
-                                  label = recv_id_label,
-                                  ondelete = "RESTRICT",
-                                  represent = inv_recv_represent,
-                                  requires = IS_EMPTY_OR(
+        recv_id = FieldTemplate("recv_id", "reference %s" % tablename,
+                                label = recv_id_label,
+                                ondelete = "RESTRICT",
+                                represent = inv_recv_represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "inv_recv.id",
                                                           inv_recv_represent,
                                                           orderby = "inv_recv.date",
                                                           sort = True,
                                                           )),
-                                  sortby = "date",
-                                  )
+                                sortby = "date",
+                                )
 
         # Filter Widgets
         if settings.get_inv_shipment_name() == "order":
@@ -1575,10 +1571,6 @@ class InventoryTrackingModel(DataModel):
                    method = "cert",
                    action = self.inv_recv_donation_cert)
 
-        set_method("inv_recv",
-                   method = "timeline",
-                   action = self.inv_timeline)
-
         # ---------------------------------------------------------------------
         # Kittings
         # - process for creating Kits from component items
@@ -1627,11 +1619,13 @@ class InventoryTrackingModel(DataModel):
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            requires = IS_FLOAT_AMOUNT(minimum=1.0),
                            ),
-                     s3_date(comment = DIV(_class="tooltip",
-                                           _title="%s|%s" % \
-                                           (T("Date Repacked"),
-                                            T("Will be filled automatically when the Item has been Repacked")))
-                            ),
+                     DateField(comment = DIV(_class = "tooltip",
+                                             _title = "%s|%s" % \
+                                                      (T("Date Repacked"),
+                                                       T("Will be filled automatically when the Item has been Repacked"),
+                                                       ),
+                                             ),
+                               ),
                      req_ref(writable = True),
                      person_id("repacked_id",
                                default = auth.s3_logged_in_person(),
@@ -1639,8 +1633,8 @@ class InventoryTrackingModel(DataModel):
                                ondelete = "SET NULL",
                                #comment = self.pr_person_comment(child="repacked_id")),
                                ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1714,8 +1708,8 @@ class InventoryTrackingModel(DataModel):
                                  readable = False,
                                  writable = False,
                                  ),
-                     #s3_comments(),
-                     *s3_meta_fields())
+                     #CommentsField(),
+                     )
 
         # Resource configuration
         configure(tablename,
@@ -1783,11 +1777,11 @@ $.filterOptionsS3({
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            ),
-                     s3_currency(),
-                     s3_date("expiry_date",
-                             label = T("Expiry Date"),
-                             represent = inv_expiry_date_represent,
-                             ),
+                     CurrencyField(),
+                     DateField("expiry_date",
+                               label = T("Expiry Date"),
+                               represent = inv_expiry_date_represent,
+                               ),
                      # The bin at origin
                      Field("bin", length=16,
                            label = T("Bin"),
@@ -1874,8 +1868,7 @@ $.filterOptionsS3({
                                   lambda row: \
                                     self.inv_track_item_total_weight(row, received=True),
                                   ),
-                     s3_comments(),
-                     *s3_meta_fields()
+                     CommentsField(),
                      )
 
         # CRUD strings
@@ -1967,7 +1960,7 @@ $.filterOptionsS3({
             Safe defaults for model-global names in case module is disabled
         """
 
-        return {"inv_recv_id": S3ReusableField.dummy("recv_id"),
+        return {"inv_recv_id": FieldTemplate.dummy("recv_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -3107,194 +3100,6 @@ $.filterOptionsS3({
                                                   )
         return True
 
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def inv_timeline(r, **attr):
-        """
-            Display the Incidents on a Simile Timeline
-
-            http://www.simile-widgets.org/wiki/Reference_Documentation_for_Timeline
-
-            @ToDo: Play button
-            http://www.simile-widgets.org/wiki/Timeline_Moving_the_Timeline_via_Javascript
-        """
-
-        resource_name = r.name
-
-        if r.representation != "html" or resource_name not in ("recv", "send"):
-            r.error(405, current.ERROR.BAD_METHOD)
-
-        T = current.T
-        db = current.db
-
-        response = current.response
-        s3 = response.s3
-
-        s3_include_simile()
-
-        # Add our data
-        # @ToDo: Make this the initial data & then collect extra via REST with a stylesheet
-        # add in JS using S3.timeline.eventSource.addMany(events) where events is a []
-
-        if r.record:
-            # Single record
-            rows = [r.record]
-        else:
-            # Multiple records
-            # @ToDo: Load all records & sort to closest in time
-            # http://stackoverflow.com/questions/7327689/how-to-generate-a-sequence-of-future-datetimes-in-python-and-determine-nearest-d
-            fields = ["id",
-                      "date",
-                      "send_ref",
-                      "comments",
-                      ]
-            if resource_name == "recv":
-                fields.append("recv_ref")
-            rows = r.resource.select(fields,
-                                     limit = 2000,
-                                     virtual = False,
-                                     as_rows = True,
-                                     )
-
-        # We need to link these records to the other end, which can only be done by send_ref
-        send_refs = [row.send_ref for row in rows if row.send_ref is not None]
-
-        data = {"dateTimeFormat": "iso8601",
-                }
-
-        now = r.utcnow
-        tl_start = tl_end = now
-        events = []
-        eappend = events.append
-        if resource_name == "send":
-            table = db.inv_recv
-            query = (table.deleted == False) & \
-                    current.auth.s3_accessible_query("read", table) & \
-                    (table.send_ref.belongs(send_refs)) & \
-                    (table.date != None)
-            recv_rows = db(query).select(table.date,
-                                         table.send_ref,
-                                         #table.comments,
-                                         )
-
-            for row in rows:
-                send_date = row.date
-                if send_date is None:
-                    # Can't put on Timeline
-                    continue
-                send_ref = row.send_ref
-                if send_ref is not None:
-                    recv_row = recv_rows.find(lambda rrow: rrow.send_ref == send_ref).first()
-                    if recv_row is None:
-                        recv_date = send_date
-                    else:
-                        recv_date = recv_row.date
-                else:
-                    recv_date = send_date
-
-                if send_date < tl_start:
-                    tl_start = send_date
-                if recv_date > tl_end:
-                    tl_end = recv_date
-                send_date = send_date.isoformat()
-                recv_date = recv_date.isoformat()
-
-                # @ToDo: Build better Caption rather than just using raw Comments
-                caption = description = row.comments or ""
-                link = URL(args = [row.id])
-
-                # Append to events
-                eappend({"start": send_date,
-                         "end": recv_date,
-                         "title": send_ref,
-                         "caption": caption,
-                         "description": description or "",
-                         "link": link,
-                         # @ToDo: Colour based on Category (More generically: Resource or Resource Type)
-                         # "color" : "blue",
-                         })
-        else:
-            table = db.inv_send
-            query = (table.deleted == False) & \
-                    current.auth.s3_accessible_query("read", table) & \
-                    (table.send_ref.belongs(send_refs)) & \
-                    (table.date != None)
-            send_rows = db(query).select(table.date,
-                                         table.send_ref,
-                                         #table.comments,
-                                         )
-
-            for row in rows:
-                recv_date = row.date
-                if recv_date is None:
-                    # Can't put on Timeline
-                    continue
-                send_ref = row.send_ref
-                if send_ref is not None:
-                    send_row = send_rows.find(lambda srow: srow.send_ref == send_ref).first()
-                    if send_row is None:
-                        send_date = recv_date
-                    else:
-                        send_date = send_row.date
-                else:
-                    send_date = recv_date
-                    send_ref = row.recv_ref
-
-                if send_date < tl_start:
-                    tl_start = send_date
-                if recv_date > tl_end:
-                    tl_end = recv_date
-                send_date = send_date.isoformat()
-                recv_date = recv_date.isoformat()
-
-                # @ToDo: Build better Caption rather than just using raw Comments
-                caption = description = row.comments or ""
-                link = URL(args = [row.id])
-
-                # Append to events
-                eappend({"start": send_date,
-                         "end": recv_date,
-                         "title": send_ref,
-                         "caption": caption,
-                         "description": description or "",
-                         "link": link,
-                         # @ToDo: Colour based on Category (More generically: Resource or Resource Type)
-                         # "color" : "blue",
-                         })
-
-        if len(events) == 0:
-            response.warning = T("No suitable data found")
-
-        data["events"] = events
-        data = json.dumps(data, separators=SEPARATORS)
-
-        code = "".join((
-'''S3.timeline.data=''', data, '''
-S3.timeline.tl_start="''', tl_start.isoformat(), '''"
-S3.timeline.tl_end="''', tl_end.isoformat(), '''"
-S3.timeline.now="''', now.isoformat(), '''"
-'''))
-
-        # Configure our code in static/scripts/S3/s3.timeline.js
-        s3.js_global.append(code)
-
-        # Create the DIV
-        item = DIV(_id = "s3timeline",
-                   _class = "s3-timeline",
-                   )
-
-        output = {"item": item}
-
-        # Maintain RHeader for consistency
-        if "rheader" in attr:
-            rheader = attr["rheader"](r)
-            if rheader:
-                output["rheader"] = rheader
-
-        output["title"] = T("Shipments Timeline")
-        response.view = "timeline.html"
-        return output
-
 # =============================================================================
 def inv_tabs(r):
     """
@@ -4124,10 +3929,10 @@ class InventoryAdjustModel(DataModel):
                                 updateable = True,
                                 #widget = S3SiteAutocompleteWidget(),
                                 ),
-                     s3_date("adjustment_date",
-                             default = "now",
-                             writable = False
-                             ),
+                     DateField("adjustment_date",
+                               default = "now",
+                               writable = False
+                               ),
                      Field("status", "integer",
                            requires = IS_EMPTY_OR(IS_IN_SET(adjust_status)),
                            represent = represent_option(adjust_status),
@@ -4142,8 +3947,8 @@ class InventoryAdjustModel(DataModel):
                            label = T("Type"),
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         self.configure(tablename,
                        super_entity = "doc_entity",
@@ -4157,18 +3962,18 @@ class InventoryAdjustModel(DataModel):
                             )
 
         # Reusable Field
-        adj_id = S3ReusableField("adj_id", "reference %s" % tablename,
-                                 label = T("Inventory Adjustment"),
-                                 ondelete = "RESTRICT",
-                                 represent = self.inv_adj_represent,
-                                 requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "inv_adj.id",
-                                                          self.inv_adj_represent,
-                                                          orderby = "inv_adj.adjustment_date",
-                                                          sort = True,
-                                                          )),
-                                 sortby = "date",
-                                 )
+        adj_id = FieldTemplate("adj_id", "reference %s" % tablename,
+                               label = T("Inventory Adjustment"),
+                               ondelete = "RESTRICT",
+                               represent = self.inv_adj_represent,
+                               requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(db, "inv_adj.id",
+                                                      self.inv_adj_represent,
+                                                      orderby = "inv_adj.adjustment_date",
+                                                      sort = True,
+                                                      )),
+                               sortby = "date",
+                               )
 
         adjust_reason = {0 : T("Unknown"),
                          1 : T("None"),
@@ -4253,8 +4058,9 @@ class InventoryAdjustModel(DataModel):
                            readable = track_pack_values,
                            writable = track_pack_values,
                            ),
-                     s3_currency(readable = track_pack_values,
-                                 writable = track_pack_values),
+                     CurrencyField(readable = track_pack_values,
+                                   writable = track_pack_values,
+                                   ),
                      Field("old_status", "integer",
                            default = 0,
                            label = T("Current Status"),
@@ -4268,9 +4074,9 @@ class InventoryAdjustModel(DataModel):
                            represent = represent_option(inv_item_status_opts),
                            requires = IS_EMPTY_OR(IS_IN_SET(inv_item_status_opts)),
                            ),
-                     s3_date("expiry_date",
-                             label = T("Expiry Date"),
-                             ),
+                     DateField("expiry_date",
+                               label = T("Expiry Date"),
+                               ),
                      Field("bin", length=16,
                            label = T("Bin"),
                            requires = IS_LENGTH(16),
@@ -4290,23 +4096,22 @@ class InventoryAdjustModel(DataModel):
                                      ondelete = "SET NULL",
                                      ),
                      adj_id(),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Reusable Field
-        adj_item_id = S3ReusableField("adj_item_id", "reference %s" % tablename,
-                                      label = T("Inventory Adjustment Item"),
-                                      ondelete = "RESTRICT",
-                                      represent = self.inv_adj_item_represent,
-                                      requires = IS_EMPTY_OR(
+        adj_item_id = FieldTemplate("adj_item_id", "reference %s" % tablename,
+                                    label = T("Inventory Adjustment Item"),
+                                    ondelete = "RESTRICT",
+                                    represent = self.inv_adj_item_represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "inv_adj_item.id",
                                                               self.inv_adj_item_represent,
                                                               orderby = "inv_adj_item.item_id",
                                                               sort = True,
-                                                              )
-                                                    ),
-                                      sortby = "item_id",
-                                      )
+                                                              )),
+                                    sortby = "item_id",
+                                    )
 
         # CRUD strings
         crud_strings["inv_adj_item"] = Storage(

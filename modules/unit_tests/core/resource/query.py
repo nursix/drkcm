@@ -35,10 +35,12 @@ class FieldSelectorResolutionTests(unittest.TestCase):
         # Create a master and a link table for self-reference
         s3db.define_table("test_master",
                           Field("name"),
+                          meta = False,
                           )
         s3db.define_table("test_link",
                           Field("parent", "reference test_master"),
                           Field("child", "reference test_master"),
+                          meta = False,
                           )
         current.db.commit()
 
@@ -1761,7 +1763,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Should still not give any duplicates:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())
@@ -1796,7 +1798,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Should still not give any duplicates:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())
@@ -1830,7 +1832,7 @@ class ResourceDataAccessTests(unittest.TestCase):
 
         # Try the same with an additional virtual field filter:
         resource = s3db.resource("org_organisation")
-        class FakeVirtualFields(object):
+        class FakeVirtualFields:
             def testfield(self):
                 return "TEST"
         resource.table.virtualfields.append(FakeVirtualFields())

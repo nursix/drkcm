@@ -282,37 +282,6 @@ if has_module("msg"):
 
     tasks["msg_gcm"] = msg_gcm
 
-    # -------------------------------------------------------------------------
-    def notify_check_subscriptions(user_id=None):
-        """
-            Scheduled task to check subscriptions for updates,
-            creates notify_notify tasks where updates exist.
-        """
-        if user_id:
-            auth.s3_impersonate(user_id)
-
-        result = s3base.S3Notifications().check_subscriptions()
-        db.commit()
-        return result
-
-    tasks["notify_check_subscriptions"] = notify_check_subscriptions
-
-    # -------------------------------------------------------------------------
-    def notify_notify(resource_id, user_id=None):
-        """
-            Asynchronous task to notify a subscriber about resource
-            updates. This task is created by notify_check_subscriptions.
-
-            @param resource_id: the pr_subscription_resource record ID
-        """
-        if user_id:
-            auth.s3_impersonate(user_id)
-
-        notify = s3base.S3Notifications
-        return notify.notify(resource_id)
-
-    tasks["notify_notify"] = notify_notify
-
 # -----------------------------------------------------------------------------
 if has_module("req"):
 
@@ -499,9 +468,10 @@ current.s3task = s3task
 
 # -----------------------------------------------------------------------------
 # Reusable field for scheduler task links
-scheduler_task_id = S3ReusableField("scheduler_task_id",
-                                    "reference %s" % s3base.S3Task.TASK_TABLENAME,
-                                    ondelete = "CASCADE")
+scheduler_task_id = FieldTemplate("scheduler_task_id",
+                                  "reference %s" % s3base.S3Task.TASK_TABLENAME,
+                                  ondelete = "CASCADE",
+                                  )
 s3.scheduler_task_id = scheduler_task_id
 
 # END =========================================================================

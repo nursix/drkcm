@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     Machine-specific settings
     All settings which are typically edited for a specific machine should be done here
@@ -165,9 +163,6 @@ settings.auth.hmac_key = "akeytochange"
 # settings.L10n.pootle_url = "http://pootle.sahanafoundation.org/"
 # settings.L10n.pootle_username = "username"
 # settings.L10n.pootle_password = "*****"
-
-# SOLR server for Full-Text Search
-#settings.base.solr_url = "http://127.0.0.1:8983/solr/"
 
 # Memcache server to allow sharing of sessions across instances
 #settings.base.session_memcache = '127.0.0.1:11211'

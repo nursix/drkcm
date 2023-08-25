@@ -3,4 +3,5 @@ from .datalist import *
 from .datatable import *
 from .forms import *
 from .navigation import *
+from .selectors import *
 from .widgets import *

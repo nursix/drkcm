@@ -1,5 +1,5 @@
 /**
- * jQuery UI Widget for S3AddPersonWidget
+ * jQuery UI Widget for PersonSelector
  *
  * @copyright 2017-2021 (c) Sahana Software Foundation
  * @license MIT
@@ -246,11 +246,9 @@
 
             // All other fields (in order of appearance)
             var personFields = [
-                'father_name',
-                'grandfather_name',
-                'year_of_birth',
                 'date_of_birth',
                 'gender',
+                'nationality',
                 'occupation',
                 'mobile_phone',
                 'home_phone',
@@ -420,14 +418,12 @@
 
             var map = {
                 'pe_label': 'pe_label',
+                'nationality': 'nationality',
                 'email': 'email',
                 'mobile_phone': 'mphone',
                 'home_phone': 'hphone',
                 'gender': 'sex',
                 'date_of_birth': 'dob',
-                'year_of_birth': 'year_of_birth',
-                'father_name': 'father_name',
-                'grandfather_name': 'grandfather_name',
                 'occupation': 'occupation',
                 'organisation_id': 'org_id'
             };
@@ -645,7 +641,7 @@
 
         // --------------------------------------------------------------------
         /**
-         * Clear the current selection and start selecting/entering a 
+         * Clear the current selection and start selecting/entering a
          * different person
          */
         _clear: function() {
@@ -1177,14 +1173,7 @@
 
                 card.append(cardLine(name));
 
-                if (item.father_name && i18n.father_name_label) {
-                    card.append(cardLine(item.father_name, i18n.father_name_label));
-                }
-                if (item.grandfather_name && i18n.grandfather_name_label) {
-                    card.append(cardLine(item.grandfather_name, i18n.grandfather_name_label));
-                }
-
-                ['year_of_birth', 'dob', 'email', 'phone'].forEach(function(propName) {
+                ['dob', 'email', 'phone'].forEach(function(propName) {
                     var value = item[propName];
                     if (value) {
                         card.append(cardLine(value));
@@ -1226,7 +1215,7 @@
                 if (dupesCount.data('submit')) {
                     this.data = {'id': personID};
                     this._serialize();
-                    dupesCount.closest('form').off(this.eventNamespace).submit();
+                    dupesCount.closest('form').off(this.eventNamespace).trigger('submit');
                 } else {
                     if (this.options.separateNameFields) {
                         this.trigger.val('');
@@ -1238,7 +1227,7 @@
                 this._clearDuplicates();
 
                 if (dupesCount.data('submit')) {
-                    dupesCount.closest('form').off(this.eventNamespace).submit();
+                    dupesCount.closest('form').off(this.eventNamespace).trigger('submit');
                 }
             }
         },
@@ -1298,7 +1287,7 @@
             }
             this._serialize();
 
-            $(form).off(this.eventNamespace).submit();
+            $(form).off(this.eventNamespace).trigger('submit');
 
             return true;
         },
@@ -1336,7 +1325,7 @@
             });
 
             // Filter Autocomplete-URL when selected organisation changes
-            $(selector + '_organisation_id').change(function() {
+            $(selector + '_organisation_id').on('change', function() {
                 self.acURL = updateURLQuery(self.acURL, {
                     '~.organisation_id': $(this).val()
                 });

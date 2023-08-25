@@ -13,7 +13,7 @@
             dt.fnReloadAjax();
         }
     };
-    $(document).ready(function() {
+    $(function() {
         setInterval(refreshDataTables, 60000);
     });
 }());

@@ -95,8 +95,8 @@ class AuthDomainApproverModel(DataModel):
                                                                 ),
                                             ),
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -140,7 +140,7 @@ class AuthUserOptionsModel(DataModel):
                           Field("osm_oauth_consumer_secret",
                                 label = T("OpenStreetMap OAuth Consumer Secret"),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -193,8 +193,8 @@ class AuthConsentModel(DataModel):
                            label = T("Description"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         self.configure(tablename,
@@ -257,15 +257,15 @@ class AuthConsentModel(DataModel):
                            represent = s3_text_represent,
                            writable = False,
                            ),
-                     s3_date("valid_from",
-                             label = T("Valid From"),
-                             default = "now",
-                             ),
-                     s3_date("valid_until",
-                             # Automatically set onaccept
-                             readable = False,
-                             writable = False,
-                             ),
+                     DateField("valid_from",
+                               label = T("Valid From"),
+                               default = "now",
+                               ),
+                     DateField("valid_until",
+                               # Automatically set onaccept
+                               readable = False,
+                               writable = False,
+                               ),
                      Field("opt_out", "boolean",
                            default = False,
                            label = T("Preselected"),
@@ -304,8 +304,8 @@ class AuthConsentModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Read-only hash fields (enabled in controller if permissible)
         # NB order matters! (for verification hashes)
@@ -361,12 +361,12 @@ class AuthConsentModel(DataModel):
                            default = False,
                            represent = s3_yes_no_represent,
                            ),
-                     s3_date(default = "now",
-                             ),
-                     s3_date("expires_on",
-                             label = T("Expires on"),
-                             ),
-                     *s3_meta_fields())
+                     DateField(default = "now",
+                               ),
+                     DateField("expires_on",
+                               label = T("Expires on"),
+                               ),
+                     )
 
         # List Fields
         list_fields = ["person_id",
@@ -413,10 +413,10 @@ class AuthConsentModel(DataModel):
                      Field("consented", "boolean",
                            default = False,
                            ),
-                     s3_datetime(default = "now",
-                                 ),
+                     DateTimeField(default = "now",
+                                   ),
                      Field("vhash", "text"),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -546,19 +546,19 @@ class AuthMasterKeyModel(DataModel):
                            ),
                      # Which 'dummy' user this master key links to:
                      Field("user_id", current.auth.settings.table_user),
-                     *s3_meta_fields())
+                     )
 
         represent = S3Represent(lookup=tablename)
 
-        masterkey_id = S3ReusableField("masterkey_id", "reference %s" % tablename,
-                                       #label = T("Master Key"),
-                                       ondelete = "CASCADE",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        masterkey_id = FieldTemplate("masterkey_id", "reference %s" % tablename,
+                                     #label = T("Master Key"),
+                                     ondelete = "CASCADE",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(current.db, "auth_masterkey.id",
                                                               represent,
                                                               )),
-                                       )
+                                     )
 
         # ---------------------------------------------------------------------
         # Single-use tokens for master key authentication
@@ -566,7 +566,8 @@ class AuthMasterKeyModel(DataModel):
         tablename = "auth_masterkey_token"
         define_table(tablename,
                      Field("token", length=64, unique=True),
-                     s3_datetime("expires_on"),
+                     DateTimeField("expires_on"),
+                     meta = False,
                      )
 
         # ---------------------------------------------------------------------
@@ -606,9 +607,10 @@ class AuthUserTempModel(DataModel):
                           Field("custom", "json",
                                 requires = IS_EMPTY_OR(IS_JSONS3()),
                                 ),
-                          S3MetaFields.uuid(),
-                          S3MetaFields.created_on(),
-                          S3MetaFields.modified_on(),
+                          MetaFields.uuid(),
+                          MetaFields.created_on(),
+                          MetaFields.modified_on(),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------

@@ -14,9 +14,6 @@ $alert_box_shadow_color: #aaaaa7 !default;
 $title_background: true !default;
 $title_bgcolor: #F7F8F9 !default;
 
-// Throbber style [sunflower|simple]
-$throbber_style: simple !default;
-
 // Footer
 $footer_bgcolor: transparent !default;
 $footer_fgcolor: #999 !default;
@@ -25,60 +22,64 @@ $footer_top_margin: 20px !default;
 
 // ============================================================================
 // STYLES
-
+//
+// General Page
+//
+html, body {
+    height: 100%;
+}
 .hide {
     display: none !important;
 }
 
 // ----------------------------------------------------------------------------
-/* Throbber */
-// Used by Autocompletes, map popups, map toolbar, dropdown widgets , tweets
-.throbber,
-.layer_throbber,
-.s3-twitter-throbber,
-.map_loader,
-.inline-throbber {
-    background-image: url(../../img/indicator.gif);
-    background-repeat: no-repeat;
-    height: 32px;
-    width: 32px;
-}
-.throbber {
-    margin-bottom: -16px;
-    padding: 0 0 0 10px;
-}
-
-.input_throbber {
-    background-size: 60% !important;
-    height: 24px;
-    width: 24px;
-    display: inline-block;
-    margin: 0 0 -11px -24px;
-}
-.s3-twitter-throbber {
-    height: 0px;
-    margin: 66px 0 0 42px;
-    padding: 20px;
-    width: 0px;
-}
-
-/* Sunflower Throbber style */
-@if $throbber_style == sunflower {
-    .inline-throbber {
-        background-image: url(../../img/sunflower_fade_indicator.gif);
+// Page Header
+//
+.main-title {
+    .org-logo {
+        vertical-align: top;
+        display: inline-block;
+        padding: 0.4rem 0.8rem 0.3rem 0;
     }
-    .throbber,
-    .layer_throbber,
-    .map_loader {
-        background-image: url(../../img/sunflower_spin_throbber.gif);
+    .system-title {
+        display: inline-block;
+        .system-name {
+            color: #333333;
+            font-size: 1.125rem;
+        }
+        .org-name {
+            color: #999999;
+            line-height: 1rem;
+        }
+        h5:first-child, h6:first-child {
+            margin: 0.3rem 0 0.125rem;
+        }
     }
-    .loading {
-        background: url(../../img/sunflower_spin_throbber.gif) center no-repeat !important;
+    .personal-menu-area {
+        text-align: right;
+    }
+    .language-selector {
+        float: right;
+        display: block;
+        margin-top: 0.625rem;
+        margin-bottom: 0.125rem;
+    }
+    [dir=rtl] & {
+        .org-logo {
+            padding: 0.4rem 0 0.3rem 0.8rem;
+        }
+        .personal-menu-area {
+            text-align: left;
+        }
+        .language-selector {
+            float: left;
+        }
     }
 }
 
 // ----------------------------------------------------------------------------
-/* Flash messages (alert box) */
+// Flash messages (alert box)
+//
 .alert-success {
     @include alert_style(#070, #e5ffe5, url(../../img/dialog-confirmation.png));
 }
@@ -107,7 +108,8 @@ $footer_top_margin: 20px !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Red indicators */
+// Red indicators
+//
 .error,
 .expired,
 .req,
@@ -123,7 +125,8 @@ $footer_top_margin: 20px !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Logged-in User Indicators */
+// Logged-in User Indicators
+//
 .username {
     color: #666666;
     padding: 0.5rem 0;
@@ -144,7 +147,8 @@ $footer_top_margin: 20px !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Global Main Content Styles */
+// Global Main Content Styles
+//
 #content {
     a.help {
         &:link {
@@ -160,6 +164,9 @@ $footer_top_margin: 20px !default;
             font-weight: normal;
             color: #666;
         }
+    }
+    h1, h2, h3, h4, h5, h6 {
+        margin-bottom: 0.25rem;
     }
     h1,
     h2 {
@@ -178,13 +185,19 @@ $footer_top_margin: 20px !default;
         }
     }
     h3 {
-        font-size: 1.1em;
+        font-size: 1.0em;
         padding-bottom: 5px;
+    }
+    h6 {
+        font-size: 1rem;
+        line-height: 1.2;
+        margin-top: 0;
     }
 }
 
 // ----------------------------------------------------------------------------
-/* Page Sections */
+// Page Sections
+//
 #map {
     width: 100%;
     overflow: auto;
@@ -209,48 +222,8 @@ $footer_top_margin: 20px !default;
 }
 
 // ----------------------------------------------------------------------------
-/* Summary Tabs */
-#summary-tabs {
-    margin-top: 10px;
-    visibility: hidden;
-    &.ui-widget-content {
-        background: none;
-        border: none;
-    }
-}
-#summary-tab-headers {
-    .ui-tabs-nav {
-        border: none;
-        margin: 0 10px;
-    }
-    a {
-        border-color: #CCC;
-    }
-    .ui-tabs-active a {
-        border-bottom: 1px solid white;
-    }
-    li {
-        margin-right: 5px;
-        box-shadow: none;
-    }
-}
-#summary-sections {
-    // Fit Summary Map Inside Summary Section
-    .x-panel-body {
-        border: none;
-        border-radius: 4px;
-    }
-    #map{
-        margin-top: 0;
-        padding: 0;
-    }
-}
-.ui-tabs .ui-tabs-panel {
-    padding: 0.5em;
-}
-
-/* -------------------------------------------------------------------------------- */
-/* Form Popup */
+// Form Popup
+//
 body.popup {
     background-color: #fbfbfb;
     min-width: auto;
@@ -274,7 +247,8 @@ body.popup {
 }
 
 // ----------------------------------------------------------------------------
-/* List-Add Button */
+// List-Add Button
+//
 #list-btn-add,
 .list-btn-add {
     float: right;
@@ -296,14 +270,16 @@ body.popup {
 }
 
 // ----------------------------------------------------------------------------
-/* Iframe Map (Location Represent links) */
+// Iframe Map (Location Represent links)
+//
 #close-iframe-map {
     padding: 7px;
     margin-top: 5px;
 }
 
 // ----------------------------------------------------------------------------
-/* Footer */
+// Footer
+//
 #footer {
     background: $footer_bgcolor;
     padding-top: 20px;
@@ -322,6 +298,7 @@ main {
 
 // ----------------------------------------------------------------------------
 // About Menu (in footer)
+//
 .sub-nav.about-menu {
     color: $footer_fgcolor;
     a {
@@ -336,7 +313,8 @@ main {
 }
 
 // ----------------------------------------------------------------------------
-/* Poweredby */
+// Poweredby
+//
 #poweredby {
     color: $footer_fgcolor;
     font-size: 0.625rem;
@@ -368,29 +346,37 @@ main {
     }
 }
 
-// ---------------------------------------------------------------------------
-/* System Info */
-.system-info {
-    width: 100%;
-    margin-top: 0.8rem;
-    table {
-        margin: auto;
-        border: 2px solid $primary-color;
-        td {
-            font-size: 0.8rem;
-            line-height: 0.8rem;
-            background-color: $datatables_bgcolor_even;
-            &:nth-child(2) {
-                font-size: 0.7rem;
-            }
-        }
-    }
-    .about-subheader td {
-        background-color: $datatables_bgcolor_odd_highlight;
-        font-size: 0.9rem;
-        font-weight: bold;
-        line-height: 0.9rem;
-    }
+// ----------------------------------------------------------------------------
+// Throbbers
+// - used by Autocompletes, map popups, map toolbar, dropdown widgets , tweets
+//
+.throbber,
+.layer_throbber,
+.s3-twitter-throbber,
+.map_loader,
+.inline-throbber {
+    background-image: url(../../img/indicator.gif);
+    background-repeat: no-repeat;
+    height: 32px;
+    width: 32px;
+}
+.throbber {
+    margin-bottom: -16px;
+    padding: 0 0 0 10px;
+}
+
+.input_throbber {
+    background-size: 60% !important;
+    height: 24px;
+    width: 24px;
+    display: inline-block;
+    margin: 0 0 -11px -24px;
+}
+.s3-twitter-throbber {
+    height: 0px;
+    margin: 66px 0 0 42px;
+    padding: 20px;
+    width: 0px;
 }
 
 // END ========================================================================

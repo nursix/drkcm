@@ -1,0 +1,50 @@
+// ============================================================================
+// Styles for Summary Pages
+// ============================================================================
+// VARIABLES
+
+// Foundation variables used:
+
+// ----------------------------------------------------------------------------
+// STYLES
+//
+#summary-tabs {
+    margin-top: 10px;
+    visibility: hidden;
+    &.ui-widget-content {
+        background: none;
+        border: none;
+    }
+}
+#summary-tab-headers {
+    .ui-tabs-nav {
+        border: none;
+        margin: 0 10px;
+    }
+    a {
+        border-color: #CCC;
+    }
+    .ui-tabs-active a {
+        border-bottom: 1px solid white;
+    }
+    li {
+        margin-right: 5px;
+        box-shadow: none;
+    }
+}
+#summary-sections {
+    // Fit Summary Map Inside Summary Section
+    .x-panel-body {
+        border: none;
+        border-radius: 4px;
+    }
+    #map{
+        margin-top: 0;
+        padding: 0;
+    }
+}
+.ui-tabs .ui-tabs-panel {
+    padding: 0.5em;
+}
+
+// END ========================================================================

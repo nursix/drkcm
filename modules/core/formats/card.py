@@ -201,7 +201,7 @@ class PDFCardWriter(FormatWriter):
                 orderby: the orderby-expression
 
             Returns:
-                an S3ResourceData instance
+                an ResourceData instance
         """
 
         if orderby is None:

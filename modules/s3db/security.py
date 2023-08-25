@@ -73,7 +73,7 @@ class SecurityZonesModel(DataModel):
         define_table(tablename,
                      location_id(
                         #label = T("Security Level Area"),
-                        widget = S3LocationSelector(show_map = False),
+                        widget = LocationSelector(show_map = False),
                         ),
                      # Overall Level
                      Field("level", "integer",
@@ -114,8 +114,8 @@ class SecurityZonesModel(DataModel):
                            requires = IS_IN_SET(level_opts),
                            comment = T("e.g. earthquakes or floods"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -139,8 +139,8 @@ class SecurityZonesModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_ZONE_TYPE = T("Create Zone Type")
@@ -185,13 +185,13 @@ class SecurityZonesModel(DataModel):
                                                  ),
                            ),
                      location_id(
-                        widget = S3LocationSelector(catalog_layers = True,
-                                                    points = False,
-                                                    polygons = True,
-                                                    ),
+                        widget = LocationSelector(catalog_layers = True,
+                                                  points = False,
+                                                  polygons = True,
+                                                  ),
                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_ZONE = T("Create Zone")
@@ -217,8 +217,8 @@ class SecurityZonesModel(DataModel):
         define_table(tablename,
                      Field("name",
                            label=T("Name")),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         ADD_STAFF = T("Add Staff Type")
@@ -276,8 +276,8 @@ class SecurityZonesModel(DataModel):
                                      readable = True,
                                      writable = True,
                                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -370,8 +370,8 @@ class SecuritySeizedItemsModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -394,19 +394,19 @@ class SecuritySeizedItemsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        item_type_id = S3ReusableField("item_type_id", "reference %s" % tablename,
-                                       label = T("Type"),
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
-                                                   IS_ONE_OF(db, "%s.id" % tablename,
-                                                             represent,
-                                                             )),
-                                       sortby = "name",
-                                       comment = S3PopupLink(c="security",
-                                                             f="seized_item_type",
-                                                             tooltip=T("Create new item type"),
-                                                             ),
-                                       )
+        item_type_id = FieldTemplate("item_type_id", "reference %s" % tablename,
+                                     label = T("Type"),
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                     sortby = "name",
+                                     comment = S3PopupLink(c = "security",
+                                                           f = "seized_item_type",
+                                                           tooltip = T("Create new item type"),
+                                                           ),
+                                     )
 
         # ---------------------------------------------------------------------
         # Depositories
@@ -416,8 +416,8 @@ class SecuritySeizedItemsModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -435,15 +435,15 @@ class SecuritySeizedItemsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        depository_id = S3ReusableField("depository_id", "reference %s" % tablename,
-                                        label = T("Depository"),
-                                        represent = represent,
-                                        requires = IS_EMPTY_OR(
+        depository_id = FieldTemplate("depository_id", "reference %s" % tablename,
+                                      label = T("Depository"),
+                                      represent = represent,
+                                      requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent,
                                                               )),
-                                        sortby = "name",
-                                        )
+                                      sortby = "name",
+                                      )
 
         # ---------------------------------------------------------------------
         # Seized Items
@@ -477,9 +477,9 @@ class SecuritySeizedItemsModel(DataModel):
                            requires = IS_INT_IN_RANGE(1, None),
                            ),
                      # Confiscated when and by whom
-                     s3_date(default = "now",
-                             label = T("Confiscated on"),
-                             ),
+                     DateField(default = "now",
+                               label = T("Confiscated on"),
+                               ),
                      person_id("confiscated_by",
                                label = T("Confiscated by"),
                                default = current.auth.s3_logged_in_person(),
@@ -497,20 +497,19 @@ class SecuritySeizedItemsModel(DataModel):
                            label = T("Status Comment"),
                            ),
                      # Returned-date and person responsible
-                     s3_date("returned_on",
-                             label = T("Returned on"),
-                             # Set onaccept when returned=True
-                             writable = False,
-                             ),
+                     DateField("returned_on",
+                               label = T("Returned on"),
+                               # Set onaccept when returned=True
+                               writable = False,
+                               ),
                      person_id("returned_by",
                                label = T("Returned by"),
                                # Set onaccept when returned=True
                                writable = False,
                                comment = None,
                                ),
-                     s3_comments(represent = s3_text_represent,
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Filter Widgets
         filter_widgets = [TextFilter(["person_id$pe_label",

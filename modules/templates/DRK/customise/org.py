@@ -18,12 +18,12 @@ def org_facility_resource(r, tablename):
     field.readable = field.writable = False
 
     # Location selector just needs country + address
-    from core import S3LocationSelector
+    from core import LocationSelector
     field = table.location_id
-    field.widget = S3LocationSelector(levels = ["L0"],
-                                      show_address=True,
-                                      show_map = False,
-                                      )
+    field.widget = LocationSelector(levels = ["L0"],
+                                    show_address=True,
+                                    show_map = False,
+                                    )
 
     field = table.obsolete
     field.label = T("Inactive")

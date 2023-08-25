@@ -437,10 +437,10 @@ $.filterOptionsS3({
                                                            ),
                                          ),
                            ),
-                     s3_datetime("sent",
-                                 default = "now",
-                                 writable = False,
-                                 ),
+                     DateTimeField("sent",
+                                   default = "now",
+                                   writable = False,
+                                   ),
                      Field("status",
                            default = "Draft",
                            label = T("Status"),
@@ -557,10 +557,10 @@ $.filterOptionsS3({
                                          ),
                            ),
                      # To record when the alert was approved
-                     s3_datetime("approved_on",
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("approved_on",
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      # To distinguish internally vs. externally generated alerts:
                      Field("external", "boolean",
                            # Set to False in controller for interactive input:
@@ -568,7 +568,7 @@ $.filterOptionsS3({
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -719,16 +719,16 @@ $.filterOptionsS3({
                                       )
 
         # Reusable Field
-        alert_id = S3ReusableField("alert_id", "reference %s" % tablename,
-                                   comment = T("The alert message containing this information"),
-                                   label = T("Alert"),
-                                   ondelete = "CASCADE",
-                                   represent = alert_represent,
-                                   requires = IS_EMPTY_OR(
+        alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
+                                 comment = T("The alert message containing this information"),
+                                 label = T("Alert"),
+                                 ondelete = "CASCADE",
+                                 represent = alert_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cap_alert.id",
                                                           alert_represent,
                                                           )),
-                                   )
+                                 )
 
         # ---------------------------------------------------------------------
         # Acknowledgement Table for CAP Alert
@@ -743,17 +743,17 @@ $.filterOptionsS3({
                         readable = False,
                         writable = False,
                         ),
-                     s3_datetime("acknowlegded_on",
-                                 label = T("Acknowledged On"),
-                                 default = "now",
-                                 requires = IS_NOT_EMPTY(),
-                                 ),
+                     DateTimeField("acknowlegded_on",
+                                   label = T("Acknowledged On"),
+                                   default = "now",
+                                   empty = False,
+                                   ),
                      Field("acknowledged_by",
                            label = T("Acknowledged By"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -785,7 +785,7 @@ $.filterOptionsS3({
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"cap_alert_id": S3ReusableField.dummy("alert_id"),
+        return {"cap_alert_id": FieldTemplate.dummy("alert_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1039,7 +1039,7 @@ class CAPInfoModel(DataModel):
         alert_id = self.cap_alert_id
 
         # TODO do not modify a deployment setting in the model,
-        #      pass as mandatory options s3_language instead
+        #      pass as mandatory options to LanguageField instead
         settings.L10n.extra_codes = [("en-US", "English"),
                                      ("en-CA", "Canadian English"),
                                      ("fr-CA", "Canadian French"),
@@ -1070,9 +1070,9 @@ class CAPInfoModel(DataModel):
                      Field("template_settings", "text",
                            readable = False,
                            ),
-                     s3_language(default = "en-US",
-                                 empty = False,
-                                 ),
+                     LanguageField(default = "en-US",
+                                   empty = False,
+                                   ),
                      Field("category", "list:string", # 1 or more allowed
                            label = T("Category"),
                            represent = S3Represent(options = cap_options["categories"],
@@ -1192,33 +1192,33 @@ $.filterOptionsS3({
                                                              ),
                                          ),
                            ),
-                     s3_datetime("effective",
-                                 label = T("Effective"),
-                                 default = "now",
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("The effective time of the information of the alert message"),
-                                                                   T("If not specified, the effective time shall be assumed to be the same the time the alert was sent."),
-                                                                   ),
-                                               ),
-                                 ),
-                     s3_datetime("onset",
-                                 label = T("Onset"),
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("Onset"),
-                                                                   T("The expected time of the beginning of the subject event of the alert message"),
-                                                                   ),
-                                               ),
-                                 ),
-                     s3_datetime("expires",
-                                 label = T("Expires at"),
-                                 #past = 0,
-                                 default = cap_expirydate(),
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("The expiry time of the information of the alert message"),
-                                                                   T("If this item is not provided, each recipient is free to enforce its own policy as to when the message is no longer in effect."),
-                                                                   ),
-                                               ),
-                                 ),
+                     DateTimeField("effective",
+                                   label = T("Effective"),
+                                   default = "now",
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("The effective time of the information of the alert message"),
+                                                                     T("If not specified, the effective time shall be assumed to be the same the time the alert was sent."),
+                                                                     ),
+                                                 ),
+                                   ),
+                     DateTimeField("onset",
+                                   label = T("Onset"),
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("Onset"),
+                                                                     T("The expected time of the beginning of the subject event of the alert message"),
+                                                                     ),
+                                                 ),
+                                   ),
+                     DateTimeField("expires",
+                                   label = T("Expires at"),
+                                   #past = 0,
+                                   default = cap_expirydate(),
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("The expiry time of the information of the alert message"),
+                                                                     T("If this item is not provided, each recipient is free to enforce its own policy as to when the message is no longer in effect."),
+                                                                     ),
+                                                 ),
+                                   ),
                      Field("sender_name",
                            label = T("Sender's name"),
                            default = cap_sendername,
@@ -1280,7 +1280,7 @@ $.filterOptionsS3({
                      #                                        ),
                      #                    ),
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1369,16 +1369,16 @@ $.filterOptionsS3({
                                      field_sep = " - ")
 
         # Reusable Field
-        info_id = S3ReusableField("info_id", "reference %s" % tablename,
-                                  label = T("Information Segment"),
-                                  ondelete = "CASCADE",
-                                  represent = info_represent,
-                                  requires = IS_EMPTY_OR(
+        info_id = FieldTemplate("info_id", "reference %s" % tablename,
+                                label = T("Information Segment"),
+                                ondelete = "CASCADE",
+                                represent = info_represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "cap_info.id",
                                                           info_represent,
                                                           )),
-                                  #sortby = "identifier",
-                                  )
+                                #sortby = "identifier",
+                                )
 
         # ---------------------------------------------------------------------
         # CAP Info Parameters (Name-Value-Pairs)
@@ -1398,7 +1398,7 @@ $.filterOptionsS3({
                            label = T("Mobile"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1863,7 +1863,7 @@ class CAPAreaModel(DataModel):
                      #                                     ),
                      #                 ),
                      #   ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1941,14 +1941,14 @@ class CAPAreaModel(DataModel):
         area_represent = cap_AreaRepresent(show_link=True)
 
         # Reusable Field
-        area_id = S3ReusableField("area_id", "reference %s" % tablename,
-                                  label = T("Area"),
-                                  ondelete = "CASCADE",
-                                  represent = area_represent,
-                                  requires = IS_ONE_OF(db, "cap_area.id",
-                                                       area_represent,
-                                                       ),
-                                  )
+        area_id = FieldTemplate("area_id", "reference %s" % tablename,
+                                label = T("Area"),
+                                ondelete = "CASCADE",
+                                represent = area_represent,
+                                requires = IS_ONE_OF(db, "cap_area.id",
+                                                     area_represent,
+                                                     ),
+                                )
 
         # ---------------------------------------------------------------------
         # Area <> Location Link Table
@@ -1965,16 +1965,16 @@ class CAPAreaModel(DataModel):
                               ),
                      area_id(),
                      self.gis_location_id(
-                        widget = S3LocationSelector(points = False,
-                                                    polygons = True,
-                                                    circles = True,
-                                                    show_map = True,
-                                                    catalog_layers = True,
-                                                    show_address = False,
-                                                    show_postcode = False,
-                                                    ),
+                        widget = LocationSelector(points = False,
+                                                  polygons = True,
+                                                  circles = True,
+                                                  show_map = True,
+                                                  catalog_layers = True,
+                                                  show_address = False,
+                                                  show_postcode = False,
+                                                  ),
                         ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2005,14 +2005,14 @@ class CAPAreaModel(DataModel):
                      area_id(empty = False,
                              ondelete = "CASCADE",
                              ),
-                     s3_language(empty = False,
-                                 select = current.deployment_settings.get_cap_languages(),
-                                 ),
+                     LanguageField(empty = False,
+                                   select = current.deployment_settings.get_cap_languages(),
+                                   ),
                      Field("name_l10n",
                            label = T("Local Name"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2057,8 +2057,8 @@ class CAPAreaModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -2429,7 +2429,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                                                            ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Form
         crud_form = S3SQLCustomForm("alert_id",
@@ -2681,11 +2681,11 @@ class CAPWarningPriorityModel(DataModel):
                                 ),
                           # Field to record the last checked time for the table
                           # - used to sent notifications to subscribers about available options
-                          s3_datetime("last_checked",
-                                      readable = False,
-                                      writable = False,
-                                      ),
-                          *s3_meta_fields())
+                          DateTimeField("last_checked",
+                                        readable = False,
+                                        writable = False,
+                                        ),
+                          )
 
         # List Fields
         list_fields = ["event_type_id",
@@ -2721,14 +2721,14 @@ class CAPWarningPriorityModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        priority_id = S3ReusableField("priority", "reference %s" % tablename,
-                                      label = T("Priority"),
-                                      represent = represent,
-                                      requires = IS_EMPTY_OR(
+        priority_id = FieldTemplate("priority", "reference %s" % tablename,
+                                    label = T("Priority"),
+                                    represent = represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent
                                                               )),
-                                      )
+                                    )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2743,7 +2743,7 @@ class CAPWarningPriorityModel(DataModel):
         """
 
 
-        return {"cap_warning_priority_id": S3ReusableField.dummy("priority"),
+        return {"cap_warning_priority_id": FieldTemplate.dummy("priority"),
                 }
 
     # -------------------------------------------------------------------------
@@ -2933,7 +2933,7 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_datetime("sent"),
+                     DateTimeField("sent"),
                      Field("status",
                            label = T("Status"),
                            represent = represent_option(status_opts),
@@ -3027,10 +3027,10 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_datetime("approved_on",
-                                 readable = False,
-                                 ),
-                     *s3_meta_fields())
+                     DateTimeField("approved_on",
+                                   readable = False,
+                                   ),
+                     )
 
         # Components
         add_components(tablename,
@@ -3116,23 +3116,23 @@ class CAPHistoryModel(DataModel):
                                               )
 
         # Reusable Field
-        alert_history_id = S3ReusableField("alert_history_id", "reference %s" % tablename,
-                                comment = T("The alert message containing this information"),
-                                label = T("Alert History"),
-                                ondelete = "CASCADE",
-                                represent = alert_history_represent,
-                                requires = IS_EMPTY_OR(
-                                            IS_ONE_OF(db, "cap_alert_history.id",
-                                                      alert_history_represent,
-                                                      )),
-                                )
+        alert_history_id = FieldTemplate("alert_history_id", "reference %s" % tablename,
+                                         label = T("Alert History"),
+                                         ondelete = "CASCADE",
+                                         represent = alert_history_represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "cap_alert_history.id",
+                                                                  alert_history_represent,
+                                                                  )),
+                                         comment = T("The alert message containing this information"),
+                                         )
 
         # ---------------------------------------------------------------------
         # CAP Info History Table
         #
 
         # TODO: avoid changing settings in model, pass directly to
-        #       validator via s3_language
+        #       validator via LanguageField
         settings.L10n.extra_codes = [("en-US", "English"),
                                      ]
 
@@ -3141,13 +3141,13 @@ class CAPHistoryModel(DataModel):
                      alert_history_id(readable = False,
                                       writable = False,
                                       ),
-                     s3_language(empty = False,
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("Denotes the language of the information"),
-                                                                   T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html",
-                                                                   ),
-                                               ),
-                                 ),
+                     LanguageField(empty = False,
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("Denotes the language of the information"),
+                                                                     T("Code Values: Natural language identifier per [RFC 3066]. If not present, an implicit default value of 'en-US' will be assumed. Edit settings.cap.languages in 000_config.py to add more languages. See <a href=\"%s\">here</a> for a full list.") % "http://www.i18nguy.com/unicode/language-identifiers.html",
+                                                                     ),
+                                                 ),
+                                   ),
                      Field("category", "list:string",
                            label = T("Category"),
                            represent = S3Represent(options = categories,
@@ -3242,31 +3242,31 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_datetime("effective",
-                                 label = T("Effective"),
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("The effective time of the information of the alert message"),
-                                                                   T("If not specified, the effective time shall be assumed to be the same the time the alert was sent."),
-                                                                   ),
-                                               ),
-                                 ),
-                     s3_datetime("onset",
-                                 label = T("Onset"),
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("Onset"),
-                                                                   T("The expected time of the beginning of the subject event of the alert message"),
-                                                                   ),
-                                               ),
-                                 ),
-                     s3_datetime("expires",
-                                 label = T("Expires at"),
-                                 #past = 0,
-                                 comment = DIV(_class = "tooltip",
-                                               _title = "%s|%s" % (T("The expiry time of the information of the alert message"),
-                                                                   T("If this item is not provided, each recipient is free to enforce its own policy as to when the message is no longer in effect."),
-                                                                   ),
-                                               ),
-                                 ),
+                     DateTimeField("effective",
+                                   label = T("Effective"),
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("The effective time of the information of the alert message"),
+                                                                     T("If not specified, the effective time shall be assumed to be the same the time the alert was sent."),
+                                                                     ),
+                                                 ),
+                                   ),
+                     DateTimeField("onset",
+                                   label = T("Onset"),
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("Onset"),
+                                                                     T("The expected time of the beginning of the subject event of the alert message"),
+                                                                     ),
+                                                 ),
+                                   ),
+                     DateTimeField("expires",
+                                   label = T("Expires at"),
+                                   #past = 0,
+                                   comment = DIV(_class = "tooltip",
+                                                 _title = "%s|%s" % (T("The expiry time of the information of the alert message"),
+                                                                     T("If this item is not provided, each recipient is free to enforce its own policy as to when the message is no longer in effect."),
+                                                                     ),
+                                                 ),
+                                   ),
                      Field("sender_name",
                            label = T("Sender's name"),
                            comment = DIV(_class = "tooltip",
@@ -3326,7 +3326,7 @@ class CAPHistoryModel(DataModel):
                      #                                        ),
                      #                    ),
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -3389,15 +3389,15 @@ class CAPHistoryModel(DataModel):
                                              )
 
         # Reusable Field
-        info_history_id = S3ReusableField("info_history_id", "reference %s" % tablename,
-                                          label = T("Information History Segment"),
-                                          ondelete = "CASCADE",
-                                          represent = info_history_represent,
-                                          requires = IS_EMPTY_OR(
+        info_history_id = FieldTemplate("info_history_id", "reference %s" % tablename,
+                                        label = T("Information History Segment"),
+                                        ondelete = "CASCADE",
+                                        represent = info_history_represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "cap_info_history.id",
                                                                   info_history_represent,
                                                                   )),
-                                          )
+                                        )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -3435,7 +3435,7 @@ class CAPHistoryModel(DataModel):
                            label = T("Mobile"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3477,7 +3477,7 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Components
         add_components(tablename,
@@ -3545,14 +3545,14 @@ class CAPHistoryModel(DataModel):
 
         # Reusable Field
         represent = cap_AreaRepresent(show_link=True)
-        area_history_id = S3ReusableField("area_history_id", "reference %s" % tablename,
-                                          label = T("Area"),
-                                          ondelete = "CASCADE",
-                                          represent = represent,
-                                          requires = IS_ONE_OF(db, "cap_area_history.id",
-                                                               represent,
-                                                               ),
-                                          )
+        area_history_id = FieldTemplate("area_history_id", "reference %s" % tablename,
+                                        label = T("Area"),
+                                        ondelete = "CASCADE",
+                                        represent = represent,
+                                        requires = IS_ONE_OF(db, "cap_area_history.id",
+                                                             represent,
+                                                             ),
+                                        )
 
         # ---------------------------------------------------------------------
         # CAP Area Locations history table
@@ -3564,7 +3564,7 @@ class CAPHistoryModel(DataModel):
                                       ),
                      area_history_id(),
                      Field("location_wkt", "text"),
-                     *s3_meta_fields())
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3597,8 +3597,8 @@ class CAPHistoryModel(DataModel):
                      Field("value",
                            label = T("Value"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -3690,7 +3690,7 @@ class CAPHistoryModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Form
         crud_form = S3SQLCustomForm("alert_history_id",
@@ -3795,8 +3795,8 @@ class CAPAlertingAuthorityModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -3860,15 +3860,15 @@ class CAPAlertingAuthorityModel(DataModel):
                                 field_sep = " - ",
                                 )
 
-        authority_id = S3ReusableField("alerting_authority_id", "reference %s" % tablename,
-                                       label = T("CAP Alerting Authority"),
-                                       ondelete = "CASCADE",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(
+        authority_id = FieldTemplate("alerting_authority_id", "reference %s" % tablename,
+                                     label = T("CAP Alerting Authority"),
+                                     ondelete = "CASCADE",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "%s.id" % tablename,
                                                               represent,
                                                               )),
-                                       )
+                                     )
 
         # ---------------------------------------------------------------------
         # Feed URL for CAP Alerting Authority
@@ -3881,7 +3881,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            label = T("CAP Feed URL"),
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Forecasts URL for CAP Alerting Authority
@@ -3893,7 +3893,7 @@ class CAPAlertingAuthorityModel(DataModel):
                            label = T("Forecast URL"),
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -3928,7 +3928,7 @@ class CAPMessageModel(DataModel):
                           self.msg_message_id(empty = False,
                                               ondelete = "CASCADE",
                                               ),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

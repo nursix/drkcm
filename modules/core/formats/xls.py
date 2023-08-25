@@ -542,7 +542,7 @@ List Fields %s""" % (request.url, len(lfields), len(rows[0]), headers, lfields)
             Args:
                 rfield: the column (S3ResourceField)
                 num_levels: the number of levels (from root)
-                rows: the Rows from S3ResourceData
+                rows: the Rows from ResourceData
 
             Returns:
                 list of keys (column names) for the inserted columns

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 
 from gluon import current
@@ -58,10 +56,6 @@ def config(settings):
     # Always notify the approver of a new (verified) user, even if the user is automatically approved
     #settings.auth.always_notify_approver = False
 
-    # The name of the teams that users are added to when they opt-in to receive alerts
-    #settings.auth.opt_in_team_list = ["Updates"]
-    # Uncomment this to set the opt in default to True
-    #settings.auth.opt_in_default = True
     # Uncomment this to request the Home Phone when a user registers
     #settings.auth.registration_requests_home_phone = True
     # Uncomment this to request the Mobile Phone when a user registers
@@ -699,8 +693,6 @@ def config(settings):
     #settings.dvr_needs_use_service_type = True
     # Uncomment this to use hierarchical need types
     #settings.dvr.needs_hierarchical = True
-    # Uncomment this to use hierarchical vulnerability types
-    #settings.dvr.vulnerability_types_hierarchical = True
 
     # Uncomment this to manage individual response actions in case activities
     #settings.dvr.manage_response_actions = True
@@ -773,17 +765,17 @@ def config(settings):
     #settings.pr.import_update_requires_email = False
     # Uncomment this to enable support for third gender
     #settings.pr.hide_third_gender = False
-    # Uncomment to a fuzzy search for duplicates in the new AddPersonWidget2
+    # Uncomment to a fuzzy search for duplicates in the new PersonSelector
     #settings.pr.lookup_duplicates = True
-    # Uncomment to hide fields in S3AddPersonWidget[2]
+    # Uncomment to hide fields in PersonSelector
     #settings.pr.request_dob = False
     #settings.pr.request_email = False
     #settings.pr.request_gender = False
-    # Uncomment to show field in S3AddPersonWidget
+    # Uncomment to show field in PersonSelector
     #settings.pr.request_home_phone = True
     # Uncomment to modify the order of Names
     #settings.pr.name_format = "%(last_name)s, %(first_name)s %(middle_name)s"
-    # Uncomment to prevent selecting existing users in the old S3AddPersonWidget
+    # Uncomment to prevent selecting existing users in the old PersonSelector
     #settings.pr.select_existing = False
     # Uncomment to prevent showing HR details in S3PersonAutocompleteWidget results
     #settings.pr.search_shows_hr_details = False
@@ -852,8 +844,6 @@ def config(settings):
     #    {#"<table name>.<field name>"  : ["<Organisation Name>"],
     #     "pr_person_details.mother_name"             : [],
     #     "pr_person_details.father_name"             : [],
-    #     "pr_person_details.company"                 : [],
-    #     "pr_person_details.affiliations"            : [],
     #     "vol_volunteer.active"                      : [],
     #     "vol_volunteer_cluster.vol_cluster_type_id"      : [],
     #     "vol_volunteer_cluster.vol_cluster_id"          : [],
@@ -1342,11 +1332,6 @@ def config(settings):
         #    #description = "Tracks the location, capacity and breakdown of victims in Shelters",
         #    module_type = 10
         #)),
-        #("dc", Storage(
-        #   name_nice = T("Assessments"),
-        #   #description = "Data collection tool",
-        #   module_type = 5
-        #)),
         #("hms", Storage(
         #    name_nice = T("Hospitals"),
         #    #description = "Helps to monitor status of hospitals",
@@ -1408,12 +1393,6 @@ def config(settings):
         #    #description = "Incident Reporting System",
         #    module_type = 10
         #)),
-        # Deprecated: Replaced by DC
-        #("survey", Storage(
-        #    name_nice = T("Surveys"),
-        #    #description = "Create, enter, and manage surveys.",
-        #    module_type = 5,
-        #)),
         # These are specialist modules
         #("cap", Storage(
         #    name_nice = T("CAP"),
@@ -1430,24 +1409,6 @@ def config(settings):
         #   name_nice = T("Missing Person Registry"),
         #   #description = "Helps to report and search for missing persons",
         #   module_type = 10,
-        #)),
-        # @ToDo: Port these Assessments to the Survey module
-        #("building", Storage(
-        #    name_nice = T("Building Assessments"),
-        #    #description = "Building Safety Assessments",
-        #    module_type = 10,
-        #)),
-        # Deprecated by Surveys module
-        # - depends on CR, IRS & Impact
-        #("assess", Storage(
-        #    name_nice = T("Assessments"),
-        #    #description = "Rapid Assessments & Flexible Impact Assessments",
-        #    module_type = 10,
-        #)),
-        #("impact", Storage(
-        #    name_nice = T("Impacts"),
-        #    #description = "Used by Assess",
-        #    module_type = None,
         #)),
     ])
 

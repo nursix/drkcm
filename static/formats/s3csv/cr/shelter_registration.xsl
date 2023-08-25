@@ -46,20 +46,6 @@
          Religion Other.................optional.....pr_person_details.religion_other
          KV:XX..........................optional.....pr_person_tag Key,Value (Key = XX in column name, value = cell in row. Multiple allowed)
 
-         Relation First Name............optional.....pr_person_relation.person_id$first_name
-         Relation Last Name.............optional.....pr_person_relation.person_id$last_name
-         Relation Mobile Phone..........optional.....pr_person_relation.person_id$ mobile phone number
-         Relation Address...............optional.....pr_person_relation.person_id$ address
-         Relation Postcode..............optional.....pr_person_relation.person_id$ address postcode
-         Relation Lat...................optional.....pr_person_relation.person_id$ latitude
-         Relation Lon...................optional.....pr_person_relation.person_id$ longitude
-         Relation Country...............optional.....pr_person_relation.person_id$ Country
-         Relation L1....................optional.....pr_person_relation.person_id$ L1
-         Relation L2....................optional.....pr_person_relation.person_id$ L2
-         Relation L3....................optional.....pr_person_relation.person_id$ L3
-         Relation L4....................optional.....pr_person_relation.person_id$ L4
-         Relation KV:XX.................optional.....pr_person_relation.person_id$person_tag Key,Value (Key = XX in column name, value = cell in row. Multiple allowed)
-
          Column headers looked up in labels.xml:
 
          PersonGender...................optional.....person gender
@@ -163,7 +149,7 @@
                 </xsl:attribute>
             </reference>
 
-            
+
             <xsl:choose>
                 <xsl:when test="$Status='PLANNED'">
                     <data field="registration_status"><xsl:text>1</xsl:text></data>
@@ -183,7 +169,7 @@
                     <data field="registration_status"><xsl:text>1</xsl:text></data> -->
                 </xsl:otherwise>
             </xsl:choose>
-            
+
 
             <xsl:if test="$CheckInDate!=''">
                 <data field="check_in_date">
@@ -360,17 +346,6 @@
                 </xsl:if>
             </resource>
 
-            <!-- Relation -->
-            <xsl:if test="col[@field='Relation First Name']!=''">
-                <resource name="pr_person_relation">
-                    <reference field="person_id" resource="pr_person">
-                        <xsl:attribute name="tuid">
-                            <xsl:value-of select="concat('Relation:', $LastName, ',', $MiddleName, ',', $FirstName)"/>
-                        </xsl:attribute>
-                    </reference>
-                </resource>
-            </xsl:if>
-
             <!-- Contact Information -->
             <xsl:call-template name="ContactInformation"/>
 
@@ -430,13 +405,6 @@
             </xsl:call-template>
         </xsl:if>
 
-        <!-- Relation -->
-        <xsl:if test="col[@field='Relation First Name']!=''">
-            <xsl:call-template name="PersonRelation">
-                <xsl:with-param name="tuid" select="concat('Relation:', $LastName, ',', $MiddleName, ',', $FirstName)"/>
-            </xsl:call-template>
-        </xsl:if>
-
     </xsl:template>
 
     <!-- ****************************************************************** -->
@@ -455,69 +423,6 @@
                 <data field="value"><xsl:value-of select="$Value"/></data>
             </resource>
         </xsl:if>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="PersonRelation">
-        <xsl:param name="tuid"/>
-        <xsl:variable name="type"><xsl:text>1</xsl:text></xsl:variable>
-        <xsl:variable name="address_tuid" select="concat('Relation Address:',
-                                                         col[@field='First Name']/text(),
-                                                         col[@field='Middle Name']/text(),
-                                                         col[@field='Last Name']/text(),
-                                                         col[@field='Email']/text(),
-                                                         col[@field='Mobile Phone']/text()
-                                                         )"/>
-
-        <resource name="pr_person">
-            <xsl:attribute name="tuid">
-                <xsl:value-of select="$tuid"/>
-            </xsl:attribute>
-            <data field="first_name"><xsl:value-of select="col[@field='Relation First Name']/text()"/></data>
-            <data field="last_name"><xsl:value-of select="col[@field='Relation Last Name']/text()"/></data>
-
-            <!-- Address -->
-            <xsl:if test="col[@field='Relation Address']!='' or col[@field='Relation Postcode']!='' or col[@field='Relation L4']!='' or col[@field='Relation L3']!='' or col[@field='Relation L2']!='' or col[@field='Relation L1']!=''">
-                <xsl:call-template name="Address">
-                    <xsl:with-param name="type" select="$type"/>
-                    <xsl:with-param name="tuid" select="$address_tuid"/>
-                </xsl:call-template>
-            </xsl:if>
-
-            <xsl:if test="col[@field='Relation Mobile Phone']!=''">
-                <resource name="pr_contact">
-                    <data field="contact_method" value="SMS"/>
-                    <data field="value">
-                        <xsl:value-of select="col[@field='Relation Mobile Phone']/text()"/>
-                    </data>
-                </resource>
-            </xsl:if>
-
-            <!-- Arbitrary Tags -->
-            <xsl:for-each select="col[starts-with(@field, 'Relation KV')]">
-                <xsl:call-template name="KeyValue"/>
-            </xsl:for-each>
-            
-        </resource>
-
-        <!-- Locations -->
-        <xsl:if test="col[@field='Relation Address']!='' or col[@field='Relation Postcode']!='' or col[@field='Relation L4']!='' or col[@field='Relation L3']!='' or col[@field='Relation L2']!='' or col[@field='Relation L1']!=''">
-            <xsl:call-template name="Locations">
-                <xsl:with-param name="tuid" select="$address_tuid"/>
-                <xsl:with-param name="type" select="$type"/>
-                <xsl:with-param name="address" select="col[@field='Relation Address']/text()"/>
-                <xsl:with-param name="postcode" select="col[@field='Relation Postcode']/text()"/>
-                <xsl:with-param name="l0" select="col[@field='Relation Country']/text()"/>
-                <xsl:with-param name="l1" select="col[@field='Relation L1']/text()"/>
-                <xsl:with-param name="l2" select="col[@field='Relation L2']/text()"/>
-                <xsl:with-param name="l3" select="col[@field='Relation L3']/text()"/>
-                <xsl:with-param name="l4" select="col[@field='Relation L4']/text()"/>
-                <xsl:with-param name="l5" select="col[@field='Relation L5']/text()"/>
-                <xsl:with-param name="lat" select="col[@field='Relation Lat']/text()"/>
-                <xsl:with-param name="lon" select="col[@field='Relation Lon']/text()"/>
-            </xsl:call-template>
-        </xsl:if>
-            
     </xsl:template>
 
     <!-- ****************************************************************** -->

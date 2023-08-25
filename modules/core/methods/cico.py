@@ -92,7 +92,7 @@ class S3CheckInMethod(CRUDMethod):
                     # Formstyle with separate row for label (e.g. default Eden formstyle)
                     tuple_rows = True
                 else:
-                    # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                    # Formstyle with just a single row (e.g. Foundation)
                     tuple_rows = False
 
                 form_rows = []
@@ -101,12 +101,12 @@ class S3CheckInMethod(CRUDMethod):
                 _id = "location_id"
                 label = LABEL("%s:" % T("Location"))
 
-                from ..ui import S3LocationSelector
+                from ..ui import LocationSelector
                 field = table.location_id
                 #value = tracker.get_location(_fields=["id"],
                 #                             as_rows=True).first().id
                 value = None # We always want to create a new Location, not update the existing one
-                widget = S3LocationSelector(show_latlon = True)(field, value)
+                widget = LocationSelector(show_latlon = True)(field, value)
 
                 row = formstyle("%s__row" % _id, label, widget, comment)
                 if tuple_rows:
@@ -190,7 +190,7 @@ class S3CheckOutMethod(CRUDMethod):
                 # Formstyle with separate row for label (e.g. default Eden formstyle)
                 tuple_rows = True
             else:
-                # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                # Formstyle with just a single row (e.g. Foundation)
                 tuple_rows = False
 
             form_rows = []

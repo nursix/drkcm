@@ -133,7 +133,7 @@ def cr_shelter_resource(r, tablename):
     from core import LocationFilter, \
                      OptionsFilter, \
                      RangeFilter, \
-                     S3LocationSelector, \
+                     LocationSelector, \
                      S3PriorityRepresent, \
                      S3SQLCustomForm, \
                      S3SQLInlineComponent, \
@@ -184,12 +184,12 @@ def cr_shelter_resource(r, tablename):
     requires = field.requires
     if isinstance(requires, IS_EMPTY_OR):
         field.requires = requires.other
-    field.widget = S3LocationSelector(levels = ("L1", "L2", "L3", "L4"),
-                                      required_levels = ("L1", "L2", "L3"),
-                                      show_address = True,
-                                      show_postcode = True,
-                                      show_map = True,
-                                      )
+    field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                    required_levels = ("L1", "L2", "L3"),
+                                    show_address = True,
+                                    show_postcode = True,
+                                    show_map = True,
+                                    )
     current.response.s3.scripts.append("/%s/static/themes/RLP/js/geocoderPlugin.js" % r.application)
 
     # Color-coded status representation
@@ -398,6 +398,28 @@ def cr_shelter_status_resource(r, tablename):
     field = table.population_children
     field.label = T("Population (Minors)")
 
+    # Timeplot options
+    # TODO need end date for proper timeplot report
+    #facts = [(T("Current Population (Total)"), "sum(population)"),
+    #         (T("Current Population (Adults)"), "sum(population_adults)"),
+    #         (T("Current Population (Children)"), "sum(population_children)"),
+    #         (T("Total Capacity"), "sum(capacity)"),
+    #         ]
+    #timeplot_options = {
+    #    "facts": facts,
+    #    "timestamp": (#(T("per interval"), "date,date"),
+    #                  (T("cumulative"), "date"),
+    #                  ),
+    #    "defaults": {"fact": facts[0],
+    #                 "timestamp": "date",
+    #                 "time": "<-0 months||days",
+    #                 },
+    #    }
+    #
+    #s3db.configure("cr_shelter_status",
+    #               timeplot_options = timeplot_options,
+    #               )
+
 # -------------------------------------------------------------------------
 def cr_shelter_population_resource(r, tablename):
 
@@ -501,22 +523,12 @@ def cr_shelter_population_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def cr_reception_center_resource(r, tablename):
-
-    pass
-
-# -------------------------------------------------------------------------
 def cr_reception_center_controller(**attr):
 
     from ..rheaders import cr_rheader
     attr["rheader"] = cr_rheader
 
     return attr
-
-# -------------------------------------------------------------------------
-def cr_reception_center_type_resource(r, tablename):
-
-    pass
 
 # -------------------------------------------------------------------------
 def cr_reception_center_type_controller(**attr):

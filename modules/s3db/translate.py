@@ -64,7 +64,7 @@ class TranslateModel(DataModel):
                                           extension = "csv",
                                           error_message = T("CSV file required")),
                            ),
-                     *s3_meta_fields())
+                     )
 
         current.response.s3.crud_strings[tablename] = Storage(
             label_create = T("Upload file"),
@@ -85,7 +85,7 @@ class TranslateModel(DataModel):
                      Field("translated", "integer"),
                      Field("untranslated", "integer"),
                      Field("dirty", "boolean", default=False),
-                     *s3_meta_fields())
+                     )
 
         #----------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

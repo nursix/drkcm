@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden Members Model
+"""
+    Sahana Eden Members Model
 
     @copyright: 2012-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -61,7 +60,6 @@ class MemberModel(DataModel):
         ADMIN = current.session.s3.system_roles.ADMIN
         is_admin = auth.s3_has_role(ADMIN)
 
-        add_components = self.add_components
         configure = self.configure
         crud_strings = s3.crud_strings
         define_table = self.define_table
@@ -93,10 +91,10 @@ class MemberModel(DataModel):
                                      readable = is_admin,
                                      writable = is_admin,
                                      ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
+                     )
 
         ADD_MEMBERSHIP_TYPE = T("Create Membership Type")
         crud_strings[tablename] = Storage(
@@ -113,24 +111,25 @@ class MemberModel(DataModel):
             msg_list_empty = T("No membership types currently registered"))
 
         represent = S3Represent(lookup=tablename, translate=True)
-        membership_type_id = S3ReusableField("membership_type_id", "reference %s" % tablename,
-                                             label = T("Type"),
-                                             ondelete = "SET NULL",
-                                             readable = types,
-                                             represent = represent,
-                                             requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db, "member_membership_type.id",
-                                                                      represent,
-                                                                      filterby="organisation_id",
-                                                                      filter_opts=filter_opts)),
-                                             sortby = "name",
-                                             writable = types,
-                                             comment = S3PopupLink(f = "membership_type",
-                                                                   label = ADD_MEMBERSHIP_TYPE,
-                                                                   title = ADD_MEMBERSHIP_TYPE,
-                                                                   tooltip = T("Add a new membership type to the catalog."),
-                                                                   ),
-                                             )
+        membership_type_id = FieldTemplate("membership_type_id", "reference %s" % tablename,
+                                           label = T("Type"),
+                                           ondelete = "SET NULL",
+                                           readable = types,
+                                           represent = represent,
+                                           requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "member_membership_type.id",
+                                                                  represent,
+                                                                  filterby = "organisation_id",
+                                                                  filter_opts = filter_opts,
+                                                                  )),
+                                           sortby = "name",
+                                           writable = types,
+                                           comment = S3PopupLink(f = "membership_type",
+                                                                 label = ADD_MEMBERSHIP_TYPE,
+                                                                 title = ADD_MEMBERSHIP_TYPE,
+                                                                 tooltip = T("Add a new membership type to the catalog."),
+                                                                 ),
+                                           )
 
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("name",
@@ -159,34 +158,34 @@ class MemberModel(DataModel):
                       self.pr_person_id(
                         comment = None,
                         ondelete = "CASCADE",
-                        widget = S3AddPersonWidget(controller="member"),
+                        widget = PersonSelector(controller="member"),
                         empty = False,
                       ),
                       membership_type_id(),
                       # History
-                      s3_date("start_date",
-                              label = T("Date Joined"),
-                              set_min = "#member_membership_end_date",
-                              ),
-                      s3_date("end_date",
-                              label = T("Date Resigned"),
-                              set_max = "#member_membership_start_date",
-                              start_field = "member_membership_start_date",
-                              default_interval = 12,
-                              ),
+                      DateField("start_date",
+                                label = T("Date Joined"),
+                                set_min = "#member_membership_end_date",
+                                ),
+                      DateField("end_date",
+                                label = T("Date Resigned"),
+                                set_max = "#member_membership_start_date",
+                                #start_field = "member_membership_start_date",
+                                #default_interval = 12,
+                                ),
                       Field("leaving_reason",
                             label = T("Reason for Leaving"),
                             # Enable in template as-required
                             readable = False,
                             writable = False,
                             ),
-                      s3_date("restart_date",
-                              label = T("Date Rejoined"),
-                              # Enable in template as-required
-                              readable = False,
-                              set_max = "#member_membership_end_date",
-                              writable = False,
-                              ),
+                      DateField("restart_date",
+                                label = T("Date Rejoined"),
+                                set_max = "#member_membership_end_date",
+                                # Enable in template as-required
+                                readable = False,
+                                writable = False,
+                                ),
                       Field("membership_fee", "double",
                             label = T("Membership Fee"),
                             represent = lambda v: \
@@ -195,12 +194,12 @@ class MemberModel(DataModel):
                                         IS_FLOAT_AMOUNT(minimum=0.0)
                                         ),
                             ),
-                      s3_date("membership_paid",
-                              label = T("Membership Paid"),
-                              ),
-                      s3_date("membership_due",
-                              label = T("Membership Fee Due Date"),
-                              ),
+                      DateField("membership_paid",
+                                label = T("Membership Paid"),
+                                ),
+                      DateField("membership_due",
+                                label = T("Membership Fee Due Date"),
+                                ),
                       Field("fee_exemption", "boolean",
                             label = T("Exempted from Membership Fee"),
                             default = False,
@@ -220,14 +219,14 @@ class MemberModel(DataModel):
                             readable = False,
                             writable = False,
                             ),
-                      s3_comments(),
+                      CommentsField(),
                       # Location (from pr_address component)
                       self.gis_location_id(readable = False,
                                            writable = False,
                                            ),
                       Field.Method("paid",
                                    self.member_membership_paid),
-                      *s3_meta_fields())
+                      )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Member"),
@@ -411,14 +410,14 @@ class MemberModel(DataModel):
                             )
 
         represent = S3Represent(lookup=tablename, fields=["code"])
-        membership_id = S3ReusableField("membership_id", "reference %s" % tablename,
-                                        label = T("Member"),
-                                        ondelete = "CASCADE",
-                                        represent = represent,
-                                        requires = IS_ONE_OF(db, "member_membership.id",
-                                                             represent,
-                                                             ),
-                                        )
+        membership_id = FieldTemplate("membership_id", "reference %s" % tablename,
+                                      label = T("Member"),
+                                      ondelete = "CASCADE",
+                                      represent = represent,
+                                      requires = IS_ONE_OF(db, "member_membership.id",
+                                                           represent,
+                                                           ),
+                                      )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -587,7 +586,7 @@ class MemberProgrammeModel(DataModel):
         self.define_table(tablename,
                           self.hrm_programme_id(),
                           self.member_membership_id(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

@@ -8,7 +8,7 @@
 
     "use strict";
 
-    $(document).ready(function() {
+    $(function() {
 
         var path = window.location.pathname.split('/'),
             confirmation = i18n.req_register_shipment;

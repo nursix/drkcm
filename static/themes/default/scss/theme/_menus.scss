@@ -1,100 +1,145 @@
 // ============================================================================
 // Styles for Menus
 // ============================================================================
-// VARIABLES
-
 // Foundation variables used:
-$side-nav-list-type: none !default;
-$side-nav-list-position: inside !default;
-$side-nav-link-color-hover: scale-color($side-nav-link-color, $lightness: 30%) !default;
-$side-nav-link-bg-hover: hsla(0, 0, 0, .025) !default;
+//$topbar-background
 
-// Side menu border and background colors
-// (Foundation side-nav has no background, this is added here)
-$side_bar_bgcolor: #d7d8d9 !default;
-$side_bar_bgcolor_active: #e0e1e2 !default;
-$side_bar_border_color: #c0c1c2 !default;
-$side_bar_divider_color: $side_bar_border_color !default;
+// VARIABLES
+//
+$topbar-link-color: $white !default;
+$topbar-link-color-hover: $topbar-link-color !default;
+$topbar-link-color-active: $white !default;
+$topbar-link-color-active-hover: scale-color($topbar-link-color-active, $lightness: -10%) !default;
+
+$topbar-link-bg-hover: scale-color($topbar-background, $lightness: -10%) !default;
+$topbar-link-bg-active: $black !default;
+$topbar-link-bg-active-hover: scale-color($topbar-link-bg-active, $lightness: -10%) !default;
+
+$topbar-arrow-color: rgba(255,255,255,0.4) !default;
+
+$side-bar-link-color: #666 !default;
+$side-bar-link-color-hover: scale-color(get-color(primary), $lightness: 15%);
+$side-bar-link-color-active: $black !default;
+$side-bar-link-color-active-hover: $side-bar-link-color-hover !default;
+
+$side-bar-bgcolor: #f7f7f7 !default;
+$side-bar-bgcolor-hover: hsla(0, 0, 0, 0.05) !default;
+$side-bar-bgcolor-active: #e0e1e2 !default;
+$side-bar-bgcolor-active-hover: scale-color($side-bar-bgcolor-active, $lightness: 5%) !default;
+
+$side-bar-divider-color: #eaeaea !default;
 
 // ============================================================================
 // STYLES
-
-/* Top bar */
-.top-bar {
-    &.expanded {
-        width: 100%;
-    }
-    z-index: 1000;
-    /* Menu logo */
-    .logo {
-        color: white;
-        display: inline-block;
-        font-size: 1.1rem;
-        font-weight: bold;
-        height: 35px;
-        padding: 0.625rem 0.5rem 0 0.7rem;
-        text-transform: uppercase;
-    }
-    .menu-toggle input {
-        margin-right: 5px;
-    }
-    li.name {
-        padding-top: 0.2rem;
-    }
-    .home-link {
-        font-size: 1.375rem;
-        color: white;
-        padding: 0.5rem;
-    }
-    [dir=rtl] & {
-        .logo {
-            padding: 0.625rem 0.7rem 0 0.5rem;
-        }
-        .menu-toggle input {
-            margin-right: 0;
-            margin-left: 5px;
-        }
-    }
-}
-.top-bar-section li.menu-home a {
-    font-weight: bold !important;
-    font-size: 1.4em !important;
-    text-transform: capitalize !important;
-}
-
+//
 // ----------------------------------------------------------------------------
-/* Side Menu */
-.sidebar {
-    background: none repeat scroll 0 0 $side_bar_bgcolor;
-    margin-top: 10px;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-}
-.side-nav {
-    li {
-        list-style-type: $side-nav-list-type;
-        list-style-position: $side-nav-list-position;
-        line-height: 1.2;
-        padding: 0;
-
-        &.heading {
-            margin-top: 0.125rem;
-
-            &:not(:first-child) {
-                border-top: 1px solid $side_bar_divider_color;
-            }
+// Main menu
+//
+.main-menu {
+    font-size: 0.8125rem;
+    .title-bar {
+        background: $topbar-background;
+        margin: 0.5rem 0 0;
+        .title-bar-title {
+            margin: 0 0.5rem;
         }
-        &.active {
-            & > a:first-child:not(.button) {
-                font-weight: bold;
-                background-color: $side_bar_bgcolor_active;
-                &:hover {
-                    color: $side-nav-link-color-hover;
-                    background-color: $side-nav-link-bg-hover;
+    }
+    .top-bar {
+        min-height: 2.2rem;
+        .dropdown.menu, .drilldown.menu {
+            z-index: 99; // always above alerts
+            li {
+                &.is-dropdown-submenu-parent > a::after {
+                    border-color: $topbar-arrow-color transparent transparent;
+                }
+                &.is-drilldown-submenu-parent > a::after {
+                    border-color: transparent transparent transparent $topbar-arrow-color;
+                }
+                .js-drilldown-back > a::before {
+                    border-color: transparent $topbar-arrow-color transparent transparent;
+                }
+                a {
+                    line-height: 1.5;
+                    background-color: $topbar-background;
+                    color: $topbar-link-color;
+                    &:hover {
+                        background-color: $topbar-link-bg-hover;
+                        color: $topbar-link-color-hover;
+                    }
+                }
+                &.active > a {
+                    background-color: $topbar-link-bg-active;
+                    color: $topbar-link-color-active;
+                    &:hover {
+                        background-color: $topbar-link-bg-active-hover;
+                        color: $topbar-link-color-active-hover;
+                    }
                 }
             }
         }
     }
+}
+
+// ----------------------------------------------------------------------------
+// Options-Menu (side menu)
+//
+.side-bar {
+    background: none repeat scroll 0 0 $side-bar-bgcolor;
+    margin-top: 10px;
+    padding: 0.25rem 0;
+}
+.options-menu {
+
+    ul {
+        margin-left: 0;
+        li > a {
+            padding-left: 1.25rem;
+        }
+    }
+
+    & > li {
+        padding: 0.3rem 0;
+        &.active-section {
+            background-color: scale-color($side-bar-bgcolor, $lightness: -2%);
+        }
+    }
+
+    li {
+        font-size: 0.875rem;
+        font-weight: normal;
+        margin: 0;
+        a {
+            color: $side-bar-link-color;
+            padding: 0.325rem 0.5rem;
+            &:hover {
+                color: $side-bar-link-color-hover;
+                background-color: $side-bar-bgcolor-hover;
+            }
+        }
+
+        &.heading {
+            & > a {
+                font-weight: bold;
+                text-transform: uppercase;
+            }
+            &:not(:first-child) {
+                border-top: 1px solid $side-bar-divider-color;
+            }
+        }
+
+        &.is-active {
+            & > a:first-child:not(.button) {
+                font-weight: bold;
+                color: $side-bar-link-color-active;
+                background-color: $side-bar-bgcolor-active;
+                &:hover {
+                    color: $side-bar-link-color-active-hover;
+                    background-color: $side-bar-bgcolor-active-hover;
+                }
+            }
+        }
+    }
+
     .num-pending {
         margin: 0 0.4rem;
         font-weight: normal;
@@ -107,58 +152,48 @@ $side_bar_divider_color: $side_bar_border_color !default;
     }
 }
 
+#menu-options-toggle {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
 // ----------------------------------------------------------------------------
-/* Page Header */
-.main-title {
-    .org-logo {
-        vertical-align: top;
-        display: inline-block;
-        padding: 0.4rem 0.8rem 0.3rem 0;
-    }
-    .system-title {
-        display: inline-block;
-        .system-name {
-            color: #333333;
+// Personal Menu, About-Menu
+//
+.sub-nav {
+    line-height: normal;
+    li {
+        font-size: 0.75rem;
+        &:before {
+            color: #999;
+            content: "|";
+            margin: 0 0.375rem;
         }
-        .org-name {
-            color: #999999;
-            line-height: 1rem;
+        &:first-child:before {
+            content: "";
+            margin: 0;
         }
-        h5:first-child, h6:first-child {
-            margin: 0.3rem 0 0.125rem;
+        a {
+            color: #999;
+            text-decoration: none;
+            display: inline-block;
+            padding: 0 0.375rem;
+            &:hover {
+                color: #666;
+            }
         }
     }
-    .personal-menu-area {
-        text-align: right;
-    }
-    .personal-menu {
+    &.personal-menu {
         float: right;
         clear: right;
+        [dir=rtl] & {
+            float: left;
+            clear: left;
+        }
         padding-top: 0;
         margin-bottom: 0.125rem;
         li a {
             padding: 0 0.375rem;
-        }
-    }
-    .language-selector {
-        float: right;
-        display: block;
-        margin-top: 0.625rem;
-        margin-bottom: 0.125rem;
-    }
-    [dir=rtl] & {
-        .org-logo {
-            padding: 0.4rem 0 0.3rem 0.8rem;
-        }
-        .personal-menu-area {
-            text-align: left;
-        }
-        .personal-menu {
-            float: left;
-            clear: left;
-        }
-        .language-selector {
-            float: left;
         }
     }
 }

@@ -4,6 +4,7 @@
 # python web2py.py -S eden -M -R applications/eden/modules/unit_tests/core/model/fields.py
 #
 import unittest
+from gluon import Field, IS_INT_IN_RANGE, IS_EMPTY_OR, IS_NOT_EMPTY
 from gluon.languages import lazyT
 
 from core import *
@@ -11,231 +12,200 @@ from core import *
 from unit_tests import run_suite
 
 # =============================================================================
-class ReusableFieldTests(unittest.TestCase):
-    """ Test multiple named widgets in reusable fields """
+class FieldTemplateTests(unittest.TestCase):
 
-    # -------------------------------------------------------------------------
-    def widget1(self):
-        """ Dummy widget """
+    @staticmethod
+    def widget_1():
+        """ Dummy """
         pass
 
-    def widget2(self):
-        """ Dummy widget """
+    @staticmethod
+    def widget_2():
+        """ Dummy """
         pass
 
-    def widget3(self):
-        """ Dummy widget """
-        pass
+    def testTemplating(self):
+        """ Verify FieldTemplate definition """
 
-    # -------------------------------------------------------------------------
-    def testWidgetOverrideWithoutDefault(self):
-        """ Test setting the widget in the instance (no default) """
+        field_a = FieldTemplate("field_a", "integer")
+        field_b = FieldTemplate("field_b")
 
-        rf = S3ReusableField("test", "integer")
+        self.assertIs(type(field_a.template), type)
+        self.assertTrue(issubclass(field_a.template, Field))
 
-        # Default None
-        field = rf()
-        self.assertEqual(field.widget, None)
+        # Check that Field classes are separate
+        self.assertIsNot(field_a.template, field_b.template)
 
-        # Widget-parameter overrides default
-        field = rf(widget=self.widget1)
-        self.assertEqual(field.widget, self.widget1)
+    def testInstantiation(self):
+        """ Verify FieldTemplate instantiation """
 
-    # -------------------------------------------------------------------------
-    def testWidgetOverrideWithDefault(self):
-        """ Test overriding the default widget in the instance """
+        w = self.widget_1
+        r = IS_INT_IN_RANGE(0, 10)
 
-        rf = S3ReusableField("test", "integer",
-                             widget=self.widget1)
+        field = FieldTemplate("field", "integer",
+                              widget = w,
+                              requires = r,
+                              )
+        instance = field()
 
-        # Default widget
-        field = rf()
-        self.assertEqual(field.widget, self.widget1)
+        self.assertEqual(instance.name, "field")
+        self.assertEqual(instance.type, "integer")
+        self.assertIs(instance.widget, w)
+        self.assertIs(instance.requires, r)
 
-        # Widget-parameter overrides default
-        field = rf(widget=self.widget2)
-        self.assertEqual(field.widget, self.widget2)
+    def testDefaultType(self):
+        """ FieldTemplate default type is string """
 
-    # -------------------------------------------------------------------------
-    def testSingleWidget(self):
-        """ Test using widget set with single widget """
+        field = FieldTemplate("field")
+        instance = field()
 
-        rf = S3ReusableField("test", "integer",
-                             widgets=self.widget1)
+        self.assertEqual(instance.type, "string")
 
-        # Default
-        field = rf()
-        self.assertEqual(field.widget, self.widget1)
+    def testOverrideName(self):
+        """ FieldTemplate instantiation can override field name """
 
-        # Deliberate default
-        field = rf(widget="default")
-        self.assertEqual(field.widget, self.widget1)
+        field = FieldTemplate("field_a", "integer")
 
-        # Override
-        field = rf(widget=self.widget2)
-        self.assertEqual(field.widget, self.widget2)
+        instance_a = field()
+        instance_b = field("field_b")
+        instance_c = field()
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="alternative")
+        self.assertEqual(instance_a.name, "field_a")
+        self.assertEqual(instance_b.name, "field_b")
+        self.assertEqual(instance_c.name, "field_a")
 
-    # -------------------------------------------------------------------------
-    def testMultipleWidgets(self):
-        """ Test using widget set with multiple widgets """
+    def testOverrideType(self):
+        """ FieldTemplate instantiation cannot override type """
 
-        rf = S3ReusableField("test", "integer",
-                             widgets={"default": self.widget1,
-                                      "alternative": self.widget2,
-                                      },
-                             )
+        field = FieldTemplate("field", "integer")
 
-        # Using default from set
-        field = rf()
-        self.assertEqual(field.widget, self.widget1)
+        instance_a = field(type="double")
+        instance_b = field()
 
-        # Deliberate default
-        field = rf(widget="default")
-        self.assertEqual(field.widget, self.widget1)
+        self.assertEqual(instance_a.type, "integer")
+        self.assertEqual(instance_b.type, "integer")
 
-        # Other choice
-        field = rf(widget="alternative")
-        self.assertEqual(field.widget, self.widget2)
+    def testOverrideRequires(self):
+        """ FieldTemplate instantiation can override default validator """
 
-        # Override
-        field = rf(widget=self.widget3)
-        self.assertEqual(field.widget, self.widget3)
+        r_a = IS_INT_IN_RANGE(0, 10)
+        r_b = IS_INT_IN_RANGE(1, 99)
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="other")
+        field = FieldTemplate("field", "integer", requires=r_a)
 
-    # -------------------------------------------------------------------------
-    def testMultipleWidgetsWithDefault(self):
-        """ Test using widget set with multiple widgets and override default """
+        instance_a = field()
+        instance_b = field(requires=r_b)
+        instance_c = field()
+        instance_d = field(requires=None)
 
-        rf = S3ReusableField("test", "integer",
-                             widgets={"default": self.widget1,
-                                      "alternative": self.widget2,
-                                      },
-                             widget=self.widget3,
-                             )
+        self.assertIs(instance_a.requires, r_a)
+        self.assertIs(instance_b.requires, r_b)
+        self.assertIs(instance_c.requires, r_a)
 
-        # "widget"-setting overrides "default"
-        field = rf()
-        self.assertEqual(field.widget, self.widget3)
+        # None is converted to [] in Field constructor
+        self.assertEqual(instance_d.requires, [])
 
-        # "widget"-setting overrides "default"
-        field = rf(widget="default")
-        self.assertEqual(field.widget, self.widget3)
+    def testOverrideWidget(self):
+        """ FieldTemplate instantiation can override default widget """
 
-        # Other alternatives still available
-        field = rf(widget="alternative")
-        self.assertEqual(field.widget, self.widget2)
+        field = FieldTemplate("field", widget=self.widget_1)
 
-        # And can still override
-        field = rf(widget=self.widget1)
-        self.assertEqual(field.widget, self.widget1)
+        instance_a = field()
+        instance_b = field(widget=self.widget_2)
+        instance_c = field()
+        instance_d = field(widget=None)
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="other")
+        self.assertIs(instance_a.widget, self.widget_1)
+        self.assertIs(instance_b.widget, self.widget_2)
+        self.assertIs(instance_c.widget, self.widget_1)
+        self.assertIs(instance_d.widget, None)
 
-    # -------------------------------------------------------------------------
-    def testFallbackWithDefault(self):
-        """ Test fallback to default widget """
+    def testEmptyNone(self):
+        """ FieldTemplate instantiation with empty=None retains original validator """
 
-        rf = S3ReusableField("test", "integer",
-                             widget=self.widget1,
-                             widgets={"alternative": self.widget2},
-                             )
+        r = IS_INT_IN_RANGE(0, 15)
 
-        # Standard fallback
-        field = rf()
-        self.assertEqual(field.widget, self.widget1)
+        field = FieldTemplate("field", "integer", requires = r)
 
-        # Deliberate default
-        field = rf(widget="default")
-        self.assertEqual(field.widget, self.widget1)
+        instance_a = field(empty=None)
+        instance_b = field()
 
-        # Alternative
-        field = rf(widget="alternative")
-        self.assertEqual(field.widget, self.widget2)
+        self.assertIs(instance_a.requires, r)
+        self.assertIs(instance_b.requires, r)
 
-        # Override
-        field = rf(widget=self.widget1)
-        self.assertEqual(field.widget, self.widget1)
+    def testEmptyTrue(self):
+        """ FieldTemplate instantiation with empty=True allows empty field values """
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="other")
+        # Adds IS_EMPTY_OR if required
+        r = IS_INT_IN_RANGE(0, 15)
 
-    # -------------------------------------------------------------------------
-    def testExplicitNone(self):
-        """ Test explicit None-widget in instance """
+        field = FieldTemplate("field", "integer", requires = r)
 
-        rf = S3ReusableField("test", "integer",
-                             widgets={"default": self.widget1,
-                                      "alternative": self.widget2,
-                                      },
-                             widget=self.widget3,
-                             )
+        instance_a = field(empty=True)
+        instance_b = field()
 
-        # Standard fallback
-        field = rf(widget=None)
-        self.assertEqual(field.widget, None)
+        self.assertIsInstance(instance_a.requires, IS_EMPTY_OR)
+        self.assertIs(instance_a.requires.other, r)
+        self.assertIs(instance_b.requires, r)
 
-    # -------------------------------------------------------------------------
-    def testFallbackWithoutDefault(self):
-        """ Test fallback to None """
+        # Does not add IS_EMPTY_OR if already present
+        field = FieldTemplate("field", "integer", requires = IS_EMPTY_OR(r))
 
-        rf = S3ReusableField("test", "integer",
-                             widgets={"alternative": self.widget2},
-                             )
+        instance_a = field(empty=True)
+        instance_b = field()
 
-        # Standard fallback
-        field = rf()
-        self.assertEqual(field.widget, None)
+        self.assertIsInstance(instance_a.requires, IS_EMPTY_OR)
+        self.assertIs(instance_a.requires.other, r)
+        self.assertIsInstance(instance_b.requires, IS_EMPTY_OR)
+        self.assertIs(instance_b.requires.other, r)
 
-        # Deliberate default
-        field = rf(widget="default")
-        self.assertEqual(field.widget, None)
+        # Does not add IS_EMPTY_OR if there is no validation at all
+        field = FieldTemplate("field", "integer", requires = None)
 
-        # Alternative
-        field = rf(widget="alternative")
-        self.assertEqual(field.widget, self.widget2)
+        instance_a = field(empty=True)
+        instance_b = field()
 
-        # Override
-        field = rf(widget=self.widget1)
-        self.assertEqual(field.widget, self.widget1)
+        self.assertEqual(instance_a.requires, [])
+        self.assertEqual(instance_b.requires, [])
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="other")
+    def testEmptyFalse(self):
+        """ FieldTemplate instantiation with empty=False enforces non-empty field values """
 
-    # -------------------------------------------------------------------------
-    def testFallbackWithoutWidgets(self):
-        """ Test fallback to None """
+        # Keeps validator that is not IS_EMPTY_OR
+        r = IS_INT_IN_RANGE(0, 15)
 
-        rf = S3ReusableField("test", "integer")
+        field = FieldTemplate("field", "integer", requires = r)
 
-        # Standard fallback
-        field = rf()
-        self.assertEqual(field.widget, None)
+        instance_a = field(empty=False)
+        instance_b = field()
 
-        # Deliberate default
-        field = rf(widget="default")
-        self.assertEqual(field.widget, None)
+        self.assertIs(instance_a.requires, r)
+        self.assertIs(instance_b.requires, r)
 
-        # Alternative
-        self.assertRaises(NameError, rf, widget="alternative")
+        # Removes IS_EMPTY_OR if present
+        field = FieldTemplate("field", "integer", requires = IS_EMPTY_OR(r))
 
-        # Override
-        field = rf(widget=self.widget1)
-        self.assertEqual(field.widget, self.widget1)
+        instance_a = field(empty=False)
+        instance_b = field()
 
-        # Undefined widget
-        self.assertRaises(NameError, rf, widget="other")
+        self.assertIs(instance_a.requires, r)
+        self.assertIsInstance(instance_b.requires, IS_EMPTY_OR)
+        self.assertIs(instance_b.requires.other, r)
+
+        # Adds IS_NOT_EMPTY if there is no validation at all
+        field = FieldTemplate("field", "integer", requires = None)
+
+        instance_a = field(empty=False)
+        instance_b = field()
+
+        self.assertIsInstance(instance_a.requires, IS_NOT_EMPTY)
+        self.assertEqual(instance_b.requires, [])
 
 # =============================================================================
 if __name__ == "__main__":
 
     run_suite(
-        ReusableFieldTests,
+        FieldTemplateTests,
     )
 
 # END ========================================================================

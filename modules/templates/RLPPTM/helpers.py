@@ -8,12 +8,13 @@ import json
 
 from dateutil import rrule
 
-from gluon import current, Field, \
+from gluon import current, Field, URL, \
                   CRYPT, IS_EMAIL, IS_IN_SET, IS_LOWER, IS_NOT_IN_DB, \
                   SQLFORM, A, DIV, H4, H5, I, INPUT, LI, P, SPAN, TABLE, TD, TH, TR, UL
 
-from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, \
-                 CRUDMethod, S3Represent, s3_fullname, s3_mark_required, s3_str
+from core import ICON, IS_FLOAT_AMOUNT, JSONERRORS, S3DateTime, CRUDMethod, \
+                 S3Represent, S3PriorityRepresent, \
+                 s3_fullname, s3_mark_required, s3_str
 
 from s3db.pr import pr_PersonRepresentContact
 
@@ -83,11 +84,10 @@ def get_managed_facilities(role="ORG_ADMIN", public_only=True, cacheable=True):
         return realms
 
     if public_only:
-        ttable = s3db.org_site_tag
-        join = ttable.on((ttable.site_id == ftable.site_id) & \
-                         (ttable.tag == "PUBLIC") & \
-                         (ttable.deleted == False))
-        query &= (ttable.value == "Y")
+        atable = s3db.org_site_approval
+        join = atable.on((atable.site_id == ftable.site_id) & \
+                         (atable.public == "Y") & \
+                         (atable.deleted == False))
     else:
         join = None
 
@@ -382,6 +382,137 @@ def is_org_type_tag(organisation_id, tag, value=None):
     return bool(row)
 
 # -----------------------------------------------------------------------------
+def account_status(record, represent=True):
+    """
+        Checks the status of the user account for a person
+
+        Args:
+            record: the person record
+            represent: represent the result as workflow option
+
+        Returns:
+            workflow option HTML if represent=True, otherwise boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.pr_person_user
+    utable = current.auth.table_user()
+
+    query = (ltable.pe_id == record.pe_id) & \
+            (ltable.deleted == False) & \
+            (utable.id == ltable.user_id)
+
+    account = db(query).select(utable.id,
+                               utable.registration_key,
+                               cache = s3db.cache,
+                               limitby = (0, 1),
+                               ).first()
+
+    if account:
+        status = "DISABLED" if account.registration_key else "ACTIVE"
+    else:
+        status = "N/A"
+
+    if represent:
+        represent = WorkflowOptions(("N/A", "nonexistent", "grey"),
+                                    ("DISABLED", "disabled##account", "red"),
+                                    ("ACTIVE", "active", "green"),
+                                    ).represent
+        status = represent(status)
+
+    return status
+
+# -----------------------------------------------------------------------------
+def hr_details(record):
+    """
+        Looks up relevant HR details for a person
+
+        Args:
+            record: the pr_person record in question
+
+        Returns:
+            dict {"organisation": organisation name,
+                  "representative": representative status,
+                  "account": account status,
+                  "status": verification status (for legal representatives),
+                  }
+
+        Note:
+            all data returned are represented (no raw data)
+    """
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    person_id = record.id
+
+    # Get HR record
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id)
+
+    hr_id = current.request.get_vars.get("human_resource.id")
+    if hr_id:
+        query &= (htable.id == hr_id)
+    query &= (htable.deleted == False)
+
+    rows = db(query).select(htable.organisation_id,
+                            htable.org_contact,
+                            htable.status,
+                            orderby = htable.created_on,
+                            )
+    if not rows:
+        human_resource = None
+    elif len(rows) > 1:
+        rrows = rows
+        rrows = rrows.filter(lambda row: row.status == 1) or rrows
+        rrows = rrows.filter(lambda row: row.org_contact) or rrows
+        human_resource = rrows.first()
+    else:
+        human_resource = rows.first()
+
+    output = {"organisation": None,
+              "representative": None,
+              "account": account_status(record),
+              "status": None,
+              }
+
+    if human_resource:
+        otable = s3db.org_organisation
+        rtable = s3db.org_representative
+
+        # Link to organisation
+        query = (otable.id == human_resource.organisation_id)
+        organisation = db(query).select(otable.id,
+                                        otable.name,
+                                        limitby = (0, 1),
+                                        ).first()
+        output["organisation"] = A(organisation.name,
+                                   _href = URL(c = "org",
+                                               f = "organisation",
+                                               args = [organisation.id],
+                                               ),
+                                   )
+
+        # Representative/verification status
+        query = (rtable.person_id == person_id) & \
+                (rtable.organisation_id == human_resource.organisation_id) & \
+                (rtable.deleted == False)
+        representative = db(query).select(rtable.active,
+                                          rtable.status,
+                                          limitby = (0, 1),
+                                          ).first()
+
+        if representative:
+            output["representative"] = T("active") if representative.active else T("inactive")
+            output["status"] = rtable.status.represent(representative.status)
+
+    return output
+
+# -----------------------------------------------------------------------------
 def restrict_data_formats(r):
     """
         Restrict data exports (prevent S3XML/S3JSON of records)
@@ -394,7 +525,7 @@ def restrict_data_formats(r):
     allowed = ("html", "iframe", "popup", "aadata", "plain", "geojson", "pdf", "xlsx")
     if r.record:
         allowed += ("card",)
-    if r.method in ("report", "timeplot", "filter", "lookup", "info"):
+    if r.method in ("report", "timeplot", "filter", "lookup", "info", "validate", "verify"):
         allowed += ("json",)
     elif r.method == "options":
         allowed += ("s3json",)
@@ -434,7 +565,7 @@ def assign_pending_invoices(billing_id, organisation_id=None, invoice_id=None):
                                    organisation_id = organisation_id,
                                    )
     else:
-        accountants = None
+        accountants = []
 
     # Query for any pending invoices of this billing cycle
     itable = s3db.fin_voucher_invoice
@@ -630,55 +761,6 @@ def configure_binary_tags(resource, tag_components):
             field.default = "N"
             field.requires = IS_IN_SET(binary_tag_opts, zero=None)
             field.represent = lambda v, row=None: binary_tag_opts.get(v, "-")
-
-# -----------------------------------------------------------------------------
-def workflow_tag_represent(options, none=None):
-    """
-        Color-coded and icon-supported representation of
-        facility approval workflow tags
-
-        Args:
-            options: the tag options as dict {value: label}
-            none: treat None-values like this option (str)
-    """
-
-    icons = {"REVISE": "fa fa-exclamation-triangle",
-             "REJECT": "fa fa-exclamation-triangle",
-             "REVIEW": "fa fa-hourglass",
-             "APPROVED": "fa fa-check",
-             "COMPLETE": "fa fa-check",
-             "N/A": "fa fa-minus-circle",
-             "N": "fa fa-minus-circle",
-             "Y": "fa fa-check",
-             }
-
-    css_classes = {"REVISE": "workflow-red",
-                   "REJECT": "workflow-red",
-                   "REVIEW": "workflow-amber",
-                   "APPROVED": "workflow-green",
-                   "COMPLETE": "workflow-green",
-                   "N/A": "workflow-grey",
-                   "N": "workflow-red",
-                   "Y": "workflow-green",
-                   }
-
-    def represent(value, row=None):
-
-        if value is None and none:
-            value = none
-
-        label = DIV(_class="approve-workflow")
-        color = css_classes.get(value)
-        if color:
-            label.add_class(color)
-        icon = icons.get(value)
-        if icon:
-            label.append(I(_class=icon))
-        label.append(options.get(value, "-"))
-
-        return label
-
-    return represent
 
 # -----------------------------------------------------------------------------
 def applicable_org_types(organisation_id, group=None, represent=False):
@@ -1079,6 +1161,188 @@ def rlp_holidays(start, end):
     return rules
 
 # =============================================================================
+class WorkflowOptions:
+    """
+        Option sets for workflow statuses or status reasons
+    """
+
+    icons = {"red": "fa fa-exclamation-triangle",
+             "amber": "fa fa-hourglass",
+             "green": "fa fa-check",
+             "grey": "fa fa-minus-circle",
+             }
+
+    css_classes = {"red": "workflow-red",
+                   "amber": "workflow-amber",
+                   "green": "workflow-green",
+                   "grey": "workflow-grey",
+                   }
+
+    # -------------------------------------------------------------------------
+    def __init__(self, *theset, selectable=None, represent="workflow", none=None):
+        """
+            Args:
+                theset: tuple|list of tuples specifying all options,
+                        (value, label) or (value, label, color)
+                selectable: tuple|list of manually selectable values
+                represent: how to represent values, either:
+                            - "workflow" for icon + red|amber|green
+                            - "status"   to use S3PriorityRepresent
+                none: treat None-value like this value
+        """
+
+        self.theset = theset
+        self._represent = represent
+        self.none = none
+
+        self._colors = None
+
+        self._keys = [o[0] for o in theset]
+        if selectable:
+            self._selectable = [k for k in self._keys if k in selectable]
+        else:
+            self._selectable = self._keys
+
+    # -------------------------------------------------------------------------
+    def selectable(self, values=False, current_value=None):
+        """
+            Produces a list of selectable options for use with IS_IN_SET
+
+            Args:
+                values: which values to use
+                        - True for the manually selectable options as configured
+                        - tuple of values to override the manually selectable options
+                        - False for all possible options
+                current_value: the current value of the field, to be included
+                               in the selectable options
+        """
+
+        if values is False:
+            selectable = self._keys
+        elif values is True:
+            selectable = self._selectable
+        elif isinstance(values, (tuple, list, set)):
+            selectable = list(values)
+        else:
+            selectable = []
+
+        if current_value and current_value not in selectable:
+            selectable = [current_value] + selectable
+
+        return [o for o in self.labels() if o[0] in selectable]
+
+    # -------------------------------------------------------------------------
+    @property
+    def colors(self):
+        """
+            The option "colors", for representation
+
+            Returns:
+                a dict {value: color}
+        """
+
+        colors = self._colors
+        if not colors:
+            colors = self._colors = {}
+            for opt in self.theset:
+                if len(opt) > 2:
+                    colors[opt[0]] = opt[2]
+                else:
+                    colors[opt[0]] = None
+        return colors
+
+    # -------------------------------------------------------------------------
+    def labels(self):
+        """
+            The (localized) option labels, for representation
+
+            Returns:
+                a list of tuples [(value, T(label)), ...]
+        """
+
+        T = current.T
+
+        return [(o[0], T(o[1])) for o in self.theset]
+
+    # -------------------------------------------------------------------------
+    @property
+    def represent(self):
+        """
+            The representation method for this option set
+
+            Returns:
+                the representation function
+        """
+
+        represent = self._represent
+        if not callable(represent):
+            if represent == "workflow":
+                represent = self.represent_workflow()
+            elif represent == "status":
+                represent = self.represent_status()
+            else:
+                represent = None
+            self._represent = represent
+        return represent
+
+    # -------------------------------------------------------------------------
+    def represent_workflow(self):
+        """
+            Representation as workflow element (icon + red|amber|green)
+
+            Returns:
+                the representation function
+        """
+
+        none = self.none
+
+        colors = self.colors
+        icons = self.icons
+        css_classes = self.css_classes
+
+        def represent(value, row=None):
+
+            if value is None and none:
+                value = none
+
+            label = DIV(_class="approve-workflow")
+
+            color = colors.get(value)
+            if color:
+                icon = icons.get(color)
+                if icon:
+                    label.append(I(_class=icon))
+                css_class = css_classes.get(color)
+                if css_class:
+                    label.add_class(css_class)
+
+            label.append(dict(self.labels()).get(value, "-"))
+
+            return label
+
+        return represent
+
+    # -------------------------------------------------------------------------
+    def represent_status(self):
+        """
+            Representation using S3PriorityRepresent
+
+            Returns:
+                a S3PriorityRepresent instance
+        """
+
+        inst = S3PriorityRepresent({},
+                                   classes = self.colors,
+                                   none = self.none,
+                                   )
+
+        def represent(value, row=None):
+            inst.options = dict(self.labels())
+            return inst(value, row=row)
+
+        return represent
+
+# =============================================================================
 class ServiceListRepresent(S3Represent):
 
     always_list = True
@@ -1121,10 +1385,10 @@ class OrganisationRepresent(S3Represent):
 
     def __init__(self, show_type=True, show_link=True):
 
-        super(OrganisationRepresent, self).__init__(lookup = "org_organisation",
-                                                    fields = ["name",],
-                                                    show_link = show_link,
-                                                    )
+        super().__init__(lookup = "org_organisation",
+                         fields = ["name",],
+                         show_link = show_link,
+                         )
         self.show_type = show_type
         self.org_types = {}
         self.type_names = {}
@@ -1270,7 +1534,7 @@ class InviteUserOrg(CRUDMethod):
         auth_settings = auth.settings
         auth_messages = auth.messages
 
-        output = {"title": T("Invite Organisation"),
+        output = {"title": T("Invite Organization"),
                   }
 
         # Check for existing accounts
@@ -1376,7 +1640,7 @@ class InviteUserOrg(CRUDMethod):
                 response.confirmation = T("Invitation sent")
         else:
             if account:
-                response.warning = T("This organisation has been invited before!")
+                response.warning = T("This organization has been invited before!")
 
         output["form"] = form
 
@@ -1387,8 +1651,6 @@ class InviteUserOrg(CRUDMethod):
     # -------------------------------------------------------------------------
     @classmethod
     def invite_account(cls, organisation, email, account=None):
-
-        request = current.request
 
         data = {"first_name": organisation.name,
                 "email": email,
@@ -1428,13 +1690,8 @@ class InviteUserOrg(CRUDMethod):
                 return "could not create preliminary account"
 
         # Compose and send invitation email
-        # => must use public_url setting because URL() produces a
-        #    localhost address when called from CLI or script
-        base_url = current.deployment_settings.get_base_public_url()
-        appname = request.application
-        registration_url = "%s/%s/default/index/register_invited/%s"
-
-        data = {"url": registration_url % (base_url, appname, key),
+        app_url = current.deployment_settings.get_base_app_url()
+        data = {"url": "%s/default/index/register_invited/%s" % (app_url, key),
                 "code": code,
                 }
 
@@ -2199,6 +2456,13 @@ class TestFacilityInfo(CRUDMethod):
                      "name": "ORG-NAME",    - the organisation name
                      "type": "ORG-TYPE",    - the organisation type
                      "website": "URL"       - the organisation website URL
+                     "commission": [        - commissioning details
+                        {"start": YYYY-MM-DD,
+                        "end": YYYY-MM-DD,
+                        "status": CURRENT|SUSPENDED|REVOKED|EXPIRED,
+                        "status_date": YYYY-MM-DD,
+                        }, ...
+                       ]
                      },
                  "location":
                     {"L1": "L1-NAME",       - the L1 name (state)
@@ -2211,7 +2475,7 @@ class TestFacilityInfo(CRUDMethod):
                  "report": ["start","end"], - echoed from input, ISO-format dates YYYY-MM-DD
                  "activity":
                     {"tests": NN            - the total number of tests reported for the period
-                    }
+                    },
                  }
         """
 
@@ -2258,10 +2522,9 @@ class TestFacilityInfo(CRUDMethod):
                 r.error(400, current.ERROR.BAD_REQUEST)
             query = (table.code.upper() == code.upper())
 
-        ttable = s3db.org_site_tag
-        left = ttable.on((ttable.site_id == table.site_id) & \
-                         (ttable.tag == "PUBLIC") & \
-                         (ttable.deleted == False))
+        atable = s3db.org_site_approval
+        left = atable.on((atable.site_id == table.site_id) & \
+                         (atable.deleted == False))
 
         query &= (table.deleted == False)
         row = db(query).select(table.code,
@@ -2272,8 +2535,7 @@ class TestFacilityInfo(CRUDMethod):
                                table.organisation_id,
                                table.location_id,
                                table.site_id,
-                               ttable.id,
-                               ttable.value,
+                               atable.public,
                                left = left,
                                limitby = (0, 1),
                                ).first()
@@ -2282,14 +2544,14 @@ class TestFacilityInfo(CRUDMethod):
             r.error(404, current.ERROR.BAD_RECORD)
         else:
             facility = row.org_facility
-            public = row.org_site_tag
+            approval = row.org_site_approval
 
         # Prepare facility info
         output = {"code": facility.code,
                   "name": facility.name,
                   "phone": facility.phone1,
                   "email": facility.email,
-                  "public": True if public.value == "Y" else False,
+                  "public": approval.public == "Y",
                   }
 
         # Look up organisation data
@@ -2306,7 +2568,8 @@ class TestFacilityInfo(CRUDMethod):
                 ]
         query = (otable.id == facility.organisation_id) & \
                 (otable.deleted == False)
-        row = db(query).select(otable.name,
+        row = db(query).select(otable.id,
+                               otable.name,
                                otable.website,
                                ttable.name,
                                ottable.value,
@@ -2322,6 +2585,26 @@ class TestFacilityInfo(CRUDMethod):
                        "type": orgtype.name,
                        "website": organisation.website,
                        }
+
+            # Add commission data
+            ctable = s3db.org_commission
+            query = (ctable.organisation_id == organisation.id) & \
+                    (ctable.deleted == False)
+            commissions = db(query).select(ctable.date,
+                                           ctable.end_date,
+                                           ctable.status,
+                                           ctable.status_date,
+                                           )
+            dtfmt = lambda dt: dt.isoformat() if dt else '--'
+            clist = []
+            for commission in commissions:
+                clist.append({"start": dtfmt(commission.date),
+                              "end": dtfmt(commission.end_date),
+                              "status": commission.status,
+                              "status_date": dtfmt(commission.status_date),
+                              })
+            orgdata["commission"] = clist
+
             output["organisation"] = orgdata
 
         # Look up location data
@@ -2371,16 +2654,18 @@ class TestFacilityInfo(CRUDMethod):
                     query &= (table.date <= end)
                 query &= (table.deleted == False)
                 total = table.tests_total.sum()
-                row = db(query).select(total).first()
+                positive = table.tests_positive.sum()
+                row = db(query).select(total, positive).first()
                 tests_total = row[total]
-                if not tests_total:
-                    tests_total = 0
+                tests_positive = row[positive]
 
                 # Add to output
                 output["report"] = [start.isoformat() if start else None,
                                     end.isoformat() if end else None,
                                     ]
-                output["activity"] = {"tests": tests_total}
+                output["activity"] = {"tests": tests_total if tests_total else 0,
+                                      "positive": tests_positive if tests_positive else 0,
+                                      }
             else:
                 r.error(400, "Invalid report parameter format")
 
@@ -2391,10 +2676,497 @@ class TestFacilityInfo(CRUDMethod):
         return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
 
 # =============================================================================
-class PersonRepresentManager(pr_PersonRepresentContact):
+class TestProviderInfo(CRUDMethod):
+    """
+        REST Method to report details/activities of a test provider
+    """
+
+    # -------------------------------------------------------------------------
+    def apply_method(self, r, **attr):
+        """
+            Report test provider information
+
+            Args:
+                r: the CRUDRequest instance
+                attr: controller attributes
+        """
+
+        if r.http == "POST":
+            if r.representation == "json":
+                output = self.provider_info(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def provider_info(cls, r, **attr):
+        """
+            Respond to a POST .json request, request body format:
+
+                {"client": "CLIENT",        - the client identity (ocert)
+                 "appkey": "APPKEY",        - the client app key  (ocert)
+                 "providerCode": "ORGANISATION-ID",
+                 "siteCode": "TESTSTATION-ID",
+                 "bsnr": "BSNR",
+                 "report": ["start","end"], - the date interval to report
+                                              activities for (optional)
+                                              (ISO-format dates YYYY-MM-DD)
+                 }
+
+            Output format:
+
+                {
+                "provider": {
+                    "name": "ORG-NAME",    - the provider name
+                    "type": "ORG-TYPE",    - the provider organisation type
+                    "code": "ORG-ID",      - the provider organisation ID
+                    "bsnr": "BSNR",        - the provider BSNR
+                    "website": "URL"       - the provider website
+                    "commission": [        - commissioning details
+                        {"start": YYYY-MM-DD,
+                         "end": YYYY-MM-DD,
+                         "status": CURRENT|SUSPENDED|REVOKED|EXPIRED,
+                         "statusDate": YYYY-MM-DD,
+                         }, ...
+                        ],
+                    "activity": {           - activity totals for all sites
+                        "interval": ["start", "end"],
+                        "testsTotal": NN,
+                        "testsPositive": NN,
+                        },
+                    },
+
+                 "sites": [
+                    {"name": "FACILITY-NAME",   - the facility name
+                     "code": "FACILITY-ID",     - the facility ID
+                     "phone": "phone #",        - the facility phone number
+                     "email": "email",          - the facility email address
+                     "location":
+                        {"L1": "L1-NAME",       - the L1 name (state)
+                         "L2": "L2-NAME",       - the L2 name (district)
+                         "L3": "L3-NAME",       - the L3 name (commune/city)
+                         "L4": "L4-NAME",       - the L4 name (village/town)
+                         "address": "STREET",   - the street address
+                         "postcode": "XXXXX"    - the postcode
+                         },
+                     "activity": {              - activity data for this site
+                        "interval": ["start", "end"],
+                        "testsTotal": NN,
+                        "testsPositive": NN,
+                        }
+                     }, ...
+                    ],
+                 }
+        """
+
+        settings = current.deployment_settings
+
+        # Get the configured, permitted clients
+        ocert = settings.get_custom("ocert")
+        if not ocert:
+            r.error(501, current.ERROR.METHOD_DISABLED)
+
+        # Read the body JSON of the request
+        body = r.body
+        body.seek(0)
+        try:
+            s = body.read().decode("utf-8")
+        except (ValueError, AttributeError, UnicodeDecodeError):
+            r.error(400, current.ERROR.BAD_REQUEST)
+        try:
+            ref = json.loads(s)
+        except JSONERRORS:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        # Verify the client
+        client = ref.get("client")
+        if not client or client not in ocert:
+            r.error(403, current.ERROR.NOT_PERMITTED)
+        key, _ = ocert.get(client)
+        if key:
+            appkey = ref.get("appkey")
+            if not appkey or appkey.upper() != key.upper():
+                r.error(403, current.ERROR.NOT_PERMITTED)
+
+        # Identify the organisation from providerCode, siteCode or bsnr or combinations thereof
+        organisation_id = r.record.id if r.record else None
+        provider_id = ref.get("providerCode")
+        site_code = ref.get("siteCode")
+        bsnr = ref.get("bsnr")
+
+        # Look up provider
+        organisation_id, provider_info = cls.lookup_provider(organisation_id,
+                                                             provider_id = provider_id,
+                                                             site_code = site_code,
+                                                             bsnr = bsnr,
+                                                             )
+        if not organisation_id:
+            r.error(404, current.ERROR.BAD_RECORD)
+
+        # Look up sites
+        sites = cls.get_sites(organisation_id)
+
+        # Retrieve activity data (if requested)
+        report = ref.get("report")
+        activity = interval = None
+        if report:
+            if isinstance(report, list) and len(report) == 2:
+
+                start, end = report
+                parse_date = current.calendar.parse_date
+
+                start = parse_date(start) if start else False
+                end = parse_date(end) if end else False
+
+                if start is None or end is None:
+                    r.error(400, "Invalid date format in report parameter")
+                if start and end and start > end:
+                    start, end = end, start
+
+                site_ids = [site.org_facility.site_id for site in sites]
+
+                activity = cls.get_site_activity(site_ids, start=start, end=end)
+                interval = [start.isoformat() if start else None,
+                            end.isoformat() if end else None,
+                            ]
+            else:
+                r.error(400, "Invalid report parameter format")
+
+        # Compile sites info
+        sites_info = []
+        total_tests, total_positive = 0, 0
+        for site in sites:
+            facility = site.org_facility
+            location = site.gis_location
+
+            site_data = {
+                "name": facility.name,
+                "code": facility.code,
+                "phone": facility.phone1,
+                "email": facility.email,
+                }
+
+            if location:
+                site_data["location"] = {
+                    "L1": location.L1,
+                    "L2": location.L2,
+                    "L3": location.L3,
+                    "L4": location.L4,
+                    "address": location.addr_street,
+                    "postcode": location.addr_postcode,
+                    }
+            else:
+                site_data["location"] = None
+
+            if activity is not None:
+                site_activity = activity.get(facility.site_id)
+                if site_activity:
+                    tests_total, tests_positive = site_activity
+                else:
+                    tests_total, tests_positive = 0, 0
+                site_data["activity"] = {"interval": interval,
+                                         "testsTotal": tests_total,
+                                         "testsPositive": tests_positive,
+                                         }
+                total_tests += tests_total
+                total_positive += tests_positive
+
+            sites_info.append(site_data)
+
+        if activity is not None:
+            # Add provider activity (totals)
+            provider_info["activity"] = {"interval": interval,
+                                         "testsTotal": total_tests,
+                                         "testsPositive": total_positive,
+                                         }
+
+        # Complete response
+        output = {"provider": provider_info,
+                  "sites": sites_info,
+                  }
+
+        # Return as JSON
+        response = current.response
+        if response:
+            response.headers["Content-Type"] = "application/json; charset=utf-8"
+        return json.dumps(output, separators=(",", ":"), ensure_ascii=False)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def lookup_provider(cls, organisation_id, provider_id=None, bsnr=None, site_code=None):
+        """
+            Identify a test provider organisation
+
+            Args:
+                organisation_id: the organisation record ID
+                provider_id: the OrgID tag of the organisation
+                bsnr: the BSNR tag of the organisation
+                site_code: a test station ID of the organisation
+            Returns:
+                the organisation record, or None
+
+            Notes:
+                - at least one search parameter must be provided
+                - if multiple parameters are provided, all of them must apply
+                - multiple matches will be treated as no match
+        """
+
+        # Must have at least one search parameter
+        if not any((organisation_id, provider_id, site_code, bsnr)):
+            return None
+
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup the organisation
+        otable = s3db.org_organisation
+        gtable = s3db.org_group
+        mtable = s3db.org_group_membership
+        ttable = s3db.org_organisation_tag
+        btable = s3db.org_bsnr
+
+        # Organisation must belong to TESTSTATIONS group
+        from .config import TESTSTATIONS
+        join = [mtable.on((mtable.organisation_id == otable.id) & \
+                          (mtable.deleted == False)),
+                gtable.on((gtable.id == mtable.group_id) & \
+                          (gtable.name == TESTSTATIONS) & \
+                          (gtable.deleted == False)),
+                ]
+
+        # Base query
+        query = (otable.deleted == False)
+        if organisation_id:
+            query = (otable.id == organisation_id) & query
+
+        # Additional parameters
+        if provider_id:
+            join.append(
+                ttable.on((ttable.organisation_id == otable.id) & \
+                          (ttable.tag == "OrgID") & \
+                          (ttable.value.upper() == provider_id.upper()) & \
+                          (ttable.deleted == False))
+                )
+        if bsnr:
+            join.append(
+                btable.on((btable.organisation_id == otable.id) & \
+                          (btable.bsnr.upper() == bsnr.upper()) & \
+                          (btable.deleted == False))
+                )
+        if site_code:
+            ftable = s3db.org_facility
+            sites = db((ftable.code.upper() == site_code.upper()) & \
+                       (ftable.deleted == False))._select(ftable.organisation_id)
+            query &= otable.id.belongs(sites)
+
+
+        rows = db(query).select(otable.id,
+                                otable.name,
+                                otable.website,
+                                join = join,
+                                limitby = (0, 2),
+                                )
+        organisation = rows.first() if len(rows) == 1 else None
+
+        if organisation:
+            organisation_id = organisation.id
+            provider_info = {"name": organisation.name,
+                             "website": organisation.website,
+                             }
+
+            provider_info["type"] = cls.get_provider_type(organisation_id)
+            provider_info.update(cls.get_provider_tags(organisation_id))
+            provider_info["commission"] = cls.get_commission_data(organisation_id)
+        else:
+            organisation_id = provider_info = None
+
+        return organisation_id, provider_info
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_provider_tags(organisation_id):
+        """
+            Retrieves the organisation tags (OrgID, BSNR) of a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                the tags as dict
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        values = {}
+
+        ttable = s3db.org_organisation_tag
+        query = (ttable.organisation_id == organisation_id) & \
+                (ttable.tag == "OrgID") & \
+                (ttable.deleted == False)
+        row = db(query).select(ttable.value, limitby=(0, 1)).first()
+        values["code"] = row.value if row else None
+
+        btable = s3db.org_bsnr
+        query = (btable.organisation_id == organisation_id) & \
+                (btable.deleted == False)
+        row = db(query).select(btable.bsnr, limitby=(0, 1)).first()
+        values["bsnr"] = row.bsnr if row else None
+
+        return values
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_provider_type(organisation_id):
+        """
+            Looks up the organisation type(s) of a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                the type name(s) as string (comma-separated if multiple)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ttable = s3db.org_organisation_type
+        ltable = s3db.org_organisation_organisation_type
+
+        join = ttable.on(ttable.id == ltable.organisation_type_id)
+        query = (ltable.organisation_id == organisation_id) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ttable.id,
+                                ttable.name,
+                                join = join,
+                                )
+        return ", ".join(row.name for row in rows) if rows else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_commission_data(organisation_id):
+        """
+            Retrieves details of all commissions for a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                a list of dicts with commission details
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        ctable = s3db.org_commission
+        query = (ctable.organisation_id == organisation_id) & \
+                (ctable.deleted == False)
+        commissions = db(query).select(ctable.date,
+                                       ctable.end_date,
+                                       ctable.status,
+                                       ctable.status_date,
+                                       )
+        dtfmt = lambda dt: dt.isoformat() if dt else '--'
+
+        clist = []
+        for commission in commissions:
+            clist.append({"start": dtfmt(commission.date),
+                          "end": dtfmt(commission.end_date),
+                          "status": commission.status,
+                          "statusDate": dtfmt(commission.status_date),
+                          })
+
+        return clist
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_sites(organisation_id):
+        """
+            Retrieves all sites (test stations) belonging to a provider
+
+            Args:
+                organisation_id: the provider organisation ID
+            Returns:
+                Rows (joined org_facility+gis_location)
+        """
+
+        s3db = current.s3db
+
+        ftable = s3db.org_facility
+        ltable = s3db.gis_location
+
+        left = ltable.on(ltable.id == ftable.location_id)
+
+        query = (ftable.organisation_id == organisation_id) & \
+                (ftable.deleted == False)
+        return current.db(query).select(ftable.id,
+                                        ftable.name,
+                                        ftable.code,
+                                        ftable.phone1,
+                                        ftable.email,
+                                        ftable.site_id,
+                                        ltable.id,
+                                        ltable.L1,
+                                        ltable.L2,
+                                        ltable.L3,
+                                        ltable.L4,
+                                        ltable.addr_street,
+                                        ltable.addr_postcode,
+                                        left = left,
+                                        )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_site_activity(site_ids, start=None, end=None):
+        """
+            Reports the testing activity of sites in a certain date interval
+
+            Args:
+                site_ids: list|set of site IDs
+                start: the start date
+                end: the end date
+            Returns:
+                a dict {site_id: (tests_total, tests_positive)}
+
+            Notes:
+                - interval includes both start and end date
+                - no start date means all available reports (before end)
+                - no end date means all available reports (after start)
+        """
+
+        table = current.s3db.disease_testing_report
+
+        query = (table.site_id.belongs(site_ids))
+        if start:
+            query &= (table.date >= start)
+        if end:
+            query &= (table.date <= end)
+        query &= (table.deleted == False)
+
+        site_id = table.site_id
+        tests_total = table.tests_total.sum()
+        tests_positive = table.tests_positive.sum()
+
+        rows = current.db(query).select(site_id,
+                                        tests_total,
+                                        tests_positive,
+                                        groupby=site_id,
+                                        )
+
+        activity = {}
+        for row in rows:
+            activity[row[site_id]] = (row[tests_total], row[tests_positive])
+
+        return activity
+
+# =============================================================================
+class PersonRepresentDetails(pr_PersonRepresentContact):
     """
         Custom representation of person_id in read-perspective on
-        test station managers tab; include DoB
+        representatives tab of organisations, includes additional
+        person details like date and place of birth, address
     """
 
     # -------------------------------------------------------------------------
@@ -2409,9 +3181,9 @@ class PersonRepresentManager(pr_PersonRepresentContact):
         T = current.T
 
         output = DIV(SPAN(s3_fullname(row),
-                          _class = "manager-name",
+                          _class = "person-name",
                           ),
-                     _class = "manager-repr",
+                     _class = "person-repr",
                      )
 
         table = self.table
@@ -2422,23 +3194,47 @@ class PersonRepresentManager(pr_PersonRepresentContact):
             dob = None
         dob = table.date_of_birth.represent(dob) if dob else "-"
 
+        try:
+            pob = row.place_of_birth
+        except AttributeError:
+            pob = None
+        if not pob:
+            pob = "-"
+
+        addr_details = {"place": row.get("addr_place") or "-",
+                        "postcode": row.get("addr_postcode") or "",
+                        "street": row.get("addr_street") or "-",
+                        }
+        if any(value and value != "-" for value in addr_details.values()):
+            address = "{street}, {postcode} {place}".format(**addr_details)
+        else:
+            address = "-"
+
         pe_id = row.pe_id
         email = self._email.get(pe_id) if self.show_email else None
         phone = self._phone.get(pe_id) if self.show_phone else None
 
         details = TABLE(TR(TH("%s:" % T("Date of Birth")),
                            TD(dob),
-                           _class = "manager-dob"
+                           _class = "person-dob"
+                           ),
+                        TR(TH("%s:" % T("Place of Birth")),
+                           TD(pob),
+                           _class = "person-pob"
                            ),
                         TR(TH(ICON("mail")),
                            TD(A(email, _href="mailto:%s" % email) if email else "-"),
-                           _class = "manager-email"
+                           _class = "person-email"
                            ),
                         TR(TH(ICON("phone")),
                            TD(phone if phone else "-"),
-                           _class = "manager-phone",
+                           _class = "person-phone",
                            ),
-                        _class="manager-details",
+                        TR(TH(ICON("home")),
+                           TD(address),
+                           _class = "person-address",
+                           ),
+                        _class="person-details",
                         )
         output.append(details)
 
@@ -2455,20 +3251,76 @@ class PersonRepresentManager(pr_PersonRepresentContact):
                 fields: unused (retained for API compatibility)
         """
 
-        rows = super(PersonRepresentManager, self).lookup_rows(key, values, fields=fields)
+        db = current.db
+        s3db = current.s3db
+
+        # Lookup person rows + store contact details in instance
+        rows = super().lookup_rows(key, values, fields=fields)
 
         # Lookup dates of birth
         table = self.table
         count = len(values)
         query = (key == values[0]) if count == 1 else key.belongs(values)
-        dob = current.db(query).select(table.id,
-                                       table.date_of_birth,
-                                       limitby = (0, count),
-                                       ).as_dict()
+        dob = db(query).select(table.id,
+                               table.date_of_birth,
+                               limitby = (0, count),
+                               ).as_dict()
+
+        # Lookup places of birth
+        dtable = s3db.pr_person_details
+        if count == 1:
+            query = (dtable.person_id == values[0])
+        else:
+            query = (dtable.person_id.belongs(values))
+        query &= (dtable.place_of_birth != None) & \
+                 (dtable.deleted == False)
+
+        details = db(query).select(dtable.person_id,
+                                   dtable.place_of_birth,
+                                   ).as_dict(key="person_id")
+
+        # Lookup addresses
+        atable = s3db.pr_address
+        ltable = s3db.gis_location
+
+        join = ltable.on(ltable.id == atable.location_id)
+        query = (atable.pe_id.belongs({row.pe_id for row in rows})) & \
+                (atable.type.belongs((1,2))) & \
+                (atable.deleted == False)
+        addresses = db(query).select(atable.pe_id,
+                                     ltable.id,
+                                     #ltable.L2,
+                                     ltable.L3,
+                                     ltable.L4,
+                                     ltable.L5,
+                                     ltable.addr_street,
+                                     ltable.addr_postcode,
+                                     join = join,
+                                     orderby = (atable.type, atable.created_on),
+                                     ).as_dict(key="pr_address.pe_id")
+
+        # Extend person rows with additional details
         for row in rows:
-            date_of_birth = dob.get(row.id)
-            if date_of_birth:
-                row.date_of_birth = date_of_birth.get("date_of_birth")
+            detail = dob.get(row.id)
+            if detail:
+                row.date_of_birth = detail["date_of_birth"]
+
+            detail = details.get(row.id)
+            if detail:
+                row.place_of_birth = detail["place_of_birth"]
+
+            address = addresses.get(row.pe_id)
+            if address:
+                location, place = address["gis_location"], None
+                for level in ("L5", "L4", "L3"):
+                    place = location[level]
+                    if place:
+                        break
+                if place:
+                    row.addr_place = place
+                    row.addr_street = location["addr_street"]
+                    row.addr_postcode = location["addr_postcode"]
+                    #row.addr_adm = location["L2"]
 
         return rows
 

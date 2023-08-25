@@ -74,7 +74,6 @@ class SyncConfigModel(DataModel):
                                                     ),
                                               ),
                                 ),
-                          *s3_meta_fields(),
                           on_define = lambda table: \
                                 [table.uuid.set_attributes(
                                     label = "UUID",
@@ -138,6 +137,7 @@ class SyncStatusModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -329,22 +329,22 @@ class SyncRepositoryModel(DataModel):
                                          ),
                            ),
                      # User-visible field for Admin
-                     s3_datetime("last_connected",
-                                 label = T("Last Connected"),
-                                 writable = False,
-                                 ),
+                     DateTimeField("last_connected",
+                                   label = T("Last Connected"),
+                                   writable = False,
+                                   ),
                      # For data repositories
-                     s3_datetime("last_refresh",
-                                 label = T("Last Refresh"),
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("last_refresh",
+                                   label = T("Last Refresh"),
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      # System fields
                      Field.Method("last_pull_time",
                                   self.sync_repository_last_pull_time),
                      Field.Method("last_push_time",
                                   self.sync_repository_last_push_time),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_REPOSITORY = T("Create Repository")
@@ -391,20 +391,19 @@ class SyncRepositoryModel(DataModel):
 
         # Reusable Fields
         sync_repository_represent = S3Represent(lookup = tablename)
-        repository_id = S3ReusableField("repository_id", "reference %s" % tablename,
-                                        comment = S3PopupLink(c = "sync",
-                                                              f = "repository",
-                                                              label = ADD_REPOSITORY,
-                                                              title = ADD_REPOSITORY,
-                                                              tooltip = ADD_REPOSITORY,
-                                                              ),
-                                        label = T("Repository"),
-                                        represent = sync_repository_represent,
-                                        requires = IS_ONE_OF(db,
-                                                             "sync_repository.id",
-                                                             "%(name)s",
-                                                             ),
-                                        )
+        repository_id = FieldTemplate("repository_id", "reference %s" % tablename,
+                                      comment = S3PopupLink(c = "sync",
+                                                            f = "repository",
+                                                            label = ADD_REPOSITORY,
+                                                            title = ADD_REPOSITORY,
+                                                            tooltip = ADD_REPOSITORY,
+                                                            ),
+                                      label = T("Repository"),
+                                      represent = sync_repository_represent,
+                                      requires = IS_ONE_OF(db, "sync_repository.id",
+                                                           "%(name)s",
+                                                           ),
+                                      )
 
         # Components
         self.add_components(tablename,
@@ -621,8 +620,8 @@ class SyncDatasetModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -662,14 +661,14 @@ class SyncDatasetModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        dataset_id = S3ReusableField("dataset_id", "reference %s" % tablename,
-                                     label = T("Data Set"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                  "%s.id" % tablename,
-                                                  represent,
-                                                  )),
-                                     )
+        dataset_id = FieldTemplate("dataset_id", "reference %s" % tablename,
+                                   label = T("Data Set"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # ---------------------------------------------------------------------
         # Data Set Archive
@@ -677,8 +676,8 @@ class SyncDatasetModel(DataModel):
         tablename = "sync_dataset_archive"
         define_table(tablename,
                      dataset_id(),
-                     s3_date(writable = False,
-                             ),
+                     DateField(writable = False,
+                               ),
                      Field("archive", "upload",
                            autodelete = True,
                            represent = self.archive_file_represent,
@@ -691,8 +690,8 @@ class SyncDatasetModel(DataModel):
                      s3.scheduler_task_id(readable = False,
                                           writable = False,
                                           ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -863,8 +862,8 @@ class SyncLogModel(DataModel):
 
         crud_strings = s3.crud_strings
 
-        s3_datetime_represent = lambda dt: \
-                                S3DateTime.datetime_represent(dt, utc=True)
+        datetime_represent = lambda dt: \
+                             S3DateTime.datetime_represent(dt, utc=True)
 
         # -------------------------------------------------------------------------
         # Sync Log
@@ -873,7 +872,7 @@ class SyncLogModel(DataModel):
         self.define_table(tablename,
                           Field("timestmp", "datetime",
                                 label = T("Date/Time"),
-                                represent = s3_datetime_represent,
+                                represent = datetime_represent,
                                 ),
                           self.sync_repository_id(),
                           Field("resource_name"),
@@ -889,7 +888,7 @@ class SyncLogModel(DataModel):
                           Field("message", "text",
                                 represent = s3_strip_markup,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -935,8 +934,8 @@ class SyncTaskModel(DataModel):
 
         configure = self.configure
 
-        s3_datetime_represent = lambda dt: \
-                                S3DateTime.datetime_represent(dt, utc=True)
+        datetime_represent = lambda dt: \
+                             S3DateTime.datetime_represent(dt, utc=True)
 
         # -------------------------------------------------------------------------
         # Task
@@ -1059,13 +1058,13 @@ class SyncTaskModel(DataModel):
                            label = T("Last pull on"),
                            readable = True,
                            writable = False,
-                           represent = s3_datetime_represent,
+                           represent = datetime_represent,
                            ),
                      Field("last_push", "datetime",
                            label = T("Last push on"),
                            readable = True,
                            writable = False,
-                           represent = s3_datetime_represent,
+                           represent = datetime_represent,
                            ),
                      Field("mode", "integer",
                            default = 3,
@@ -1143,7 +1142,7 @@ class SyncTaskModel(DataModel):
                                                 ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1168,13 +1167,13 @@ class SyncTaskModel(DataModel):
 
         # Reusable Field
         task_represent = self.sync_task_represent
-        task_id = S3ReusableField("task_id", "reference %s" % tablename,
-                                  label = T("Task"),
-                                  represent = task_represent,
-                                  requires = IS_ONE_OF(db, "sync_task.id",
-                                                       task_represent,
-                                                       ),
-                                  )
+        task_id = FieldTemplate("task_id", "reference %s" % tablename,
+                                label = T("Task"),
+                                represent = task_represent,
+                                requires = IS_ONE_OF(db, "sync_task.id",
+                                                     task_represent,
+                                                     ),
+                                )
 
         # Components
         self.add_components(tablename,
@@ -1195,7 +1194,7 @@ class SyncTaskModel(DataModel):
                            label = T("Filter"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         onaccept = self.sync_resource_filter_onaccept
         configure(tablename,
@@ -1332,7 +1331,7 @@ class SyncScheduleModel(DataModel):
         self.define_table(tablename,
                           self.sync_repository_id(),
                           s3.scheduler_task_id(),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(

@@ -19,7 +19,7 @@ from gluon.storage import Storage
 
 from core import ConsentTracking, \
                  FS, ICON, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
-                 JSONERRORS, S3CRUD, CustomController, S3LocationSelector, \
+                 JSONERRORS, S3CRUD, CustomController, LocationSelector, \
                  S3Represent, S3Report, CRUDRequest, WithAdvice, \
                  s3_comments_widget, s3_get_extension, s3_mark_required, \
                  s3_str, s3_text_represent, s3_truncate
@@ -621,7 +621,7 @@ class register(CustomController):
                       # -- Address --
                       Field("location", "json",
                             label = T("Address"),
-                            widget = S3LocationSelector(
+                            widget = LocationSelector(
                                         levels = ("L1", "L2", "L3", "L4"),
                                         required_levels = ("L1", "L2", "L3"),
                                         filter_lx = settings.get_custom("regional"),
@@ -1320,7 +1320,7 @@ class register_org(CustomController):
                             ),
                       # -- Address --
                       Field("location", "json",
-                            widget = S3LocationSelector(
+                            widget = LocationSelector(
                                         levels = ("L1", "L2", "L3", "L4"),
                                         required_levels = ("L1", "L2", "L3"),
                                         show_address = True,
@@ -1361,7 +1361,7 @@ class register_org(CustomController):
 
         # Subheadings
         subheadings = ((0, T("User Account")),
-                       (5, T("Organisation")),
+                       (5, T("Organization")),
                        (8, T("Address")),
                        (9, T("Contact Information")),
                        (12, "%s / %s" % (T("Privacy"), T("Terms of Service"))),
@@ -1700,7 +1700,7 @@ class approve_org(CustomController):
             if ORG_ADMIN:
                 if not organisation_id or \
                    not has_role("ORG_ADMIN", for_pe=org.pe_id):
-                    session.error = T("Account not within your Organisation!")
+                    session.error = T("Account not within your Organization!")
                     redirect(URL(c="default", f="index", args=["approve"]))
 
             person = "%(first_name)s %(last_name)s <%(email)s>" % {"first_name": user.first_name,
@@ -1951,12 +1951,13 @@ class approve_org(CustomController):
                     # Send welcome email
                     settings = current.deployment_settings
                     from templates.RLPPTM.notifications import CMSNotifications
+                    data = {"name": organisation or org.name,
+                            "homepage": settings.get_base_public_url(),
+                            "profile": "%s/default/person" % settings.get_base_app_url(),
+                            }
                     error = CMSNotifications.send(user.email,
                                                   "WelcomeProvider",
-                                                  {"name": organisation or org.name,
-                                                   "homepage": settings.get_base_public_url(),
-                                                   "profile": URL("default", "person", host=True),
-                                                   },
+                                                  data,
                                                   module = "auth",
                                                   resource = "user",
                                                   )

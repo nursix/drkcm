@@ -17,9 +17,10 @@ $anonymize_button_bgcolor_hover: $alert-button-bg-hover !default;
 
 // ============================================================================
 // STYLES
-
+//
 // ----------------------------------------------------------------------------
-/* General Widgets */
+// General Form Widgets
+//
 input[type="text"],
 input[type="password"],
 input[type="date"],
@@ -49,6 +50,14 @@ textarea {
 input {
     &[type=file] {
         width: auto;
+        cursor: pointer;
+        &::file-selector-button {
+            background-color: #ccc;
+            color: #333;
+            border: 0;
+            border-radius: 0;
+            padding: 5px 10px;
+        }
     }
     // Date Picker Widget
     &.datetimepicker,
@@ -62,11 +71,12 @@ input {
     }
 }
 select {
+    font-size: 0.825rem;
     [dir=ltr] & {
-        padding: 0 1rem 0 0.25rem;
+        padding: 0 1.25rem 0 0.25rem;
     }
     [dir=rtl] & {
-        padding: 0 0.25rem 0 1rem;
+        padding: 0 0.25rem 0 1.25rem;
     }
 }
 textarea {
@@ -90,10 +100,15 @@ input[disabled='disabled'] {
 }
 
 // ----------------------------------------------------------------------------
-/* jQuery UI widgets */
+// jQuery UI widgets
+//
 .ui-dialog {
     padding: 0;
-    width: 750px !important;
+    width: auto;
+    &:not(.qrinput-dialog) {
+        width: 750px!important;
+        max-width: 100%;
+    }
     .ui-dialog-content {
         // Ensure maximal space for iframe within Dialog
         padding: 0 !important;
@@ -157,7 +172,7 @@ label.ui-corner-all span {
 }
 .ui-multiselect-header {
     span.ui-icon {
-        margin-top: 4px;
+        margin-top: 1px;
     }
     [dir=rtl] & {
         .ui-multiselect-filter {
@@ -200,21 +215,10 @@ button.ui-multiselect {
 .ui-widget {
     font-family: $body-font-family;
 }
-.ui-icon-triangle-1-s {
-    background-position: -68px -12px;
-}
 
 // ----------------------------------------------------------------------------
-/* Simile Timeline */
-.s3-timeline  {
-    height: 400px;
-    border: 1px solid #aaa;
-    font-family: Trebuchet MS,sans-serif;
-    font-size: 85%;
-}
-
-// ----------------------------------------------------------------------------
-/* Password Widget */
+// Password Widget
+//
 .s3-password-widget {
     display: inline-block;
 }
@@ -224,20 +228,23 @@ button.ui-multiselect {
 }
 
 // ----------------------------------------------------------------------------
-/* Tweet Display */
+// Tweet Display
+//
 .s3-twitter-container {
     width: 350px;
     height: 130px;
 }
 
 // ----------------------------------------------------------------------------
-/* Checkboxes Widget */
+// Checkboxes Widget
+//
 .controls .checkboxes-widget-s3 {
   display: inline-flex;
 }
 
 // ----------------------------------------------------------------------------
-/* Action Toolbar (Saved Filters Page) */
+// Action Toolbar (Saved Filters Page)
+//
 .action-bar {
     color: #8a8989;
     font-size: 14px;
@@ -254,7 +261,8 @@ button.ui-multiselect {
 }
 
 // ----------------------------------------------------------------------------
-/* Hierarchy Widget */
+// Hierarchy Widget
+//
 .s3-hierarchy-tree.jstree,
 .s3-hierarchy-header {
     border: 1px solid #ccc;
@@ -277,19 +285,22 @@ button.ui-multiselect {
 }
 
 // ----------------------------------------------------------------------------
-/* Translate module */
+// Translate module
+//
 .form-container form .translation_module_table td {
     padding: 0.3rem;
 }
 
 // ----------------------------------------------------------------------------
-/* S3SQLInlineLink read-only list representation */
+// S3SQLInlineLink read-only list representation
+//
 ul.s3-inline-link {
     font-size: inherit;
 }
 
 // ----------------------------------------------------------------------------
-/* Location Selector */
+// Location Selector
+//
 option.missing {
     background-color: yellow;
 }
@@ -312,15 +323,24 @@ option.missing {
 }
 
 // ----------------------------------------------------------------------------
-/* GIS */
+// GIS (Xtheme)
+//
 ul.x-tab-strip,
 ul.x-tree-node-ct,
 ul.x-tree-root-ct {
     list-style: none outside none;
 }
+.x-toolbar table {
+    border-collapse: separate;
+    width: auto;
+    tbody, tr {
+        background: none;
+    }
+}
 
 // ----------------------------------------------------------------------------
-/* Date picker */
+// Date picker
+//
 .calendar-widget-container {
     white-space: nowrap;
 }
@@ -366,13 +386,11 @@ input.date.hasDatepicker {
     .fa {
         color: #B0B0B0;
     }
-    display: inline-block;
-    width: 1.2rem;
-    vertical-align: top;
 }
 
 // ----------------------------------------------------------------------------
-/* Range filter widgets */
+// Range filter widgets
+//
 .range-filter,
 .date-filter {
     display: inline-block;
@@ -389,7 +407,8 @@ input.date.hasDatepicker {
 }
 
 // ----------------------------------------------------------------------------
-/* GroupedOptions widget */
+// GroupedOptions widget
+//
 .s3-groupedopts-widget {
     table {
         margin-left: 0;
@@ -457,7 +476,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* ImageCropWidget */
+// ImageCropWidget
+//
 .imagecrop-drag {
     font-weight: bold;
     text-align: center;
@@ -483,7 +503,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* Widget Intro-Wrapper */
+// Widget Advice
+//
 .widget-advice {
     max-width: 42rem;
     padding: 0.3rem 0.3rem 0.5rem;
@@ -494,7 +515,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* pr_Contacts */
+// pr_Contacts
+//
 .pr-contacts-wrapper h3 {
   margin-top: 0.5rem;
   padding-bottom: 0 !important;
@@ -503,10 +525,6 @@ div.s3-groupedopts-widget {
     input, select {
         min-height: 1.2rem;
         margin: 2px 0;
-    }
-    button {
-        @include tiny_button_style();
-        margin: 2px;
     }
 }
 .pr-contact-actions {
@@ -544,7 +562,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* AddPersonWidget */
+// PersonSelector
+//
 .box_top,
 .box_top_inner {
     border-top: #bbb 1px solid;
@@ -599,7 +618,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* QR Input */
+// QR Input
+//
 .qrinput {
     display: inline-block;
     .qrscan-btn {
@@ -621,6 +641,9 @@ div.s3-groupedopts-widget {
         display: inline-block;
         width: 1.2rem;
     }
+    input {
+        max-width: 14rem;
+    }
 }
 .qrinput-success {
     text-align: center;
@@ -630,7 +653,8 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
-/* Anonymize-Widget */
+// Anonymize-Widget
+//
 form.anonymize-form,
 .anonymize-success {
     padding: 1rem;
@@ -658,7 +682,8 @@ form.anonymize-form,
 }
 
 // ----------------------------------------------------------------------------
-/* Consent Widget */
+// Consent Widget
+//
 .consent-widget {
     border: 1px solid #E0E0E0;
     padding: 0.5rem 1rem;
@@ -676,7 +701,6 @@ form.anonymize-form,
         font-weight: bold;
     }
     .consent-checkbox {
-        vertical-align: bottom;
         margin-right: 0.5rem!important;
     }
     .req {
@@ -691,7 +715,8 @@ form.anonymize-form,
 }
 
 // ----------------------------------------------------------------------------
-/* Weekly Hours Widget */
+// Weekly Hours Widget
+//
 .wh-raster {
     margin-top: 0.3rem;
     tr {
@@ -745,8 +770,8 @@ form.anonymize-form,
 }
 
 // ----------------------------------------------------------------------------
-/* Comment feeds (cms/project) */
-
+// Comment feeds (cms/project)
+//
 #comments {
     margin: 0;
     padding: 0;
@@ -842,7 +867,8 @@ form.anonymize-form,
 }
 
 // ----------------------------------------------------------------------------
-/* Req quantity */
+// Req quantity
+//
 .ajax_more {
     float: right;
     margin: 0 2px 2px 0;
@@ -861,7 +887,8 @@ form.anonymize-form,
 }
 
 // ----------------------------------------------------------------------------
-/* Supply */
+// Supply (supply_item_entity_controller)
+//
 .rfilter {
     float: left;
     padding: 10px 20px 10px 10px;

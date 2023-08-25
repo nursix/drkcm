@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
     This file specifies the tests which are to be run on the default template.
 

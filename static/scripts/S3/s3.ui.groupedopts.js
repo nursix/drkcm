@@ -100,16 +100,16 @@
             } else
             if (groups.length) {
                 this.grouped = true;
-                this.menu = $('<div class="s3-groupedopts-widget"/>');
+                this.menu = $('<div class="s3-groupedopts-widget">');
                 for (var i=0; i < groups.length; i++) {
                     this._renderGroup(groups[i]);
                 }
             } else {
                 this.grouped = false;
                 if (opts.table) {
-                    this.menu = $('<table class="s3-groupedopts-widget"/>');
+                    this.menu = $('<table class="s3-groupedopts-widget">');
                 } else {
-                    this.menu = $('<div class="s3-groupedopts-widget"/>');
+                    this.menu = $('<div class="s3-groupedopts-widget">');
                 }
                 var items = el.find('option');
                 this._renderRows(items, this.menu);
@@ -221,9 +221,9 @@
                 tr;
             for (i = 0; i < rows.length; i++) {
                 if (table) {
-                    tr = $('<tr/>');
+                    tr = $('<tr>');
                 } else {
-                    tr = $('<div class="s3-groupedopts-row"/>');
+                    tr = $('<div class="s3-groupedopts-row">');
                 }
                 for (j = 0; j < rows[i].length; j++) {
                     this._renderItem(rows[i][j], tr, table);
@@ -271,7 +271,7 @@
                            'id="' + id + '" ' +
                            'name="' + this.name + '" ' +
                            'class="s3-groupedopts-option" ' +
-                           'value="' + value + '"/>').prependTo($olabel),
+                           'value="' + value + '">').prependTo($olabel),
                 pos;
 
             if (multiple) {
@@ -304,7 +304,7 @@
         _bindEvents: function() {
 
             var self = this;
-            self.menu.find('.s3-groupedopts-option').click(function() {
+            self.menu.find('.s3-groupedopts-option').on('click', function() {
                 var $this = $(this);
                 var value = $this.val(),
                     el = self.element,
@@ -339,13 +339,13 @@
                     }
                 }
                 this.selected = selected;
-                el.val(selected).change();
+                el.val(selected).trigger('change');
             });
 
             // Apply cluetip (from S3.js)
             self.menu.find('label[title]').cluetip({splitTitle: '|', showTitle:false});
 
-            self.menu.find('.s3-groupedopts-label').click(function() {
+            self.menu.find('.s3-groupedopts-label').on('click', function() {
                 var div = $(this);
                 div.next('table').toggle();
                 div.toggleClass('expanded');

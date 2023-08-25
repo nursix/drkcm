@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" S3 Theme Elements
+"""
+    S3 Theme Elements
 
     @requires: U{B{I{gluon}} <http://web2py.com>}
 
@@ -30,8 +29,7 @@
 """
 from lxml.html import submit_form
 
-__all__ = ("formstyle_bootstrap",
-           "formstyle_foundation",
+__all__ = ("formstyle_foundation",
            "formstyle_foundation_2col",
            "formstyle_foundation_inline",
            "formstyle_table",
@@ -56,82 +54,6 @@ class SECTION(DIV):
     tag = "section"
 
 # =============================================================================
-def formstyle_bootstrap(form, fields, *args, **kwargs):
-    """
-        Formstyle for Bootstrap 2.x themes: http://getbootstrap.com/2.3.2/
-    """
-
-    def render_row(row_id, label, controls, comment, hidden=False):
-        # Based on web2py/gluon/sqhtml.py
-        # wrappers
-        _help = DIV(comment, _class="help-block")
-        # embed _help into _controls
-        _controls = DIV(controls, _help, _class="controls")
-        # submit unflag by default
-        _submit = False
-
-        element = None
-        if isinstance(controls, INPUT):
-            controls.add_class("span4")
-            element = controls
-        elif hasattr(controls, "element"):
-            element = controls.element("input")
-        if element:
-            if element["_type"] == "submit":
-                # flag submit button
-                _submit = True
-                element["_class"] = "btn btn-primary"
-            elif element["_type"] == "file":
-                element["_class"] = "input-file"
-
-        # For password fields, which are wrapped in a CAT object.
-        if isinstance(controls, CAT) and isinstance(controls[0], INPUT):
-            controls[0].add_class("span4")
-
-        if isinstance(controls, SELECT):
-            controls.add_class("span4")
-
-        if isinstance(controls, TEXTAREA):
-            controls.add_class("span4")
-
-        if isinstance(label, LABEL):
-            label["_class"] = "control-label"
-
-        _class = "hide " if hidden else ""
-
-        if _submit:
-            # submit button has unwrapped label and controls, different class
-            return DIV(label,
-                       controls,
-                       _class = "%sform-actions" % _class,
-                       _id = row_id,
-                       )
-        else:
-            # unwrapped label
-            return DIV(label,
-                       _controls,
-                       _class = "%scontrol-group" % _class,
-                       _id = row_id,
-                       )
-
-    if args:
-        row_id = form
-        label = fields
-        widget, comment = args
-        if comment:
-            comment = DIV(_class = "tooltip",
-                          _title = "%s|%s" % (label, comment),
-                          )
-        hidden = kwargs.get("hidden", False)
-        return render_row(row_id, label, widget, comment, hidden)
-    else:
-        form.add_class("form-horizontal")
-        parent = FIELDSET()
-        for row_id, label, widget, comment in fields:
-            parent.append(render_row(row_id, label, widget, comment))
-        return parent
-
-# =============================================================================
 def formstyle_foundation(form, fields, *args, **kwargs):
     """
         Formstyle for Foundation 5 themes: http://foundation.zurb.com
@@ -149,17 +71,20 @@ def formstyle_foundation(form, fields, *args, **kwargs):
             if submit:
                 submit.add_class("small primary button")
 
-        _class = "form-row row hide" if hidden else "form-row row"
-        hints = DIV(render_tooltip(label, comment), _class="inline-tooltip")
+        tooltip = render_tooltip(label, comment, _class="tooltip")
+        if isinstance(tooltip, DIV):
+            tooltip.add_class("inline-tooltip")
+
         controls = DIV(label,
                        DIV(widget,
-                           hints,
+                           tooltip,
                            _class = "controls",
                            ),
                        _class = "small-12 columns",
                        )
+
         return DIV(controls,
-                   _class = _class,
+                   _class = "form-row row hide" if hidden else "form-row row",
                    _id = row_id,
                    )
 
@@ -404,7 +329,6 @@ def render_tooltip(label, comment, _class="tooltip"):
 #
 FORMSTYLES = {"default": formstyle_foundation,
               "default_inline": formstyle_foundation_inline,
-              "bootstrap": formstyle_bootstrap,
               "foundation": formstyle_foundation,
               "foundation_2col": formstyle_foundation_2col,
               "foundation_inline": formstyle_foundation_inline,

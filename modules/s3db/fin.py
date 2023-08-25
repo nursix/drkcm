@@ -62,15 +62,14 @@ class FinExpensesModel(DataModel):
                           Field("name", length=128, notnull=True,
                                 label = T("Short Description"),
                                 ),
-                          s3_date(),
+                          DateField(),
                           Field("value", "double",
                                 label = T("Value"),
                                 represent = lambda v: \
                                     IS_FLOAT_AMOUNT.represent(v, precision=2),
                                 ),
-                          s3_currency(),
-                          s3_comments(),
-                          *s3_meta_fields(),
+                          CurrencyField(),
+                          CommentsField(),
                           on_define = lambda table: \
                             [table.created_by.set_attributes(represent = self.auth_UserRepresent(show_email = False,
                                                                                                  show_link = False)),
@@ -120,18 +119,18 @@ class FinExpensesModel(DataModel):
 
         represent = S3Represent(lookup = tablename)
 
-        expense_id = S3ReusableField("expense_id", "reference %s" % tablename,
-                                     label = T("Expense"),
-                                     ondelete = "CASCADE",
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        expense_id = FieldTemplate("expense_id", "reference %s" % tablename,
+                                   label = T("Expense"),
+                                   ondelete = "CASCADE",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(current.db, "fin_expense.id",
                                                           represent,
                                                           orderby="fin_expense.name",
                                                           sort=True,
                                                           )),
-                                     sortby = "name",
-                                     )
+                                   sortby = "name",
+                                   )
 
         # ---------------------------------------------------------------------
         # Return global names to s3.*
@@ -146,7 +145,7 @@ class FinExpensesModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"fin_expense_id": S3ReusableField.dummy("expense_id"),
+        return {"fin_expense_id": FieldTemplate.dummy("expense_id"),
                 }
 
 # =============================================================================
@@ -202,7 +201,7 @@ class FinVoucherModel(DataModel):
                           )
 
         org_group_id = self.org_group_id
-        org_group_represent = org_group_id.attr.represent
+        org_group_represent = org_group_id().represent
         org_group_requires = IS_EMPTY_OR(IS_ONE_OF(db, "org_group.id",
                                                    org_group_represent,
                                                    sort = True,
@@ -235,9 +234,9 @@ class FinVoucherModel(DataModel):
                                                 sort = False,
                                                 ),
                            ),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               ),
                      org_group_id("issuers_id",
                             label = T("Issuers##fin"),
                             requires = org_group_requires,
@@ -261,7 +260,7 @@ class FinVoucherModel(DataModel):
                            requires = IS_FLOAT_AMOUNT(0),
                            represent = price_represent,
                            ),
-                     s3_currency(),
+                     CurrencyField(),
                      Field("credit", "integer",
                            default = 0,
                            label = T("Credit Balance"),
@@ -291,8 +290,8 @@ class FinVoucherModel(DataModel):
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # List fields
         list_fields = ["name",
@@ -333,14 +332,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup = tablename)
-        program_id = S3ReusableField("program_id", "reference %s" % tablename,
-                                     label = T("Program"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        program_id = FieldTemplate("program_id", "reference %s" % tablename,
+                                   label = T("Program"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # -------------------------------------------------------------------------
         # Voucher billing
@@ -362,9 +361,9 @@ class FinVoucherModel(DataModel):
                             label = T("Accountant##billing"),
                             comment = None,
                             ),
-                     s3_date(default = "now",
-                             writable = False, # Only writable while scheduled
-                             ),
+                     DateField(default = "now",
+                               writable = False, # Only writable while scheduled
+                               ),
                      Field("status",
                            default = "SCHEDULED",
                            requires = IS_IN_SET(billing_status,
@@ -403,8 +402,8 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -437,14 +436,14 @@ class FinVoucherModel(DataModel):
                                                                                utc = True,
                                                                                ),
                                 )
-        billing_id = S3ReusableField("billing_id", "reference %s" % tablename,
-                                     label = T("Billing"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        billing_id = FieldTemplate("billing_id", "reference %s" % tablename,
+                                   label = T("Billing"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -505,10 +504,10 @@ class FinVoucherModel(DataModel):
                            ),
 
                      # Date of invoice
-                     s3_date(label = T("Invoice Date"),
-                             default = "now",
-                             writable = False,
-                             ),
+                     DateField(label = T("Invoice Date"),
+                               default = "now",
+                               writable = False,
+                               ),
 
                      # Payer references
                      Field("invoice_no",
@@ -546,7 +545,7 @@ class FinVoucherModel(DataModel):
                            represent = price_represent,
                            writable = False,
                            ),
-                     s3_currency(writable = False),
+                     CurrencyField(writable = False),
 
                      # Bank account details
                      Field("account_holder",
@@ -597,8 +596,8 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -658,14 +657,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable field
         represent = fin_VoucherInvoiceRepresent()
-        invoice_id = S3ReusableField("invoice_id", "reference %s" % tablename,
-                                     label = T("Invoice"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
-                                                    IS_ONE_OF(db, "%s.id" % tablename,
-                                                              represent,
-                                                              )),
-                                     )
+        invoice_id = FieldTemplate("invoice_id", "reference %s" % tablename,
+                                   label = T("Invoice"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                   )
 
 
         # -------------------------------------------------------------------------
@@ -699,9 +698,9 @@ class FinVoucherModel(DataModel):
                            ),
 
                      # Date of claim
-                     s3_date(default = "now",
-                             writable = False,
-                             ),
+                     DateField(default = "now",
+                               writable = False,
+                               ),
 
                      # Claimant reference number
                      Field("refno",
@@ -733,7 +732,7 @@ class FinVoucherModel(DataModel):
                            represent = price_represent,
                            writable = False,
                            ),
-                     s3_currency(writable=False),
+                     CurrencyField(writable=False),
 
                      # Bank account details
                      Field("account_holder",
@@ -778,8 +777,8 @@ class FinVoucherModel(DataModel):
                            writable = False,
                            ),
 
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -823,14 +822,14 @@ class FinVoucherModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, fields=["refno", "date"])
-        claim_id = S3ReusableField("claim_id", "reference %s" % tablename,
-                                   label = T("Compensation Claim"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        claim_id = FieldTemplate("claim_id", "reference %s" % tablename,
+                                 label = T("Compensation Claim"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                   )
+                                 )
 
         # -------------------------------------------------------------------------
         # Voucher eligibility type
@@ -859,8 +858,8 @@ class FinVoucherModel(DataModel):
                                                   )),
                            widget = S3MultiSelectWidget(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -877,15 +876,15 @@ class FinVoucherModel(DataModel):
         )
 
         represent = S3Represent(lookup = tablename, translate = True)
-        eligibility_type_id = S3ReusableField("eligibility_type_id", "reference %s" % tablename,
-                                              label = T("Type of Eligibility"),
-                                              ondelete = "RESTRICT",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
+        eligibility_type_id = FieldTemplate("eligibility_type_id", "reference %s" % tablename,
+                                            label = T("Type of Eligibility"),
+                                            ondelete = "RESTRICT",
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
                                                             IS_ONE_OF(db, "%s.id" % tablename,
                                                                       represent,
                                                                       )),
-                                              )
+                                            )
 
         # -------------------------------------------------------------------------
         # Voucher
@@ -911,13 +910,13 @@ class FinVoucherModel(DataModel):
                            label = T("Voucher ID"),
                            writable = False,
                            ),
-                     s3_date("bearer_dob",
-                             future = 0,
-                             label = T("Beneficiary Date of Birth"),
-                             readable = bearer_dob,
-                             writable = bearer_dob,
-                             empty = not bearer_dob,
-                             ),
+                     DateField("bearer_dob",
+                               future = 0,
+                               label = T("Beneficiary Date of Birth"),
+                               readable = bearer_dob,
+                               writable = bearer_dob,
+                               empty = not bearer_dob,
+                               ),
                      Field("bearer_pin",
                            label = T("PIN"),
                            readable = bearer_pin,
@@ -946,19 +945,19 @@ class FinVoucherModel(DataModel):
                            default = 0,
                            writable = False,
                            ),
-                     s3_date(label = T("Issued On"),
-                             default = "now",
-                             writable = False,
-                             ),
-                     s3_date("valid_until",
-                             label = T("Valid Until"),
-                             writable = False,
-                             ),
+                     DateField(label = T("Issued On"),
+                               default = "now",
+                               writable = False,
+                               ),
+                     DateField("valid_until",
+                               label = T("Valid Until"),
+                               writable = False,
+                               ),
                      Field.Virtual("status", self.voucher_status,
                                    label = T("Status"),
                                    ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # TODO Bearer notes?
 
@@ -986,10 +985,10 @@ class FinVoucherModel(DataModel):
         )
 
         # Reusable field
-        voucher_id = S3ReusableField("voucher_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     requires = IS_ONE_OF(db, "%s.id" % tablename),
-                                     )
+        voucher_id = FieldTemplate("voucher_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   requires = IS_ONE_OF(db, "%s.id" % tablename),
+                                   )
 
         # -------------------------------------------------------------------------
         # Voucher debit
@@ -1016,22 +1015,22 @@ class FinVoucherModel(DataModel):
                            represent = lambda v, row=None: v if v else "-",
                            widget = S3QRInput(),
                            ),
-                     s3_date("bearer_dob",
-                             label = T("Beneficiary Date of Birth"),
-                             readable = bearer_dob,
-                             writable = bearer_dob,
-                             empty = not bearer_dob,
-                             ),
+                     DateField("bearer_dob",
+                               label = T("Beneficiary Date of Birth"),
+                               readable = bearer_dob,
+                               writable = bearer_dob,
+                               empty = not bearer_dob,
+                               ),
                      Field("bearer_pin",
                            label = T("PIN"),
                            readable = bearer_pin,
                            writable = bearer_pin,
                            requires = IS_NOT_EMPTY() if bearer_pin else None,
                            ),
-                     s3_date(default = "now",
-                             label = T("Date Effected"),
-                             writable = False,
-                             ),
+                     DateField(default = "now",
+                               label = T("Date Effected"),
+                               writable = False,
+                               ),
                      Field("quantity", "integer",
                            label = T("Service Quantity"),
                            requires = IS_INT_IN_RANGE(1),
@@ -1064,8 +1063,8 @@ class FinVoucherModel(DataModel):
                      Field.Virtual("status", self.debit_status,
                                    label = T("Status"),
                                    ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -1096,10 +1095,10 @@ class FinVoucherModel(DataModel):
         )
 
         # Reusable field
-        debit_id = S3ReusableField("debit_id", "reference %s" % tablename,
-                                   ondelete = "RESTRICT",
-                                   requires = IS_ONE_OF(db, "%s.id" % tablename),
-                                   )
+        debit_id = FieldTemplate("debit_id", "reference %s" % tablename,
+                                 ondelete = "RESTRICT",
+                                 requires = IS_ONE_OF(db, "%s.id" % tablename),
+                                 )
 
         # -------------------------------------------------------------------------
         # Voucher transaction
@@ -1122,7 +1121,7 @@ class FinVoucherModel(DataModel):
         tablename = "fin_voucher_transaction"
         define_table(tablename,
                      program_id(empty = False),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      Field("type",
                            label = T("Type"),
                            represent = represent_option(transaction_types),
@@ -1150,7 +1149,7 @@ class FinVoucherModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # List Fields
         list_fields = ["program_id",

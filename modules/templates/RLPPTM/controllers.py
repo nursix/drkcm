@@ -15,7 +15,7 @@ from gluon import Field, HTTP, SQLFORM, URL, current, redirect, \
 from gluon.storage import Storage
 
 from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
-                 ICON, S3GroupedOptionsWidget, S3LocationSelector, \
+                 ICON, S3GroupedOptionsWidget, LocationSelector, \
                  CRUDRequest, S3CRUD, CustomController, FS, JSONERRORS, \
                  S3Represent, WithAdvice, s3_comments_widget, \
                  s3_get_extension, s3_mark_required, s3_str, \
@@ -94,22 +94,20 @@ class index(CustomController):
             login_form = auth.login(inline=True)
 
         # Homepage action buttons
-        buttons = UL(LI(A(ICON("organisation"), T("Test Stations"),
-                          _href = URL(c = "org",
-                                      f = "facility",
-                                      args = ["summary"],
-                                      vars = {"$$code": "TESTS-PUBLIC"},
-                                      ),
-                          _class="info button",
-                          ),
+        buttons = DIV(A(ICON("organisation"), T("Test Stations"),
+                        _href = URL(c = "org",
+                                    f = "facility",
+                                    args = ["summary"],
+                                    vars = {"$$code": "TESTS-PUBLIC"},
+                                    ),
+                        _class="info button",
                         ),
-                     LI(A(ICON("book"), T("Guides & Videos"),
-                          _href = URL(c="default", f="help"),
-                          _class="info button",
-                          ),
+                      A(ICON("book"), T("Guides & Videos"),
+                        _href = URL(c="default", f="help"),
+                        _class="info button",
                         ),
-                     _class="button-group even-2 stack-for-small",
-                     )
+                      _class="button-group expanded stacked-for-small",
+                      )
 
         output = {"login_div": login_div,
                   "login_form": login_form,
@@ -302,8 +300,8 @@ class approve(CustomController):
 
         try:
             org_group_pe_id = org_group.pe_id
-        except:
-            raise RuntimeError("Cannot approve user account as Org Group '%s' is missing " % TESTSTATIONS)
+        except Exception as e:
+            raise RuntimeError("Cannot approve user account as Org Group '%s' is missing " % TESTSTATIONS) from e
 
         has_role = auth.s3_has_role
         if has_role("ORG_GROUP_ADMIN",
@@ -356,7 +354,7 @@ class approve(CustomController):
                 if not organisation_id or \
                    not has_role("ORG_ADMIN",
                                 for_pe = org.pe_id):
-                    session.error = T("Account not within your Organisation!")
+                    session.error = T("Account not within your Organization!")
                     redirect(URL(c = "default",
                                  f = "index",
                                  args = ["approve"],
@@ -626,9 +624,13 @@ class approve(CustomController):
                                 set_record_owner(ltable, link)
                                 s3db_onaccept(ltable, link, method="create")
 
-                        # Add default tags
-                        from .customise.org import add_organisation_default_tags
-                        add_organisation_default_tags(organisation_id)
+                        # Add default tags, audit and verification status
+                        from .models.org import TestProvider
+                        provider = TestProvider(organisation_id)
+                        provider.add_default_tags()
+                        provider.add_audit_status()
+                        # Must be done after linking to organisation type:
+                        provider.add_verification_defaults()
 
                         # Update user
                         user.update_record(organisation_id = organisation_id,
@@ -667,7 +669,7 @@ class approve(CustomController):
                                 "opening_times": opening_times,
                                 "comments": comments,
                                 }
-                    facility_id = facility["id"] = ftable.insert(**facility)
+                    facility["id"] = ftable.insert(**facility)
                     update_super(ftable, facility)
                     set_record_owner(ftable, facility, owned_by_user=user_id)
                     s3db_onaccept(ftable, facility, method="create")
@@ -685,16 +687,6 @@ class approve(CustomController):
                     set_record_owner(dtable, details, owned_by_user=user_id)
                     s3db_onaccept(dtable, details, method="create")
 
-                    # Link facility to facility type
-                    fttable = s3db.org_facility_type
-                    tltable = s3db.org_site_facility_type
-                    facility_type = db(fttable.name == "Infection Test Station") \
-                                      .select(fttable.id, limitby=(0, 1)).first()
-                    if facility_type:
-                        tltable.insert(site_id = site_id,
-                                       facility_type_id = facility_type.id,
-                                       )
-
                     # Link facility to services
                     if service_ids:
                         sltable = s3db.org_service_site
@@ -706,10 +698,13 @@ class approve(CustomController):
                             set_record_owner(sltable, link, owned_by_user=user_id)
                             s3db_onaccept(sltable, link, method="create")
 
-                    # Add default tags for facility
-                    from .customise.org import set_facility_code, add_facility_default_tags
-                    set_facility_code(facility_id)
-                    add_facility_default_tags(facility_id)
+                    # Add code and approval defaults for facility
+                    # - see facility_postprocess
+                    from .models.org import TestStation
+                    ts = TestStation(site_id)
+                    ts.set_facility_type()
+                    ts.add_facility_code()
+                    ts.update_approval()
 
                     # Approve user
                     auth.s3_approve_user(user)
@@ -717,12 +712,13 @@ class approve(CustomController):
                     # Send welcome email
                     settings = current.deployment_settings
                     from .notifications import CMSNotifications
+                    data = {"name": organisation or org.name,
+                            "homepage": settings.get_base_public_url(),
+                            "profile": "%s/default/person" % settings.get_base_app_url(),
+                            }
                     error = CMSNotifications.send(user.email,
                                                   "WelcomeProvider",
-                                                  {"name": organisation or org.name,
-                                                   "homepage": settings.get_base_public_url(),
-                                                   "profile": URL("default", "person", host=True),
-                                                   },
+                                                  data,
                                                   module = "auth",
                                                   resource = "user",
                                                   )
@@ -1032,8 +1028,8 @@ class register(CustomController):
                                                                 ).first()
             try:
                 org_group_id = org_group.id
-            except:
-                raise RuntimeError("Cannot register user account as Org Group '%s' is missing " % TESTSTATIONS)
+            except Exception as e:
+                raise RuntimeError("Cannot register user account as Org Group '%s' is missing " % TESTSTATIONS) from e
             db(utable.id == user_id).update(org_group_id = org_group_id)
 
             # Save temporary user fields in s3db.auth_user_temp
@@ -1217,7 +1213,7 @@ class register(CustomController):
 
                       # -- Address --
                       Field("location", "json",
-                            widget = S3LocationSelector(
+                            widget = LocationSelector(
                                         levels = ("L1", "L2", "L3", "L4"),
                                         required_levels = ("L1", "L2", "L3"),
                                         show_address = True,
@@ -2293,6 +2289,21 @@ class geocode(CustomController):
 
         current.response.headers["Content-Type"] = "application/json"
         return output
+
+# =============================================================================
+class geocode_all_states(CustomController):
+    """
+        Wrapper custom geocoder:
+            - allow addresses in all federal states
+    """
+
+    def __call__(self):
+
+        # Use alternative class
+        from .rlpgeonames import rlp_GeoNamesAllStates
+        current.deployment_settings.gis.geocode_service = rlp_GeoNamesAllStates
+
+        return geocode()()
 
 # =============================================================================
 class ocert(CustomController):

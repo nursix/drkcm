@@ -151,14 +151,14 @@ class BRCaseModel(DataModel):
                                                            ),
                                          ),
                            ),
-                     s3_comments(
+                     CommentsField(
                            comment = DIV(_class = "tooltip",
                                          _title = "%s|%s" % (T("Comments"),
                                                              T("Describe the meaning, reasons and potential consequences of this status"),
                                                              ),
                                          ),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -186,18 +186,18 @@ class BRCaseModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_id = S3ReusableField("status_id", "reference %s" % tablename,
-                                    label = T("Case Status"),
-                                    ondelete = "RESTRICT",
-                                    represent = represent,
-                                    requires = IS_EMPTY_OR(
+        status_id = FieldTemplate("status_id", "reference %s" % tablename,
+                                  label = T("Case Status"),
+                                  ondelete = "RESTRICT",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "br_case_status.id",
                                                           represent,
                                                           orderby = "br_case_status.workflow_position",
                                                           sort = False,
                                                           )),
-                                    sortby = "workflow_position",
-                                    )
+                                  sortby = "workflow_position",
+                                  )
 
         # ---------------------------------------------------------------------
         # Case: establishes a case file for the beneficiary (=pr_person),
@@ -243,10 +243,10 @@ class BRCaseModel(DataModel):
                                        ),
 
                      # Basic date fields
-                     s3_date(label = T("Registration Date"),
-                             default = "now",
-                             empty = False,
-                             ),
+                     DateField(label = T("Registration Date"),
+                               default = "now",
+                               empty = False,
+                               ),
 
                      # Case status
                      status_id(),
@@ -276,8 +276,8 @@ class BRCaseModel(DataModel):
                            ),
 
                      # Standard comments and meta fields
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         self.configure(tablename,
@@ -525,8 +525,8 @@ class BRCaseActivityModel(DataModel):
                            default = False,
                            label = T("Is default closure status"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -553,18 +553,18 @@ class BRCaseActivityModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        status_id = S3ReusableField("status_id",
-                                    "reference %s" % tablename,
-                                    label = T("Status"),
-                                    represent = represent,
-                                    requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                         represent,
-                                                         orderby = "workflow_position",
-                                                         sort = False,
-                                                         zero = None,
-                                                         ),
-                                    sortby = "workflow_position",
-                                    )
+        status_id = FieldTemplate("status_id",
+                                  "reference %s" % tablename,
+                                  label = T("Status"),
+                                  represent = represent,
+                                  requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                       represent,
+                                                       orderby = "workflow_position",
+                                                       sort = False,
+                                                       zero = None,
+                                                       ),
+                                  sortby = "workflow_position",
+                                  )
 
         # ---------------------------------------------------------------------
         # Activity: generic problem container to track beneficiary support
@@ -662,16 +662,16 @@ class BRCaseActivityModel(DataModel):
                                writable = case_activity_status,
                                ),
                      # Dates
-                     s3_date(label = T("Date"),
-                             default = "now",
-                             set_min = "#br_case_activity_end_date",
-                             ),
-                     s3_date("end_date",
-                             label = T("Ended on"),
-                             readable = case_activity_end_date,
-                             writable = case_activity_end_date == "writable",
-                             set_max = "#br_case_activity_date",
-                             ),
+                     DateField(label = T("Date"),
+                               default = "now",
+                               set_min = "#br_case_activity_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("Ended on"),
+                               readable = case_activity_end_date,
+                               writable = case_activity_end_date == "writable",
+                               set_max = "#br_case_activity_date",
+                               ),
 
                      # Outcome
                      Field("outcome", "text",
@@ -679,8 +679,8 @@ class BRCaseActivityModel(DataModel):
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -817,18 +817,18 @@ class BRCaseActivityModel(DataModel):
             sort, orderby = False, "%s.date desc" % tablename
         else:
             sort, orderby = True, None
-        case_activity_id = S3ReusableField("case_activity_id",
-                                           "reference %s" % tablename,
-                                           label = label,
-                                           ondelete = "CASCADE",
-                                           represent = represent,
-                                           requires = IS_EMPTY_OR(
+        case_activity_id = FieldTemplate("case_activity_id",
+                                         "reference %s" % tablename,
+                                         label = label,
+                                         ondelete = "CASCADE",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   orderby = orderby,
                                                                   sort = sort,
                                                                   )),
-                                                        )
+                                         )
 
         # ---------------------------------------------------------------------
         # Activity Update Type:
@@ -845,8 +845,8 @@ class BRCaseActivityModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -869,16 +869,16 @@ class BRCaseActivityModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        update_type_id = S3ReusableField("update_type_id",
-                                         "reference %s" % tablename,
-                                         label = T("Occasion"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(
+        update_type_id = FieldTemplate("update_type_id",
+                                       "reference %s" % tablename,
+                                       label = T("Occasion"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   )),
-                                         sortby = "name",
-                                         )
+                                       sortby = "name",
+                                       )
 
         # ---------------------------------------------------------------------
         # Activity Updates: inline-journal to document progress
@@ -886,16 +886,16 @@ class BRCaseActivityModel(DataModel):
         tablename = "br_case_activity_update"
         define_table(tablename,
                      case_activity_id(),
-                     s3_date(default = "now",
-                             ),
+                     DateField(default = "now",
+                               ),
                      update_type_id(),
                      self.hrm_human_resource_id(
                             comment = None,
                             represent = hr_represent,
                             widget = None,
                             ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -913,7 +913,7 @@ class BRCaseActivityModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"br_case_activity_id": S3ReusableField.dummy("case_activity_id"),
+        return {"br_case_activity_id": FieldTemplate.dummy("case_activity_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1050,8 +1050,8 @@ class BRAppointmentModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1069,15 +1069,15 @@ class BRAppointmentModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename, translate=True)
-        appointment_type_id = S3ReusableField("type_id", "reference %s" % tablename,
-                                              label = T("Appointment Type"),
-                                              ondelete = "RESTRICT",
-                                              represent = represent,
-                                              requires = IS_EMPTY_OR(
-                                                              IS_ONE_OF(db, "%s.id" % tablename,
-                                                                        represent,
-                                                                        )),
-                                              )
+        appointment_type_id = FieldTemplate("type_id", "reference %s" % tablename,
+                                            label = T("Appointment Type"),
+                                            ondelete = "RESTRICT",
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "%s.id" % tablename,
+                                                                      represent,
+                                                                      )),
+                                            )
 
         # ---------------------------------------------------------------------
         # Appointment
@@ -1101,7 +1101,7 @@ class BRAppointmentModel(DataModel):
                                        ),
                      appointment_type_id(empty = False,
                                          ),
-                     s3_date(),
+                     DateField(),
                      # Activate in template as needed:
                      self.hrm_human_resource_id(readable=False,
                                                 writable=False,
@@ -1113,8 +1113,8 @@ class BRAppointmentModel(DataModel):
                                                 ),
                            represent = represent_option(appointment_status_opts),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -1203,8 +1203,8 @@ class BRNeedsModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # Hierarchy
         if hierarchical_needs:
@@ -1243,21 +1243,21 @@ class BRNeedsModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        need_id = S3ReusableField("need_id", "reference %s" % tablename,
-                                  label = T("Need Type"),
-                                  ondelete = "RESTRICT",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
+        need_id = FieldTemplate("need_id", "reference %s" % tablename,
+                                label = T("Need Type"),
+                                ondelete = "RESTRICT",
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                  #comment = S3PopupLink(c = "br",
-                                  #                      f = "need",
-                                  #                      title = ADD_NEED,
-                                  #                      tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
-                                  #                      ),
-                                  widget = widget,
-                                  )
+                                #comment = S3PopupLink(c = "br",
+                                #                      f = "need",
+                                #                      title = ADD_NEED,
+                                #                      tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
+                                #                      ),
+                                widget = widget,
+                                )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1270,7 +1270,7 @@ class BRNeedsModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"br_need_id": S3ReusableField.dummy("need_id"),
+        return {"br_need_id": FieldTemplate.dummy("need_id"),
                 }
 
 # =============================================================================
@@ -1330,8 +1330,8 @@ class BRAssistanceModel(DataModel):
                      self.br_need_id(readable = themes_needs,
                                      writable = themes_needs,
                                      ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1356,16 +1356,16 @@ class BRAssistanceModel(DataModel):
                 requires.set_filter(filterby = "organisation_id",
                                     filter_opts = (root_org,),
                                     )
-        theme_ids = S3ReusableField("theme_ids",
-                                    "list:reference %s" % tablename,
-                                    label = T("Themes"),
-                                    ondelete = "RESTRICT",
-                                    represent = themes_represent,
-                                    requires = IS_EMPTY_OR(requires),
-                                    sortby = "name",
-                                    widget = S3MultiSelectWidget(header = False,
-                                                                 ),
-                                    )
+        theme_ids = FieldTemplate("theme_ids",
+                                  "list:reference %s" % tablename,
+                                  label = T("Themes"),
+                                  ondelete = "RESTRICT",
+                                  represent = themes_represent,
+                                  requires = IS_EMPTY_OR(requires),
+                                  sortby = "name",
+                                  widget = S3MultiSelectWidget(header = False,
+                                                               ),
+                                  )
 
         # ---------------------------------------------------------------------
         # Types of Assistance
@@ -1375,8 +1375,8 @@ class BRAssistanceModel(DataModel):
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1399,7 +1399,7 @@ class BRAssistanceModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        assistance_type_id = S3ReusableField(
+        assistance_type_id = FieldTemplate(
                                 "assistance_type_id",
                                 "reference %s" % tablename,
                                 label = T("Type of Assistance"),
@@ -1439,8 +1439,8 @@ class BRAssistanceModel(DataModel):
                            requires = IS_HTML_COLOUR(),
                            widget = S3ColorPickerWidget(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table Configuration
         configure(tablename,
@@ -1465,7 +1465,7 @@ class BRAssistanceModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        assistance_status_id = S3ReusableField(
+        assistance_status_id = FieldTemplate(
                                 "status_id",
                                 "reference %s" % tablename,
                                 label = T("Status"),
@@ -1503,17 +1503,17 @@ class BRAssistanceModel(DataModel):
                          readable = use_activities,
                          writable = use_activities,
                          ),
-                     s3_datetime("start_date",
-                                 label = T("Date"),
-                                 default = "now",
-                                 widget = None if use_time else "date",
-                                 ),
-                     s3_datetime("end_date",
-                                 label = T("End"),
-                                 widget = None if use_time else "date",
-                                 readable = False,
-                                 writable = False,
-                                 ),
+                     DateTimeField("start_date",
+                                   label = T("Date"),
+                                   default = "now",
+                                   widget = None if use_time else "date",
+                                   ),
+                     DateTimeField("end_date",
+                                   label = T("End"),
+                                   widget = None if use_time else "date",
+                                   readable = False,
+                                   writable = False,
+                                   ),
                      assistance_type_id(readable = use_type,
                                         writable = use_type,
                                         ),
@@ -1538,11 +1538,11 @@ class BRAssistanceModel(DataModel):
                            readable = track_effort,
                            writable = track_effort,
                            ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -1711,11 +1711,11 @@ class BRAssistanceModel(DataModel):
                                       readable = False,
                                       writable = False,
                                       ),
-                     s3_comments(label = T("Details"),
-                                 comment = None,
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Details"),
+                                   comment = None,
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   ),
+                     )
 
         configure(tablename,
                   onaccept = self.assistance_measure_theme_onaccept,
@@ -1733,7 +1733,7 @@ class BRAssistanceModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"br_assistance_type_id": S3ReusableField.dummy("assistance_type_id"),
+        return {"br_assistance_type_id": FieldTemplate.dummy("assistance_type_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -2213,22 +2213,22 @@ class BRAssistanceOfferModel(DataModel):
                            requires = IS_IN_SET(offer_availability, zero=None, sort=False),
                            represent = represent_option(dict(offer_availability)),
                            ),
-                     s3_date(label = T("Available from"),
-                             default = "now",
-                             # TODO setmin
-                             ),
-                     s3_date("end_date",
-                             label = T("Available until"),
-                             # TODO setmax
-                             ),
+                     DateField(label = T("Available from"),
+                               default = "now",
+                               set_min = "#br_assistance_offer_end_date",
+                               ),
+                     DateField("end_date",
+                               label = T("Available until"),
+                               set_max = "#br_assistance_offer_date",
+                               ),
                      Field("status",
                            default = "NEW",
                            label = T("Status"),
                            requires = IS_IN_SET(offer_status, zero=None, sort=False),
                            represent = represent_option(dict(offer_status)),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -2290,16 +2290,16 @@ class BRAssistanceOfferModel(DataModel):
                                     )
         else:
             represent = S3Represent(lookup=tablename)
-        offer_id = S3ReusableField("offer_id",
-                                   "reference %s" % tablename,
-                                   label = T("Offer"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        offer_id = FieldTemplate("offer_id",
+                                 "reference %s" % tablename,
+                                 label = T("Offer"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                   sortby = "date",
-                                   )
+                                 sortby = "date",
+                                 )
 
         # ---------------------------------------------------------------------
         # Link offer <=> case activity
@@ -2321,13 +2321,13 @@ class BRAssistanceOfferModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_datetime("notified_on",
-                                 label = T("Case manager notified on"),
-                                 default = None,
-                                 readable = False,
-                                 writable = False,
-                                 ),
-                     *s3_meta_fields())
+                     DateTimeField("notified_on",
+                                   label = T("Case manager notified on"),
+                                   default = None,
+                                   readable = False,
+                                   writable = False,
+                                   ),
+                     )
 
         # List fields
         list_fields = ["offer_id",
@@ -2521,7 +2521,7 @@ class BRLanguageModel(DataModel):
                           self.pr_person_id(empty = False,
                                             ondelete = "CASCADE",
                                             ),
-                          s3_language(select = None),
+                          LanguageField(select = None),
                           Field("quality",
                                 default = "N",
                                 label = T("Quality/Mode"),
@@ -2531,8 +2531,8 @@ class BRLanguageModel(DataModel):
                                                      zero = None,
                                                      ),
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         self.configure(tablename,
                        orderby = "language",
@@ -2583,8 +2583,8 @@ class BRServiceContactModel(DataModel):
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -2608,16 +2608,16 @@ class BRServiceContactModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        contact_type_id = S3ReusableField("contact_type_id", "reference %s" % tablename,
-                                          label = T("Contact Type"),
-                                          ondelete = "RESTRICT",
-                                          represent = represent,
-                                          requires = IS_EMPTY_OR(
+        contact_type_id = FieldTemplate("contact_type_id", "reference %s" % tablename,
+                                        label = T("Contact Type"),
+                                        ondelete = "RESTRICT",
+                                        represent = represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   )),
-                                          sortby = "name",
-                                          )
+                                        sortby = "name",
+                                        )
 
         # ---------------------------------------------------------------------
         # Service Contacts of Beneficiaries
@@ -2664,8 +2664,8 @@ class BRServiceContactModel(DataModel):
                      Field("email",
                            label = T("Email"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2735,8 +2735,8 @@ class BRNotesModel(DataModel):
                                                              ),
                                          ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -2754,15 +2754,16 @@ class BRNotesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, translate=True)
-        note_type_id = S3ReusableField("note_type_id", "reference %s" % tablename,
-                                       label = T("Note Type"),
-                                       ondelete = "RESTRICT",
-                                       represent = represent,
-                                       requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                        "%s.id" % tablename,
-                                                        represent,
-                                                        )),
-                                       )
+        note_type_id = FieldTemplate("note_type_id", "reference %s" % tablename,
+                                     label = T("Note Type"),
+                                     ondelete = "RESTRICT",
+                                     represent = represent,
+                                     requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db,
+                                                              "%s.id" % tablename,
+                                                              represent,
+                                                              )),
+                                     )
 
         # ---------------------------------------------------------------------
         # Notes
@@ -2774,14 +2775,14 @@ class BRNotesModel(DataModel):
                                        ),
                      note_type_id(empty = False,
                                   ),
-                     s3_datetime(default = "now",
-                                 ),
-                     s3_comments("note",
-                                 label = T("Note"),
-                                 represent = lambda v: s3_text_represent(v, lines=8),
-                                 comment = None,
-                                 ),
-                     *s3_meta_fields())
+                     DateTimeField(default = "now",
+                                   ),
+                     CommentsField("note",
+                                   label = T("Note"),
+                                   represent = lambda v: s3_text_represent(v, lines=8),
+                                   comment = None,
+                                   ),
+                     )
 
         # List fields
         list_fields = ["id",
@@ -4145,7 +4146,7 @@ def br_rheader(r, tabs=None):
 
             rheader_fields = [[(T("ID"), "pe_label"),
                                (T("Case Status"), case_status),
-                               (T("Organisation"), organisation),
+                               (T("Organization"), organisation),
                                ],
                               ["date_of_birth",
                                household_size,

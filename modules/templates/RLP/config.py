@@ -1363,7 +1363,7 @@ def config(settings):
                               IS_PERSON_GENDER,
                               AgeFilter,
                               LocationFilter,
-                              S3LocationSelector,
+                              LocationSelector,
                               OptionsFilter,
                               RangeFilter,
                               S3SQLCustomForm,
@@ -1397,13 +1397,13 @@ def config(settings):
             atable = s3db.pr_address
             field = atable.location_id
             field.requires = IS_LOCATION() # Mandatory
-            field.widget = S3LocationSelector(levels = ("L1", "L2", "L3"),
-                                              required_levels = ("L1", "L2", "L3"),
-                                              show_address = True,
-                                              show_postcode = True,
-                                              postcode_required = True,
-                                              show_map = False,
-                                              )
+            field.widget = LocationSelector(levels = ("L1", "L2", "L3"),
+                                            required_levels = ("L1", "L2", "L3"),
+                                            show_address = True,
+                                            show_postcode = True,
+                                            postcode_required = True,
+                                            show_map = False,
+                                            )
 
             hrcomponent = resource.components.get("volunteer_record")
             hrtable = hrcomponent.table
@@ -2203,7 +2203,7 @@ def config(settings):
                             TR(represent("REQ"), T("Requested")),
                             TR(represent("APPR"), T("Accepted by coordinator/volunteer")),
                             TR(represent("DECL"), T("Declined by coordinator/volunteer")),
-                            TR(represent("CANC"), T("Cancelled by requesting organisation or volunteer")),
+                            TR(represent("CANC"), T("Cancelled by requesting organization or volunteer")),
                             TR(represent("IMPL"), T("Deployment carried out")),
                             TR(represent("NVLD"), T("Invalid Record")),
                             )
@@ -2580,7 +2580,7 @@ def config(settings):
 
             # Configure reports
             axes = [(T("Pool"), "person_id$pool_membership.group_id"),
-                    (T("Deploying Organisation"), "organisation_id"),
+                    (T("Deploying Organization"), "organisation_id"),
                     "status",
                     ]
             facts = [(T("Number of Deployments"), "count(id)"),

@@ -322,12 +322,11 @@ class S3Trackable:
                 locations.append(Row({"lat": None, "lon": None}))
 
         if as_rows:
-            return Rows(records=locations, compact=False)
+            locations = Rows(records=locations, compact=False)
+        elif not locations:
+            locations = None
 
-        if not locations:
-            return None
-        else:
-            return locations
+        return locations
 
     # -------------------------------------------------------------------------
     def set_location(self, location, timestmp=None):

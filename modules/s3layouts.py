@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
-
-""" Sahana Eden GUI Layouts (HTML Renderers)
+"""
+    Sahana Eden GUI Layouts (HTML Renderers)
 
     @copyright: 2012-2021 (c) Sahana Software Foundation
     @license: MIT
@@ -53,7 +52,7 @@ __all__ = ("S3MainMenuDefaultLayout",
            )
 
 from gluon import current, URL, \
-                  A, DIV, FORM, H3, IMG, INPUT, LABEL, LI, OPTION, SELECT, SPAN, TAG, UL
+                  A, BUTTON, DIV, FORM, H3, IMG, INPUT, LABEL, LI, OPTION, SELECT, SPAN, TAG, UL
 
 from core import S3NavigationItem, ICON, get_crud_string
 from s3theme import NAV, SECTION
@@ -95,7 +94,7 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                 toplevel = False
 
             if item.components:
-                classes.append("has-dropdown not-click")
+                classes.append("has-submenu")
                 if item.selected:
                     classes.append("active")
                 _class = " ".join(classes)
@@ -107,8 +106,9 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                                 _id = item.attr._id
                                 ),
                                 UL(items,
-                                    _class = "dropdown"
-                                    ),
+                                   #data = {"submenu": ""},
+                                   _class = "menu vertical"
+                                   ),
                                 _class = _class,
                                 )
                 else:
@@ -153,32 +153,49 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                 else:
                     left.append(child)
             right.reverse()
-            if current.response.s3.direction == "rtl":
-                right, left = left, right
 
             T = current.T
             data_options = {"back": T("Back"),
                             }
 
-            return NAV(UL(LI(A(" ",
-                                _href = URL(c="default", f="index"),
-                                ),
-                                _class = "name"
-                                ),
-                            LI(A(SPAN(current.T("Menu"))),
-                                _class = "toggle-topbar menu-icon",
-                                ),
-                            _class = "title-area",
-                            ),
-                        SECTION(UL(right, _class="right"),
-                                UL(left, _class="left"),
-                                _class = "top-bar-section",
-                                ),
-                        _class = "top-bar",
-                        data = {"topbar": " ",
-                                "options": "back_text:%(back)s" % data_options,
-                                },
-                        )
+            # Title area:
+            #   - toggle the menu on small screens
+            title_area = SECTION(BUTTON(data = {"toggle": "main-menu",
+                                                },
+                                        _class = "menu-icon",
+                                        _type = "button",
+                                        ),
+                                 DIV(T("Menu"),
+                                     _class = "title-bar-title",
+                                     ),
+                                 data = {"responsive-toggle": "main-menu",
+                                         "hide-for": "medium",
+                                         },
+                                 _class = "title-bar hide-for-medium",
+                                 )
+
+            # Main menu:
+            #   - drop-down on medium and large screens
+            #   - drill-down on small screens
+            main_menu = SECTION(DIV(UL(left,
+                                       data = {"responsive-menu": "drilldown medium-dropdown",
+                                               },
+                                       _class = "vertical medium-horizontal menu",
+                                       ),
+                                    _class="top-bar-left",
+                                    ),
+                                DIV(UL(right,
+                                       data = {"responsive-menu": "drilldown medium-dropdown",
+                                               },
+                                       _class = "vertical medium-horizontal menu",
+                                       ),
+                                    _class = "top-bar-right",
+                                    ),
+                                _class = "top-bar",
+                                _id = "main-menu",
+                                )
+
+            return NAV(title_area, main_menu, _class="main-menu")
 
     # ---------------------------------------------------------------------
     @staticmethod
@@ -234,7 +251,7 @@ class S3PersonalMenuDefaultLayout(S3NavigationItem):
             # The menu
             items = item.render_components()
             if items:
-                return TAG["ul"](items, _class="sub-nav personal-menu")
+                return TAG["ul"](items, _class="menu sub-nav personal-menu")
             else:
                 return "" # menu is empty
         else:
@@ -260,7 +277,7 @@ class S3AboutMenuDefaultLayout(S3NavigationItem):
             # The menu
             items = item.render_components()
             if items:
-                return TAG["ul"](items, _class="sub-nav about-menu")
+                return TAG["ul"](items, _class="menu sub-nav about-menu")
             else:
                 return "" # menu is empty
         else:
@@ -403,18 +420,19 @@ class S3OptionsMenuDefaultLayout(S3NavigationItem):
                             return None
 
                         _class = ""
-                        if item.parent.parent is None and item.selected:
-                            _class = "active"
+                        if item.selected:
+                            _class = "active-section"
+                            if not any(c.selected for c in item.components):
+                                _class = "%s is-active" % _class
 
-                        section = [LI(A(item.label,
+                        section = LI(A(item.label,
                                         **attr
                                         ),
                                       _class="heading %s" % _class,
-                                      ),
-                                   ]
+                                      )
 
                         if items:
-                            section.append(UL(items))
+                            section.append(UL(items, _class="vertical menu"))
                         return section
 
                     else:
@@ -424,6 +442,9 @@ class S3OptionsMenuDefaultLayout(S3NavigationItem):
                         else:
                             _class = ""
 
+                        if item.selected:
+                            _class = "is-active %s" % _class
+
                         return LI(A(item.label,
                                     **attr
                                     ),
@@ -432,7 +453,12 @@ class S3OptionsMenuDefaultLayout(S3NavigationItem):
             else:
                 # Main menu
                 items = item.render_components()
-                return DIV(NAV(UL(items, _id="main-sub-menu", _class="side-nav")), _class="sidebar")
+                return NAV(UL(items,
+                              _id="main-options-menu",
+                              _class="vertical menu options-menu",
+                              ),
+                           _class="side-bar",
+                           )
 
         else:
             return None
@@ -666,7 +692,7 @@ class S3PopupLink(S3NavigationItem):
 
         tooltip = item.opts.tooltip
         if tooltip is not None:
-            ttip = DIV(_class = "tooltip",
+            ttip = DIV(_class = "tooltip inline-tooltip",
                        _title = "%s|%s" % (item.opts.title, tooltip))
         else:
             ttip = ""

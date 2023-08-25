@@ -22,8 +22,21 @@ $datatables_bgcolor_head: #ffffff !default;
 
 // ============================================================================
 // STYLES
+//
+// General table styles
+//
+table {
+    width: auto;
+    th, td {
+        text-align: left;
+        [dir=rtl] & {
+            text-align: right;
+        }
+    }
+}
 
 // DataTable
+//
 #table-container {
     display: block;
     margin-bottom: 1.5rem;
@@ -38,21 +51,25 @@ $datatables_bgcolor_head: #ffffff !default;
     overflow: auto;
     clear: both;
 }
-
 table.dataTable {
     width: 100%;
-    th, td {
-        border: 1px solid $datatables_border_color;
-        padding: 0.2rem 1.5rem 0.2rem 0.5rem;
-        [dir=rtl] & {
-            padding: 0.2rem 0.5rem 0.2rem 1.5rem;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    thead, tbody, tfoot {
+        th, td {
+            border: 1px solid $datatables_border_color;
+            padding: 0.2rem 1.5rem 0.2rem 0.5rem;
+            [dir=rtl] & {
+                padding: 0.2rem 0.5rem 0.2rem 1.5rem;
+            }
         }
-    }
-    th {
-        text-align: center;
+        th {
+            text-align: center;
+        }
     }
 
     thead {
+        background-color: $datatables_bgcolor_head;
         th {
             // override jquery.dataTables.css
             border-bottom: 1px solid $datatables_border_color;
@@ -61,9 +78,6 @@ table.dataTable {
                     background-position-x: left;
                 }
             }
-        }
-        th, td {
-            background-color: $datatables_bgcolor_head;
         }
     }
 
@@ -190,7 +204,7 @@ table.dataTable {
     &.dtr-inline.collapsed tbody {
         td:first-child::before,
         th:first-child::before {
-            top: 6px;
+            top: 0.4rem;
             //line-height: 0.9rem;
             background-color: $primary-color;
         }
@@ -206,91 +220,125 @@ table.dataTable {
     }
 }
 
-.dataTables_filter {
-    float: left;
-    text-align: left;
-    margin-right: 3rem;
-    label {
-        margin-left: 0.3rem;
-        font-size: 0.75rem;
-        font-weight: normal;
-    }
-    input[type="search"] {
-        margin-left: 0.3rem;
-    }
-    [dir=rtl] & {
-        float: right;
-        text-align: right;
-        margin-right: 0;
-        margin-left: 3rem;
-        label,
+.dataTables_wrapper {
+    .dataTables_filter {
+        float: left;
+        text-align: left;
+        margin-right: 3rem;
+        label {
+            margin-left: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
         input[type="search"] {
-            margin-left: 0rem;
-            margin-right: 0.3rem;
+            margin-left: 0.3rem;
+        }
+        [dir=rtl] & {
+            float: right;
+            text-align: right;
+            margin-right: 0;
+            margin-left: 3rem;
+            label,
+            input[type="search"] {
+                margin-left: 0rem;
+                margin-right: 0.3rem;
+            }
         }
     }
-}
-.dataTables_length {
-    float: left;
-    margin-bottom:4px;
-    label {
-        font-size: 0.75rem;
-        font-weight: normal;
-        white-space: nowrap;
-        margin: 0 10rem 0.3rem 0.3rem;
-    }
-    select {
-        font-size: 0.75rem;
-        height: auto;
-        padding: 0.2rem 1.1rem 0.2rem 0!important;
-    }
-    [dir=rtl] & {
-        float: right;
+    .dataTables_length {
+        float: left;
+        margin-bottom:4px;
         label {
-            margin: 0 0.3rem 0.3rem 10rem;
+            font-size: 0.75rem;
+            font-weight: normal;
+            white-space: nowrap;
+            margin: 0 10rem 0.3rem 0.3rem;
         }
         select {
-            padding: 0.2rem 0 0.2rem 1.1rem!important;
+            font-size: 0.75rem;
+            text-align: center;
+            height: auto;
+            padding: 0.2rem 1.2rem 0.2rem 0;
+            border-radius: 0;
+            margin: 0 0.2rem;
+            min-width: 3rem;
+        }
+        [dir=rtl] & {
+            float: right;
+            label {
+                margin: 0 0.3rem 0.3rem 10rem;
+            }
+            select {
+                padding: 0.2rem 0 0.2rem 1.1rem!important;
+            }
         }
     }
-}
-.dataTables_processing {
-    padding: 1rem 0 2rem;
-    top: 2.5rem;
-    left: 30%;
-    background-color: #fffbe0;
-    color: #737373;
-    border-color: #737373;
-    [dir=rtl] & {
-        left: unset;
-        right: 30%;
+    .dataTables_processing {
+        padding: 1rem 0 2rem;
+        top: 2.5rem;
+        left: 30%;
+        background-color: #fffbe0;
+        color: #737373;
+        border-color: #737373;
+        [dir=rtl] & {
+            left: unset;
+            right: 30%;
+        }
     }
-}
-.dataTables_info {
-    float: right;
-    clear: none;
-    margin: 0.5rem 0;
-    [dir=rtl] & {
-        float: left;
+    .dataTables_info {
+        float: right;
+        [dir=rtl] & {
+            float: left;
+        }
+        &:last-of-type {
+            float: left;
+            [dir=rtl] & {
+                float: right;
+            }
+        }
+        clear: none;
+        margin: 0.5rem 0;
+        padding-top: 0.3rem;
     }
-}
-.dataTables_paginate {
-    float: right;
-    margin: 0.3rem 0 0.3rem 0.7rem;
-    &.paging_full_numbers {
-        width: auto;
-    }
-    a.paginate_button,
-    a.paginate_active {
-        text-decoration: none;
-    }
-    [dir=rtl] & {
-        float: left;
-        margin: 0.3rem 0.7rem 0.3rem 0;
+    .dataTables_paginate {
+        float: right;
+        margin: 0.3rem 0 0.3rem 0.7rem;
+        padding-top: 0.3rem;
+        [dir=rtl] & {
+            float: left;
+            margin: 0.3rem 0.7rem 0.3rem 0;
+        }
+
+        &.paging_full_numbers {
+            width: auto;
+        }
+        .paginate_button,
+        .paginate_active {
+            padding: 0.1rem 0.5rem !important;
+            font-size: 0.8rem;
+            a {
+                text-decoration: none;
+                color: #333!important;
+            }
+            &:hover a {
+                color: #eee !important;
+            }
+            &:active a {
+                color: rgba(0, 0, 0, 0.5) !important;
+            }
+            &.disabled a {
+                color: #666 !important;
+            }
+            &.current a {
+                color: #333 !important;
+            }
+        }
     }
 }
 
+// ----------------------------------------------------------------------------
 // Export Options
+//
 .dt-export-options {
     float: right;
     padding-top: 5px;
@@ -347,6 +395,9 @@ table.dataTable {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Empty-section
+//
 .empty {
     @include empty_section();
 }

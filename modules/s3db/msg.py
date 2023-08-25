@@ -120,13 +120,13 @@ class MsgChannelModel(DataModel):
                           )
 
         # Reusable Field
-        channel_id = S3ReusableField("channel_id", "reference %s" % tablename,
-                                     label = T("Channel"),
-                                     ondelete = "SET NULL",
-                                     represent = S3Represent(lookup = tablename),
-                                     requires = IS_EMPTY_OR(
-                                        IS_ONE_OF_EMPTY(db, "msg_channel.channel_id")),
-                                     )
+        channel_id = FieldTemplate("channel_id", "reference %s" % tablename,
+                                   label = T("Channel"),
+                                   ondelete = "SET NULL",
+                                   represent = S3Represent(lookup = tablename),
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_channel.channel_id")),
+                                   )
 
         self.add_components(tablename,
                             msg_channel_status = "channel_id",
@@ -143,7 +143,9 @@ class MsgChannelModel(DataModel):
         define_table(tablename,
                      # @ToDo: Make it per-channel
                      #channel_id(),
-                     *S3MetaFields.timestamps())
+                     *MetaFields.timestamps(),
+                     meta = False,
+                     )
 
         # ---------------------------------------------------------------------
         # Channel Status
@@ -157,7 +159,7 @@ class MsgChannelModel(DataModel):
                            #represent = s3_yes_no_represent,
                            represent = lambda v: v or current.messages["NONE"],
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -400,7 +402,7 @@ class MsgMessageModel(DataModel):
                           # came in on allows correlation to Outbound
                           # messages (campaign_message, deployment_alert, etc)
                           self.msg_channel_id(),
-                          s3_datetime(default="now"),
+                          DateTimeField(default="now"),
                           Field("body", "text",
                                 label = T("Message"),
                                 ),
@@ -436,12 +438,12 @@ class MsgMessageModel(DataModel):
 
         # Reusable Field
         message_represent = S3Represent(lookup = tablename, fields = ["body"])
-        message_id = S3ReusableField("message_id", "reference %s" % tablename,
-                                     ondelete = "RESTRICT",
-                                     represent = message_represent,
-                                     requires = IS_EMPTY_OR(
-                                        IS_ONE_OF_EMPTY(db, "msg_message.message_id")),
-                                     )
+        message_id = FieldTemplate("message_id", "reference %s" % tablename,
+                                   ondelete = "RESTRICT",
+                                   represent = message_represent,
+                                   requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_message.message_id")),
+                                   )
 
         self.add_components(tablename,
                             msg_attachment = "message_id",
@@ -467,16 +469,16 @@ class MsgMessageModel(DataModel):
                            5 : T("Failed"),
                            }
 
-        opt_msg_status = S3ReusableField("status", "integer",
-                                         notnull=True,
-                                         requires = IS_IN_SET(MSG_STATUS_OPTS,
-                                                              zero = None),
-                                         default = 1,
-                                         label = T("Status"),
-                                         represent = lambda opt: \
-                                                     MSG_STATUS_OPTS.get(opt,
-                                                                 UNKNOWN_OPT)
-                                         )
+        opt_msg_status = FieldTemplate("status", "integer",
+                                       notnull=True,
+                                       requires = IS_IN_SET(MSG_STATUS_OPTS,
+                                                            zero = None,
+                                                            ),
+                                       default = 1,
+                                       label = T("Status"),
+                                       represent = lambda opt: \
+                                                   MSG_STATUS_OPTS.get(opt, UNKNOWN_OPT)
+                                       )
 
         # Outbox - needs to be separate to Message since a single message
         # sent needs different outbox entries for each recipient
@@ -507,7 +509,7 @@ class MsgMessageModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         configure(tablename,
                   list_fields = ["id",
@@ -531,7 +533,7 @@ class MsgMessageModel(DataModel):
             Return safe defaults in case the model has been deactivated.
         """
 
-        return {"msg_message_id": S3ReusableField.dummy("message_id"),
+        return {"msg_message_id": FieldTemplate.dummy("message_id"),
                 }
 
 # =============================================================================
@@ -553,7 +555,7 @@ class MsgMessageAttachmentModel(DataModel):
                           self.msg_message_id(ondelete = "CASCADE"),
                           # document_id not doc_id
                           self.doc_document_id(),
-                          *s3_meta_fields())
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -591,7 +593,7 @@ class MsgMessageContactModel(DataModel):
                           # Instance
                           self.super_link("message_id", "msg_message"),
                           self.msg_channel_id(), # Unused
-                          s3_datetime(default = "now"),
+                          DateTimeField(default = "now"),
                           Field("subject", length=78,    # RFC 2822
                                 label = T("Subject"),
                                 requires = IS_LENGTH(78),
@@ -632,7 +634,7 @@ class MsgMessageContactModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        orderby = "msg_contact.date desc",
@@ -686,8 +688,8 @@ class MsgMessageTagModel(DataModel):
                           Field("value",
                                 label = T("Value"),
                                 ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("message_id",
@@ -755,7 +757,7 @@ class MsgEmailModel(MsgChannelModel):
                      # Set true to delete messages from the remote
                      # inbox after fetching them.
                      Field("delete_from_server", "boolean"),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.msg_channel_onaccept,
@@ -784,7 +786,7 @@ class MsgEmailModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now"),
+                     DateTimeField(default = "now"),
                      Field("subject", length=78,    # RFC 2822
                            label = T("Subject"),
                            requires = IS_LENGTH(78),
@@ -812,7 +814,7 @@ class MsgEmailModel(MsgChannelModel):
                            represent = lambda direction: \
                                        (direction and [T("In")] or [T("Out")])[0],
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   orderby = "msg_email.date desc",
@@ -891,7 +893,7 @@ class MsgFacebookModel(MsgChannelModel):
                            requires = IS_INT_IN_RANGE(0, +1e16)
                            ),
                      Field("page_access_token"),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.msg_facebook_channel_onaccept,
@@ -919,7 +921,7 @@ class MsgFacebookModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now"),
+                     DateTimeField(default = "now"),
                      Field("body", "text",
                            label = T("Message"),
                            ),
@@ -937,7 +939,7 @@ class MsgFacebookModel(MsgChannelModel):
                            represent = lambda direction: \
                                        (direction and [T("In")] or [T("Out")])[0],
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   orderby = "msg_facebook.date desc",
@@ -1028,7 +1030,7 @@ class MsgMCommonsModel(MsgChannelModel):
                           Field("timestmp", "datetime",
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.msg_channel_onaccept,
@@ -1090,7 +1092,7 @@ class MsgGCMModel(MsgChannelModel):
                           Field("api_key",
                                 notnull = True,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.msg_gcm_channel_onaccept,
@@ -1166,7 +1168,7 @@ class MsgParsingModel(DataModel):
                            label = T("Enabled?"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        onaccept = self.msg_parser_onaccept,
@@ -1206,7 +1208,7 @@ class MsgParsingModel(DataModel):
                                 label = T("Reply"),
                                 ondelete = "CASCADE",
                                 ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Login sessions for Message Parsing
@@ -1223,7 +1225,7 @@ class MsgParsingModel(DataModel):
                      Field("is_expired", "boolean",
                            default = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Keywords for Message Parsing
@@ -1235,7 +1237,7 @@ class MsgParsingModel(DataModel):
                            ),
                      # @ToDo: Move this to a link table
                      self.event_incident_type_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Senders for Message Parsing
@@ -1251,7 +1253,7 @@ class MsgParsingModel(DataModel):
                      Field("priority", "integer",
                            label = T("Priority"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         return {"msg_parser_enabled": self.parser_enabled,
@@ -1475,9 +1477,9 @@ class MsgRSSModel(MsgChannelModel):
                            # Some feeds have text/html set which feedparser refuses to parse
                            comment = T("Force content-type to application/xml"),
                            ),
-                     s3_datetime(label = T("Last Polled"),
-                                 writable = False,
-                                 ),
+                     DateTimeField(label = T("Last Polled"),
+                                   writable = False,
+                                   ),
                      Field("etag",
                            label = T("ETag"),
                            writable = False
@@ -1502,7 +1504,7 @@ class MsgRSSModel(MsgChannelModel):
                                          _title="%s|%s" % (T("Password"),
                                                            T("Optional password for HTTP Basic Authentication."))),
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        list_fields = ["name",
@@ -1536,9 +1538,9 @@ class MsgRSSModel(MsgChannelModel):
                      # Instance
                      super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default="now",
-                                 label = T("Published on"),
-                                 ),
+                     DateTimeField(default="now",
+                                   label = T("Published on"),
+                                   ),
                      Field("title",
                            label = T("Title"),
                            ),
@@ -1563,7 +1565,7 @@ class MsgRSSModel(MsgChannelModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("from_address",),
@@ -1586,14 +1588,15 @@ class MsgRSSModel(MsgChannelModel):
                                     fields = ["title", "from_address",],
                                     field_sep = " - ")
 
-        rss_id = S3ReusableField("rss_id", "reference %s" % tablename,
-                                 label = T("RSS Link"),
-                                 ondelete = "CASCADE",
-                                 represent = rss_represent,
-                                 requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(current.db, "msg_rss.id",
-                                                          rss_represent)),
-                                 )
+        rss_id = FieldTemplate("rss_id", "reference %s" % tablename,
+                               label = T("RSS Link"),
+                               ondelete = "CASCADE",
+                               represent = rss_represent,
+                               requires = IS_EMPTY_OR(
+                                            IS_ONE_OF(current.db, "msg_rss.id",
+                                                      rss_represent,
+                                                      )),
+                               )
 
         # ---------------------------------------------------------------------
         # Links for RSS Feed
@@ -1606,7 +1609,7 @@ class MsgRSSModel(MsgChannelModel):
                            ),
                      Field("type",
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        deduplicate = S3Duplicate(primary = ("rss_id", "url"),
@@ -1649,7 +1652,7 @@ class MsgSMSModel(DataModel):
                           self.super_link("message_id", "msg_message"),
                           self.msg_channel_id(),
                           self.org_organisation_id(default = default),
-                          s3_datetime(default="now"),
+                          DateTimeField(default="now"),
                           Field("body", "text",
                                 # Allow multi-part SMS
                                 #length = 160,
@@ -1672,7 +1675,7 @@ class MsgSMSModel(DataModel):
                           Field("remote_id",
                                 #label = T("Remote ID"),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        super_entity = "msg_message",
@@ -1738,7 +1741,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("default_country_code", "integer",
                            default = country_code,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # SMS Modem Channel
@@ -1758,7 +1761,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("max_length", "integer",
                            default = 160,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1784,7 +1787,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("max_length", "integer",
                            default = 160,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1847,7 +1850,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("enabled", "boolean",
                            default = True,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   super_entity = "msg_channel",
@@ -1890,7 +1893,7 @@ class MsgTropoModel(DataModel):
                            ),
                      Field("token_messaging"),
                      #Field("token_voice"),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        super_entity = "msg_channel",
@@ -1918,6 +1921,7 @@ class MsgTropoModel(DataModel):
                      Field("recipient"),
                      Field("message"),
                      Field("network"),
+                     meta = False,
                      )
 
         # ---------------------------------------------------------------------
@@ -1972,7 +1976,7 @@ class MsgTwilioModel(MsgChannelModel):
                                        ],
                            widget = S3PasswordWidget(),
                            ),
-                     *s3_meta_fields())
+                     )
 
         self.configure(tablename,
                        onaccept = self.msg_channel_onaccept,
@@ -2000,7 +2004,7 @@ class MsgTwilioModel(MsgChannelModel):
                      # Component not Instance
                      self.msg_message_id(ondelete = "CASCADE"),
                      Field("sid"),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         return None
@@ -2071,7 +2075,7 @@ class MsgTwitterModel(DataModel):
                            readable = False,
                            widget = password_widget,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   onaccept = self.twitter_channel_onaccept,
@@ -2099,9 +2103,9 @@ class MsgTwitterModel(DataModel):
                      # Instance
                      self.super_link("message_id", "msg_message"),
                      self.msg_channel_id(),
-                     s3_datetime(default = "now",
-                                 label = T("Posted on"),
-                                 ),
+                     DateTimeField(default = "now",
+                                   label = T("Posted on"),
+                                   ),
                      Field("body", length=140,
                            label = T("Message"),
                            requires = IS_LENGTH(140),
@@ -2126,7 +2130,7 @@ class MsgTwitterModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["id",
@@ -2287,7 +2291,7 @@ class MsgTwitterSearchModel(MsgChannelModel):
                            label = T("Searched?"),
                            represent = s3_yes_no_represent,
                            ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = ["keywords",
@@ -2299,14 +2303,13 @@ class MsgTwitterSearchModel(MsgChannelModel):
 
         # Reusable Query ID
         represent = S3Represent(lookup=tablename, fields=["keywords"])
-        search_id = S3ReusableField("search_id", "reference %s" % tablename,
-                    label = T("Search Query"),
-                    ondelete = "CASCADE",
-                    represent = represent,
-                    requires = IS_EMPTY_OR(
-                                IS_ONE_OF_EMPTY(db, "msg_twitter_search.id")
-                                ),
-                    )
+        search_id = FieldTemplate("search_id", "reference %s" % tablename,
+                                  label = T("Search Query"),
+                                  ondelete = "CASCADE",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF_EMPTY(db, "msg_twitter_search.id")),
+                                  )
 
         set_method("msg_twitter_search",
                    method = "poll",
@@ -2315,10 +2318,6 @@ class MsgTwitterSearchModel(MsgChannelModel):
         set_method("msg_twitter_search",
                    method = "keygraph",
                    action = self.twitter_keygraph)
-
-        set_method("msg_twitter_result",
-                   method = "timeline",
-                   action = self.twitter_timeline)
 
         # ---------------------------------------------------------------------
         # Twitter Search Results
@@ -2332,9 +2331,9 @@ class MsgTwitterSearchModel(MsgChannelModel):
                      # Just present for Super Entity
                      #self.msg_channel_id(),
                      search_id(),
-                     s3_datetime(default="now",
-                                 label = T("Tweeted on"),
-                                 ),
+                     DateTimeField(default="now",
+                                   label = T("Tweeted on"),
+                                   ),
                      Field("tweet_id",
                            label = T("Tweet ID")),
                      Field("lang",
@@ -2359,7 +2358,7 @@ class MsgTwitterSearchModel(MsgChannelModel):
                      #      readable = False,
                      #      writable = False,
                      #      ),
-                     *s3_meta_fields())
+                     )
 
         configure(tablename,
                   list_fields = [#"category",
@@ -2411,100 +2410,6 @@ class MsgTwitterSearchModel(MsgChannelModel):
         redirect(URL(f="twitter_result"))
 
 # =============================================================================
-    @staticmethod
-    def twitter_timeline(r, **attr):
-        """
-            Display the Tweets on a Simile Timeline
-
-            http://www.simile-widgets.org/wiki/Reference_Documentation_for_Timeline
-        """
-
-        if r.representation == "html" and r.name == "twitter_result":
-
-            appname = r.application
-            response = current.response
-            s3 = response.s3
-
-            # Add core Simile Code
-            #s3.scripts.append("/%s/static/scripts/simile/timeline/timeline-api.js" % appname)
-
-            # Add our controlled script
-            #if s3.debug:
-            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.js" % appname)
-            #else:
-            #    s3.scripts.append("/%s/static/scripts/S3/s3.timeline.min.js" % appname)
-            s3_include_simile()
-
-            # Add our data
-            # @ToDo: Make this the initial data & then collect extra via REST with a stylesheet
-            # add in JS using S3.timeline.eventSource.addMany(events) where events is a []
-            if r.record:
-                # Single record
-                rows = [r.record]
-            else:
-                # Multiple records
-                # @ToDo: Load all records & sort to closest in time
-                # http://stackoverflow.com/questions/7327689/how-to-generate-a-sequence-of-future-datetimes-in-python-and-determine-nearest-d
-                rows = r.resource.select(["date", "body"], limit=2000, as_rows=True)
-
-            data = {"dateTimeFormat": "iso8601",
-                    }
-
-            now = r.utcnow
-            tl_start = tl_end = now
-            events = []
-            import re
-            for row in rows:
-                # Dates
-                start = row.date or ""
-                if start:
-                    if start < tl_start:
-                        tl_start = start
-                    if start > tl_end:
-                        tl_end = start
-                    start = start.isoformat()
-
-                title = (re.sub(r"(?<=^|(?<=[^a-zA-Z0-9-_\.]))@([A-Za-z]+[A-Za-z0-9]+)|RT", "", row.body))
-                if len(title) > 30:
-                    title = title[:30]
-
-                events.append({"start": start,
-                               "title": title,
-                               "description": row.body,
-                               })
-            data["events"] = events
-            data = json.dumps(data, separators=SEPARATORS)
-
-            code = "".join((
-'''S3.timeline.data=''', data, '''
-S3.timeline.tl_start="''', tl_start.isoformat(), '''"
-S3.timeline.tl_end="''', tl_end.isoformat(), '''"
-S3.timeline.now="''', now.isoformat(), '''"
-'''))
-
-            # Control our code in static/scripts/S3/s3.timeline.js
-            s3.js_global.append(code)
-
-            # Create the DIV
-            item = DIV(_id = "s3timeline",
-                       _class = "s3-timeline",
-                       )
-
-            output = {"item": item}
-
-            # Maintain RHeader for consistency
-            if attr.get("rheader"):
-                rheader = attr["rheader"](r)
-                if rheader:
-                    output["rheader"] = rheader
-
-            output["title"] = current.T("Twitter Timeline")
-            response.view = "timeline.html"
-            return output
-
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-# =============================================================================
 class MsgXFormsModel(DataModel):
     """
         XForms are used by the ODK Collect mobile client
@@ -2526,7 +2431,8 @@ class MsgXFormsModel(DataModel):
                           Field("fileno", "integer"),
                           Field("totalno", "integer"),
                           Field("partno", "integer"),
-                          Field("message", length=160)
+                          Field("message", length=160),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -2580,8 +2486,8 @@ class MsgBaseStationModel(DataModel):
                                  #widget=S3OrganisationAutocompleteWidget(default_from_profile=True),
                                  ),
                           self.gis_location_id(),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         # CRUD strings
         current.response.s3.crud_strings[tablename] = Storage(

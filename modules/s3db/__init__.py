@@ -1,6 +1,5 @@
 DEFAULT = lambda: None
 
-from . import assess
 from . import asset
 from . import auth
 from . import br
@@ -8,7 +7,6 @@ from . import budget
 from . import cap
 from . import cms
 from . import cr
-from . import dc
 from . import deploy
 from . import disease
 from . import doc
@@ -35,7 +33,6 @@ from . import security
 from . import sit
 from . import stats
 from . import supply
-from . import survey
 from . import sync
 from . import translate
 from . import transport

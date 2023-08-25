@@ -103,21 +103,21 @@ class DiseaseDataModel(DataModel):
                      Field("watch_period", "integer",
                            label = T("Watch Period after Exposure (days)"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         represent = S3Represent(lookup=tablename)
-        disease_id = S3ReusableField("disease_id", "reference %s" % tablename,
-                                     label = T("Disease"),
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db, "disease_disease.id",
-                                                          represent,
-                                                          ),
-                                     sortby = "name",
-                                     comment = S3PopupLink(f = "disease",
-                                                           tooltip = T("Add a new disease to the catalog"),
-                                                           ),
-                                     )
+        disease_id = FieldTemplate("disease_id", "reference %s" % tablename,
+                                   label = T("Disease"),
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db, "disease_disease.id",
+                                                        represent,
+                                                        ),
+                                   sortby = "name",
+                                   comment = S3PopupLink(f = "disease",
+                                                         tooltip = T("Add a new disease to the catalog"),
+                                                         ),
+                                   )
 
         self.add_components(tablename,
                             disease_symptom = "disease_id",
@@ -155,18 +155,18 @@ class DiseaseDataModel(DataModel):
                      Field("assessment",
                            label = T("Assessment method"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # @todo: refine to include disease name?
         represent = S3Represent(lookup=tablename)
-        symptom_id = S3ReusableField("symptom_id", "reference %s" % tablename,
-                                     label = T("Symptom"),
-                                     represent = represent,
-                                     requires = IS_ONE_OF(db, "disease_symptom.id",
-                                                          represent,
-                                                          ),
-                                     sortby = "name",
-                                     )
+        symptom_id = FieldTemplate("symptom_id", "reference %s" % tablename,
+                                   label = T("Symptom"),
+                                   represent = represent,
+                                   requires = IS_ONE_OF(db, "disease_symptom.id",
+                                                        represent,
+                                                        ),
+                                   sortby = "name",
+                                   )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -193,9 +193,9 @@ class DiseaseDataModel(DataModel):
 
         tablename = "disease_testing_device"
         define_table(tablename,
-                     disease_id(
-                         ondelete = "CASCADE",
-                         ),
+                     disease_id(ondelete = "CASCADE",
+                                comment = None,
+                                ),
                      Field("name",
                            label = T("Name"),
                            requires = IS_NOT_EMPTY(),
@@ -230,12 +230,12 @@ class DiseaseDataModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         self.configure(tablename,
-                       onaccept = self.testing_device_onaccept,
+                       #onaccept = self.testing_device_onaccept,
                        )
 
         # CRUD Strings
@@ -254,16 +254,16 @@ class DiseaseDataModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
-        device_id = S3ReusableField("device_id", "reference %s" % tablename,
-                                    label = T("Testing Device"),
-                                    represent = represent,
-                                    requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                         represent,
-                                                         filterby = "available",
-                                                         filter_opts = [True],
-                                                         ),
-                                    sortby = "name",
-                                    )
+        device_id = FieldTemplate("device_id", "reference %s" % tablename,
+                                  label = T("Testing Device"),
+                                  represent = represent,
+                                  requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                       represent,
+                                                       filterby = "available",
+                                                       filter_opts = [True],
+                                                       ),
+                                  sortby = "name",
+                                  )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -278,7 +278,7 @@ class DiseaseDataModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"disease_disease_id": dummy("disease_id"),
                 "disease_symptom_id": dummy("symptom_id"),
@@ -407,8 +407,8 @@ class DiseaseMonitoringModel(DataModel):
                            label = T("Obsolete"),
                            represent = s3_yes_no_represent,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -426,17 +426,17 @@ class DiseaseMonitoringModel(DataModel):
 
         # Reusable Field
         represent = S3Represent(lookup=tablename)
-        demographic_id = S3ReusableField("demographic_id", "reference %s" % tablename,
-                                         label = T("Demographic"),
-                                         represent = represent,
-                                         requires = IS_EMPTY_OR(
+        demographic_id = FieldTemplate("demographic_id", "reference %s" % tablename,
+                                       label = T("Demographic"),
+                                       represent = represent,
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
                                                                   filterby = "obsolete",
                                                                   filter_opts = (False,),
                                                                   )),
-                                         sortby = "name",
-                                         )
+                                       sortby = "name",
+                                       )
 
         # ---------------------------------------------------------------------
         # Testing Site Daily Summary Report
@@ -461,10 +461,10 @@ class DiseaseMonitoringModel(DataModel):
                                      writable = True,
                                      #ondelete = "CASCADE", # default
                                      ),
-                     s3_date(default="now",
-                             past = 1,
-                             future = 0,
-                             ),
+                     DateField(default="now",
+                               past = 1,
+                               future = 0,
+                               ),
                      Field("tests_total", "integer",
                            label = T("Total Number of Tests"),
                            requires = IS_INT_IN_RANGE(0),
@@ -475,8 +475,8 @@ class DiseaseMonitoringModel(DataModel):
                            requires = IS_INT_IN_RANGE(0),
                            writable = not subtotals,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -613,8 +613,8 @@ class DiseaseMonitoringModel(DataModel):
                            label = T("Number of Positive Test Results"),
                            requires = IS_INT_IN_RANGE(0),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # List fields
         list_fields = ["report_id$site_id",
@@ -689,7 +689,7 @@ class DiseaseMonitoringModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        dummy = S3ReusableField.dummy
+        dummy = FieldTemplate.dummy
 
         return {"disease_demographic_id": dummy("demographic_id"),
                 }
@@ -895,14 +895,14 @@ class DiseaseCertificateModel(DataModel):
                           Field("errors", "text",
                                 ),
                           # Date after which a certificate can no longer be issued
-                          s3_datetime("valid_until",
-                                      label = T("Valid until"),
-                                      ),
+                          DateTimeField("valid_until",
+                                        label = T("Valid until"),
+                                        ),
                           # Date when the certificate was issued
-                          s3_datetime("certified_on",
-                                      label = T("Certified on"),
-                                      ),
-                          *s3_meta_fields())
+                          DateTimeField("certified_on",
+                                        label = T("Certified on"),
+                                        ),
+                          )
 
         self.configure(tablename,
                        insertable = False,
@@ -920,7 +920,7 @@ class DiseaseCertificateModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        #dummy = S3ReusableField.dummy
+        #dummy = FieldTemplate.dummy
 
         return None
 
@@ -1006,12 +1006,12 @@ class DiseaseCaseTrackingModel(DataModel):
                            ),
                      person_id(empty = False,
                                ondelete = "CASCADE",
-                               widget = S3AddPersonWidget(controller = "pr",
-                                                          pe_label = use_case_id,
-                                                          ),
+                               widget = PersonSelector(controller = "pr",
+                                                       pe_label = use_case_id,
+                                                       ),
                                ),
                      self.disease_disease_id(comment = None),
-                     #s3_date(), # date registered == created_on?
+                     #DateField(), # date registered == created_on?
                      self.gis_location_id(),
                      # @todo: add site ID for registering site?
 
@@ -1022,9 +1022,9 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(illness_status),
                            default = "UNKNOWN",
                            ),
-                     s3_date("symptom_debut",
-                             label = T("Symptom Debut"),
-                             ),
+                     DateField("symptom_debut",
+                               label = T("Symptom Debut"),
+                               ),
                      Field("hospitalized", "boolean",
                            default = False,
                            label = T("Hospitalized"),
@@ -1057,10 +1057,10 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(diagnosis_status),
                            default = "UNKNOWN",
                            ),
-                     s3_date("diagnosis_date",
-                             default = "now",
-                             label = T("Diagnosis Date"),
-                             ),
+                     DateField("diagnosis_date",
+                               default = "now",
+                               label = T("Diagnosis Date"),
+                               ),
 
                      # Current monitoring level and end date
                      Field("monitoring_level",
@@ -1069,25 +1069,25 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_IN_SET(monitoring_levels),
                            default = "NONE",
                            ),
-                     s3_date("monitoring_until",
-                             label = T("Monitoring required until"),
-                             ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     DateField("monitoring_until",
+                               label = T("Monitoring required until"),
+                               ),
+                     CommentsField(),
+                     )
 
         # Reusable Field
         represent = disease_CaseRepresent()
-        case_id = S3ReusableField("case_id", "reference %s" % tablename,
-                                  label = T("Case"),
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                           "disease_case.id",
-                                                           represent,
-                                                           )),
-                                  comment = S3PopupLink(f = "case",
-                                                        tooltip = T("Add a new case"),
-                                                        ),
-                                  )
+        case_id = FieldTemplate("case_id", "reference %s" % tablename,
+                                label = T("Case"),
+                                represent = represent,
+                                requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "disease_case.id",
+                                                          represent,
+                                                          )),
+                                comment = S3PopupLink(f = "case",
+                                                      tooltip = T("Add a new case"),
+                                                      ),
+                                )
 
         # Components
         add_components(tablename,
@@ -1212,13 +1212,13 @@ class DiseaseCaseTrackingModel(DataModel):
         tablename = "disease_case_monitoring"
         define_table(tablename,
                      case_id(empty=False),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      Field("illness_status",
                            represent = illness_status_represent,
                            requires = IS_IN_SET(illness_status),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         add_components(tablename,
@@ -1273,7 +1273,7 @@ class DiseaseCaseTrackingModel(DataModel):
                            requires = IS_ONE_OF(db, "disease_case_monitoring.id"),
                            ),
                      self.disease_symptom_id(),
-                     *s3_meta_fields())
+                     )
 
         # =====================================================================
         # Case Treatment/Progress Notes
@@ -1289,15 +1289,15 @@ class DiseaseCaseTrackingModel(DataModel):
         tablename = "disease_case_treatment"
         define_table(tablename,
                      case_id(empty=False),
-                     s3_datetime(default="now"),
+                     DateTimeField(default="now"),
                      Field("occasion",
                            represent = occasion_represent,
                            requires = IS_IN_SET(occasions,
                                                 sort = False,
                                                 ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Table configuration
         configure(tablename,
@@ -1329,7 +1329,7 @@ class DiseaseCaseTrackingModel(DataModel):
                         }
 
         project_id = self.project_project_id
-        project_represent = project_id.attr.represent
+        project_represent = project_id().represent
 
         tablename = "disease_case_diagnostics"
         define_table(tablename,
@@ -1372,11 +1372,11 @@ class DiseaseCaseTrackingModel(DataModel):
                      Field("probe_number", length=64, unique=True,
                            requires = IS_LENGTH(64),
                            ),
-                     s3_datetime("probe_date",
-                                 default = "now",
-                                 label = T("Probe Date"),
-                                 future = 0,
-                                 ),
+                     DateTimeField("probe_date",
+                                   default = "now",
+                                   label = T("Probe Date"),
+                                   future = 0,
+                                   ),
                      Field("probe_status",
                            represent = represent_option(probe_status),
                            requires = IS_IN_SET(probe_status),
@@ -1396,16 +1396,16 @@ class DiseaseCaseTrackingModel(DataModel):
                      Field("result",
                            label = T("Result"),
                            ),
-                     s3_date("result_date",
-                             label = T("Result Date"),
-                             ),
+                     DateField("result_date",
+                               label = T("Result Date"),
+                               ),
                      Field("conclusion",
                            represent = diagnosis_status_represent,
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(diagnosis_status)),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1432,7 +1432,7 @@ class DiseaseCaseTrackingModel(DataModel):
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return {"disease_case_id": S3ReusableField.dummy("case_id"),
+        return {"disease_case_id": FieldTemplate.dummy("case_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1758,14 +1758,14 @@ class DiseaseContactTracingModel(DataModel):
         tablename = "disease_tracing"
         define_table(tablename,
                      case_id(empty=False),
-                     s3_datetime("start_date",
-                                 label = T("From"),
-                                 set_min="#disease_tracing_end_date",
-                                 ),
-                     s3_datetime("end_date",
-                                 label = T("To"),
-                                 set_max="#disease_tracing_start_date",
-                                 ),
+                     DateTimeField("start_date",
+                                   label = T("From"),
+                                   set_min = "#disease_tracing_end_date",
+                                   ),
+                     DateTimeField("end_date",
+                                   label = T("To"),
+                                   set_max = "#disease_tracing_start_date",
+                                   ),
                      # @todo: add site_id?
                      self.gis_location_id(),
                      Field("circumstances", "text",
@@ -1776,23 +1776,23 @@ class DiseaseContactTracingModel(DataModel):
                            requires = IS_IN_SET(contact_tracing_status, zero=None),
                            represent = represent_option(contact_tracing_status),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # @todo: implement specific S3Represent class
         represent = S3Represent(lookup=tablename, fields=["case_id"])
-        tracing_id = S3ReusableField("tracing_id", "reference %s" % tablename,
-                                     label = T("Tracing Record"),
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        tracing_id = FieldTemplate("tracing_id", "reference %s" % tablename,
+                                   label = T("Tracing Record"),
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "disease_tracing.id",
                                                               represent,
                                                               )),
-                                     sortby = "date",
-                                     comment = S3PopupLink(f = "tracing",
-                                                           tooltip = T("Add a new contact tracing information"),
-                                                           ),
-                                     )
+                                   sortby = "date",
+                                   comment = S3PopupLink(f = "tracing",
+                                                         tooltip = T("Add a new contact tracing information"),
+                                                         ),
+                                   )
 
         self.add_components(tablename,
                             disease_exposure = "tracing_id",
@@ -1849,11 +1849,11 @@ class DiseaseContactTracingModel(DataModel):
         tablename = "disease_exposure"
         define_table(tablename,
                      self.pr_person_id(empty = False,
-                                       widget = S3AddPersonWidget(controller = "pr",
-                                                                  pe_label = use_case_id,
-                                                                  ),
+                                       widget = PersonSelector(controller = "pr",
+                                                               pe_label = use_case_id,
+                                                               ),
                                        ),
-                     s3_datetime(
+                     DateTimeField(
                          comment = DIV(_class="tooltip",
                                        _title="%s|%s" % (T("Exposure Date/Time"),
                                                          T("Date and Time when the person has been exposed"),
@@ -1886,7 +1886,7 @@ class DiseaseContactTracingModel(DataModel):
                            requires = IS_IN_SET(exposure_risk, zero=None),
                            ),
                      Field("circumstances", "text"),
-                     *s3_meta_fields())
+                     )
 
         # List fields
         list_fields = ["person_id",
@@ -2136,10 +2136,9 @@ class DiseaseStatsModel(DataModel):
                            represent = lambda v: T(v) if v is not None \
                                                     else NONE,
                            ),
-                     s3_comments("description",
-                                 label = T("Description"),
-                                 ),
-                     *s3_meta_fields()
+                     CommentsField("description",
+                                   label = T("Description"),
+                                   ),
                      )
 
         # CRUD Strings
@@ -2193,7 +2192,7 @@ class DiseaseStatsModel(DataModel):
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     s3_date(empty = False),
+                     DateField(empty = False),
                      #Field("end_date", "date",
                      #      # Just used for the year() VF
                      #      readable = False,
@@ -2201,8 +2200,7 @@ class DiseaseStatsModel(DataModel):
                      #      ),
                      # Link to Source
                      self.stats_source_id(),
-                     s3_comments(),
-                     *s3_meta_fields()
+                     CommentsField(),
                      )
 
         # CRUD Strings
@@ -2321,15 +2319,14 @@ class DiseaseStatsModel(DataModel):
                                                 current.messages.UNKNOWN_OPT),
                            requires = IS_IN_SET(aggregate_types),
                            ),
-                     s3_date("date",
-                             label = T("Start Date"),
-                             ),
+                     DateField("date",
+                               label = T("Start Date"),
+                               ),
                      Field("sum", "double",
                            label = T("Sum"),
                            represent = lambda v: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     *s3_meta_fields()
                      )
 
         # ---------------------------------------------------------------------

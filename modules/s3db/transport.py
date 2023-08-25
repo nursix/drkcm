@@ -307,8 +307,8 @@ class TransportModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -380,8 +380,8 @@ class TransportModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -572,8 +572,8 @@ class TransportModel(DataModel):
                            label = T("Obsolete"),
                            represent = represent_option(obsolete_options),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -613,12 +613,12 @@ class TransportModel(DataModel):
                                        ],
                            ),
                      location_id(
-                        widget = S3LocationSelector(levels = [],
-                                                    show_address = False,
-                                                    show_postcode = False,
-                                                    show_latlon = True,
-                                                    show_map = True,
-                                                    ),
+                        widget = LocationSelector(levels = [],
+                                                  show_address = False,
+                                                  show_postcode = False,
+                                                  show_latlon = True,
+                                                  show_map = True,
+                                                  ),
                      ),
                      Field("status",
                            default = "OPEN",
@@ -628,8 +628,8 @@ class TransportModel(DataModel):
                                                 sort = False,
                                                 ),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Components
         self.add_components(tablename,
@@ -691,18 +691,18 @@ class TransportModel(DataModel):
 
         # Reusable field
         represent = transport_BorderCrossingRepresent(show_link=True)
-        border_crossing_id = S3ReusableField("border_crossing_id", "reference %s" % tablename,
-                                             label = T("Border Crossing"),
-                                             represent = represent,
-                                             requires = IS_ONE_OF(db, "%s.id" % tablename,
-                                                                  represent,
-                                                                  ),
-                                             sortby = "name",
-                                             comment = S3PopupLink(c="transport",
-                                                                   f="border_crossing",
-                                                                   tooltip=T("Create a new border crossing"),
-                                                                   ),
-                                             )
+        border_crossing_id = FieldTemplate("border_crossing_id", "reference %s" % tablename,
+                                           label = T("Border Crossing"),
+                                           represent = represent,
+                                           requires = IS_ONE_OF(db, "%s.id" % tablename,
+                                                                represent,
+                                                                ),
+                                           sortby = "name",
+                                           comment = S3PopupLink(c="transport",
+                                                                 f="border_crossing",
+                                                                 tooltip=T("Create a new border crossing"),
+                                                                 ),
+                                           )
 
         # ---------------------------------------------------------------------
         # Countries involved in a border crossing
@@ -720,7 +720,7 @@ class TransportModel(DataModel):
                                         zero=messages.SELECT_LOCATION,
                                         )),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Border Control Points
@@ -741,8 +741,8 @@ class TransportModel(DataModel):
                      border_crossing_id(),
                      organisation_id(),
                      location_id(),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

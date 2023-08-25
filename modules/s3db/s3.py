@@ -57,7 +57,9 @@ class S3HierarchyModel(DataModel):
                                 default = False,
                                 ),
                           Field("hierarchy", "json"),
-                          *S3MetaFields.timestamps())
+                          *MetaFields.timestamps(),
+                          meta = False,
+                          )
 
         # ---------------------------------------------------------------------
         # Return global names to s3.*
@@ -110,7 +112,7 @@ class S3DashboardModel(DataModel):
                           Field("active", "boolean",
                                 default = True,
                                 ),
-                          *s3_meta_fields())
+                          )
 
         self.configure(tablename,
                        onaccept = self.dashboard_onaccept,
@@ -184,7 +186,8 @@ class S3ImportJobModel(DataModel):
         self.define_table(tablename,
                           Field("job_id", length=128, unique=True, notnull=True),
                           Field("tablename"),
-                          s3_datetime("timestmp", default="now"),
+                          DateTimeField("timestmp", default="now"),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -201,6 +204,7 @@ class S3ImportJobModel(DataModel):
                           Field("ritems", "list:string"),
                           Field("citems", "list:string"),
                           Field("parent", length=128),
+                          meta = False,
                           )
 
         # ---------------------------------------------------------------------
@@ -271,8 +275,7 @@ class S3DynamicTablesModel(DataModel):
                            ),
                      # Link this table to a certain master key
                      self.auth_masterkey_id(),
-                     #s3_comments(),
-                     *s3_meta_fields(),
+                     #CommentsField(),
                      on_define = lambda table: \
                                  [self.s3_table_set_before_write(table)]
                      )
@@ -298,15 +301,15 @@ class S3DynamicTablesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        table_id = S3ReusableField("table_id", "reference %s" % tablename,
-                                   label = T("Table"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
+        table_id = FieldTemplate("table_id", "reference %s" % tablename,
+                                 label = T("Table"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                   sortby = "name",
-                                   )
+                                 sortby = "name",
+                                 )
 
         # ---------------------------------------------------------------------
         # Field in Dynamic Table
@@ -393,15 +396,15 @@ class S3DynamicTablesModel(DataModel):
                                                            ),
                                          ),
                            ),
-                     s3_comments(label = T("Tooltip"),
-                                 represent = s3_text_represent,
-                                 comment = DIV(_class="tooltip",
-                                               _title="%s|%s" % (T("Tooltip"),
-                                                                 T("Explanation of the field to be displayed in forms"),
-                                                                 ),
-                                               ),
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Tooltip"),
+                                   represent = s3_text_represent,
+                                   comment = DIV(_class="tooltip",
+                                                 _title="%s|%s" % (T("Tooltip"),
+                                                                   T("Explanation of the field to be displayed in forms"),
+                                                                   ),
+                                                 ),
+                                   ),
+                     )
 
         # Table configuration
         self.configure(tablename,
@@ -426,15 +429,15 @@ class S3DynamicTablesModel(DataModel):
 
         # Reusable field
         represent = S3Represent(lookup=tablename, show_link=True)
-        field_id = S3ReusableField("field_id", "reference %s" % tablename,
-                                   label = T("Field"),
-                                   represent = represent,
-                                   requires = IS_EMPTY_OR(
-                                            IS_ONE_OF(db, "%s.id" % tablename,
-                                                      represent,
-                                                      )),
-                                   sortby = "name",
-                                   )
+        field_id = FieldTemplate("field_id", "reference %s" % tablename,
+                                 label = T("Field"),
+                                 represent = represent,
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "%s.id" % tablename,
+                                                          represent,
+                                                          )),
+                                 sortby = "name",
+                                 )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

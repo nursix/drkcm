@@ -80,7 +80,7 @@ class VolunteerModel(DataModel):
                                 readable = False,
                                 writable = False,
                                 ),
-                          *s3_meta_fields())
+                          )
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -148,10 +148,10 @@ class VolunteerActivityModel(DataModel):
                      #                         readable = is_admin,
                      #                         writable = is_admin,
                      #                         ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Activity Type"),
@@ -173,19 +173,19 @@ class VolunteerActivityModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename, translate=True)
-        activity_type_id = S3ReusableField("activity_type_id", "reference %s" % tablename,
-                                           label = T("Activity Type"),
-                                           requires = IS_EMPTY_OR(
+        activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
+                                         label = T("Activity Type"),
+                                         requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "vol_activity_type.id",
                                                                   represent,
                                                                   #filterby="organisation_id",
                                                                   #filter_opts=filter_opts,
                                                                   )),
-                                           ondelete = "CASCADE",
-                                           represent = represent,
-                                           comment = comment
-                                           )
+                                         ondelete = "CASCADE",
+                                         represent = represent,
+                                         comment = comment
+                                         )
 
         # Components
         add_components(tablename,
@@ -223,7 +223,7 @@ class VolunteerActivityModel(DataModel):
                      self.org_sector_id(empty = False,
                                         ondelete = "CASCADE",
                                         ),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Volunteer Activities
@@ -237,12 +237,12 @@ class VolunteerActivityModel(DataModel):
                      self.org_sector_id(empty = False,
                                         ),
                      self.gis_location_id(),
-                     s3_date(future=0),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     DateField(future=0),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               ),
+                     CommentsField(),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Activity"),
@@ -258,17 +258,16 @@ class VolunteerActivityModel(DataModel):
             msg_list_empty = T("No Activities found"))
 
         represent = S3Represent(lookup=tablename, show_link=True)
-        activity_id = S3ReusableField("activity_id", "reference %s" % tablename,
-                                      label = T("Activity"),
-                                      requires = IS_ONE_OF(db,
-                                                           "vol_activity.id",
-                                                           represent,
-                                                           #filterby="organisation_id",
-                                                           #filter_opts=filter_opts,
-                                                           ),
-                                      represent = represent,
-                                      #comment = comment
-                                      )
+        activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
+                                    label = T("Activity"),
+                                    requires = IS_ONE_OF(db, "vol_activity.id",
+                                                         represent,
+                                                         #filterby="organisation_id",
+                                                         #filter_opts=filter_opts,
+                                                         ),
+                                    represent = represent,
+                                    #comment = comment
+                                    )
 
         # Components
         add_components(tablename,
@@ -332,7 +331,7 @@ $.filterOptionsS3({
                      activity_id(ondelete = "CASCADE",
                                  ),
                      activity_type_id(),
-                     *s3_meta_fields())
+                     )
 
         # ---------------------------------------------------------------------
         # Volunteer Activities <> People link table
@@ -350,10 +349,10 @@ $.filterOptionsS3({
                      self.hrm_job_title_id(#readable = vol_roles,
                                            #writable = vol_roles,
                                            ),
-                     s3_date(future=0),
-                     s3_date("end_date",
-                             label = T("End Date"),
-                             ),
+                     DateField(future=0),
+                     DateField("end_date",
+                               label = T("End Date"),
+                               ),
                      Field("hours", "double",
                            label = T("Hours"),
                            ),
@@ -371,8 +370,8 @@ $.filterOptionsS3({
                      #      writable = False,
                      #      ),
                      Field.Method("month", vol_activity_hours_month),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Hours"),
@@ -494,7 +493,7 @@ $.filterOptionsS3({
                      Field("activity_hours_id", "reference vol_activity_hours"),
                      activity_type_id(#script = script,
                                       ),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return None
@@ -625,10 +624,10 @@ class VolunteerAwardModel(DataModel):
                                               readable = is_admin,
                                               writable = is_admin,
                                               ),
-                     s3_comments(label = T("Description"),
-                                 comment = None,
-                                 ),
-                     *s3_meta_fields())
+                     CommentsField(label = T("Description"),
+                                   comment = None,
+                                   ),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Award"),
@@ -650,17 +649,17 @@ class VolunteerAwardModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        award_id = S3ReusableField("award_id", "reference %s" % tablename,
-                                   label = T("Award"),
-                                   requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db,
-                                                          "vol_award.id",
+        award_id = FieldTemplate("award_id", "reference %s" % tablename,
+                                 label = T("Award"),
+                                 requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "vol_award.id",
                                                           represent,
-                                                          filterby="organisation_id",
-                                                          filter_opts=filter_opts)),
-                                   represent = represent,
-                                   comment = comment
-                                   )
+                                                          filterby = "organisation_id",
+                                                          filter_opts = filter_opts,
+                                                          )),
+                                 represent = represent,
+                                 comment = comment
+                                 )
 
         # ---------------------------------------------------------------------
         # Volunteers <> Awards link table
@@ -671,8 +670,8 @@ class VolunteerAwardModel(DataModel):
                                        ondelete = "CASCADE",
                                        ),
                      award_id(),
-                     s3_date(future = 0,
-                             ),
+                     DateField(future = 0,
+                               ),
                      Field("number",
                            label = T("Number"),
                            # Enable in templates as-required
@@ -689,8 +688,8 @@ class VolunteerAwardModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Add Award"),
@@ -768,7 +767,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster Type"),
@@ -793,15 +792,16 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_type_id = S3ReusableField("vol_cluster_type_id", "reference %s" % tablename,
-                                              label = T("Volunteer Cluster Type"),
-                                              requires = IS_EMPTY_OR(
+        vol_cluster_type_id = FieldTemplate("vol_cluster_type_id", "reference %s" % tablename,
+                                            label = T("Volunteer Cluster Type"),
+                                            requires = IS_EMPTY_OR(
                                                             IS_ONE_OF(db,
                                                                       "vol_cluster_type.id",
-                                                                      represent)),
-                                              represent = represent,
-                                              comment = comment
-                                              )
+                                                                      represent,
+                                                                      )),
+                                            represent = represent,
+                                            comment = comment
+                                            )
 
         # ---------------------------------------------------------------------
         # Volunteer Cluster
@@ -814,7 +814,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster"),
@@ -839,15 +839,16 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_id = S3ReusableField("vol_cluster_id", "reference %s" % tablename,
-                                         label = T("Volunteer Cluster"),
-                                         requires = IS_EMPTY_OR(
+        vol_cluster_id = FieldTemplate("vol_cluster_id", "reference %s" % tablename,
+                                       label = T("Volunteer Cluster"),
+                                       requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db,
                                                                   "vol_cluster.id",
-                                                                  represent)),
-                                         represent = represent,
-                                         comment = comment
-                                         )
+                                                                  represent,
+                                                                  )),
+                                       represent = represent,
+                                       comment = comment
+                                       )
 
         # ---------------------------------------------------------------------
         # Volunteer Group Position
@@ -860,7 +861,7 @@ class VolunteerClusterModel(DataModel):
                                        IS_LENGTH(255),
                                        ],
                            ),
-                     *s3_meta_fields())
+                     )
 
         crud_strings[tablename] = Storage(
             label_create = T("Create Volunteer Cluster Position"),
@@ -885,12 +886,13 @@ class VolunteerClusterModel(DataModel):
                               )
 
         represent = S3Represent(lookup=tablename)
-        vol_cluster_position_id = S3ReusableField("vol_cluster_position_id", "reference %s" % tablename,
+        vol_cluster_position_id = FieldTemplate("vol_cluster_position_id", "reference %s" % tablename,
                                                 label = T("Volunteer Cluster Position"),
                                                 requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db,
-                                                                      "vol_cluster_position.id",
-                                                                      represent)),
+                                                                IS_ONE_OF(db,
+                                                                          "vol_cluster_position.id",
+                                                                          represent,
+                                                                          )),
                                                 represent = represent,
                                                 comment = comment
                                                 )
@@ -914,7 +916,7 @@ $.filterOptionsS3({
                                     writable=False),
                      vol_cluster_position_id(readable=False,
                                              writable=False),
-                     *s3_meta_fields())
+                     )
 
         # Pass names back to global scope (s3.*)
         return {"vol_cluster_type_id": vol_cluster_type_id,
@@ -930,7 +932,7 @@ $.filterOptionsS3({
             deployment_settings.
         """
 
-        return {"vol_cluster_id": S3ReusableField.dummy("vol_cluster_id"),
+        return {"vol_cluster_id": FieldTemplate.dummy("vol_cluster_id"),
                 }
 
 # =============================================================================
@@ -1425,7 +1427,7 @@ def vol_volunteer_controller():
 
                 elif not r.component and r.method != "delete":
                     # Use vol controller for person_id widget
-                    table.person_id.widget = S3AddPersonWidget(controller="vol")
+                    table.person_id.widget = PersonSelector(controller="vol")
                     # Show location ID
                     location_id.writable = location_id.readable = True
                     # Hide unwanted fields

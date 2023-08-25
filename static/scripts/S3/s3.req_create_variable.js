@@ -2,7 +2,7 @@
    - inserted into page in req_create_form_mods()
 */
 
-$(document).ready(function() {
+$(function() {
 
     var span = '<span class="req"> *</span>';
 
@@ -28,7 +28,7 @@ $(document).ready(function() {
         if ((comments === '') || (comments == i18n.req_next_msg) || (comments == i18n.req_other_msg)) {
             $('#req_req_comments').addClass('default-text')
                                   .val(i18n.req_other_msg)
-                                  .focus(function() {
+                                  .on('focus', function() {
                 if($(this).val() == i18n.req_other_msg){
                     // Clear on click if still default
                     $(this).val('').removeClass('default-text');
@@ -65,7 +65,7 @@ $(document).ready(function() {
         if ((comments === '') || (comments == i18n.req_next_msg) || (comments == i18n.req_other_msg)) {
             $('#req_req_comments').addClass('default-text')
                                   .val(i18n.req_next_msg)
-                                  .focus(function() {
+                                  .on('focus', function() {
                 if($(this).val() == i18n.req_next_msg){
                     // Clear on click if still default
                     $(this).val('').removeClass('default-text');
@@ -83,7 +83,7 @@ $(document).ready(function() {
     }
 
     // onChange
-    $('#req_req_type').change(function() {
+    $('#req_req_type').on('change', function() {
         var type = $('#req_req_type').val();
         if (type == 9) {
             type_9();
@@ -91,7 +91,7 @@ $(document).ready(function() {
             type_next(type);
         }
     });
-    $('#req_req_is_template').change(function() {
+    $('#req_req_is_template').on('change', function() {
         if ($('#req_req_is_template').is(':checked')) {
             $('#req_req_date__row1').hide();
             $('#req_req_date__row').hide();
@@ -117,7 +117,7 @@ $(document).ready(function() {
     });
 
     // onSubmit
-    $('form').submit(function() {
+    $('form').on('submit', function() {
         // Do the normal form-submission tasks
         // @ToDo: Look to have this happen automatically
         // http://forum.jquery.com/topic/multiple-event-handlers-on-form-submit
@@ -134,7 +134,7 @@ $(document).ready(function() {
                 // Reset the Navigation protection
                 S3SetNavigateAwayConfirm();
                 // Move focus to this field
-                $('#req_req_comments').focus();
+                $('#req_req_comments').trigger('focus');
                 // Prevent the Form's save from continuing
                 return false;
             }

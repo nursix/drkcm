@@ -86,11 +86,11 @@ class DVIModel(DataModel):
 
         tablename = "dvi_recreq"
         define_table(tablename,
-                     s3_datetime(label = T("Date/Time of Find"),
-                                 empty = False,
-                                 default = "now",
-                                 future = 0,
-                                 ),
+                     DateTimeField(label = T("Date/Time of Find"),
+                                   empty = False,
+                                   default = "now",
+                                   future = 0,
+                                   ),
                      Field("marker", length=64,
                            label = T("Marker"),
                            requires = IS_LENGTH(64),
@@ -121,7 +121,7 @@ class DVIModel(DataModel):
                            label = T("Task Status"),
                            represent = lambda opt: \
                                        task_status.get(opt, UNKNOWN_OPT)),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -153,13 +153,15 @@ class DVIModel(DataModel):
                                 fields = ["marker", "date", "bodies_found"],
                                 labels = T("[%(marker)s] %(date)s: %(bodies_found)s bodies"),
                                 )
-        dvi_recreq_id = S3ReusableField("dvi_recreq_id", "reference %s" % tablename,
-                                        requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                        "dvi_recreq.id",
-                                                        represent)),
-                                        represent = represent,
-                                        label=T("Recovery Request"),
-                                        ondelete = "RESTRICT")
+        dvi_recreq_id = FieldTemplate("dvi_recreq_id", "reference %s" % tablename,
+                                      label = T("Recovery Request"),
+                                      requires = IS_EMPTY_OR(
+                                                    IS_ONE_OF(db, "dvi_recreq.id",
+                                                              represent,
+                                                              )),
+                                      represent = represent,
+                                      ondelete = "RESTRICT",
+                                      )
 
         # ---------------------------------------------------------------------
         # Morgue
@@ -189,14 +191,17 @@ class DVIModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     *s3_meta_fields())
+                     )
 
         # Reusable Field
-        morgue_id = S3ReusableField("morgue_id", "reference %s" % tablename,
-                                    requires = IS_EMPTY_OR(IS_ONE_OF(db,
-                                                    "dvi_morgue.id", "%(name)s")),
-                                    represent = S3Represent(lookup="dvi_morgue"),
-                                    ondelete = "RESTRICT")
+        morgue_id = FieldTemplate("morgue_id", "reference %s" % tablename,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "dvi_morgue.id",
+                                                          "%(name)s",
+                                                          )),
+                                  represent = S3Represent(lookup="dvi_morgue"),
+                                  ondelete = "RESTRICT",
+                                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -233,12 +238,12 @@ class DVIModel(DataModel):
                                                   IS_NOT_ONE_OF(db, "dvi_body.pe_label")]),
                      morgue_id(),
                      dvi_recreq_id(),
-                     s3_datetime("date_of_recovery",
-                                 label = T("Date of Recovery"),
-                                 empty = False,
-                                 default = "now",
-                                 future = 0
-                                 ),
+                     DateTimeField("date_of_recovery",
+                                   label = T("Date of Recovery"),
+                                   empty = False,
+                                   default = "now",
+                                   future = 0
+                                   ),
                      Field("recovery_details", "text"),
                      Field("incomplete", "boolean",
                            label = T("Incomplete"),
@@ -255,7 +260,7 @@ class DVIModel(DataModel):
                      self.pr_gender(label=T("Apparent Gender")),
                      self.pr_age_group(label=T("Apparent Age")),
                      location_id(label=T("Place of Recovery")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -308,12 +313,13 @@ class DVIModel(DataModel):
         # ---------------------------------------------------------------------
         # Checklist of operations
         #
-        checklist_item = S3ReusableField("checklist_item", "integer",
-                                         requires = IS_IN_SET(task_status, zero=None),
-                                         default = 1,
-                                         label = T("Checklist Item"),
-                                         represent = lambda opt: \
-                                                     task_status.get(opt, UNKNOWN_OPT))
+        checklist_item = FieldTemplate("checklist_item", "integer",
+                                       label = T("Checklist Item"),
+                                       default = 1,
+                                       requires = IS_IN_SET(task_status, zero=None),
+                                       represent = lambda opt: \
+                                                   task_status.get(opt, UNKNOWN_OPT),
+                                       )
 
         tablename = "dvi_checklist"
         define_table(tablename,
@@ -334,7 +340,7 @@ class DVIModel(DataModel):
                                     label = T("DNA Profiling")),
                      checklist_item("dental",
                                     label = T("Dental Examination")),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -362,7 +368,7 @@ class DVIModel(DataModel):
                      Field("footwear", "text"),  # @todo: elaborate
                      Field("watch", "text"),     # @todo: elaborate
                      Field("other", "text"),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         ADD_PERSONAL_EFFECTS = T("Create Personal Effects")
@@ -422,7 +428,7 @@ class DVIModel(DataModel):
                            represent = lambda opt: \
                                        dvi_id_methods.get(opt, UNKNOWN_OPT)),
                      Field("comment", "text"),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(

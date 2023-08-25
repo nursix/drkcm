@@ -571,12 +571,10 @@ def group_membership():
                 group_ids = set()
 
             # Add-Person widget to use BR controller and expose pe_label
-            from core import S3AddPersonWidget
+            from core import PersonSelector
             field = table.person_id
             field.represent = s3db.pr_PersonRepresent(show_link=True)
-            field.widget = S3AddPersonWidget(controller = "br",
-                                             pe_label = True,
-                                             )
+            field.widget = PersonSelector(controller="br", pe_label=True)
 
             # Expose Family Member Roles
             ROLE = T("Role")

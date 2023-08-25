@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from collections import OrderedDict
 
 #from gluon import current, URL
@@ -41,5 +39,5 @@ def config(settings):
 
     # Uncomment to open Location represent links in a Popup Window
     settings.gis.popup_location_link = True
-    
+
 # END =========================================================================

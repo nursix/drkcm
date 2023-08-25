@@ -1,7 +1,7 @@
 """
-    Reusable fields
+    Field Types and Standards
 
-    Copyright: 2009-2022 (c) Sahana Software Foundation
+    Copyright: 2009-2023 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -25,33 +25,34 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3ReusableField",
-           "S3MetaFields",
+__all__ = ("CommentsField",
+           "CurrencyField",
+           "DateField",
+           "DateTimeField",
+           "LanguageField",
+           "TimeField",
+           "FieldTemplate",
+           "MetaFields",
            "s3_fieldmethod",
            "s3_meta_fields",
            "s3_all_meta_field_names",
            "s3_role_required",
            "s3_roles_permitted",
-           "s3_comments",
-           "s3_currency",
-           "s3_language",
-           "s3_date",
-           "s3_datetime",
-           "s3_time",
            )
 
 import datetime
 from uuid import uuid4
 
-from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_TIME, TAG, XML
+from gluon import current, DIV, Field, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, IS_TIME, TAG
 from gluon.sqlhtml import TimeWidget
-from gluon.storage import Storage
+from gluon.tools import DEFAULT
 
 from s3dal import SQLCustomType
 
 from ..tools import IS_ISO639_2_LANGUAGE_CODE, IS_ONE_OF, IS_UTC_DATE, \
-                    IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str
-from ..ui import S3ScriptItem, S3CalendarWidget, S3DateWidget
+                    IS_UTC_DATETIME, S3DateTime, S3Represent, s3_str, \
+                    s3_text_represent
+from ..ui import S3ScriptItem, S3CalendarWidget
 
 # =============================================================================
 def s3_fieldmethod(name, f, represent=None, search_field=None):
@@ -92,92 +93,121 @@ def s3_fieldmethod(name, f, represent=None, search_field=None):
     return fieldmethod
 
 # =============================================================================
-class S3ReusableField:
+class FieldTemplate:
     """
-        DRY Helper for reusable fields:
+        Field templates (=anonymous Field subclasses); useful to avoid
+        repeating the same Field definition in multiple tables
 
-        This creates neither a Table nor a Field, but just
-        an argument store. The field is created with the __call__
-        method, which is faster than copying an existing field.
+        Example:
+            # Define once:
+            person_id = FieldTemplate("person_id", "reference pr_person.id",
+                                      label = ...,
+                                      requires = ...,
+                                      represent = ...,
+                                      widget = ...,
+                                      )
+
+            # Use many times:
+            define_table("some_table",
+                         person_id(),
+                         )
+
+            define_table("other_table",
+                         person_id(),
+                         )
     """
 
-    def __init__(self, name, type="string", **attr):
+    def __init__(self, name, type="string", **args):
+        """
+            Args:
+                name: the field name
+                type: the field type
+                args: default keyword args for instances
+        """
 
-        self.name = name
-        self.__type = type
-        self.attr = Storage(attr)
+        class Template(Field):
+
+            def __init__(self, fieldname=None, empty=None, **kwargs):
+
+                ia = dict(args)
+                ia.update(kwargs)
+
+                if not fieldname:
+                    fieldname = name
+
+                if empty is not None and "requires" not in kwargs:
+                    requires = ia.get("requires")
+                    validate = requires[0] \
+                               if isinstance(requires, (list, tuple)) else requires
+
+                    if empty:
+                        if validate and not isinstance(validate, IS_EMPTY_OR):
+                            validate = IS_EMPTY_OR(validate)
+                    else:
+                        if not validate:
+                            validate = IS_NOT_EMPTY()
+                        elif isinstance(validate, IS_EMPTY_OR):
+                            validate = validate.other
+
+                    if isinstance(requires, (list, tuple)):
+                        ia["requires"] = [validate] + list(requires[1:])
+                    else:
+                        ia["requires"] = validate
+
+                script = ia.pop("script", None)
+                if script:
+                    comment = ia.get("comment")
+                    if comment:
+                        ia["comment"] = TAG[""](comment, S3ScriptItem(script))
+                    else:
+                        ia["comment"] = S3ScriptItem(script)
+
+                super().__init__(fieldname, type=type, **ia)
+
+        self.template = Template
 
     # -------------------------------------------------------------------------
-    def __call__(self, name=None, **attr):
+    def __call__(self, fieldname=None, empty=None, **kwargs):
+        """
+            Generates an instance of the Field template
 
-        if not name:
-            name = self.name
+            Args:
+                fieldname: alternative field name
+                empty: whether to allow empty field values
+                       - None: use the default validator
+                       - True: allow empty values
+                       - False: reject empty values
+                kwargs: any additional keyword arguments, including
+                        overrides for default keyword arguments
+        """
 
-        ia = dict(self.attr)
+        # Cannot override the field type
+        kwargs.pop("type", None)
 
-        DEFAULT = "default"
-        widgets = ia.pop("widgets", {})
-
-        if attr:
-            empty = attr.pop("empty", True)
-            if not empty:
-                requires = ia.get("requires")
-                if requires:
-                    if not isinstance(requires, (list, tuple)):
-                        requires = [requires]
-                    if requires:
-                        r = requires[0]
-                        if isinstance(r, IS_EMPTY_OR):
-                            requires = r.other
-                            ia["requires"] = requires
-            widget = attr.pop("widget", DEFAULT)
-            ia.update(**attr)
-        else:
-            widget = DEFAULT
-
-        if isinstance(widget, str):
-            if widget == DEFAULT and "widget" in ia:
-                widget = ia["widget"]
-            else:
-                if not isinstance(widgets, dict):
-                    widgets = {DEFAULT: widgets}
-                if widget != DEFAULT and widget not in widgets:
-                    raise NameError("Undefined widget: %s" % widget)
-                else:
-                    widget = widgets.get(widget)
-        ia["widget"] = widget
-
-        script = ia.pop("script", None)
-        if script:
-            comment = ia.get("comment")
-            if comment:
-                ia["comment"] = TAG[""](comment,
-                                        S3ScriptItem(script=script),
-                                        )
-            else:
-                ia["comment"] = S3ScriptItem(script=script)
-
-        return Field(name, self.__type, **ia)
+        return self.template(fieldname, empty=empty, **kwargs)
 
     # -------------------------------------------------------------------------
     @staticmethod
     def dummy(fname="dummy_id", ftype="integer"):
         """
-            Provide a dummy reusable field; for safe defaults in models
+            A dummy FieldTemplate; for safe defaults in models
 
             Args:
                 fname: the dummy field name
                 ftype: the dummy field type
 
             Returns:
-                a lambda with the same signature as a reusable field
+                a lambda with the same call signature as a FieldTemplate,
+                which ignores all keyword arguments except the field name
+                and produces a hidden dummy field without constraints and
+                default=None
         """
 
-        return lambda name=fname, **attr: Field(name,
-                                                ftype,
-                                                readable = False,
-                                                writable = False,
-                                                )
+        return lambda fieldname=fname, **attr: Field(fieldname,
+                                                     ftype,
+                                                     readable = False,
+                                                     writable = False,
+                                                     )
 
 # =============================================================================
 # Meta-fields
@@ -209,7 +239,7 @@ ALL_META_FIELD_NAMES = ("uuid",
                         )
 
 # -----------------------------------------------------------------------------
-class S3MetaFields:
+class MetaFields:
     """ Class to standardize meta-fields """
 
     # -------------------------------------------------------------------------
@@ -267,7 +297,7 @@ class S3MetaFields:
             are set to None during deletion to derestrict constraints)
         """
 
-        return Field("deleted_fk", #"text",
+        return Field("deleted_fk", #"json",
                      readable = False,
                      writable = False,
                      )
@@ -417,7 +447,7 @@ class S3MetaFields:
             Standard meta fields for all tables
 
             Returns:
-                tuple of Fields
+                list of Fields
         """
 
         return (cls.uuid(),
@@ -520,7 +550,7 @@ def s3_meta_fields():
             tuple of Field instances
     """
 
-    return S3MetaFields.all_meta_fields()
+    return MetaFields.all_meta_fields()
 
 def s3_all_meta_field_names():
     """
@@ -593,465 +623,474 @@ def s3_roles_permitted(name="roles_permitted", **attr):
     return Field(name, "list:reference auth_group", **attr)
 
 # =============================================================================
-def s3_comments(name="comments", **attr):
+class CommentsField(Field):
     """
-        Return a standard Comments field
+        Standard comments field with suitable defaults
     """
 
-    T = current.T
-    if "label" not in attr:
-        attr["label"] = T("Comments")
-    if "represent" not in attr:
-        # Support HTML markup
-        attr["represent"] = lambda comments: \
-            XML(comments) if comments else current.messages["NONE"]
-    if "widget" not in attr:
-        from ..ui import s3_comments_widget
-        _placeholder = attr.pop("_placeholder", None)
-        if _placeholder:
-            attr["widget"] = lambda f, v: \
-                s3_comments_widget(f, v, _placeholder=_placeholder)
+    def __init__(self,
+                 fieldname = "comments",
+                 label = DEFAULT,
+                 comment = DEFAULT,
+                 represent = DEFAULT,
+                 widget = DEFAULT,
+                 placeholder = None,
+                 **args):
+        """
+            Args:
+                placeholder: a placeholder text for the input
+
+            Other Args:
+                - see Field
+        """
+
+        T = current.T
+
+        if label is DEFAULT:
+            label = T("Comments")
+
+        if comment is DEFAULT:
+            comment = DIV(_class="tooltip",
+                          _title="%s|%s" % (T("Comments"),
+                                            T("Please use this field to record any additional information, including a history of the record if it is updated."),
+                                            ),
+                          )
+
+        if represent is DEFAULT:
+            represent = s3_text_represent
+
+        if widget is DEFAULT:
+            from ..ui import s3_comments_widget
+            if placeholder:
+                widget = lambda f, v: \
+                         s3_comments_widget(f, v, _placeholder=placeholder)
+            else:
+                widget = s3_comments_widget
+
+        super().__init__(fieldname,
+                         type = "text",
+                         label = label,
+                         comment = comment,
+                         represent = represent,
+                         widget = widget,
+                         **args)
+
+# =============================================================================
+class CurrencyField(Field):
+    """
+        Standard currency field with suitable defaults
+    """
+
+    def __init__(self,
+                 fieldname = "currency",
+                 length = 3,
+                 default = DEFAULT,
+                 label = DEFAULT,
+                 requires = DEFAULT,
+                 writable = DEFAULT,
+                 **args):
+        """
+            Args:
+                - see Field
+        """
+
+        settings = current.deployment_settings
+
+        if label is DEFAULT:
+            label = current.T("Currency")
+
+        if default is DEFAULT:
+            default = settings.get_fin_currency_default()
+
+        if requires is DEFAULT:
+            currency_opts = settings.get_fin_currencies()
+            requires = IS_IN_SET(list(currency_opts.keys()), zero=None)
+
+        if writable is DEFAULT:
+            writable = settings.get_fin_currency_writable()
+
+        super().__init__(fieldname,
+                         #type = "string",
+                         default = default,
+                         label = label,
+                         length = length,
+                         requires = requires,
+                         writable = writable,
+                         **args)
+
+# =============================================================================
+class LanguageField(Field):
+    """
+        Standard language selection field with suitable defaults
+    """
+
+    def __init__(self,
+                 fieldname = "language",
+                 length = 8,
+                 default = DEFAULT,
+                 label = DEFAULT,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 empty = None,
+                 select = DEFAULT,
+                 translate = True,
+                 **args):
+        """
+
+            Args:
+                empty: allow the field to remain empty:
+                       - None: accept empty, don't show empty-option (default)
+                       - True: accept empty, show empty-option
+                       - False: reject empty, don't show empty-option
+                       (keyword ignored if a "requires" is passed)
+                select: language selection as dict {code:name}, or None
+                        to allow all available languages; if omitted, the
+                        L10n_languages deployment setting will be used
+                translate: translate the language names into the
+                           current UI language
+
+            Other Args:
+                - see Field
+        """
+
+        if label is DEFAULT:
+            label = current.T("Language")
+
+        if default is DEFAULT:
+            default = current.deployment_settings.get_L10n_default_language()
+
+        if requires is DEFAULT:
+            zero = "" if empty else None
+            if select is DEFAULT:
+                # Use L10n_languages deployment setting
+                validator = IS_ISO639_2_LANGUAGE_CODE(sort = True,
+                                                      translate = translate,
+                                                      zero = zero,
+                                                      )
+            else:
+                # Use language selection as specified
+                # - can be None to denote "all available languages"
+                validator = IS_ISO639_2_LANGUAGE_CODE(select = select,
+                                                      sort = True,
+                                                      translate = translate,
+                                                      zero = zero,
+                                                      )
+            requires = validator if empty is False else IS_EMPTY_OR(validator)
         else:
-            attr["widget"] = s3_comments_widget
-    if "comment" not in attr:
-        attr["comment"] = DIV(_class="tooltip",
-                              _title="%s|%s" % \
-            (T("Comments"),
-             T("Please use this field to record any additional information, including a history of the record if it is updated.")))
+            validator = None
 
-    return Field(name, "text", **attr)
+        if represent is DEFAULT:
+            if not validator:
+                validator = IS_ISO639_2_LANGUAGE_CODE(translate=translate)
+            represent = validator.represent
 
-# =============================================================================
-def s3_currency(name="currency", **attr):
-    """
-        Return a standard Currency field
+        # Remove any conflicting type argument
+        args.pop("type", None)
 
-        @ToDo: Move to a Finance module?
-    """
-
-    settings = current.deployment_settings
-
-    if "label" not in attr:
-        attr["label"] = current.T("Currency")
-    if "default" not in attr:
-        attr["default"] = settings.get_fin_currency_default()
-    if "requires" not in attr:
-        currency_opts = settings.get_fin_currencies()
-        attr["requires"] = IS_IN_SET(list(currency_opts.keys()),
-                                     zero=None)
-    if "writable" not in attr:
-        attr["writable"] = settings.get_fin_currency_writable()
-
-    return Field(name, length=3, **attr)
+        super().__init__(fieldname,
+                         #type = "string",
+                         label = label,
+                         default = default,
+                         represent = represent,
+                         requires = requires,
+                         **args)
 
 # =============================================================================
-def s3_language(name="language", **attr):
+class DateField(Field):
     """
-        Return a standard Language field
-
-        Args:
-            name: the Field name
-            attr: Field parameters, as well as keywords:
-
-        Keyword Args:
-            empty: allow the field to remain empty:
-                    - None: accept empty, don't show empty-option (default)
-                    - True: accept empty, show empty-option
-                    - False: reject empty, don't show empty-option
-                    (keyword ignored if a "requires" is passed)
-            translate: translate the language names into current UI language
-                       (not recommended for selector to choose that UI language)
-            select: which languages to show in the selector:
-                    - a dict of {lang_code: lang_name}
-                    - None to expose all languages
-                    - False (or omit) to use L10n_languages setting (default)
+        Standard date field with suitable defaults and options
     """
 
-    if "label" not in attr:
-        attr["label"] = current.T("Language")
-    if "default" not in attr:
-        attr["default"] = current.deployment_settings.get_L10n_default_language()
+    def __init__(self,
+                 fieldname = "date",
+                 default = None,
+                 label = DEFAULT,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 widget = None,
+                 calendar = None,
+                 empty = None,
+                 future = None,
+                 past = None,
+                 **args):
+        """
+            Args:
+                default: the default date, or "now"
+                calendar: the calendar to use
+                empty: empty values allowed
+                future: selectable future interval (months)
+                past: selectable past interval (months)
+            Keyword Args:
+                set_min: set dynamic minimum for this date widget (DOM ID)
+                set_max: set dynamic maximum for this date widget (DOM ID)
+                month_selector: activate month-selector in calendar widget
+            Other Args:
+                - see Field
 
-    empty = attr.pop("empty", None)
-    zero = "" if empty else None
+            Notes:
+                - timezone-aware by default (stored as UTC)
+        """
 
-    translate = attr.pop("translate", True)
+        # Default label
+        if label is DEFAULT:
+            label = current.T("Date")
 
-    if "select" in attr:
-        # If select is present => pass as-is
-        requires = IS_ISO639_2_LANGUAGE_CODE(select = attr.pop("select"),
-                                             sort = True,
-                                             translate = translate,
-                                             zero = zero,
-                                             )
-    else:
-        # Use L10n_languages deployment setting
-        requires = IS_ISO639_2_LANGUAGE_CODE(sort = True,
-                                             translate = translate,
-                                             zero = zero,
-                                             )
+        # Default value
+        now = current.request.utcnow.date()
+        if default == "now":
+            default = now
 
-    if "requires" not in attr:
-        # Value required only if empty is explicitly False
-        if empty is False:
-            attr["requires"] = requires
-        else:
-            attr["requires"] = IS_EMPTY_OR(requires)
+        # Default widget
+        if widget is None or widget == "calendar":
 
-    if "represent" not in attr:
-        attr["represent"] = requires.represent
+            widget_options = ("set_min", "set_max", "month_selector")
+            widget_args = {}
 
-    return Field(name, length=8, **attr)
+            for option in widget_options:
+                if option in args:
+                    widget_args[option] = args.pop(option)
+
+            widget_args["calendar"] = calendar
+
+            # Past/future options
+            if past is not None:
+                widget_args["past_months"] = past
+            if future is not None:
+                widget_args["future_months"] = future
+
+            widget = S3CalendarWidget(**widget_args)
+
+        # Default representation
+        if represent is DEFAULT:
+            represent = lambda dt: \
+                        S3DateTime.date_represent(dt, utc=True, calendar=calendar)
+
+        # Default validation
+        if requires is DEFAULT:
+            if past is None and future is None:
+                requires = IS_UTC_DATE(calendar=calendar)
+            else:
+                from dateutil.relativedelta import relativedelta
+                minimum = maximum = None
+                if past is not None:
+                    minimum = now - relativedelta(months = past)
+                if future is not None:
+                    maximum = now + relativedelta(months = future)
+                requires = IS_UTC_DATE(calendar = calendar,
+                                       minimum = minimum,
+                                       maximum = maximum,
+                                       )
+
+            if empty is not False:
+                requires = IS_EMPTY_OR(requires)
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "date",
+                         default = default,
+                         label = label,
+                         represent = represent,
+                         requires = requires,
+                         widget = widget,
+                         calendar = calendar,
+                         **args)
 
 # =============================================================================
-def s3_date(name="date", **attr):
+class DateTimeField(Field):
     """
-        Return a standard date-field
-
-        Args:
-            name: the field name
-
-        Keyword Args:
-            default: the field default, can be specified as "now" for
-                     current date, or as Python date
-            past: number of selectable past months
-            future: number of selectable future months
-            widget: the form widget for the field, can be specified
-                    as "date" for S3DateWidget, "calendar" for
-                    S3CalendarWidget, or as a web2py FormWidget,
-                    defaults to "calendar"
-            calendar: the calendar to use for this widget, defaults
-                      to current.calendar
-            start_field: CSS selector for the start field for interval
-                         selection
-            default_interval: the default interval
-            default_explicit: whether the user must click the field
-                              to set the default, or whether it will
-                              automatically be set when the value for
-                              start_field is set
-            set_min: CSS selector for another date/time widget to
-                     dynamically set the minimum selectable date/time to
-                     the value selected in this widget
-            set_max: CSS selector for another date/time widget to
-                     dynamically set the maximum selectable date/time to
-                     the value selected in this widget
-            month_selector: allow direct selection of month
+        Standard date+time field with suitable defaults and options
 
         Notes:
-            - other S3ReusableField keywords are also supported (in addition
-              to the above)
-            - calendar-option requires widget="calendar" (default), otherwise
-              Gregorian calendar is enforced for the field
-            - set_min/set_max only supported for widget="calendar" (default)
-            - interval options currently not supported by S3CalendarWidget,
-              only available with widget="date"
-            - start_field and default_interval should be given together
-            - sets a default field label "Date" => use label-keyword to
-              override if necessary
-            - sets a default validator IS_UTC_DATE => use requires-keyword
-              to override if necessary
-            - sets a default representation S3DateTime.date_represent => use
-              represent-keyword to override if necessary
+            - timezone-aware by default (stored as UTC)
     """
 
-    attributes = dict(attr)
+    def __init__(self,
+                 fieldname = "date",
+                 default = None,
+                 label = DEFAULT,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 widget = None,
+                 calendar = None,
+                 past = None,
+                 future = None,
+                 minimum = None,
+                 maximum = None,
+                 empty = None,
+                 **args):
+        """
+            Args:
+                default: the default datetime, or "now"
+                widget: the widget, or one of "date"|"datetime"
+                represent: the representation method, or one of "date"|"datetime"
+                calendar: the calendar to use
+                past: selectable past interval (hours)
+                future: selectable future interval (hours)
+                minimum: the earliest selectable datetime (overrides past)
+                maximum: the latest selectable datetime (overrides future)
+                empty: empty values allowed
+            Keyword Args:
+                set_min: set dynamic minimum for this date/time widget (DOM ID)
+                set_max: set dynamic maximum for this date/time widget (DOM ID)
+                month_selector: activate month-selector in calendar widget
+            Other Args:
+                - see Field
+        """
 
-    # Calendar
-    calendar = attributes.pop("calendar", None)
+        # Default label
+        if label is DEFAULT:
+            label = current.T("Date")
 
-    # Past and future options
-    past = attributes.pop("past", None)
-    future = attributes.pop("future", None)
+        # Default value
+        now = current.request.utcnow
+        if default == "now":
+            default = now
 
-    # Label
-    if "label" not in attributes:
-        attributes["label"] = current.T("Date")
+        date_only = widget == "date"
 
-    # Widget-specific options (=not intended for S3ReusableField)
-    WIDGET_OPTIONS = ("start_field",
-                      "default_interval",
-                      "default_explicit",
-                      "set_min",
-                      "set_max",
-                      "month_selector",
-                      )
-
-    # Widget
-    widget = attributes.get("widget", "calendar")
-    widget_options = {}
-    if widget == "date":
-        # Legacy: S3DateWidget
-        # @todo: deprecate (once S3CalendarWidget supports all legacy options)
-
-        # Must use Gregorian calendar
-        calendar = "Gregorian"
-
-        # Past/future options
-        if past is not None:
-            widget_options["past"] = past
-        if future is not None:
-            widget_options["future"] = future
-
-        # Supported additional widget options
-        SUPPORTED_OPTIONS = ("start_field",
-                             "default_interval",
-                             "default_explicit",
-                             )
-        for option in WIDGET_OPTIONS:
-            if option in attributes:
-                if option in SUPPORTED_OPTIONS:
-                    widget_options[option] = attributes[option]
-                del attributes[option]
-
-        widget = S3DateWidget(**widget_options)
-
-    elif widget == "calendar":
-
-        # Default: calendar widget
-        widget_options["calendar"] = calendar
-
-        # Past/future options
-        if past is not None:
-            widget_options["past_months"] = past
-        if future is not None:
-            widget_options["future_months"] = future
-
-        # Supported additional widget options
-        SUPPORTED_OPTIONS = ("set_min",
-                             "set_max",
-                             "month_selector",
-                             )
-        for option in WIDGET_OPTIONS:
-            if option in attributes:
-                if option in SUPPORTED_OPTIONS:
-                    widget_options[option] = attributes[option]
-                del attributes[option]
-
-        widget = S3CalendarWidget(**widget_options)
-
-    else:
-        # Drop all widget options
-        for option in WIDGET_OPTIONS:
-            attributes.pop(option, None)
-
-    attributes["widget"] = widget
-
-    # Default value
-    now = current.request.utcnow.date()
-    if attributes.get("default") == "now":
-        attributes["default"] = now
-
-    # Representation
-    if "represent" not in attributes:
-        attributes["represent"] = lambda dt: \
-                                  S3DateTime.date_represent(dt,
-                                                            utc=True,
-                                                            calendar=calendar,
-                                                            )
-
-    # Validator
-    if "requires" not in attributes:
-
-        if past is None and future is None:
-            requires = IS_UTC_DATE(calendar=calendar)
-        else:
-            from dateutil.relativedelta import relativedelta
-            minimum = maximum = None
-            if past is not None:
-                minimum = now - relativedelta(months = past)
-            if future is not None:
-                maximum = now + relativedelta(months = future)
-            requires = IS_UTC_DATE(calendar=calendar,
-                                   minimum=minimum,
-                                   maximum=maximum,
-                                   )
-
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            # Default
-            attributes["requires"] = IS_EMPTY_OR(requires)
-
-    return Field(name, "date", **attributes)
-
-# =============================================================================
-def s3_datetime(name="date", **attr):
-    """
-        Return a standard datetime field
-
-        Args:
-            name: the field name
-
-        Keyword Args:
-            default: the field default, can be specified as "now" for
-                     current date/time, or as Python date
-            past: number of selectable past hours
-            future: number of selectable future hours
-            widget: form widget option, can be specified as "date"
-                    for date-only, or "datetime" for date+time (default),
-                    or as a web2py FormWidget
-            calendar: the calendar to use for this field, defaults
-                      to current.calendar
-            set_min: CSS selector for another date/time widget to
-                     dynamically set the minimum selectable date/time to
-                     the value selected in this widget
-            set_max: CSS selector for another date/time widget to
-                     dynamically set the maximum selectable date/time to
-                     the value selected in this widget
-
-        Notes:
-            - other S3ReusableField keywords are also supported (in addition
-               to the above)
-            - sets a default field label "Date" => use label-keyword to
-              override if necessary
-            - sets a default validator IS_UTC_DATE/IS_UTC_DATETIME => use
-              requires-keyword to override if necessary
-            - sets a default representation S3DateTime.date_represent or
-              S3DateTime.datetime_represent respectively => use the
-              represent-keyword to override if necessary
-    """
-
-    attributes = dict(attr)
-
-    # Calendar
-    calendar = attributes.pop("calendar", None)
-
-    # Limits
-    limits = {}
-    for keyword in ("past", "future", "min", "max"):
-        if keyword in attributes:
-            limits[keyword] = attributes[keyword]
-            del attributes[keyword]
-
-    # Compute earliest/latest
-    widget = attributes.pop("widget", None)
-    now = current.request.utcnow
-    if widget == "date":
-        # Helper function to convert past/future hours into
-        # earliest/latest datetime, retaining day of month and
-        # time of day
-        def limit(delta):
-            current_month = now.month
-            years, hours = divmod(-delta, 8760)
-            months = divmod(hours, 744)[0]
-            if months > current_month:
-                years += 1
-            month = divmod((current_month - months) + 12, 12)[1]
-            year = now.year - years
-            return now.replace(month=month, year=year)
-
-        earliest = limits.get("min")
-        if not earliest:
-            past = limits.get("past")
-            if past is not None:
-                earliest = limit(-past)
-        latest = limits.get("max")
-        if not latest:
-            future = limits.get("future")
-            if future is not None:
-                latest = limit(future)
-    else:
-        # Compute earliest/latest
-        earliest = limits.get("min")
-        if not earliest:
-            past = limits.get("past")
-            if past is not None:
-                earliest = now - datetime.timedelta(hours=past)
-        latest = limits.get("max")
-        if not latest:
-            future = limits.get("future")
-            if future is not None:
-                latest = now + datetime.timedelta(hours=future)
-
-    # Label
-    if "label" not in attributes:
-        attributes["label"] = current.T("Date")
-
-    # Widget
-    set_min = attributes.pop("set_min", None)
-    set_max = attributes.pop("set_max", None)
-    date_only = False
-    if widget == "date":
-        date_only = True
-        widget = S3CalendarWidget(calendar = calendar,
-                                  timepicker = False,
-                                  minimum = earliest,
-                                  maximum = latest,
-                                  set_min = set_min,
-                                  set_max = set_max,
-                                  )
-    elif widget is None or widget == "datetime":
-        widget = S3CalendarWidget(calendar = calendar,
-                                  timepicker = True,
-                                  minimum = earliest,
-                                  maximum = latest,
-                                  set_min = set_min,
-                                  set_max = set_max,
-                                  )
-    attributes["widget"] = widget
-
-    # Default value
-    if attributes.get("default") == "now":
-        attributes["default"] = now
-
-    # Representation
-    represent = attributes.pop("represent", None)
-    represent_method = None
-    if represent == "date" or represent is None and date_only:
-        represent_method = S3DateTime.date_represent
-    elif represent is None:
-        represent_method = S3DateTime.datetime_represent
-    if represent_method:
-        represent = lambda dt: represent_method(dt,
-                                                utc=True,
-                                                calendar=calendar,
-                                                )
-    attributes["represent"] = represent
-
-    # Validator and empty-option
-    if "requires" not in attributes:
+        # Determine earliest/latest
         if date_only:
-            validator = IS_UTC_DATE
+            if not minimum and past is not None:
+                minimum = self._limit(-past, now=now)
+            if not maximum and future is not None:
+                maximum = self._limit(future, now=now)
         else:
-            validator = IS_UTC_DATETIME
-        requires = validator(calendar=calendar,
-                             minimum=earliest,
-                             maximum=latest,
-                             )
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            attributes["requires"] = IS_EMPTY_OR(requires)
+            if not minimum and past is not None:
+                minimum = now - datetime.timedelta(hours=past)
+            if not maximum and future is not None:
+                maximum = now + datetime.timedelta(hours=future)
 
-    return Field(name, "datetime", **attributes)
+        # Default widget
+        if widget is None or widget in ("date", "datetime"):
+
+            widget_options = ("set_min", "set_max", "month_selector")
+            widget_args = {}
+            for option in widget_options:
+                if option in args:
+                    widget_args[option] = args.pop(option)
+
+            widget = S3CalendarWidget(calendar = calendar,
+                                      timepicker = not date_only,
+                                      minimum = minimum,
+                                      maximum = maximum,
+                                      **widget_args)
+
+        # Default representation
+        represent_method = None
+        if represent is DEFAULT:
+            represent = "date" if date_only else "datetime"
+        if represent == "date":
+            represent_method = S3DateTime.date_represent
+        elif represent == "datetime":
+            represent_method = S3DateTime.datetime_represent
+        if represent_method:
+            represent = lambda dt: \
+                        represent_method(dt, utc=True, calendar=calendar)
+
+        # Default validator and empty-option
+        if requires is DEFAULT:
+            valid = IS_UTC_DATE if date_only else IS_UTC_DATETIME
+            requires = valid(calendar = calendar,
+                             minimum = minimum,
+                             maximum = maximum,
+                             )
+            if empty is not False:
+                requires = IS_EMPTY_OR(requires)
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "datetime",
+                         label = label,
+                         default = default,
+                         widget = widget,
+                         represent = represent,
+                         requires = requires,
+                         calendar = calendar,
+                         **args)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _limit(delta, now=None):
+        """
+            Helper function to convert past/future hours into earliest/latest
+            datetime, retaining day of month and time of day
+        """
+
+        if now is None:
+            now = current.request.utcnow
+
+        current_month = now.month
+        years, hours = divmod(-delta, 8760)
+
+        months = divmod(hours, 744)[0]
+        if months > current_month:
+            years += 1
+
+        month = divmod((current_month - months) + 12, 12)[1]
+        year = now.year - years
+
+        return now.replace(month=month, year=year)
 
 # =============================================================================
-def s3_time(name="time_of_day", **attr):
+class TimeField(Field):
     """
-        Return a standard time field
+        Standard time field with suitable defaults
 
-        Args:
-            name: the field name
-
-        TODO Support minTime/maxTime options for fgtimepicker
+        Notes:
+            - not timezone-aware, default "now" is local time
     """
 
-    attributes = dict(attr)
+    def __init__(self,
+                 fieldname = "time_of_day",
+                 default = None,
+                 label = DEFAULT,
+                 represent = DEFAULT,
+                 requires = DEFAULT,
+                 widget = None,
+                 empty = None,
+                 **args):
+        """
+            Args:
+                default: the default time, or "now"
+                empty: empty values allowed
 
-    if "widget" not in attributes:
-        # adds .time class which launches fgtimepicker from s3.datepicker.js
-        attributes["widget"] = TimeWidget.widget
+            Other Args:
+                - see Field
+        """
 
-    if "requires" not in attributes:
-        requires = IS_TIME()
-        empty = attributes.pop("empty", None)
-        if empty is False:
-            attributes["requires"] = requires
-        else:
-            attributes["requires"] = IS_EMPTY_OR(requires)
+        if label is DEFAULT:
+            label = current.T("Time of Day")
 
-    return Field(name, "time", **attributes)
+        now = S3DateTime.to_local(current.request.utcnow).time().replace(microsecond=0)
+        if default == "now":
+            default = now
+
+        if widget is None:
+            # adds .time class which launches fgtimepicker from s3.datepicker.js
+            widget = TimeWidget.widget
+
+        if requires is DEFAULT:
+            requires = IS_TIME()
+            if empty is not False:
+                requires = IS_EMPTY_OR(requires)
+
+        if represent is DEFAULT:
+            represent = S3DateTime.time_represent
+
+        # Remove any conflicting type argument
+        args.pop("type", None)
+
+        super().__init__(fieldname,
+                         type = "time",
+                         label = label,
+                         default = default,
+                         widget = widget,
+                         represent = represent,
+                         requires = requires,
+                         **args)
 
 # END =========================================================================

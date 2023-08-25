@@ -32,7 +32,7 @@ def human_resource():
     """
         HR Controller
         - combined
-        Used for Summary view, Imports, S3AddPersonWidget and the service record
+        Used for Summary view, Imports, PersonSelector and the service record
     """
 
     # Custom method for Service Record

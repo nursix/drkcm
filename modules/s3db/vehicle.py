@@ -118,8 +118,8 @@ class VehicleModel(DataModel):
                            represent = lambda v: \
                                        float_represent(v, precision=2),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         type_represent = S3Represent(lookup=tablename,
                                      fields=["code", "name"],
@@ -143,20 +143,21 @@ class VehicleModel(DataModel):
                   deduplicate = S3Duplicate(primary=("code",)),
                   )
 
-        vehicle_type_id = S3ReusableField("vehicle_type_id", "reference %s" % tablename,
-                                          label = T("Vehicle Type"),
-                                          ondelete = "RESTRICT",
-                                          represent = type_represent,
-                                          requires = IS_EMPTY_OR(
+        vehicle_type_id = FieldTemplate("vehicle_type_id", "reference %s" % tablename,
+                                        label = T("Vehicle Type"),
+                                        ondelete = "RESTRICT",
+                                        represent = type_represent,
+                                        requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "vehicle_vehicle_type.id",
                                                                   type_represent,
-                                                                  orderby="vehicle_vehicle_type.code",
-                                                                  sort=True)),
-                                          sortby = "code",
-                                          # Allow changing by whether hierarchical or not
-                                          #widget = vehicle_type_widget,
-                                          #comment = vehicle_type_comment,
-                                          )
+                                                                  orderby = "vehicle_vehicle_type.code",
+                                                                  sort = True,
+                                                                  )),
+                                        sortby = "code",
+                                        # Allow changing by whether hierarchical or not
+                                        #widget = vehicle_type_widget,
+                                        #comment = vehicle_type_comment,
+                                        )
 
         # ---------------------------------------------------------------------
         # Vehicles
@@ -188,14 +189,14 @@ class VehicleModel(DataModel):
                                           IS_INT_IN_RANGE(0, None)
                                           ),
                            ),
-                     s3_date("service_date",
-                             label = T("Service Due"),
-                             ),
-                     s3_date("insurance_date",
-                             label = T("Insurance Renewal Due"),
-                             ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     DateField("service_date",
+                               label = T("Service Due"),
+                               ),
+                     DateField("insurance_date",
+                               label = T("Insurance Renewal Due"),
+                               ),
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -212,16 +213,16 @@ class VehicleModel(DataModel):
 
         represent = S3Represent(lookup = tablename)
 
-        vehicle_id = S3ReusableField("vehicle_id", "reference %s" % tablename,
-                                     label = T("Vehicle"),
-                                     ondelete = "RESTRICT",
-                                     represent = represent,
-                                     requires = IS_EMPTY_OR(
+        vehicle_id = FieldTemplate("vehicle_id", "reference %s" % tablename,
+                                   label = T("Vehicle"),
+                                   ondelete = "RESTRICT",
+                                   represent = represent,
+                                   requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db,
                                                               "vehicle_vehicle.id",
                                                               represent,
                                                               )),
-                                     )
+                                   )
 
         configure(tablename,
                   context = {"location": "asset_id$location_id"
@@ -239,7 +240,7 @@ class VehicleModel(DataModel):
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        return {"vehicle_vehicle_id": S3ReusableField.dummy("vehicle_id"),
+        return {"vehicle_vehicle_id": FieldTemplate.dummy("vehicle_id"),
                 }
 
 # END =========================================================================

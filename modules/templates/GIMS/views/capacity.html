@@ -1,0 +1,29 @@
+{{extend "layout.html"}}
+<div id='home'>
+ <div class='row'>
+  <div class='small-12 columns text-center'>
+   <h2>{{=title}}</h2>
+  </div>
+ </div>
+ <div class='row capacity-overview'>
+  <div class='small-12 columns text-center'>
+   <h4>{{=T("Current Capacities and Occupancy")}}</h4>
+   <div class='capacity-data'>
+    {{=table}}
+   </div>
+  </div>
+ </div>
+ <div class='row capacity-overview'>
+  <div class='small-12 columns text-center'>
+   <h4>{{=T("Occupancy Development")}}</h4>
+   <div class='capacity-data'>
+    {{=chart}}
+   </div>
+  </div>
+ </div>
+ <div class='row occupancy-data'>
+  <div class='small-12 columns text-center'>
+  {{=export}}
+  </div>
+ </div>
+</div>

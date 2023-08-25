@@ -52,19 +52,19 @@ def user():
         ADMIN = True
         pe_ids = None
 
-    elif s3_has_role("ORG_ADMIN"):
-        pe_ids = auth.get_managed_orgs()
-        if pe_ids is None:
-            # OrgAdmin with default realm, but user not affiliated with any org
-            auth.permission.fail()
-        elif pe_ids is not True:
-            # OrgAdmin for certain organisations
+    elif auth.s3_has_roles(("ORG_ADMIN", "ORG_GROUP_ADMIN")):
+        pe_ids = auth.permission.permitted_realms("auth_user", "update")
+        if pe_ids:
+            # Restricted to certain organisations
             otable = s3db.org_organisation
             s3.filter = (otable.pe_id.belongs(pe_ids)) & \
                         (table.organisation_id == otable.id)
+        elif pe_ids is not None:
+            # Not allowed for any organisations
+            auth.permission.fail()
         else:
-            # OrgAdmin with site-wide permission
-            pe_ids = None
+            # Allowed for all organisations
+            pass
     else:
         auth.permission.fail()
 
@@ -411,7 +411,7 @@ def user():
                 tuple_rows = True
                 form[0].insert(8, row)
             else:
-                # Formstyle with just a single row (e.g. Bootstrap, Foundation or DRRPP)
+                # Formstyle with just a single row (e.g. Foundation)
                 tuple_rows = False
                 form[0].insert(4, row)
             # @ToDo: Ensure this reads existing values & creates/updates when saved
@@ -531,6 +531,47 @@ def audit():
     return crud_controller("s3", "audit")
 
 # =============================================================================
+@auth.s3_requires_membership(1)
+def event():
+    """
+        CRUD controller for Auth event log
+    """
+
+    def prep(r):
+
+        from core import S3DateTime
+
+        table = auth.settings.table_event
+
+        field = table.time_stamp
+        field.represent = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
+
+        field = table.user_id
+        field.represent = auth.user_represent
+
+        list_fields = ["time_stamp", "user_id", "description"]
+
+        s3db.configure(table,
+                       insertable = False,
+                       editable = False,
+                       deletable = False,
+                       list_fields = list_fields,
+                       orderby = ~table.time_stamp,
+                       )
+
+        s3.crud_strings[auth.settings.table_event_name] = Storage(
+            title_display = T("Logged Event"),
+            title_list = T("Logged Events"),
+            label_list_button = T("List Events"),
+            msg_list_empty = T("No Events currently registered"),
+            )
+
+        return True
+    s3.prep = prep
+
+    return crud_controller("auth", "event")
+
+# =============================================================================
 # Consent Tracking
 #
 @auth.s3_requires_membership(1)
@@ -613,7 +654,7 @@ def consent_option():
                            csv_stylesheet = ("auth", "consent_option.xsl"),
                            )
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 @auth.s3_requires_membership(1)
 def consent():
 

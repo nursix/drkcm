@@ -106,7 +106,7 @@
         var extractFrom = function(query, f) {
             return query && query.split('&').filter(function(item) {
                 var q = item.split('=');
-                return q.length > 1 && f(decodeURIComponent(q[0]));
+                return q.length > 1 && f(S3.urlDecode(q[0]));
             }) || [];
         };
 
@@ -415,7 +415,7 @@
             }
 
             // Parse and store the table config
-            var tableConfig = $.parseJSON(config.val());
+            var tableConfig = JSON.parse(config.val());
             this.tableConfig = tableConfig;
 
             // Apply actions fallback
@@ -1742,7 +1742,7 @@
 
                 if (oSetting) {
 
-                    var args = 'id=' + self.tableid,
+                    var args = 'id=' + self.tableID,
                         sSearch = oSetting.oPreviousSearch.sSearch,
                         aaSort = oSetting.aaSorting,
                         aaSortFixed = oSetting.aaSortingFixed,
@@ -1805,7 +1805,7 @@
                     var items = link.search.slice(1).split('&'),
                         queries = items.map(function(item) {
                             var q = item.split('=');
-                            return [decodeURIComponent(q[0]), decodeURIComponent(q[1])];
+                            return [S3.urlDecode(q[0]), S3.urlDecode(q[1])];
                         }).filter(function(item) {
                             return item[0].indexOf('.') != -1;
                         });
@@ -1946,7 +1946,7 @@
     // DOCUMENT-READY
 
     // Actions when document ready
-    $(document).ready(function() {
+    $(function() {
 
         if (S3.dataTables) {
             // Initialize all data tables

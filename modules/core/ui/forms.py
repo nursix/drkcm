@@ -56,7 +56,8 @@ from ..resource import FS
 from ..tools import s3_mark_required, set_last_record_id, s3_str, \
                     s3_validate, JSONERRORS, JSONSEPARATORS, S3Represent
 
-from .widgets import S3Selector, S3UploadWidget
+from .widgets import S3UploadWidget
+from .selectors import LocationSelector
 
 # Compact JSON encoding
 DEFAULT = lambda: None
@@ -97,8 +98,7 @@ class S3SQLForm:
                 msg = "Invalid form element: %s" % str(element)
                 if debug:
                     raise SyntaxError(msg)
-                else:
-                    current.log.error(msg)
+                current.log.error(msg)
 
         opts = {}
         attr = {}
@@ -312,15 +312,26 @@ class S3SQLForm:
                     f = f[:-5]
                 if f.startswith(tablename):
                     f = f[len(tablename) + 1:] # : -6
-                    if f.startswith("sub_"):
-                        # Component
+                    # Subtable / S3SQLInlineComponent
+                    if f.startswith("sub_default"):
+                        f = f[11:]
+                    elif f.startswith("sub_"):
                         f = f[4:]
-                elif f.startswith("sub-default"):
-                    # S3SQLInlineComponent[CheckBox]
+                    # S3SQLInlineLink
+                    elif f.startswith("link_default"):
+                        f = f[12:]
+                    elif f.startswith("link_"):
+                        f = f[5:]
+                # S3SQLInlineComponent
+                elif f.startswith("sub_default"):
                     f = f[11:]
                 elif f.startswith("sub_"):
-                    # S3GroupedOptionsWidget
                     f = f[4:]
+                # S3SQLInlineLink
+                elif f.startswith("link_default"):
+                    f = f[12:]
+                elif f.startswith("link_"):
+                    f = f[5:]
                 headings = subheadings.get(f)
                 if not headings:
                     try:
@@ -559,8 +570,7 @@ class S3SQLDefaultForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = settings.submit_style
             except:
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings
@@ -624,7 +634,7 @@ class S3SQLDefaultForm(S3SQLForm):
                 def parse_key(value):
                     key = s3_str(value)
                     if key.startswith("{"):
-                        # JSON-based selector (e.g. S3LocationSelector)
+                        # JSON-based selector (e.g. LocationSelector)
                         return json.loads(key).get("id")
                     else:
                         # Normal selector (e.g. OptionsWidget)
@@ -818,8 +828,7 @@ class S3SQLCustomForm(S3SQLForm):
             msg = "Invalid form element: %s" % str(element)
             if current.deployment_settings.get_base_debug():
                 raise SyntaxError(msg)
-            else:
-                current.log.error(msg)
+            current.log.error(msg)
 
     # -------------------------------------------------------------------------
     def append(self, element):
@@ -1010,15 +1019,16 @@ class S3SQLCustomForm(S3SQLForm):
                     if not permitted:
                         forbidden.append(alias)
                     continue
-                else:
-                    cid = row[component.table._id]
-                    permitted = has_permission("read", ctname, cid)
-                    if not permitted:
-                        forbidden.append(alias)
-                        continue
-                    permitted = has_permission("update", ctname, cid)
-                    if not permitted:
-                        noupdate.append(alias)
+
+                cid = row[component.table._id]
+                permitted = has_permission("read", ctname, cid)
+                if not permitted:
+                    forbidden.append(alias)
+                    continue
+
+                permitted = has_permission("update", ctname, cid)
+                if not permitted:
+                    noupdate.append(alias)
 
                 # Add the row to the subrows
                 subrows[alias] = row
@@ -1138,8 +1148,7 @@ class S3SQLCustomForm(S3SQLForm):
             try:
                 form[0][-1][0][0]["_class"] = crud_settings.submit_style
             except (KeyError, IndexError, TypeError):
-                # Submit button has been removed or a different formstyle,
-                # such as Bootstrap (which is already styled anyway)
+                # Submit button has been removed or a different formstyle
                 pass
 
         # Subheadings
@@ -1897,7 +1906,6 @@ class S3SQLDummyField(S3SQLFormElement):
         A Dummy Field
 
         A simple DIV which can then be acted upon with JavaScript
-        - used by dc_question Grids
     """
 
     # -------------------------------------------------------------------------
@@ -1949,7 +1957,6 @@ class S3SQLSectionBreak(S3SQLFormElement):
         A Section Break
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------
@@ -2001,7 +2008,6 @@ class S3SQLInlineInstruction(S3SQLFormElement):
         Inline Instructions
 
         A simple DIV which can then be acted upon with JavaScript &/or Styled
-        - used by dc_template.layout
     """
 
     # -------------------------------------------------------------------------
@@ -2012,7 +2018,7 @@ class S3SQLInlineInstruction(S3SQLFormElement):
                 say: What to Say
         """
 
-        super(S3SQLInlineInstruction, self).__init__(None)
+        super().__init__(None)
 
         self.do = do
         self.say = say
@@ -2084,7 +2090,7 @@ class S3SQLSubForm(S3SQLFormElement):
                 options: options for the form element
         """
 
-        super(S3SQLSubForm, self).__init__(selector, **options)
+        super().__init__(selector, **options)
 
         self.alias = None
 
@@ -2543,7 +2549,7 @@ class S3SQLVerticalSubFormLayout(S3SQLSubFormLayout):
             own labels)
         """
 
-        headers = super(S3SQLVerticalSubFormLayout, self).headers
+        headers = super().headers
 
         header_row = headers(data, readonly = readonly)
         element = header_row.element("tr")
@@ -2558,7 +2564,7 @@ class S3SQLVerticalSubFormLayout(S3SQLSubFormLayout):
             horizontal layout.
         """
 
-        rowstyle = super(S3SQLVerticalSubFormLayout, self).rowstyle
+        rowstyle = super().rowstyle
         return rowstyle(form, fields, *args, **kwargs)
 
     # -------------------------------------------------------------------------
@@ -2613,7 +2619,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
 
     def __init__(self, selector, **options):
 
-        super(S3SQLInlineComponent, self).__init__(selector, **options)
+        super().__init__(selector, **options)
 
         self.resource = None
         self.upload = {}
@@ -2635,8 +2641,8 @@ class S3SQLInlineComponent(S3SQLSubForm):
         # Check selector
         try:
             component = resource.components[selector]
-        except KeyError:
-            raise SyntaxError("Undefined component: %s" % selector)
+        except KeyError as e:
+            raise SyntaxError("Undefined component: %s" % selector) from e
 
         # Check permission
         permitted = current.auth.s3_has_permission("read",
@@ -2692,8 +2698,8 @@ class S3SQLInlineComponent(S3SQLSubForm):
         component_name = self.selector
         try:
             component = resource.components[component_name]
-        except KeyError:
-            raise AttributeError("Undefined component")
+        except KeyError as e:
+            raise AttributeError("Undefined component") from e
 
         options = self.options
 
@@ -2816,7 +2822,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                 field = rfield.field
 
                 widget = field.widget
-                if isinstance(widget, S3Selector):
+                if isinstance(widget, LocationSelector):
                     # Use the widget extraction/serialization method
                     value = widget.serialize(widget.extract(row[colname]))
                 elif hasattr(field, "formatter"):
@@ -2978,7 +2984,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
             # Get the item record ID
             if "_delete" in item and item["_delete"]:
                 continue
-            elif "_id" in item:
+            if "_id" in item:
                 record_id = item["_id"]
                 # Check permissions to edit this item
                 if _editable:
@@ -3281,14 +3287,14 @@ class S3SQLInlineComponent(S3SQLSubForm):
                             if not hasattr(field, "type"):
                                 # Virtual Field
                                 continue
-                            elif field.type == "upload":
+                            if field.type == "upload":
                                 # Find, rename and store the uploaded file
                                 rowindex = item.get("_index", None)
                                 if rowindex is not None:
                                     filename = self._store_file(table, f, rowindex)
                                     if filename:
                                         values[f] = filename
-                            elif isinstance(widget, S3Selector):
+                            elif isinstance(widget, LocationSelector):
                                 # Value must be processed by widget post-process
                                 value, error = widget.postprocess(d["value"])
                                 if not error:
@@ -3322,7 +3328,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                         # so just ignore it
                         continue
 
-                    elif not component.multiple or not multiple:
+                    if not component.multiple or not multiple:
                         # Do not create a second record in this component
                         query = (resource._id == master_id) & \
                                 component.get_join()
@@ -3601,7 +3607,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                     if type(value) is str:
                         value = s3_str(value)
                     widget = formfield.widget
-                    if isinstance(widget, S3Selector):
+                    if isinstance(widget, LocationSelector):
                         # Use the widget parser to get at the selected ID
                         value, error = widget.parse(value).get("id"), None
                     else:
@@ -3715,7 +3721,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
         component = self.resource.components[self.selector]
         table = component.table
 
-        defaults = dict()
+        defaults = {}
         for f in filterby:
             fieldname = f["field"]
             if fieldname not in table.fields:
@@ -3729,8 +3735,7 @@ class S3SQLInlineComponent(S3SQLSubForm):
                 if isinstance(options, (list, tuple)):
                     if len(options) != 1:
                         continue
-                    else:
-                        default = options[0]
+                    default = options[0]
                 else:
                     default = options
             else:
@@ -4400,8 +4405,8 @@ class S3SQLInlineLink(S3SQLInlineComponent):
         selector = self.selector
         try:
             component = self.resource.components[selector]
-        except KeyError:
-            raise SyntaxError("Undefined component: %s" % selector)
+        except KeyError as e:
+            raise SyntaxError("Undefined component: %s" % selector) from e
 
         link = component.link
         if not link:

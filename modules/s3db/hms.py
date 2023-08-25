@@ -255,8 +255,8 @@ class HospitalDataModel(DataModel):
                            readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         ADD_HOSPITAL = T("Create Hospital")
@@ -374,17 +374,17 @@ class HospitalDataModel(DataModel):
                                               )
 
         represent = S3Represent(lookup=tablename)
-        hospital_id = S3ReusableField("hospital_id", "reference %s" % tablename,
-                                      comment = hms_hospital_id_comment,
-                                      label = T("Hospital"),
-                                      ondelete = "RESTRICT",
-                                      represent = represent,
-                                      requires = IS_EMPTY_OR(
+        hospital_id = FieldTemplate("hospital_id", "reference %s" % tablename,
+                                    comment = hms_hospital_id_comment,
+                                    label = T("Hospital"),
+                                    ondelete = "RESTRICT",
+                                    represent = represent,
+                                    requires = IS_EMPTY_OR(
                                                     IS_ONE_OF(db, "hms_hospital.id",
                                                               represent
                                                               )),
-                                      sortby = "name",
-                                      )
+                                    sortby = "name",
+                                    )
 
         # Components
         single = {"joinby": "hospital_id",
@@ -491,9 +491,9 @@ class HospitalDataModel(DataModel):
                            requires = IS_EMPTY_OR(
                                         IS_IN_SET(hms_facility_status_opts)),
                            ),
-                     s3_date("date_reopening",
-                             label = T("Estimated Reopening Date"),
-                             ),
+                     DateField("date_reopening",
+                               label = T("Estimated Reopening Date"),
+                               ),
                      Field("facility_operations", "integer",
                            label = T("Facility Operations"),
                            represent = lambda opt: \
@@ -627,7 +627,7 @@ class HospitalDataModel(DataModel):
                      Field("access_status", "text",
                            label = T("Road Conditions")),
 
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -675,7 +675,7 @@ class HospitalDataModel(DataModel):
                      Field("website",
                            label = T("Website"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -726,10 +726,10 @@ class HospitalDataModel(DataModel):
                            requires = IS_IN_SET(hms_bed_type_opts,
                                                 zero=None),
                            ),
-                     s3_datetime(empty = False,
-                                 label = T("Date of Report"),
-                                 future = 0,
-                                 ),
+                     DateTimeField(empty = False,
+                                   label = T("Date of Report"),
+                                   future = 0,
+                                   ),
                      Field("beds_baseline", "integer",
                            default = 0,
                            label = T("Baseline Number of Beds"),
@@ -748,8 +748,8 @@ class HospitalDataModel(DataModel):
                            represent = IS_INT_AMOUNT.represent,
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # Field configuration
         # CRUD Strings
@@ -852,7 +852,7 @@ class HospitalDataModel(DataModel):
                            default = False,
                            label = T("Obstetrics/Gynecology"),
                            ),
-                     *s3_meta_fields())
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -883,8 +883,8 @@ class HospitalDataModel(DataModel):
                      Field("type"),
                      Field("description"),
                      Field("quantity"),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -915,7 +915,7 @@ class HospitalDataModel(DataModel):
     # -------------------------------------------------------------------------
     def defaults(self):
 
-        return {"hms_hospital_id": S3ReusableField.dummy("hospital_id"),
+        return {"hms_hospital_id": FieldTemplate.dummy("hospital_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -1084,8 +1084,7 @@ class HospitalCTCModel(DataModel):
                      Field("problem_details", "text",
                            label = T("Current problems, details"),
                            ),
-                     s3_comments(),
-                     *s3_meta_fields(),
+                     CommentsField(),
                      on_define = lambda table: \
                          [table.modified_on.set_attributes(label = T("Last updated on"),
                                                            readable = True
@@ -1146,10 +1145,10 @@ class HospitalActivityReportModel(DataModel):
         tablename = "hms_activity"
         self.define_table(tablename,
                           self.hms_hospital_id(ondelete = "CASCADE"),
-                          s3_datetime(label = T("Date & Time"),
-                                      empty = False,
-                                      future = 0,
-                                      ),
+                          DateTimeField(label = T("Date & Time"),
+                                        empty = False,
+                                        future = 0,
+                                        ),
                           # Current Number of Patients
                           Field("patients", "integer",
                                 default = 0,
@@ -1181,7 +1180,7 @@ class HospitalActivityReportModel(DataModel):
                           Field("comment", length=128,
                                 requires = IS_LENGTH(128),
                                 ),
-                          *s3_meta_fields())
+                          )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(

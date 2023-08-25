@@ -79,11 +79,11 @@ FacilityLayoutRequirements,org,facility,"RAUMKONZEPT
 Aktuell liegt kein (ausreichendes) Raumkonzept für Ihre Teststelle vor. Bitte beachten Sie, dass eine räumliche Abgrenzung zu Ihren üblichen Betriebsräumen gegeben sein muss.
 
 Bitte legen Sie ein entsprechendes Raumkonzept vor. ",
-TestStationManagerRequirements,org,facility,"TESTSTELLEN-VERANTWORTLICHER
+TestProviderRequirements,org,commission,"Kommerzielle Testanbieter müssen mindestens einen Teststellenverantwortlichen angeben. Zum Teststellenverantwortlichen sind Name, Vorname, Geburtsdatum sowie Kontaktinformationen (Email, Telefon) zu hinterlegen. Außerdem muss der Verantwortliche ein polizeiliches Führungszeugnis sowie eine Erklärung zu anhängigen Ermittlungs- oder Strafverfahren bei der Aufsichtsbehörde (LSJV) vorlegen.
 
-Die Angaben zum Teststellenverantwortlichen sind unvollständig.
+Arztpraxen, Zahnarztpraxen sowie Hilfsorganisationen müssen ein Dokument hochladen (auf dem Dokumente-Reiter), anhand dessen ihr jeweiliger Zulassungsstatus geprüft werden kann. Details dazu entnehmen Sie bitte der aktuellen Dokumentation zum Portal.
 
-Zum Teststellenverantwortlichen sind Name, Vorname, Geburtsdatum sowie Kontaktinformationen (Email, Telefon) zu hinterlegen. Außerdem muss der Verantwortliche ein polizeiliches Führungszeugnis sowie eine Erklärung zu anhängigen Ermittlungs- oder Strafverfahren bei der Aufsichtsbehörde (LSJV) vorlegen.",
+Alle eingesandten oder hochgeladenen Dokumente müssen durch das LSJV geprüft werden, bevor eine (Weiter-)Beauftragung erfolgen kann.",
 TestResultRegistrationIntroDisabled,disease,case_diagnostics,Placeholder post for test result registration page intro,Rename into TestResultRegistrationIntro (remove Disabled-suffix) to activate
 HomepageIntroDisabled,default,index,,
 Subject FacilityObsolete,org,facility,Deaktivierung ihrer Teststellen-Registrierung,
@@ -104,5 +104,40 @@ Mit freundlichen Grüßen,
 Ihr Landesamt für Soziales, Jugend und Versorgung
 ",
 DaycareTestingInquiry,disease,daycare_testing,Zu Planungszwecken benötigen wir die folgenden Angaben zu Ihrer Organisation:,
-TestStationManagerIntro,hrm,human_resource,"Hinweis: Teststellenverantwortliche müssen ein Benutzerkonto haben, im persönlichen Profil ihr Geburtsdatum, Steuer-ID, Email-Adresse und Telefonnummer hinterlegen, sowie ein polizeiliches Führungszeugnis und eine schriftliche Erklärung zu anhängigen Ermittlungs- und Strafverfahren einreichen.
+Message CommissionStatusChanged,org,commission,"Der Status der Beauftragung für den Teststellenbetreiber {name} hat sich geändert. 
+
+Details siehe {url}
+
+Beachten Sie bitte: diese Benachrichtigung wurde automatisch erstellt und dient lediglich zu Ihrer Information. Ein amtlicher Bescheid zur Änderung ergeht ggf. gesondert per Post. Bei Rückfragen wenden Sie sich bitte an den Support.",
+Message CommissionIssued,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung ab {start} erteilt.
+
+Details siehe: {url}
+
+Beachten Sie bitte: diese Benachrichtigung wurde automatisch erstellt und dient lediglich zu Ihrer Information. Ein amtlicher Bescheid ergeht gesondert per Post.",
+Message CommissionSuspended,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung mit Wirkung vom {status_date} ausgesetzt, und alle zugehörigen Teststellen vorläufig aus dem öffentlichen Verzeichnis entfernt.
+
+Grund: {reason}
+
+{explanation}
+
+Details siehe: {url}
+
+Beachten Sie bitte: diese Benachrichtigung wurde automatisch erstellt und dient lediglich zu Ihrer Information. Ein amtlicher Bescheid ergeht ggf. gesondert per Post.",
+Message CommissionRevoked,org,commission,"Für den Teststellenbetreiber {name} wurde die Beauftragung mit Wirkung vom {status_date} entzogen, und alle zugehörigen Teststellen aus dem öffentlichen Verzeichnis entfernt.
+
+Details siehe: {url}
+
+Beachten Sie bitte: diese Benachrichtigung wurde automatisch erstellt und dient lediglich zu Ihrer Information. Ein amtlicher Bescheid ergeht gesondert per Post.",
+Message CommissionExpired,org,commission,"Für den Teststellenbetreiber {name} ist die befristete Beauftragung am {end_date} ausgelaufen. Alle zugehörigen Teststellen wurden aus dem öffentlichen Verzeichnis entfernt.
+
+Details siehe: {url}
+
+Beachten Sie bitte: diese Benachrichtigung wurde automatisch erstellt und dient lediglich zu Ihrer Information. Ein amtlicher Bescheid ergeht ggf. gesondert per Post.",
+Subject CommissionStatusChanged,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionIssued,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionSuspended,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionRevoked,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+Subject CommissionExpired,org,commission,Änderungsmitteilung zur Beauftragung von {name},
+CommissionYYYYMMDD,org,commission,"<template><para align=""center"">Ungültige Dokumentvorlage</para></template>",
+OrgContactIntro,hrm,human_resource,"Hinweis: Vertreter der Organisation müssen ein Benutzerkonto haben, im persönlichen Profil ihr Geburtsdatum, Geburtsort, Adresse, Email-Adresse und Telefonnummer hinterlegen, sowie ein polizeiliches Führungszeugnis und eine schriftliche Erklärung zu anhängigen Ermittlungs- und Strafverfahren einreichen. Außerdem ist ein Nachweis ihrer Vertreterschaft zur Verifizierung hochzuladen.
 Mehr Informationen dazu in der Hilfe [Link einfügen].",

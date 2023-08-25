@@ -9,7 +9,6 @@ from gluon import current
 # -------------------------------------------------------------------------
 def doc_image_resource(r, tablename):
 
-    T = current.T
     s3db = current.s3db
 
     if r.tablename == "cr_shelter":

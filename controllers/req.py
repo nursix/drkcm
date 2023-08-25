@@ -2013,30 +2013,6 @@ def need():
     return crud_controller(rheader=s3db.req_rheader)
 
 # -----------------------------------------------------------------------------
-def need_line():
-    """
-        RESTful CRUD Controller for Need Lines
-    """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def need_response():
-    """
-        RESTful CRUD Controller for Need Responses (i.e. Activity Groups)
-    """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
-def need_response_line():
-    """
-        RESTful CRUD Controller for Need Response Lines (i.e. Activities)
-    """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
 def order_item():
     """
         RESTful CRUD Controller for Order Items

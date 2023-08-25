@@ -224,16 +224,16 @@ class AssetModel(DataModel):
                                      label = T("Supplier/Donor"),
                                      ondelete = "SET NULL",
                                      ),
-                     s3_date("purchase_date",
-                             label = T("Purchase Date"),
-                             ),
+                     DateField("purchase_date",
+                               label = T("Purchase Date"),
+                               ),
                      Field("purchase_price", "double",
                            #default = 0.00,
                            label = T("Purchase Price"),
                            represent = lambda v, row=None: \
                             IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     s3_currency("purchase_currency"),
+                     CurrencyField("purchase_currency"),
                      # Base Location, which should always be a Site & set via Log
                      location_id(readable = False,
                                  writable = False,
@@ -252,8 +252,8 @@ class AssetModel(DataModel):
                            #readable = False,
                            writable = False,
                            ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -272,16 +272,17 @@ class AssetModel(DataModel):
         asset_represent = asset_AssetRepresent(show_link=True)
 
         # Reusable Field
-        asset_id = S3ReusableField("asset_id", "reference %s" % tablename,
-                                   label = T("Asset"),
-                                   ondelete = "CASCADE",
-                                   represent = asset_represent,
-                                   requires = IS_EMPTY_OR(
+        asset_id = FieldTemplate("asset_id", "reference %s" % tablename,
+                                 label = T("Asset"),
+                                 ondelete = "CASCADE",
+                                 represent = asset_represent,
+                                 requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "asset_asset.id",
                                                           asset_represent,
-                                                          sort=True)),
-                                   sortby = "number",
-                                   )
+                                                          sort = True,
+                                                          )),
+                                 sortby = "number",
+                                 )
 
         # Which levels of Hierarchy are we using?
         levels = current.gis.get_relevant_hierarchy_levels()
@@ -463,20 +464,20 @@ class AssetModel(DataModel):
                                      label = T("Supplier/Donor"),
                                      ondelete = "SET NULL",
                                      ),
-                     s3_date("purchase_date",
-                             label = T("Purchase Date"),
-                             ),
+                     DateField("purchase_date",
+                               label = T("Purchase Date"),
+                               ),
                      Field("purchase_price", "double",
                            #default=0.00,
                            represent=lambda v, row=None: \
                                      IS_FLOAT_AMOUNT.represent(v, precision=2),
                            ),
-                     s3_currency("purchase_currency"),
+                     CurrencyField("purchase_currency"),
                      # Base Location, which should always be a Site & set via Log
                      location_id(readable = False,
                                  writable = False),
-                     s3_comments(comment = None),
-                     *s3_meta_fields())
+                     CommentsField(comment = None),
+                     )
 
         # =====================================================================
         # Asset Log
@@ -521,15 +522,15 @@ $.filterOptionsS3({
                                        asset_log_status_opts.get(opt, UNKNOWN_OPT),
                            requires = IS_IN_SET(asset_log_status_opts),
                            ),
-                     s3_datetime("datetime",
-                                 default = "now",
-                                 empty = False,
-                                 represent = "date",
-                                 ),
-                     s3_datetime("datetime_until",
-                                 label = T("Date Until"),
-                                 represent = "date",
-                                 ),
+                     DateTimeField("datetime",
+                                   default = "now",
+                                   empty = False,
+                                   represent = "date",
+                                   ),
+                     DateTimeField("datetime_until",
+                                   label = T("Date Until"),
+                                   represent = "date",
+                                   ),
                      person_id(label = T("Assigned To")),
                      Field("check_in_to_person", "boolean",
                            #label = T("Mobile"),      # Relabel?
@@ -587,8 +588,8 @@ $.filterOptionsS3({
                                label = T("Assigned By"),               # or the previous owner if passed on directly (e.g. to successor in their post)
                                comment = self.pr_person_comment(child="by_person_id"),
                                ),
-                     s3_comments(),
-                     *s3_meta_fields())
+                     CommentsField(),
+                     )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -635,7 +636,7 @@ $.filterOptionsS3({
     def defaults():
         """ Return safe defaults for names in case the model is disabled """
 
-        return {"asset_asset_id": S3ReusableField.dummy("asset_id"),
+        return {"asset_asset_id": FieldTemplate.dummy("asset_id"),
                 }
 
     # -------------------------------------------------------------------------
@@ -850,8 +851,8 @@ class AssetHRModel(DataModel):
                           self.hrm_human_resource_id(empty = False,
                                                      ondelete = "CASCADE",
                                                      ),
-                          #s3_comments(),
-                          *s3_meta_fields())
+                          #CommentsField(),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -879,8 +880,8 @@ class AssetTeamModel(DataModel):
                           self.pr_group_id(comment = None,
                                            empty = False,
                                            ),
-                          #s3_comments(),
-                          *s3_meta_fields())
+                          #CommentsField(),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -914,8 +915,8 @@ class AssetTelephoneModel(DataModel):
                           #Field("unit_cost", "double",
                           #      label = T("Unit Cost"),
                           #      ),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          CommentsField(),
+                          )
 
         #--------------------------------------------------------------------------
         # Telephone Usage Costs
@@ -925,13 +926,16 @@ class AssetTelephoneModel(DataModel):
         tablename = "asset_telephone_usage"
         self.define_table(tablename,
                           self.asset_asset_id(empty = False),
-                          s3_date(label = T("Start Date")),
+                          DateField(label = T("Start Date"),
+                                    set_max = "#asset_telephone_usage_end_date",
+                                    ),
                           # @ToDo: Validation to ensure not before Start Date
-                          s3_date("end_date",
-                                  label = T("End Date"),
-                                  start_field = "asset_telephone_usage_date",
-                                  default_interval = 1,
-                                  ),
+                          DateField("end_date",
+                                    label = T("End Date"),
+                                    set_min = "#asset_telephone_usage_date",
+                                    #start_field = "asset_telephone_usage_date",
+                                    #default_interval = 1,
+                                    ),
                           Field("units_used", "double", # 'usage' is a reserved word in MySQL
                                 label = T("Usage"),
                                 ),
@@ -943,9 +947,9 @@ class AssetTelephoneModel(DataModel):
                           #Field("cost", "double",
                           #      label = T("Cost"),
                           #      ),
-                          #s3_currency(),
-                          s3_comments(),
-                          *s3_meta_fields())
+                          #CurrencyField(),
+                          CommentsField(),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -993,7 +997,6 @@ def asset_log_prep(r):
 
     T = current.T
     db = current.db
-    request = current.request
 
     table = db.asset_log
 
@@ -1114,8 +1117,6 @@ def asset_rheader(r):
             s3db = current.s3db
             s3 = current.response.s3
 
-            NONE = current.messages["NONE"]
-
             if record.type == ASSET_TYPE_TELEPHONE:
                 tabs = [(T("Asset Details"), None, {"native": True}),
                         (T("Telephone Details"), "telephone"),
@@ -1231,7 +1232,6 @@ def asset_rheader(r):
 def asset_controller():
     """ RESTful CRUD controller """
 
-    s3db = current.s3db
     s3 = current.response.s3
 
     # Pre-process
@@ -1255,33 +1255,34 @@ def asset_controller():
         current.response.s3.asset_import = True
         return
         # @ToDo: get this working
-        ctable = s3db.pr_contact
-        ptable = s3db.pr_person
-
-        elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
-        persons = {}
-        for element in elements:
-            email = element.text
-            if email in persons:
-                # Replace email with uuid
-                element.text = persons[email]["uuid"]
-                # Don't check again
-                continue
-
-            query = (ctable.value == email) & \
-                    (ctable.pe_id == ptable.pe_id)
-            person = db(query).select(ptable.uuid,
-                                      limitby=(0, 1)
-                                      ).first()
-            if person:
-                # Replace email with uuid
-                uuid = person.uuid
-            else:
-                # Blank it
-                uuid = ""
-            element.text = uuid
-            # Store in case we get called again with same value
-            persons[email] = {"uuid": uuid}
+        #s3db = current.s3db
+        #ctable = s3db.pr_contact
+        #ptable = s3db.pr_person
+        #
+        #elements = tree.getroot().xpath("/s3xml//resource[@name='pr_person']/data[@field='first_name']")
+        #persons = {}
+        #for element in elements:
+        #    email = element.text
+        #    if email in persons:
+        #        # Replace email with uuid
+        #        element.text = persons[email]["uuid"]
+        #        # Don't check again
+        #        continue
+        #
+        #    query = (ctable.value == email) & \
+        #            (ctable.pe_id == ptable.pe_id)
+        #    person = db(query).select(ptable.uuid,
+        #                              limitby=(0, 1)
+        #                              ).first()
+        #    if person:
+        #        # Replace email with uuid
+        #        uuid = person.uuid
+        #    else:
+        #        # Blank it
+        #        uuid = ""
+        #    element.text = uuid
+        #    # Store in case we get called again with same value
+        #    persons[email] = {"uuid": uuid}
 
     s3.import_prep = import_prep
 
