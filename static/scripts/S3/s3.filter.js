@@ -1168,7 +1168,7 @@ S3.search = {};
                             if (widget.hasClass('multiselect-filter-widget') &&
                                 widget.multiselect('instance')) {
                                 widget.multiselect('refresh');
-                                widget.multiselect('instance').button.hide();
+                                widget.multiselect('instance').$button.hide();
                             } else if (widget.hasClass('groupedopts-filter-widget') &&
                                 widget.groupedopts('instance')) {
                                 widget.groupedopts('refresh');
@@ -1246,7 +1246,7 @@ S3.search = {};
                             } else if (widget.hasClass('multiselect-filter-widget') &&
                                 widget.multiselect('instance')) {
                                 widget.multiselect('refresh');
-                                widget.multiselect('instance').button.show();
+                                widget.multiselect('instance').$button.show();
                             } else {
                                 widget.removeClass('hide').show();
                             }

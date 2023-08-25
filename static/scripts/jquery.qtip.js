@@ -2,7 +2,7 @@
  * qTip2 - Pretty powerful tooltips - v3.0.3
  * http://qtip2.com
  *
- * Copyright (c) 2016 
+ * Copyright (c) 2016
  * Released under the MIT licenses
  * http://jquery.org/license
  *
@@ -307,9 +307,9 @@ PROTOTYPE.destroy = function(immediate) {
 }
 
 function invalidContent(c) {
-	return !($.isFunction(c) || 
-            c && c.attr || 
-            c.length || 
+	return !($.isFunction(c) ||
+            c && c.attr ||
+            c.length ||
             $.type(c) === 'object' && (c.jquery || c.then));
 }
 
@@ -977,8 +977,8 @@ C.string = function(join) {
 	var x = this.x, y = this.y;
 
 	var result = x !== y ?
-		x === 'center' || y !== 'center' && (this.precedance === Y || this.forceY) ? 
-			[y,x] : 
+		x === 'center' || y !== 'center' && (this.precedance === Y || this.forceY) ?
+			[y,x] :
 			[x,y] :
 		[x];
 
@@ -2164,7 +2164,7 @@ $.extend(Tip.prototype, {
 		var elements = this.qtip.elements,
 			prop = BORDER + camel(side) + 'Width';
 
-		return (use ? intCss(use, prop) : 
+		return (use ? intCss(use, prop) :
 			intCss(elements.content, prop) ||
 			intCss(this._useTitle(corner) && elements.titlebar || elements.content, prop) ||
 			intCss(elements.tooltip, prop)
@@ -3016,7 +3016,12 @@ $.extend(TRUE, QTIP.defaults, {
 	viewportWidth = viewport[0] === window ? viewport.width() : viewport.outerWidth(FALSE);
 	viewportHeight = viewport[0] === window ? viewport.height() : viewport.outerHeight(FALSE);
 	viewportScroll = { left: fixed ? 0 : viewport.scrollLeft(), top: fixed ? 0 : viewport.scrollTop() };
-	viewportOffset = viewport.offset() || adjusted;
+    // *** Eden ASP patched for jQuery 3 ***
+    if (viewport[0] === window || !document.body.contains(viewport[0])) {
+        viewportOffset = adjusted;
+    } else {
+        viewportOffset = viewport.offset() || adjusted;
+    }
 
 	// Generic calculation method
 	function calculate(side, otherSide, type, adjustment, side1, side2, lengthName, targetLength, elemLength) {
@@ -3112,7 +3117,7 @@ $.extend(TRUE, QTIP.defaults, {
 		newWidth, newHeight;
 
 		// First pass, sanitize coords and determine outer edges
-		i = baseCoords.length; 
+		i = baseCoords.length;
 		while(i--) {
 			next = [ parseInt(baseCoords[--i], 10), parseInt(baseCoords[i+1], 10) ];
 
