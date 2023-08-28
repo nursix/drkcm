@@ -166,7 +166,7 @@ class SyncRepositoryModel(DataModel):
 
         set_method = self.set_method
 
-        password_widget = S3PasswordWidget()
+        password_widget = S3PasswordWidget.widget
 
         # -------------------------------------------------------------------------
         # Repository Types

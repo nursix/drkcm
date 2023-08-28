@@ -1,7 +1,7 @@
 """
-    UI Widgets
+    Form Widgets
 
-    Copyright: 2009-2022 (c) Sahana Software Foundation
+    Copyright: 2009-2023 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -26,7 +26,6 @@
 """
 
 __all__ = ("S3AgeWidget",
-           "S3AutocompleteWidget",
            "S3CascadeSelectWidget",
            "S3ColorPickerWidget",
            "S3CalendarWidget",
@@ -37,24 +36,18 @@ __all__ = ("S3AgeWidget",
            "S3GroupedOptionsWidget",
            "S3HiddenWidget",
            "S3HierarchyWidget",
-           "S3HumanResourceAutocompleteWidget",
            "S3ImageCropWidget",
            "S3InvBinWidget",
            "S3KeyValueWidget",
            # Only used inside this module
            #"S3LatLonWidget",
-           "S3LocationAutocompleteWidget",
            "S3LocationDropdownWidget",
            "S3LocationLatLonWidget",
            "S3PasswordWidget",
            "S3PhoneWidget",
            "S3QRInput",
            "S3MultiSelectWidget",
-           "S3OrganisationAutocompleteWidget",
-           "S3PersonAutocompleteWidget",
-           "S3PentityAutocompleteWidget",
            "S3SelectWidget",
-           "S3SiteAutocompleteWidget",
            "S3SliderWidget",
            "S3StringWidget",
            "S3TimeIntervalWidget",
@@ -63,10 +56,8 @@ __all__ = ("S3AgeWidget",
            "CheckboxesWidgetS3",
            "s3_comments_widget",
            "s3_richtext_widget",
-           "search_ac",
            "S3XMLContents",
            "S3TagCheckboxWidget",
-           "ICON",
            )
 
 import datetime
@@ -83,19 +74,37 @@ except ImportError:
     sys.stderr.write("ERROR: dateutil module needed for Date handling\n")
     raise
 
-from gluon import *
-from gluon.html import BUTTON, LABEL
+from gluon import current, URL, Field, \
+                  BUTTON, LABEL, A, DIV, FIELDSET, HR, IMG, INPUT, LEGEND, LI, \
+                  OPTGROUP, OPTION, SCRIPT, SELECT, SPAN, TABLE, TAG, TD, TEXTAREA, \
+                  TR, UL, \
+                  IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, IS_IN_SET
 from gluon.languages import lazyT
-from gluon.sqlhtml import *
+from gluon.sqlhtml import DoubleWidget, FormWidget, IntegerWidget, ListWidget, \
+                          MultipleOptionsWidget, OptionsWidget, StringWidget, \
+                          TextWidget, UploadWidget, SQLFORM
 from gluon.storage import Storage
 
-from ..tools import *
+from ..tools import s3_get_foreign_key, s3_include_underscore, s3_mark_required, \
+                    s3_str, s3_strip_markup, JSONERRORS, JSONSEPARATORS, \
+                    S3Calendar, S3DateTime, IS_LAT_LON
+
+from .autocomplete import S3AutocompleteWidget
+from .icons import ICON
 
 DEFAULT = lambda:None
 repr_select = lambda l: len(l.name) > 48 and "%s..." % l.name[:44] or l.name
 
 # =============================================================================
-class S3AgeWidget(FormWidget):
+class EdenFormWidget(FormWidget):
+
+    @classmethod
+    def widget(cls, field, value, **attributes):
+
+        return cls()
+
+# =============================================================================
+class S3AgeWidget(EdenFormWidget):
     """
         Widget to accept and represent date of birth as age in years,
         mapping the age to a pseudo date-of-birth internally so that
@@ -192,110 +201,7 @@ class S3AgeWidget(FormWidget):
         return date, None
 
 # =============================================================================
-class S3AutocompleteWidget(FormWidget):
-    """
-        Renders a SELECT as an INPUT field with AJAX Autocomplete
-    """
-
-    def __init__(self,
-                 module,
-                 resourcename,
-                 fieldname = "name",
-                 filter = "",       # REST filter
-                 link_filter = "",
-                 post_process = "",
-                 ):
-
-        self.module = module
-        self.resourcename = resourcename
-        self.fieldname = fieldname
-        self.filter = filter
-        self.link_filter = link_filter
-        self.post_process = post_process
-
-        # @ToDo: Refreshes all dropdowns as-necessary
-        self.post_process = post_process or ""
-
-    def __call__(self, field, value, **attributes):
-
-        s3 = current.response.s3
-        settings = current.deployment_settings
-
-        default = {"_type": "text",
-                   "value": str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = attr["_class"] + " hide"
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-        dummy_input = "dummy_%s" % real_input
-
-        # JS Function defined in static/scripts/S3/S3.js
-        script = '''S3.autocomplete.normal('%s','%s','%s','%s','%s',"%s"''' % \
-            (self.fieldname,
-             self.module,
-             self.resourcename,
-             real_input,
-             self.filter,
-             self.link_filter,
-             )
-
-        options = ""
-        post_process = self.post_process
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-        if min_length != 2:
-            options = ''',"%(postprocess)s",%(delay)s,%(min_length)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 "min_length": min_length,
-                 }
-        elif delay != 800:
-            options = ''',"%(postprocess)s",%(delay)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 }
-        elif post_process:
-            options = ''',"%(postprocess)s"''' % \
-                {"postprocess": post_process,
-                 }
-
-        script = '''%s%s)''' % (script, options)
-        s3.jquery_ready.append(script)
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        s3.js_global.append('''i18n.none_of_the_above="%s"''' % current.T("None of the above"))
-
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(**attr),
-                       )
-
-# =============================================================================
-class S3ColorPickerWidget(FormWidget):
+class S3ColorPickerWidget(EdenFormWidget):
     """
         Displays a widget to allow the user to pick a
         color, and falls back to using JSColor or a regular text input if
@@ -377,7 +283,7 @@ class S3ColorPickerWidget(FormWidget):
         return widget
 
 # =============================================================================
-class S3CalendarWidget(FormWidget):
+class S3CalendarWidget(EdenFormWidget):
     """
         Widget to select a date from a popup calendar, with
         optional time input
@@ -686,7 +592,8 @@ class S3CalendarWidget(FormWidget):
         return extremes
 
     # -------------------------------------------------------------------------
-    def inject_script(self, selector, options):
+    @staticmethod
+    def inject_script(selector, options):
         """
             Helper function to inject the document-ready-JavaScript for
             this widget.
@@ -805,7 +712,7 @@ class S3CalendarWidget(FormWidget):
         s3.jquery_ready.append(script)
 
 # =============================================================================
-class S3DateWidget(FormWidget):
+class S3DateWidget(EdenFormWidget):
     """
         Standard Date widget
     """
@@ -997,7 +904,7 @@ interval:%(interval)d
         return TAG[""](widget, requires = field.requires)
 
 # =============================================================================
-class S3DateTimeWidget(FormWidget):
+class S3DateTimeWidget(EdenFormWidget):
     """
         Date and/or time picker widget based on jquery.ui.datepicker and
         jquery.ui.timepicker.addon.js.
@@ -1270,7 +1177,7 @@ if($('#%(selector)s_clear').length==0){
         return
 
 # =============================================================================
-class S3HoursWidget(FormWidget):
+class S3HoursWidget(EdenFormWidget):
     """
         Widget to enter a duration in hours (e.g. of a task), supporting
         flexible input format (e.g. "1h 15min", "1.75", "2:10")
@@ -1418,7 +1325,7 @@ class S3HoursWidget(FormWidget):
         return round(hours, precision) if precision is not None else hours
 
 # =============================================================================
-class S3WeeklyHoursWidget(FormWidget):
+class S3WeeklyHoursWidget(EdenFormWidget):
     """
         Widget to enter weekly time rules (JSON) using a 24/7 hours
         matrix, e.g. opening hours, times of availability, etc.
@@ -1610,7 +1517,7 @@ class S3WeeklyHoursWidget(FormWidget):
         return output if html else "\n".join(output)
 
 # =============================================================================
-class S3QRInput(FormWidget):
+class S3QRInput(EdenFormWidget):
     """
         Simple input widget with attached QR-code decoder, using the
         device camera (if available) to capture the code
@@ -1736,7 +1643,7 @@ class S3QRInput(FormWidget):
         s3.jquery_ready.append(script)
 
 # =============================================================================
-class S3EmbeddedComponentWidget(FormWidget):
+class S3EmbeddedComponentWidget(EdenFormWidget):
     """
         Widget used by S3CRUD for link-table components with actuate="embed".
         Uses s3.embed_component.js for client-side processing, and
@@ -1877,8 +1784,9 @@ class S3EmbeddedComponentWidget(FormWidget):
                 requires = f.requires or []
                 if not isinstance(requires, (list, tuple)):
                     requires = [requires]
-                [r.set_self_id(selected) for r in requires
-                                         if hasattr(r, "set_self_id")]
+                for r in requires:
+                    if hasattr(r, "set_self_id"):
+                        r.set_self_id(selected)
 
         # Mark required
         labels, required = s3_mark_required(fields)
@@ -1997,7 +1905,7 @@ class S3EmbeddedComponentWidget(FormWidget):
         return None
 
 #==============================================================================
-class S3GroupedOptionsWidget(FormWidget):
+class S3GroupedOptionsWidget(EdenFormWidget):
     """
         Widget with checkboxes or radio buttons for OptionsFilter
         - checkboxes can be optionally grouped by letter
@@ -2350,93 +2258,7 @@ class S3HiddenWidget(StringWidget):
                        )
 
 # =============================================================================
-class S3HumanResourceAutocompleteWidget(FormWidget):
-    """
-        Renders an hrm_human_resource SELECT as an INPUT field with
-        AJAX Autocomplete.
-
-        Differs from the S3AutocompleteWidget in that it uses:
-            3 name fields
-            Organisation
-            Job Role
-   """
-
-    def __init__(self,
-                 post_process = "",
-                 group = "",    # Filter to staff/volunteers/deployables
-                 ):
-
-        self.post_process = post_process
-        self.group = group
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        settings = current.deployment_settings
-
-        group = self.group
-        if not group and current.request.controller == "deploy":
-            group = "deploy"
-
-        default = {"_type": "text",
-                   "value": str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = "%s hide" % attr["_class"]
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        script = '''S3.autocomplete.hrm('%(group)s','%(input)s',"%(postprocess)s"''' % \
-            {"group": group,
-             "input": real_input,
-             "postprocess": self.post_process,
-             }
-        if delay != 800:
-            script = "%s,%s" % (script, delay)
-            if min_length != 2:
-                script = "%s,%s" % (script, min_length)
-        elif min_length != 2:
-            script = "%s,,%s" % (script, min_length)
-        script = "%s)" % script
-
-        current.response.s3.jquery_ready.append(script)
-
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             _value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(**attr),
-                       )
-
-# =============================================================================
-class S3ImageCropWidget(FormWidget):
+class S3ImageCropWidget(EdenFormWidget):
     """
         Allows the user to crop an image and uploads it.
         Cropping & Scaling (if necessary) done client-side
@@ -2814,102 +2636,7 @@ i18n.gis_range_error={degrees:{lat:'%s',lon:'%s'},minutes:'%s',seconds:'%s',deci
                     )
 
 # =============================================================================
-class S3LocationAutocompleteWidget(FormWidget):
-    """
-        Renders a gis_location SELECT as an INPUT field with AJAX Autocomplete
-
-        Appropriate when the location has been previously created (as is the
-        case for location groups or other specialized locations that need
-        the location create form).
-        LocationSelector is generally more appropriate for specific locations.
-
-        Currently used for selecting the region location in gis_config
-        and for project/location.
-    """
-
-    def __init__(self,
-                 level = "",
-                 post_process = "",
-                 ):
-
-        self.level = level
-        self.post_process = post_process
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        settings = current.deployment_settings
-
-        level = self.level
-        if isinstance(level, list):
-            levels = ""
-            counter = 0
-            for _level in level:
-                levels += _level
-                if counter < len(level):
-                    levels += "|"
-                counter += 1
-
-        default = {"_type": "text",
-                   "value": s3_str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = attr["_class"] + " hide"
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        # Mandatory part
-        script = '''S3.autocomplete.location("%s"''' % real_input
-        # Optional parts
-        if self.post_process:
-            # We need all
-            script = '''%s,'%s',%s,%s,"%s"''' % (script, level, min_length, delay, self.post_process)
-        elif delay != 800:
-            script = '''%s,"%s",%s,%s''' % (script, level, min_length, delay)
-        elif min_length != 2:
-            script = '''%s,"%s",%s''' % (script, level, min_length)
-        elif level:
-            script = '''%s,"%s"''' % (script, level)
-        # Close
-        script = "%s)" % script
-        current.response.s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(**attr),
-                       )
-
-# =============================================================================
-class S3LocationDropdownWidget(FormWidget):
+class S3LocationDropdownWidget(EdenFormWidget):
     """
         Renders a dropdown for an Lx level of location hierarchy
     """
@@ -2995,7 +2722,7 @@ class S3LocationDropdownWidget(FormWidget):
         return widget
 
 # =============================================================================
-class S3LocationLatLonWidget(FormWidget):
+class S3LocationLatLonWidget(EdenFormWidget):
     """
         Renders a Lat & Lon input for a Location
     """
@@ -3320,7 +3047,7 @@ class S3MultiSelectWidget(MultipleOptionsWidget):
         return widget
 
 # =============================================================================
-class S3CascadeSelectWidget(FormWidget):
+class S3CascadeSelectWidget(EdenFormWidget):
     """ Cascade Selector for Hierarchies """
 
     def __init__(self,
@@ -3581,7 +3308,7 @@ class S3CascadeSelectWidget(FormWidget):
         return value, None
 
 # =============================================================================
-class S3HierarchyWidget(FormWidget):
+class S3HierarchyWidget(EdenFormWidget):
     """ Selector Widget for Hierarchies """
 
     def __init__(self,
@@ -3840,422 +3567,7 @@ class S3HierarchyWidget(FormWidget):
         return value, None
 
 # =============================================================================
-class S3OrganisationAutocompleteWidget(FormWidget):
-    """
-        Renders an org_organisation SELECT as an INPUT field with AJAX
-        Autocomplete. Differs from the S3AutocompleteWidget in that it
-        can default to the setting in the profile.
-
-        TODO Add an option to hide the widget completely when using the
-             Org from the Profile (i.e. prevent user overrides)
-    """
-
-    def __init__(self,
-                 post_process = "",
-                 default_from_profile = False,
-                 ):
-
-        self.post_process = post_process
-        self.tablename = "org_organisation"
-        self.default_from_profile = default_from_profile
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        def transform_value(value):
-            if not value and self.default_from_profile:
-                auth = current.session.auth
-                if auth and auth.user:
-                    value = auth.user.organisation_id
-            return value
-
-        settings = current.deployment_settings
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        return self.autocomplete_template(self.post_process,
-                                          delay,
-                                          min_length,
-                                          field,
-                                          value,
-                                          attributes,
-                                          transform_value = transform_value,
-                                          )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def autocomplete_template(post_process,
-                              delay,
-                              min_length,
-                              field,
-                              value,
-                              attributes,
-                              source = None,
-                              transform_value = lambda value: value,
-                              ):
-        """
-            Renders a SELECT as an INPUT field with AJAX Autocomplete
-        """
-
-        value = transform_value(value)
-
-        default = {"_type": "text",
-                   "value": (value is not None and s3_str(value)) or "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = attr["_class"] + " hide"
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        script = \
-'''S3.autocomplete.org('%(input)s',"%(postprocess)s",%(delay)s,%(min_length)s)''' % \
-            {"input": real_input,
-             "postprocess": post_process,
-             "delay": delay,
-             "min_length": min_length,
-             }
-
-        current.response.s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide"),
-                       INPUT(**attr),
-                       )
-
-# =============================================================================
-class S3PersonAutocompleteWidget(FormWidget):
-    """
-        Renders a pr_person SELECT as an INPUT field with AJAX Autocomplete.
-        Differs from the S3AutocompleteWidget in that it uses 3 name fields
-
-        To make this widget use the HR table, set the controller to "hrm"
-    """
-
-    def __init__(self,
-                 controller = "pr",
-                 function = "person_search",
-                 post_process = "",
-                 hideerror = False,
-                 ajax_filter = "",
-                 ):
-
-        self.post_process = post_process
-        self.c = controller
-        self.f = function
-        self.hideerror = hideerror
-        self.ajax_filter = ajax_filter
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        default = {"_type": "text",
-                   "value": str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = "%s hide" % attr["_class"]
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        script = '''S3.autocomplete.person('%(controller)s','%(fn)s',"%(input)s"''' % \
-            {"controller": self.c,
-             "fn": self.f,
-             "input": real_input,
-             }
-        options = ""
-        post_process = self.post_process
-
-        settings = current.deployment_settings
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        if self.ajax_filter:
-            options = ''',"%(ajax_filter)s"''' % \
-                {"ajax_filter": self.ajax_filter}
-
-        if min_length != 2:
-            options += ''',"%(postprocess)s",%(delay)s,%(min_length)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 "min_length": min_length,
-                 }
-        elif delay != 800:
-            options += ''',"%(postprocess)s",%(delay)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 }
-        elif post_process:
-            options += ''',"%(postprocess)s"''' % \
-                {"postprocess": post_process}
-
-        script = '''%s%s)''' % (script, options)
-        current.response.s3.jquery_ready.append(script)
-
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             _value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(hideerror = self.hideerror, **attr),
-                       )
-
-# =============================================================================
-class S3PentityAutocompleteWidget(FormWidget):
-    """
-        Renders a pr_pentity SELECT as an INPUT field with AJAX Autocomplete.
-        Differs from the S3AutocompleteWidget in that it can filter by type &
-        also represents results with the type
-    """
-
-    def __init__(self,
-                 controller = "pr",
-                 function = "pentity",
-                 types = None,
-                 post_process = "",
-                 hideerror = False,
-                 ):
-
-        self.post_process = post_process
-        self.c = controller
-        self.f = function
-        self.types = types
-        self.hideerror = hideerror
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        default = {"_type": "text",
-                   "value": str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = "%s hide" % attr["_class"]
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            text = s3_str(field.represent(value))
-            if "<" in text:
-                text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        T = current.T
-        s3 = current.response.s3
-        script = \
-'''i18n.person="%s"\ni18n.group="%s"\ni18n.none_of_the_above="%s"''' % \
-            (T("Person"), T("Group"), T("None of the above"))
-        s3.js_global.append(script)
-
-        if self.types:
-            # Something other than default: ("pr_person", "pr_group")
-            types = json.dumps(self.types, separators=JSONSEPARATORS)
-        else:
-            types = ""
-
-        script = '''S3.autocomplete.pentity('%(controller)s','%(fn)s',"%(input)s"''' % \
-            {"controller": self.c,
-             "fn": self.f,
-             "input": real_input,
-             }
-
-        options = ""
-        post_process = self.post_process
-
-        settings = current.deployment_settings
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        if types:
-            options = ''',"%(postprocess)s",%(delay)s,%(min_length)s,%(types)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 "min_length": min_length,
-                 "types": types,
-                 }
-        elif min_length != 2:
-            options = ''',"%(postprocess)s",%(delay)s,%(min_length)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 "min_length": min_length,
-                 }
-        elif delay != 800:
-            options = ''',"%(postprocess)s",%(delay)s''' % \
-                {"postprocess": post_process,
-                 "delay": delay,
-                 }
-        elif post_process:
-            options = ''',"%(postprocess)s"''' % \
-                {"postprocess": post_process,
-                 }
-
-        script = '''%s%s)''' % (script, options)
-        s3.jquery_ready.append(script)
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             _value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(hideerror = self.hideerror, **attr),
-                       )
-
-# =============================================================================
-class S3SiteAutocompleteWidget(FormWidget):
-    """
-        Renders an org_site SELECT as an INPUT field with AJAX Autocomplete.
-        Differs from the S3AutocompleteWidget in that it uses name & type fields
-        in the represent
-    """
-
-    def __init__(self,
-                 post_process = "",
-                 ):
-
-        self.auth = current.auth
-        self.post_process = post_process
-
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
-
-        default = {"_type": "text",
-                   "value": str(value) if value is not None else "",
-                   }
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        # Hide the real field
-        attr["_class"] = "%s hide" % attr["_class"]
-
-        if "_id" in attr:
-            real_input = attr["_id"]
-        else:
-            real_input = str(field).replace(".", "_")
-        dummy_input = "dummy_%s" % real_input
-
-        if value:
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            # Provide the representation for the current/default Value
-            represent = field.represent
-            if hasattr(represent, "link"):
-                # S3Represent, so don't generate HTML
-                text = s3_str(represent(value, show_link=False))
-            else:
-                # Custom represent, so filter out HTML later
-                text = s3_str(represent(value))
-                if "<" in text:
-                    text = s3_strip_markup(text)
-            represent = s3_str(text)
-        else:
-            represent = ""
-
-        s3 = current.response.s3
-        site_types = current.auth.org_site_types
-        for instance_type in site_types:
-            # Change from T()
-            site_types[instance_type] = s3_str(site_types[instance_type])
-        site_types = '''S3.org_site_types=%s''' % json.dumps(site_types, separators=JSONSEPARATORS)
-
-        settings = current.deployment_settings
-        delay = settings.get_ui_autocomplete_delay()
-        min_length = settings.get_ui_autocomplete_min_chars()
-
-        js_global = s3.js_global
-        if site_types not in js_global:
-            js_global.append(site_types)
-        script = '''S3.autocomplete.site('%(input)s',"%(postprocess)s"''' % \
-            {"input": real_input,
-             "postprocess": self.post_process,
-             }
-        if delay != 800:
-            script = "%s,%s" % (script, delay)
-            if min_length != 2:
-                script = "%s,%s" % (script, min_length)
-        elif min_length != 2:
-            script = "%s,,%s" % (script, min_length)
-        script = "%s)" % script
-
-        s3.jquery_ready.append(script)
-
-        return TAG[""](INPUT(_id = dummy_input,
-                             # Required to retain label on error:
-                             _name = dummy_input,
-                             _class = "string",
-                             _value = represent,
-                             ),
-                       DIV(_id = "%s_throbber" % dummy_input,
-                           _class = "throbber input_throbber hide",
-                           ),
-                       INPUT(**attr),
-                       )
-
-# =============================================================================
-class S3SliderWidget(FormWidget):
+class S3SliderWidget(EdenFormWidget):
     """
         Standard Slider Widget
 
@@ -4459,13 +3771,13 @@ class S3TimeIntervalWidget(FormWidget):
             try:
                 val = int(value)
             except ValueError:
-                return (value, T("Enter an integer"))
+                return (value, current.T("Enter an integer"))
 
             post_vars = current.request.post_vars
             try:
                 mul = int(post_vars[("%s_multiplier" % field).replace(".", "_")])
             except ValueError:
-                return (value, T("Invalid time unit"))
+                return (value, current.T("Invalid time unit"))
 
             return val * mul, None
 
@@ -4633,7 +3945,7 @@ class CheckboxesWidgetS3(OptionsWidget):
         """
 
         #values = re.compile("[\w\-:]+").findall(str(value))
-        values = not isinstance(value, (list, tuple)) and [value] or value
+        values = [value] if not isinstance(value, (list, tuple)) else value
         values = [str(v) for v in values]
 
         attr = OptionsWidget._attributes(field, {}, **attributes)
@@ -4710,8 +4022,8 @@ class S3PasswordWidget(FormWidget):
         Widget for password fields, allows unmasking of passwords
     """
 
-    # -------------------------------------------------------------------------
-    def __call__(self, field, value, **attributes):
+    @staticmethod
+    def widget(field, value, **attributes):
 
         T = current.T
 
@@ -4823,136 +4135,6 @@ def s3_richtext_widget(field, value):
                     )
 
 # =============================================================================
-def search_ac(r, **attr):
-    """
-        JSON search method for S3AutocompleteWidget
-
-        Args:
-            r: the CRUDRequest
-            attr: request attributes
-    """
-
-    _vars = current.request.get_vars
-
-    # JQueryUI Autocomplete uses "term" instead of "value"
-    # (old JQuery Autocomplete uses "q" instead of "value")
-    value = _vars.term or _vars.value or _vars.q or None
-
-    # We want to do case-insensitive searches
-    # (default anyway on MySQL/SQLite, but not PostgreSQL)
-    value = value.lower().strip()
-
-    fieldname = _vars.get("field", "name")
-    fieldname = str.lower(fieldname)
-    filter = _vars.get("filter", "~")
-
-    resource = r.resource
-    table = resource.table
-
-    limit = int(_vars.limit or 0)
-
-    from ..resource import FS
-    field = FS(fieldname)
-
-    # Default fields to return
-    fields = ["id", fieldname]
-    # Now using custom method
-    #if resource.tablename == "org_site":
-    #    # Simpler to provide an exception case than write a whole new class
-    #    fields.append("instance_type")
-
-    if filter == "~":
-        # Normal single-field Autocomplete
-        query = (field.lower().like(value + "%"))
-
-    elif filter == "=":
-        if field.type.split(" ")[0] in \
-            ["reference", "id", "float", "integer"]:
-            # Numeric, e.g. Organizations' offices_by_org
-            query = (field == value)
-        else:
-            # Text
-            query = (field.lower() == value)
-
-    elif filter == "<":
-        query = (field < value)
-
-    elif filter == ">":
-        query = (field > value)
-
-    else:
-        output = current.xml.json_message(False, 400,
-                    "Unsupported filter! Supported filters: ~, =, <, >")
-        raise HTTP(400, body=output)
-
-    if "link" in _vars:
-        link_filter = S3EmbeddedComponentWidget.link_filter_query(table,
-                                                                  _vars.link,
-                                                                  )
-        if link_filter:
-            query &= link_filter
-
-    # Select only or exclude template records:
-    # to only select templates:
-    #           ?template=<fieldname>.<value>,
-    #      e.g. ?template=template.true
-    # to exclude templates:
-    #           ?template=~<fieldname>.<value>
-    #      e.g. ?template=~template.true
-    if "template" in _vars:
-        try:
-            flag, val = _vars.template.split(".", 1)
-            if flag[0] == "~":
-                exclude = True
-                flag = flag[1:]
-            else:
-                exclude = False
-            ffield = table[flag]
-        except:
-            pass # ignore
-        else:
-            if str(ffield.type) == "boolean":
-                if val.lower() == "true":
-                    val = True
-                else:
-                    val = False
-            if exclude:
-                templates = (ffield != val)
-            else:
-                templates = (ffield == val)
-            resource.add_filter(templates)
-
-    resource.add_filter(query)
-
-    output = None
-    if filter == "~":
-        MAX_SEARCH_RESULTS = current.deployment_settings.get_search_max_results()
-        if (not limit or limit > MAX_SEARCH_RESULTS) and \
-           resource.count() > MAX_SEARCH_RESULTS:
-            output = [
-                {"label": str(current.T("There are more than %(max)s results, please input more characters.") % \
-                    {"max": MAX_SEARCH_RESULTS})
-                 }
-                ]
-
-    if output is None:
-        rows = resource.select(fields,
-                               start=0,
-                               limit=limit,
-                               orderby=field,
-                               as_rows=True)
-        output = []
-        append = output.append
-        for row in rows:
-            record = {"id": row.id,
-                      fieldname: row[fieldname],
-                      }
-            append(record)
-
-    current.response.headers["Content-Type"] = "application/json"
-    return json.dumps(output, separators=JSONSEPARATORS)
-
-# =============================================================================
 class S3XMLContents:
     """
         Renderer for db-stored XML contents (e.g. CMS)
@@ -5036,7 +4218,7 @@ class S3XMLContents:
         return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
 
 # =============================================================================
-class S3TagCheckboxWidget(FormWidget):
+class S3TagCheckboxWidget(EdenFormWidget):
     """
         Simple widget to use a checkbox to toggle a string-type Field
         between two values (default "Y"|"N").
@@ -5092,409 +4274,5 @@ class S3TagCheckboxWidget(FormWidget):
 
         v = self.on if value == "on" else self.off
         return v, None
-
-# =============================================================================
-class ICON(I):
-    """
-        Helper class to render <i> tags for icons, mapping abstract
-        icon names to theme-specific CSS classes. The standard icon
-        set can be configured using settings.ui.icons
-
-        e.g. ICON("book"), gives:
-            - font-awesome: <i class="icon icon-book">
-            - foundation: <i class="fi-book">
-
-        Standard sets are defined below.
-
-        Additional icons (beyond the standard set) can be configured
-        per deployment (settings.ui.custom_icons).
-
-        If <i class=""> is not suitable for the CSS, a custom HTML
-        layout can be configured as settings.ui.icon_layout. See
-        S3Config for more details.
-
-        TODO apply in widgets/crud/profile+datalist layouts etc.
-        TODO better abstract names for the icons to indicate what they
-             symbolize rather than what they depict, e.g. "sitemap" is
-             typically used to symbolize an organisation => rename into
-             "organisation".
-    """
-
-    # -------------------------------------------------------------------------
-    # Standard icon sets,
-    # - "_base" can be used to define a common CSS class for all icons
-    #
-    icons = {
-        # Font-Awesome 4
-        # https://fontawesome.com/v4.7.0/icons/
-        "font-awesome": {
-            "_base": "fa",
-            "active": "fa-check",
-            "activity": "fa-cogs",
-            "add": "fa-plus",
-            "administration": "fa-cog",
-            "alert": "fa-bell",
-            "arrow-down": "fa-arrow-down",
-            "arrow-left": "fa-arrow-left",
-            "arrow-right": "fa-arrow-right",
-            "assessment": "fa-bar-chart",
-            "asset": "fa-fire-extinguisher",
-            "attachment": "fa-paperclip",
-            "bar-chart": "fa-bar-chart",
-            "bars": "fa-bars",
-            "book": "fa-book",
-            "bookmark": "fa-bookmark",
-            "bookmark-empty": "fa-bookmark-o",
-            "briefcase": "fa-briefcase",
-            "calendar": "fa-calendar",
-            "caret-right": "fa-caret-right",
-            "certificate": "fa-certificate",
-            "check": "fa-check",
-            "close": "fa-close",
-            "cog": "fa-cog",
-            "comment-alt": "fa-comment-o",
-            "commit": "fa-check-square-o",
-            "copy": "fa-copy",
-            "delete": "fa-trash",
-            "delivery": "fa-thumbs-up",
-            "deploy": "fa-plus",
-            "deployed": "fa-check",
-            "done": "fa-check",
-            "down": "fa-caret-down",
-            "edit": "fa-edit",
-            "eraser": "fa-eraser",
-            "event": "fa-bolt",
-            "exclamation": "fa-exclamation",
-            "eye": "fa-eye",
-            "facebook": "fa-facebook",
-            "facility": "fa-home",
-            "file": "fa-file",
-            "file-alt": "fa-file-o",
-            "file-pdf": "fa-file-pdf-o",
-            "file-doc": "fa-file-word-o",
-            "file-xls": "fa-file-excel-o",
-            "file-text": "fa-file-text-o",
-            "file-image": "fa-file-image-o",
-            "file-generic": "fa-file-o",
-            "flag": "fa-flag",
-            "flag-alt": "fa-flag-o",
-            "folder": "fa-folder",
-            "folder-alt": "fa-folder-o",
-            "folder-open-alt": "fa-folder-open-o",
-            "fullscreen": "fa-fullscreen",
-            "globe": "fa-globe",
-            "goods": "fa-cubes",
-            "group": "fa-group",
-            "hand-grab": "fa-hand-grab-o",
-            "hashtag": "fa-hashtag",
-            "hint": "fa-hand-o-right",
-            "home": "fa-home",
-            "inactive": "fa-check-empty",
-            "incident": "fa-bolt",
-            "info": "fa-info",
-            "info-circle": "fa-info-circle",
-            "link": "fa-external-link",
-            "list": "fa-list",
-            "location": "fa-globe",
-            "mail": "fa-envelope-o",
-            "map-marker": "fa-map-marker",
-            "minus": "fa-minus",
-            "move": "fa-arrows",
-            "news": "fa-info",
-            "offer": "fa-truck",
-            "organisation": "fa-institution",
-            "org-network": "fa-umbrella",
-            "other": "fa-circle",
-            "paper-clip": "fa-paperclip",
-            "pause": "fa-pause",
-            "pencil": "fa-pencil",
-            "phone": "fa-phone",
-            "picture": "fa-picture-o",
-            "plane": "fa-plane",
-            "play": "fa-play",
-            "plus": "fa-plus",
-            "plus-sign": "fa-plus-sign",
-            "print": "fa-print",
-            "project": "fa-dashboard",
-            "question-circle-o": "fa-question-circle-o",
-            "radio": "fa-microphone",
-            "remove": "fa-remove",
-            "request": "fa-flag",
-            "responsibility": "fa-briefcase",
-            "return": "fa-arrow-left",
-            "rss": "fa-rss",
-            "search": "fa-search",
-            "sent": "fa-check",
-            "settings": "fa-wrench",
-            "share": "fa-share-alt",
-            "ship": "fa-ship",
-            "shipment": "fa-truck",
-            "site": "fa-home",
-            "skype": "fa-skype",
-            "staff": "fa-user",
-            "star": "fa-star",
-            "stop": "fa-stop",
-            "table": "fa-table",
-            "tag": "fa-tag",
-            "tags": "fa-tags",
-            "tasks": "fa-tasks",
-            "th": "fa-th",
-            "time": "fa-time",
-            "truck": "fa-truck",
-            "twitter": "fa-twitter",
-            "undo": "fa-undo",
-            "unsent": "fa-times",
-            "up": "fa-caret-up",
-            "upload": "fa-upload",
-            "user": "fa-user",
-            "volunteer": "fa-hand-paper-o",
-            "wrench": "fa-wrench",
-            "zoomin": "fa-zoomin",
-            "zoomout": "fa-zoomout",
-        },
-        # Foundation Icon Fonts 3
-        # http://zurb.com/playground/foundation-icon-fonts-3
-        "foundation": {
-            "active": "fi-check",
-            "activity": "fi-price-tag",
-            "add": "fi-plus",
-            "arrow-down": "fi-arrow-down",
-            "attachment": "fi-paperclip",
-            "bar-chart": "fi-graph-bar",
-            "book": "fi-book",
-            "bookmark": "fi-bookmark",
-            "bookmark-empty": "fi-bookmark-empty",
-            "calendar": "fi-calendar",
-            "caret-right": "fi-play",
-            "certificate": "fi-burst",
-            "comment-alt": "fi-comment",
-            "commit": "fi-check",
-            "copy": "fi-page-copy",
-            "delete": "fi-trash",
-            "deploy": "fi-plus",
-            "deployed": "fi-check",
-            "edit": "fi-page-edit",
-            "eraser": "fi-trash",
-            "exclamation": "fi-alert",
-            "eye": "fi-eye",
-            "facebook": "fi-social-facebook",
-            "facility": "fi-home",
-            "file": "fi-page-filled",
-            "file-alt": "fi-page",
-            "file-text": "fi-page-filled",
-            "file-text-alt": "fi-page",
-            "flag": "fi-flag",
-            "flag-alt": "fi-flag",
-            "folder": "fi-folder",
-            "folder-alt": "fi-folder",
-            "folder-open-alt": "fi-folder",
-            "fullscreen": "fi-arrows-out",
-            "globe": "fi-map",
-            "group": "fi-torsos-all",
-            "home": "fi-home",
-            "inactive": "fi-x",
-            "info": "fi-info",
-            "info-circle": "fi-info",
-            "link": "fi-web",
-            "list": "fi-list-thumbnails",
-            "location": "fi-map",
-            "mail": "fi-mail",
-            "map-marker": "fi-marker",
-            "minus": "fi-minus",
-            "offer": "fi-burst",
-            "organisation": "fi-torsos-all",
-            "org-network": "fi-asterisk",
-            "other": "fi-asterisk",
-            "paper-clip": "fi-paperclip",
-            "pause": "fi-pause",
-            "pencil": "fi-pencil",
-            "phone": "fi-telephone",
-            "play": "fi-play",
-            "plus": "fi-plus",
-            "plus-sign": "fi-plus",
-            "print": "fi-print",
-            "radio": "fi-microphone",
-            "remove": "fi-x",
-            "request": "fi-flag",
-            "responsibility": "fi-sheriff-badge",
-            "return": "fi-arrow-left",
-            "rss": "fi-rss",
-            "search": "fi-magnifying-glass",
-            "sent": "fi-check",
-            "settings": "fi-wrench",
-            "share": "fi-share",
-            "site": "fi-home",
-            "skype": "fi-social-skype",
-            "star": "fi-star",
-            "stop": "fi-stop",
-            "table": "fi-list-thumbnails",
-            "tag": "fi-price-tag",
-            "tags": "fi-pricetag-multiple",
-            "tasks": "fi-clipboard-notes",
-            "time": "fi-clock",
-            "twitter": "fi-social-twitter",
-            "undo": "fi-arrow-left",
-            "unsent": "fi-x",
-            "upload": "fi-upload",
-            "user": "fi-torso",
-            "zoomin": "fi-zoom-in",
-            "zoomout": "fi-zoom-out",
-        },
-        # Font-Awesome 3
-        # https://fontawesome.com/v3.2.1/icons/
-        "font-awesome3": {
-            "_base": "icon",
-            "active": "icon-check",
-            "activity": "icon-tag",
-            "add": "icon-plus",
-            "administration": "icon-cog",
-            "arrow-down": "icon-arrow-down",
-            "attachment": "icon-paper-clip",
-            "bar-chart": "icon-bar-chart",
-            "book": "icon-book",
-            "bookmark": "icon-bookmark",
-            "bookmark-empty": "icon-bookmark-empty",
-            "briefcase": "icon-briefcase",
-            "calendar": "icon-calendar",
-            "caret-right": "icon-caret-right",
-            "certificate": "icon-certificate",
-            "comment-alt": "icon-comment-alt",
-            "commit": "icon-truck",
-            "copy": "icon-copy",
-            "delete": "icon-trash",
-            "deploy": "icon-plus",
-            "deployed": "icon-ok",
-            "down": "icon-caret-down",
-            "edit": "icon-edit",
-            "eraser": "icon-eraser",
-            "exclamation": "icon-exclamation",
-            "eye": "icon-eye-open",
-            "facebook": "icon-facebook",
-            "facility": "icon-home",
-            "file": "icon-file",
-            "file-alt": "icon-file-alt",
-            "file-text": "icon-file-text",
-            "file-text-alt": "icon-file-text-alt",
-            "flag": "icon-flag",
-            "flag-alt": "icon-flag-alt",
-            "folder": "icon-folder-close",
-            "folder-alt": "icon-folder-close-alt",
-            "folder-open-alt": "icon-folder-open-alt",
-            "fullscreen": "icon-fullscreen",
-            "globe": "icon-globe",
-            "group": "icon-group",
-            "home": "icon-home",
-            "inactive": "icon-check-empty",
-            "info": "icon-info",
-            "info-circle": "icon-info-sign",
-            "link": "icon-external-link",
-            "list": "icon-list",
-            "location": "icon-globe",
-            "mail": "icon-envelope-alt",
-            "map-marker": "icon-map-marker",
-            "minus": "icon-minus",
-            "offer": "icon-truck",
-            "organisation": "icon-sitemap",
-            "org-network": "icon-umbrella",
-            "other": "icon-circle",
-            "paper-clip": "icon-paper-clip",
-            "pause": "icon-pause",
-            "pencil": "icon-pencil",
-            "phone": "icon-phone",
-            "picture": "icon-picture",
-            "play": "icon-play",
-            "plus": "icon-plus",
-            "plus-sign": "icon-plus-sign",
-            "print": "icon-print",
-            "radio": "icon-microphone",
-            "remove": "icon-remove",
-            "request": "icon-flag",
-            "responsibility": "icon-briefcase",
-            "return": "icon-arrow-left",
-            "rss": "icon-rss",
-            "search": "icon-search",
-            "sent": "icon-ok",
-            "settings": "icon-wrench",
-            "share": "icon-share",
-            "site": "icon-home",
-            "skype": "icon-skype",
-            "star": "icon-star",
-            "stop": "icon-stop",
-            "table": "icon-table",
-            "tag": "icon-tag",
-            "tags": "icon-tags",
-            "tasks": "icon-tasks",
-            "time": "icon-time",
-            "truck": "icon-truck",
-            "twitter": "icon-twitter",
-            "undo": "icon-undo",
-            "unsent": "icon-remove",
-            "up": "icon-caret-up",
-            "upload": "icon-upload-alt",
-            "user": "icon-user",
-            "wrench": "icon-wrench",
-            "zoomin": "icon-zoomin",
-            "zoomout": "icon-zoomout",
-        },
-    }
-
-    # -------------------------------------------------------------------------
-    def __init__(self, name, **attr):
-        """
-            Args:
-                name: the abstract icon name
-                attr: additional HTML attributes (optional)
-        """
-
-        self.name = name
-        super(ICON, self).__init__(" ", **attr)
-
-    # -------------------------------------------------------------------------
-    def xml(self):
-        """
-            Render this instance as XML
-        """
-
-        # Custom layout?
-        layout = current.deployment_settings.get_ui_icon_layout()
-        if layout:
-            return layout(self)
-
-        css_class = self.css_class(self.name)
-
-        if css_class:
-            self.add_class(css_class)
-
-        return super(ICON, self).xml()
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def css_class(cls, name):
-
-        settings = current.deployment_settings
-        fallback = "font-awesome"
-
-        # Lookup the default set
-        icons = cls.icons
-        default_set = settings.get_ui_icons()
-        default = icons[fallback]
-        if default_set != fallback:
-            default.pop("_base", None)
-            default.update(icons.get(default_set, {}))
-
-        # Custom set?
-        custom = settings.get_ui_custom_icons()
-
-        if custom and name in custom:
-            css = custom[name]
-            base = custom.get("_base")
-        elif name in default:
-            css = default[name]
-            base = default.get("_base")
-        else:
-            css = name
-            base = None
-
-        return " ".join([c for c in (css, base) if c])
 
 # END =========================================================================

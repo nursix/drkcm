@@ -4663,7 +4663,7 @@ class cap_ImportAlert(CRUDMethod):
                             ),
                       Field("password",
                             label=T("Password"),
-                            widget = S3PasswordWidget(),
+                            widget = S3PasswordWidget.widget,
                             comment = DIV(_class="tooltip",
                                           _title="%s|%s" % (T("Password"),
                                                             T("Optional password for HTTP Authentication."))),

@@ -37,7 +37,7 @@ from gluon import *
 
 from ..tools import s3_get_extension, s3_str
 
-from .widgets import ICON
+from .icons import ICON
 
 DEFAULT = lambda: None
 DEFAULT_FORMAT = "html"
