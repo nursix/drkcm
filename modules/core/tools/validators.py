@@ -51,6 +51,7 @@ __all__ = ("IS_DYNAMIC_FIELDNAME",
            "IS_UTC_DATE",
            "IS_UTC_OFFSET",
            "IS_AVAILABLE_QUANTITY",
+           "SKIP_VALIDATION",
            "SINGLE_PHONE_NUMBER_PATTERN",
            "MULTI_PHONE_NUMBER_PATTERN",
            "JSONERRORS",
@@ -3296,6 +3297,7 @@ class IS_IBAN(Validator):
             raise ValidationError(translate(self.error_message))
 
         return iban
+
     # -------------------------------------------------------------------------
     @staticmethod
     def represent(value, row=None):
@@ -3316,5 +3318,75 @@ class IS_IBAN(Validator):
             iban = s3_str(value).strip().replace(" ", "").upper()
             reprstr = " ".join(re.findall('..?.?.?', iban))
         return reprstr
+
+# =============================================================================
+class SKIP_VALIDATION(Validator):
+    """
+        Pseudo-validator that allows introspection of field options
+        during GET, but does nothing during POST. Used for Ajax-validated
+        inline-components to prevent them from throwing validation errors
+        when the outer form gets submitted.
+    """
+
+    def __init__(self, other=None):
+        """
+            Args:
+                other: the actual field validator
+
+            Example:
+                field.requires = SKIP_VALIDATION(field.requires)
+        """
+
+        if other and isinstance(other, (list, tuple)):
+            other = other[0]
+        self.other = other
+        if other:
+            if hasattr(other, "multiple"):
+                self.multiple = other.multiple
+            if hasattr(other, "options"):
+                self.options = other.options
+            if hasattr(other, "formatter"):
+                self.formatter = other.formatter
+
+    # -------------------------------------------------------------------------
+    def validate(self, value, record_id=None):
+        """
+            Validation
+
+            Args:
+                value: the value
+                record_id: the record ID (unused, for API compatibility)
+        """
+
+        other = self.other
+        if current.request.env.request_method == "POST" or not other:
+            return value
+        if not isinstance(other, (list, tuple)):
+            other = [other]
+        for r in other:
+            value = validator_caller(r, value, record_id)
+
+        return value
+
+    ## -------------------------------------------------------------------------
+    #def __call__(self, value, record_id=None):
+        #"""
+            #Validation
+
+            #Args:
+                #value: the value
+                #record_id: the record ID (unused, for API compatibility)
+        #"""
+
+        #other = self.other
+        #if current.request.env.request_method == "POST" or not other:
+            #return value, None
+        #if not isinstance(other, (list, tuple)):
+            #other = [other]
+        #for r in other:
+            #value, error = r(value)
+            #if error:
+                #return value, error
+        #return value, None
 
 # END =========================================================================

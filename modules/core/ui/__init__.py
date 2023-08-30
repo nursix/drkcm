@@ -6,4 +6,5 @@ from .forms import *
 from .icons import *
 from .navigation import *
 from .selectors import *
+from .subforms import *
 from .widgets import *
