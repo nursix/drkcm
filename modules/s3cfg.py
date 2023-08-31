@@ -3913,6 +3913,12 @@ class S3Config(Storage):
         """
         return self.__lazy("dvr", "response_themes_details", default=False)
 
+    def get_dvr_response_themes_efforts(self):
+        """
+            Record response efforts per theme
+        """
+        return self.__lazy("dvr", "response_themes_efforts", default=False)
+
     def get_dvr_response_activity_autolink(self):
         """
             Automatically link response actions to case activities

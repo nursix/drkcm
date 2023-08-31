@@ -1224,6 +1224,7 @@ class S3HoursWidget(EdenFormWidget):
         attr = StringWidget._attributes(field, default, **attributes)
 
         attr["requires"] = self.validate
+        attr["_title"] = current.T("In hours, or formatted like 1h10min, 15min, 0:45...")
 
         widget = INPUT(**attr)
         widget.add_class("hours")

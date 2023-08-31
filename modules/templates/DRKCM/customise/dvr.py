@@ -8,7 +8,7 @@ import datetime
 
 from collections import OrderedDict
 
-from gluon import current, IS_EMPTY_OR, IS_IN_SET, IS_LENGTH
+from gluon import current, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_IN_SET, IS_LENGTH
 from gluon.storage import Storage
 
 from core import FS, IS_ONE_OF
@@ -624,15 +624,22 @@ def configure_inline_responses(person_id,
     if use_theme and settings.get_dvr_response_themes_details():
         # Expose response_action_theme inline
 
-        # Filter action_id in inline response_themes to same beneficiary
-        ltable = s3db.dvr_response_action_theme
-        field = ltable.action_id
-        dbset = db(rtable.person_id == person_id) if person_id else db
-        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_response_action.id",
-                                               field.represent,
-                                               orderby = ~rtable.start_date,
-                                               sort = False,
-                                               ))
+        if settings.get_dvr_response_themes_efforts():
+            # Cannot edit inline theme details
+            readonly = True
+        else:
+            # Can add and edit inline theme details
+            readonly = False
+
+            # Filter action_id in inline response_themes to same beneficiary
+            ltable = s3db.dvr_response_action_theme
+            field = ltable.action_id
+            dbset = db(rtable.person_id == person_id) if person_id else db
+            field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_response_action.id",
+                                                   field.represent,
+                                                   orderby = ~rtable.start_date,
+                                                   sort = False,
+                                                   ))
 
         # Inline-component
         inline_responses = S3SQLInlineComponent(
@@ -643,8 +650,8 @@ def configure_inline_responses(person_id,
                                           ],
                                 label = T("Themes"),
                                 orderby = "action_id",
+                                readonly = readonly,
                                 )
-
     else:
         # Expose response_action inline
 
@@ -1314,7 +1321,8 @@ def response_action_onvalidation(form):
     """
 
     ui_options = get_ui_options()
-    if ui_options.get("response_effort_required"):
+    if ui_options.get("response_effort_required") and not \
+       current.deployment_settings.get_dvr_response_themes_efforts():
 
         db = current.db
         s3db = current.s3db
@@ -1925,6 +1933,7 @@ def dvr_response_action_resource(r, tablename):
 
     use_theme = ui_options_get("response_use_theme")
     themes_details = use_theme and settings.get_dvr_response_themes_details()
+    themes_efforts = use_theme and settings.get_dvr_response_themes_efforts()
 
     # Represent for dvr_response_action_theme.id
     if themes_details:
@@ -1950,7 +1959,7 @@ def dvr_response_action_resource(r, tablename):
         crud_strings = current.response.s3.crud_strings["dvr_response_action"]
         crud_strings["title_report"] = T("Action Statistic")
 
-    if r.interactive or r.representation in ("aadata", "xlsx", "xls", "pdf", "s3json"):
+    if r.interactive or r.representation in ("aadata", "xlsx", "xls", "pdf", "json", "s3json"):
 
         human_resource_id = current.auth.s3_logged_in_human_resource()
 
@@ -1960,12 +1969,16 @@ def dvr_response_action_resource(r, tablename):
         field.represent = s3db.hrm_HumanResourceRepresent(show_link=False)
         field.widget = None
 
+        ltable = s3db.dvr_response_action_theme
+
         # Require explicit unit in hours-widget above 4 hours
         from core import S3HoursWidget
-        field = table.hours
-        field.widget = S3HoursWidget(precision = 2,
-                                     explicit_above = 4,
-                                     )
+        for f in (table.hours, ltable.hours):
+            f.widget = S3HoursWidget(precision=2, explicit_above=4)
+
+        # Require input when documenting effort per theme
+        if themes_efforts:
+            ltable.hours.requires = IS_FLOAT_IN_RANGE(0.0, None)
 
         # Use separate due-date field?
         use_due_date = settings.get_dvr_response_due_date()
