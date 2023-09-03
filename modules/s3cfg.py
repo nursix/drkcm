@@ -948,40 +948,6 @@ class S3Config(Storage):
         """
         return self.auth.get("person_realm_member_org", False)
 
-    def get_auth_entity_role_manager(self):
-        """
-            Activate Entity Role Manager (=embedded Role Manager Tab for OrgAdmins)
-        """
-        return self.auth.get("entity_role_manager", False)
-
-    def get_auth_role_modules(self):
-        """
-            Which modules are included in the Role Manager
-            - to assign discrete permissions to via UI
-        """
-        T = current.T
-        return self.auth.get("role_modules", OrderedDict([
-            ("staff", T("Staff")),
-            ("vol", T("Volunteers")),
-            ("member", T("Members")),
-            ("inv", T("Warehouses")),
-            ("asset", T("Assets")),
-            ("project", T("Projects")),
-            ("irs", T("Incidents"))
-        ]))
-
-    def get_auth_access_levels(self):
-        """
-            Access levels for the Role Manager UI
-        """
-        T = current.T
-        return self.auth.get("access_levels", OrderedDict([
-            ("reader", T("Reader")),
-            ("data_entry", T("Data Entry")),
-            ("editor", T("Editor")),
-            ("super", T("Super Editor"))
-        ]))
-
     def get_auth_approve_user_message(self):
         return self.auth.get("auth_approve_user_message", None)
 
