@@ -40,7 +40,7 @@ from gluon import current, \
 from gluon.sqlhtml import FormWidget, StringWidget, OptionsWidget
 from gluon.storage import Storage
 
-from .widgets import ICON
+from .icons import ICON
 from ..tools import IS_LOCATION, IS_PHONE_NUMBER_MULTI, IS_PHONE_NUMBER_SINGLE, \
                     JSONERRORS, JSONSEPARATORS, StringTemplateParser, \
                     s3_required_label, s3_fullname, s3_str, s3_validate

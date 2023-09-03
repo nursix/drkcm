@@ -233,6 +233,8 @@ def config(settings):
     settings.dvr.response_themes = get_ui_option("response_use_theme")
     # Document response details per theme
     settings.dvr.response_themes_details = get_ui_option("response_themes_details")
+    # Document response efforts per theme
+    settings.dvr.response_themes_efforts = get_ui_option("response_themes_efforts")
     # Response themes are org-specific
     settings.dvr.response_themes_org_specific = True
     # Use response types

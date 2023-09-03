@@ -1677,7 +1677,9 @@ class DVRResponseModel(DataModel):
 
         use_response_types = settings.get_dvr_response_types()
         use_response_themes = settings.get_dvr_response_themes()
+
         response_themes_details = settings.get_dvr_response_themes_details()
+        response_themes_efforts = settings.get_dvr_response_themes_efforts()
 
         use_due_date = settings.get_dvr_response_due_date()
         DATE = T("Date Actioned") if use_due_date else T("Date")
@@ -1736,11 +1738,10 @@ class DVRResponseModel(DataModel):
                      response_status_id(),
                      Field("hours", "double",
                            label = T("Effort (Hours)"),
-                           requires = IS_EMPTY_OR(
-                                       IS_FLOAT_IN_RANGE(0.0, None)),
+                           requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
                            represent = lambda hours: "%.2f" % hours if hours else NONE,
-                           widget = S3HoursWidget(precision = 2,
-                                                  ),
+                           widget = S3HoursWidget(precision=2),
+                           writable = not response_themes_efforts,
                            ),
                      CommentsField(label = T("Details"),
                                    comment = None,
@@ -1750,25 +1751,23 @@ class DVRResponseModel(DataModel):
 
         # List_fields
         list_fields = ["case_activity_id",
-                       "comments",
+                       "response_type_id" if use_response_types else None,
+                       #contents
                        "human_resource_id",
-                       #"date_due",
+                       "date_due" if use_due_date else None,
                        "start_date",
                        "hours",
                        "status_id",
                        ]
 
-        if use_due_date:
-            list_fields[3:3] = ["date_due"]
-        if use_response_types:
-            list_fields[1:1] = ["response_type_id"]
         if use_response_themes:
             if response_themes_details:
-                list_fields[1:1] = ["response_action_theme.theme_id"]
+                contents = ["response_action_theme.theme_id"]
             else:
-                list_fields[1:1] = ["response_theme_ids", "comments"]
+                contents = ["response_theme_ids", "comments"]
         else:
-            list_fields[1:1] = ["comments"]
+            contents = ["comments"]
+        list_fields[2:2] = contents
 
         # Filter widgets
         if use_response_types:
@@ -1815,12 +1814,15 @@ class DVRResponseModel(DataModel):
         type_field = "response_type_id" if use_response_types else None
         details_field = "comments"
 
+        postprocess = None
         if use_response_themes:
             if response_themes_details:
+                fields = ["theme_id", "comments"]
+                if response_themes_efforts:
+                    fields.append("hours")
+                    postprocess = self.response_action_postprocess
                 theme_field = S3SQLInlineComponent("response_action_theme",
-                                                   fields = ["theme_id",
-                                                             "comments",
-                                                             ],
+                                                   fields = fields,
                                                    label = T("Themes"),
                                                    )
                 details_field = None
@@ -1841,6 +1843,7 @@ class DVRResponseModel(DataModel):
                                     "start_date",
                                     "status_id",
                                     "hours",
+                                    postprocess = postprocess,
                                     )
 
         # Table Configuration
@@ -1896,6 +1899,14 @@ class DVRResponseModel(DataModel):
                            requires = IS_ONE_OF(db, "dvr_response_theme.id",
                                                 theme_represent,
                                                 ),
+                           ),
+                     Field("hours", "double",
+                           label = T("Effort (Hours)"),
+                           requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
+                           represent = lambda hours: "%.2f" % hours if hours else NONE,
+                           widget = S3HoursWidget(precision=2),
+                           readable = response_themes_efforts,
+                           writable = response_themes_efforts,
                            ),
                      case_activity_id(ondelete = "SET NULL",
                                       readable = False,
@@ -2094,6 +2105,46 @@ class DVRResponseModel(DataModel):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def response_action_postprocess(cls, form):
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        db = current.db
+        s3db = current.s3db
+        settings = current.deployment_settings
+
+        if settings.get_dvr_response_themes_details() and \
+           settings.get_dvr_response_themes_efforts():
+
+            # Look up the record
+            atable = s3db.dvr_response_action
+            query = (atable.id == record_id)
+            record = db(query).select(atable.id,
+                                      atable.hours,
+                                      limitby = (0, 1),
+                                      ).first()
+            if not record:
+                return
+
+            # Calculate total effort from individual theme links
+            ltable = s3db.dvr_response_action_theme
+            query = (ltable.action_id == record_id) & \
+                    (ltable.deleted == False)
+            rows = db(query).select(ltable.hours)
+            hours = [row.hours for row in rows if row.hours is not None]
+            effort = sum(hours) if hours else None
+            if effort is None and (record.hours is None or not rows):
+                # Default total if nothing provided
+                effort = 0.0
+
+            # Update the record
+            if effort is not None:
+                record.update_record(hours=effort)
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def response_action_onaccept(cls, form):
         """
             Onaccept routine for response actions
@@ -2147,8 +2198,7 @@ class DVRResponseModel(DataModel):
                 if case_activity:
                     record.update_record(person_id = case_activity.person_id)
 
-        elif settings.get_dvr_response_activity_autolink() and \
-             not themes_details:
+        elif settings.get_dvr_response_activity_autolink() and not themes_details:
             # Automatically link the response action to a case activity
             # (using matching needs)
 
@@ -2280,6 +2330,7 @@ class DVRResponseModel(DataModel):
                                   table.action_id,
                                   table.theme_id,
                                   table.comments,
+                                  table.hours,
                                   limitby = (0, 1),
                                   ).first()
         if not record:
@@ -2312,19 +2363,27 @@ class DVRResponseModel(DataModel):
                             current.auth.s3_accessible_query("delete", table) & \
                             (table.deleted == False)
                     rows = db(query).select(table.id,
+                                            table.hours,
                                             table.comments,
                                             orderby = table.created_on,
                                             )
-                    duplicates = []
-                    details = []
+
+                    duplicates, details, hours = [], [], []
                     for row in rows:
+                        duplicates.append(row.id)
                         if row.comments:
                             details.append(row.comments.strip())
-                        duplicates.append(row.id)
+                        if row.hours:
+                            hours.append(row.hours)
+
                     if record.comments:
                         details.append(record.comments.strip())
+                    if record.hours:
+                        hours.append(record.hours)
 
-                    record.update_record(comments="\n\n".join(c for c in details if c))
+                    record.update_record(comments = "\n\n".join(c for c in details if c),
+                                         hours = sum(hours) if hours else None,
+                                         )
                     s3db.resource("dvr_response_action_theme", id=duplicates).delete()
 
                 # Update response_theme_ids in response action
@@ -2369,8 +2428,8 @@ class DVRResponseModel(DataModel):
             query = (atable.id == action_id) & \
                     (atable.deleted == False)
             action = db(query).select(atable.id,
-                                      atable.person_id,
-                                      atable.human_resource_id,
+                                      #atable.person_id,
+                                      #atable.human_resource_id,
                                       limitby = (0, 1),
                                       ).first()
         else:

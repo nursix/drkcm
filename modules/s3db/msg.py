@@ -752,7 +752,7 @@ class MsgEmailModel(MsgChannelModel):
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(64),
                                        ],
-                           widget = S3PasswordWidget(),
+                           widget = S3PasswordWidget.widget,
                            ),
                      # Set true to delete messages from the remote
                      # inbox after fetching them.
@@ -886,7 +886,7 @@ class MsgFacebookModel(MsgChannelModel):
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(64),
                                        ],
-                           widget = S3PasswordWidget(),
+                           widget = S3PasswordWidget.widget,
                            ),
                      # Optional
                      Field("page_id", "bigint",
@@ -1024,7 +1024,7 @@ class MsgMCommonsModel(MsgChannelModel):
                           Field("password", "password",
                                 readable = False,
                                 requires = IS_NOT_EMPTY(),
-                                widget = S3PasswordWidget(),
+                                widget = S3PasswordWidget.widget,
                                 ),
                           Field("query"),
                           Field("timestmp", "datetime",
@@ -1499,7 +1499,7 @@ class MsgRSSModel(MsgChannelModel):
                      Field("password", "password",
                            label = T("Password"),
                            readable = False,
-                           widget = S3PasswordWidget(),
+                           widget = S3PasswordWidget.widget,
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Password"),
                                                            T("Optional password for HTTP Basic Authentication."))),
@@ -1845,7 +1845,7 @@ class MsgSMSOutboundModel(DataModel):
                      Field("username"),
                      Field("password", "password",
                            readable = False,
-                           widget = S3PasswordWidget(),
+                           widget = S3PasswordWidget.widget,
                            ),
                      Field("enabled", "boolean",
                            default = True,
@@ -1974,7 +1974,7 @@ class MsgTwilioModel(MsgChannelModel):
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(64),
                                        ],
-                           widget = S3PasswordWidget(),
+                           widget = S3PasswordWidget.widget,
                            ),
                      )
 
@@ -2028,7 +2028,7 @@ class MsgTwitterModel(DataModel):
         # ---------------------------------------------------------------------
         # Twitter Channel
         #
-        password_widget = S3PasswordWidget()
+        password_widget = S3PasswordWidget.widget
         tablename = "msg_twitter_channel"
         define_table(tablename,
                      # Instance
