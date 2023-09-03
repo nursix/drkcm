@@ -467,7 +467,7 @@
             // Submit the form when all inline validations are done
             var ns = this.eventNamespace + this.id,
                 self = this;
-            $.when.apply(null, validations).then(
+            $.when.apply($, validations).then(
                 function() {
                     // Validation succeeded => submit the form
                     self.submitInProgress = false;
@@ -477,7 +477,7 @@
                     // Validation failed
                     // => restore any rejected promises
                     for (var key in pendingValidations) {
-                        if (pendingValidations[key].isRejected()) {
+                        if (pendingValidations[key].state() == "rejected") {
                             pendingValidations[key] = $.Deferred();
                         }
                     }
@@ -1342,6 +1342,8 @@
                         throbber.hide();
                         add_button.removeClass('hide').show();
                     }
+                    // Propagate the rejected-status
+                    return validated;
                 });
         },
 
@@ -1485,6 +1487,8 @@
                             throbber.hide();
                             rdy_button.removeClass('hide').show();
                         }
+                        // Propagate the rejected-status
+                        return validated;
                     });
             }
         },
