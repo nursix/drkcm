@@ -1472,8 +1472,8 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
 
         fieldname = str(field).replace(".", "_")
         if fieldname.startswith("sub_"):
-            from .forms import SKIP_POST_VALIDATION
-            requires = SKIP_POST_VALIDATION(requires)
+            from ..tools import SKIP_VALIDATION
+            requires = SKIP_VALIDATION(requires)
 
         defaults = {"requires": requires,
                     "_type": "hidden",

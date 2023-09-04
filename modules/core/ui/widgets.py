@@ -2713,8 +2713,8 @@ class S3LocationDropdownWidget(EdenFormWidget):
             # Skip in-widget validation on POST if inline
             widget_id = attr.get("_id")
             if widget_id and widget_id[:4] == "sub_":
-                from .forms import SKIP_POST_VALIDATION
-                requires = SKIP_POST_VALIDATION(requires)
+                from ..tools import SKIP_VALIDATION
+                requires = SKIP_VALIDATION(requires)
 
             widget = TAG[""](SELECT(*opts, **attr), requires = requires)
         else:
