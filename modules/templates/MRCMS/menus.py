@@ -61,7 +61,7 @@ class S3MainMenu(default.S3MainMenu):
                 MM("Confiscation", c="security", f="seized_item"),
             ]
 
-        elif not_admin and has_role("QUARTIER"):
+        elif not_admin and has_role("QUARTERMASTER"):
             return [
                 MM("Clients", c=("dvr", "cr"), f=("person", "shelter_registration")),
                 MM("Confiscation", c="security", f="seized_item"),
@@ -131,7 +131,7 @@ class S3MainMenu(default.S3MainMenu):
             lang_name = represent_local(code)
             menu_lang(
                 ML(lang_name, translate=False, lang_code=code, lang_name=lang_name)
-            )
+                )
         return menu_lang
 
     # -------------------------------------------------------------------------
@@ -142,7 +142,8 @@ class S3MainMenu(default.S3MainMenu):
         auth = current.auth
         settings = current.deployment_settings
 
-        ADMIN = current.auth.get_system_roles().ADMIN
+        sr = current.auth.get_system_roles()
+        ADMIN = sr.ADMIN
 
         if not auth.is_logged_in():
             request = current.request
@@ -152,12 +153,12 @@ class S3MainMenu(default.S3MainMenu):
                "_next" in request.get_vars:
                 login_next = request.get_vars["_next"]
 
-            self_registration = settings.get_security_self_registration()
+            #self_registration = settings.get_security_self_registration()
             menu_personal = MP()(
-                        MP("Register", c="default", f="user",
-                           m = "register",
-                           check = self_registration,
-                           ),
+                        #MP("Register", c="default", f="user",
+                        #   m = "register",
+                        #   check = self_registration,
+                        #   ),
                         MP("Login", c="default", f="user",
                            m = "login",
                            vars = {"_next": login_next},
@@ -170,15 +171,16 @@ class S3MainMenu(default.S3MainMenu):
                               )
         else:
             s3_has_role = auth.s3_has_role
-            is_org_admin = lambda i: not s3_has_role(ADMIN) and \
-                                     s3_has_role("ORG_ADMIN")
+            is_user_admin = lambda i: \
+                            s3_has_role(sr.ORG_ADMIN, include_admin=False) or \
+                            s3_has_role(sr.ORG_GROUP_ADMIN, include_admin=False)
 
             menu_personal = MP()(
                         MP("Administration", c="admin", f="index",
                            restrict = ADMIN,
                            ),
                         MP("Administration", c="admin", f="user",
-                           check = is_org_admin,
+                           check = is_user_admin,
                            ),
                         MP("Profile", c="default", f="person"),
                         MP("Change Password", c="default", f="user",
@@ -187,7 +189,8 @@ class S3MainMenu(default.S3MainMenu):
                         MP("Logout", c="default", f="user",
                            m = "logout",
                            ),
-            )
+                        )
+
         return menu_personal
 
     # -------------------------------------------------------------------------
@@ -197,10 +200,11 @@ class S3MainMenu(default.S3MainMenu):
         ADMIN = current.auth.get_system_roles().ADMIN
 
         menu_about = MA(c="default")(
-            MA("Help", f="help"),
-            #MA("Contact", f="contact"),
-            MA("Version", f="about", restrict = ADMIN),
-        )
+                MA("Help", f="help"),
+                #MA("Contact", f="contact"),
+                MA("Version", f="about", restrict = ADMIN),
+                )
+
         return menu_about
 
 # =============================================================================
