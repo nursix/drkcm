@@ -41,6 +41,7 @@ __all__ = ("JSONSEPARATORS",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
+           "datahash",
            "s3_get_extension",
            "s3_get_extension_from_url",
            "s3_get_foreign_key",
@@ -727,6 +728,23 @@ def s3_flatlist(nested):
                 yield sub
         else:
             yield item
+
+# =============================================================================
+def datahash(*values):
+    """
+        Produce a data verification hash from the values
+
+        Args:
+            values: an (ordered) iterable of values
+
+        Returns:
+            the verification hash as string
+    """
+
+    import hashlib
+    dstr = "|%s|" % "|".join([str(v) for v in values])
+
+    return hashlib.sha512(dstr.encode("utf-8")).hexdigest().lower()
 
 # =============================================================================
 def s3_set_match_strings(matchDict, value):
