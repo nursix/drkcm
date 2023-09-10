@@ -3899,12 +3899,10 @@ class OrgSitePresenceModel(DataModel):
         define_table(tablename,
                      super_link("site_id", "org_site",
                                 readable = True,
-                                writable = True,
+                                writable = False,
                                 ),
-                     person_id(),
-                     DateTimeField(default = "now",
-                                   writable = False,
-                                   ),
+                     person_id(writable=False),
+                     DateTimeField(writable = False),
                      Field("event_type",
                            represent = represent_option(event_types),
                            requires = IS_IN_SET(event_types, zero=None),
@@ -3916,6 +3914,7 @@ class OrgSitePresenceModel(DataModel):
                      )
 
         configure(tablename,
+                  insertable = False,
                   editable = False,
                   deletable = False,
                   create_onaccept = self.presence_event_onaccept,
@@ -3925,7 +3924,7 @@ class OrgSitePresenceModel(DataModel):
         # Current Presence at Sites
         #
         presence_status = {"IN": T("Present##presence"),
-                           "OUT": T("Absent##presence"),
+                           "OUT": T("Not Present##presence"),
                            }
         tablename = "org_site_presence"
         define_table(tablename,
@@ -3933,10 +3932,8 @@ class OrgSitePresenceModel(DataModel):
                                 readable = True,
                                 writable = False,
                                 ),
-                     person_id(writable = False,
-                               ),
-                     DateTimeField(writable = False,
-                                   ),
+                     person_id(writable=False),
+                     DateTimeField(writable=False),
                      Field("status",
                            represent = represent_option(presence_status),
                            requires = IS_IN_SET(presence_status, zero=None),
@@ -4021,7 +4018,7 @@ class OrgSitePresenceModel(DataModel):
                 (ptable.site_id != record.site_id) & \
                 (ptable.status == "IN") & \
                 (ptable.deleted == False)
-        db(query).update(status="OUT", event_id=record.id)
+        db(query).update(status="OUT", date=now, event_id=record.id)
 
         # Get the presence record for the event site
         query = (ptable.person_id == record.person_id) & \
@@ -4033,6 +4030,12 @@ class OrgSitePresenceModel(DataModel):
                                     limitby = (0, 1),
                                     ).first()
 
+        # Update presence at the site
+        # Notes:
+        #    - multiple consecutive IN will retain the earliest IN date
+        #    - multiple consecutive OUT will update to the latest OUT date
+        #    - a SEEN event does not change presence status/date at the site
+        #    - the tracking reference (event_id) will always be updated
         new_status = "IN" if record.event_type == "IN" else "OUT"
         if not presence:
             # Create new presence record
@@ -4043,7 +4046,8 @@ class OrgSitePresenceModel(DataModel):
                           event_id = record.id,
                           )
 
-        elif record.event_type in ("IN", "OUT") and presence.status != new_status:
+        elif record.event_type == "IN" and presence.status != new_status or \
+             record.event_type == "OUT":
             # Update the presence record according to this movement
             presence.update_record(date = now,
                                    status = new_status,

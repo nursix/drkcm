@@ -3470,15 +3470,6 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_allocation", False)
 
-    def get_org_site_check_in_qrcode(self):
-        """
-            Use QRInput for site check-in/out
-                - True to enable and use QR contents verbatim
-                - a tuple (pattern, index) for QR contents parsing
-                - False to disable
-        """
-        return self.org.get("site_check_in_qrcode", False)
-
     def get_cr_check_out_is_final(self):
         """
             Whether checking out of a shelter frees up the place
@@ -5031,6 +5022,42 @@ class S3Config(Storage):
             Get custom tasks for scheduled site checks
         """
         return self.org.get("site_check")
+
+    # TODO *** update default config.py
+    def get_org_site_presence_site_types(self):
+        """
+            Site types where presence registration is allowed
+            - True to allow all site types
+            - List of tablenames to select site types
+            - False to deny all site types
+        """
+        return self.org.get("site_presence_site_types", True)
+
+    def get_org_site_presence_expires(self):
+        """
+            Number of hours after which the user's IN-registration expires
+            - 0 to disable expiry
+        """
+        return self.org.get("site_presence_expires", 0)
+
+    def get_org_site_presence_qrcode(self):
+        """
+            Use QRInput for site presence registration
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for QR contents parsing
+                - False to disable
+        """
+        return self.org.get("site_presence_qrcode", False)
+
+    def get_org_site_check_in_qrcode(self):
+        """
+            Use QRInput for site check-in/out
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for QR contents parsing
+                - False to disable
+        """
+        # TODO deprecate
+        return self.org.get("site_check_in_qrcode", False)
 
     def set_org_dependent_field(self,
                                 tablename=None,

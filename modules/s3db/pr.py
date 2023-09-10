@@ -1117,6 +1117,8 @@ class PRPersonModel(DataModel):
                        member_membership = "person_id",
                        # Organisation Group Association
                        org_group_person = "person_id",
+                       # Site Presence History
+                       org_site_presence_event = "person_id",
                        # Education history
                        pr_education = "person_id",
                        # Occupation Types

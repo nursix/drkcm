@@ -1524,12 +1524,20 @@ class S3QRInput(EdenFormWidget):
         device camera (if available) to capture the code
     """
 
-    def __init__(self, hidden=False, icon=True, label=False, pattern=None, index=None):
+    def __init__(self,
+                 hidden = False,
+                 icon = True,
+                 label = False,
+                 placeholder = None,
+                 pattern = None,
+                 index = None,
+                 ):
         """
             Args:
                 hidden: use a hidden input
                 icon: show icon on button
                 label: show label on button
+                placeholder: placeholder for visible input
                 pattern: a JS regular expression to parse the QR Code
                 index: group index or name for the regex match
         """
@@ -1537,6 +1545,7 @@ class S3QRInput(EdenFormWidget):
         self.hidden = hidden
         self.icon = icon
         self.label = label
+        self.placeholder = placeholder
 
         self.pattern = pattern
         self.index = index
@@ -1571,6 +1580,8 @@ class S3QRInput(EdenFormWidget):
         widget_id = attr.get("_id")
         if not widget_id:
             widget_id = attr["_id"] = str(field).replace(".", "_")
+        if self.placeholder:
+            attr["_placeholder"] = self.placeholder
 
         title = T("Scan QR Code")
 

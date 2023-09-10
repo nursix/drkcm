@@ -1233,7 +1233,7 @@ class FormKey:
         keys = current.session.get(keyname, [])
         if not formkey or formkey not in keys:
             return False
-        else:
+        elif invalidate:
             keys.remove(formkey)
 
         return True

@@ -406,9 +406,16 @@ class CRShelterModel(DataModel):
                    )
 
         # Check-in method
+        # TODO deprecate
         set_method("cr_shelter",
                    method="check-in",
                    action = self.org_SiteCheckInMethod,
+                   )
+
+        # Presence Registration
+        set_method("cr_shelter",
+                   method = "presence",
+                   action = RegisterPresence,
                    )
 
         # Shelter Inspection method
