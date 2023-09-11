@@ -96,7 +96,7 @@ def mrcms_dvr_rheader(r, tabs=None):
                                    (T("Shelter"), shelter),
                                    ],
                                   [(T("Name"), name),
-                                   (T("Transferable"), transferable),
+                                   (T("Transferable"), transferable), # TODO disable transferability
                                    (T("Checked-out"), "absence"),
                                    ],
                                   ["date_of_birth",

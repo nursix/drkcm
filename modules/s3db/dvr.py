@@ -4714,7 +4714,6 @@ class DVRDiagnosisModel(DataModel):
 
         db = current.db
         s3 = current.response.s3
-        settings = current.deployment_settings
 
         define_table = self.define_table
         crud_strings = s3.crud_strings
@@ -8739,16 +8738,16 @@ def dvr_update_last_seen(person_id):
     if event:
         last_seen_on = event.date
 
-    # Check shelter registration history for newer entries
-    htable = s3db.cr_shelter_registration_history
-    query = (htable.person_id == person_id) & \
-            (htable.status.belongs(2, 3)) & \
-            (htable.date != None) & \
-            (htable.deleted != True)
+    # Check site presence events for newer entries
+    etable = s3db.org_site_presence_event
+    query = (etable.person_id == person_id) & \
+            (etable.event_type.belongs("IN", "OUT", "SEEN")) & \
+            (etable.date != None) & \
+            (etable.deleted == False)
     if last_seen_on is not None:
-        query &= htable.date > last_seen_on
-    entry = db(query).select(htable.date,
-                             orderby = ~htable.date,
+        query &= etable.date > last_seen_on
+    entry = db(query).select(etable.date,
+                             orderby = ~etable.date,
                              limitby = (0, 1),
                              ).first()
     if entry:

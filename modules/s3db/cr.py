@@ -1942,10 +1942,6 @@ class CRShelterRegistrationModel(DataModel):
                           shelter_id = shelter_id,
                           )
 
-            # Update last_seen_on
-            if current.deployment_settings.has_module("dvr"):
-                s3db.dvr_update_last_seen(person_id)
-
         # Update registration
         update["last_shelter_id"] = shelter_id
         update["last_shelter_unit_id"] = unit_id

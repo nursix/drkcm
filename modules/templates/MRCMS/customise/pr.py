@@ -16,6 +16,8 @@ ABSENCE_LIMIT = 5
 
 # =============================================================================
 def mrcms_absence(row):
+    # TODO update for org_site_presence_event
+    # TODO referring to the site where currently registered as checked-in
     """
         Field method to display duration of absence in
         dvr/person list view and rheader

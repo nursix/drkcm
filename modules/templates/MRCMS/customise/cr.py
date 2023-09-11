@@ -10,16 +10,19 @@ from gluon import current, URL, \
 from core import IS_ONE_OF, S3CRUD
 
 # -------------------------------------------------------------------------
-def check_in_status(site, person):
+def client_site_status(person_id, site_id, site_type, case_status):
     """
-        Determine the current check-in status for a person
+        Check whether a person to register at a site is a resident,
+        whether they are permitted to enter/leave premises, and whether
+        there are advice/instructions to the reception staff
 
         Args:
-            site: the site record (instance!)
-            person: the person record
-
-        See also:
-            org_SiteCheckInMethod for details of the return value
+            person_id: the person ID
+            site_id: the site ID
+            site_type: the site type (tablename)
+            case_status: the current case status (Row)
+        Returns:
+            dict, see person_site_status
     """
 
     T = current.T
@@ -28,58 +31,40 @@ def check_in_status(site, person):
     s3db = current.s3db
 
     result = {"valid": False,
-              "check_in_allowed": False,
-              "check_out_allowed": False,
+              "allowed_in": False,
+              "allowed_out": False,
               }
-    person_id = person.id
 
-    # Check the case status
-    ctable = s3db.dvr_case
-    cstable = s3db.dvr_case_status
-    query = (ctable.person_id == person_id) & \
-            (cstable.id == ctable.status_id)
-    status = db(query).select(cstable.is_closed,
-                              limitby = (0, 1),
-                              ).first()
-
-    if status and status.is_closed:
-        result["error"] = T("Not currently a resident")
+    if case_status.is_closed:
+        result["error"] = T("Closed case")
         return result
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
-    query = (stable.site_id == site.site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby=(0, 1),
-                                    ).first()
-    if not registration:
-        result["error"] = T("Registration not found")
-        return result
+    if site_type == "cr_shelter":
+        # Check for a shelter registration
+        stable = s3db.cr_shelter
+        rtable = s3db.cr_shelter_registration
+        query = (stable.site_id == site_id) & \
+                (stable.id == rtable.shelter_id) & \
+                (rtable.person_id == person_id) & \
+                (rtable.deleted != True)
+        registration = db(query).select(rtable.id,
+                                        rtable.registration_status,
+                                        limitby=(0, 1),
+                                        ).first()
+        if not registration or registration.registration_status == 3:
+            # No registration with this site, or checked-out
+            return result
 
     result["valid"] = True
 
-    # Check current status
-    reg_status = registration.registration_status
-    if reg_status == 2:
-        # Currently checked-in at this site
-        status = 1
-    elif reg_status == 3:
-        # Currently checked-out from this site
-        status = 2
-    else:
-        # No previous status
-        status = None
-    result["status"] = status
+    # Get the current presence status at the site
+    from core import SitePresence
+    presence = SitePresence.status(person_id, site_id)[0]
 
-    check_in_allowed = True
-    check_out_allowed = True
+    allowed_in = True
+    allowed_out = True
 
-    # Check if we have any case flag to deny check-in or to show advise
+    # Check if we have any case flag to deny passage and/or to show instructions
     ftable = s3db.dvr_case_flag
     ltable = s3db.dvr_case_flag_case
     query = (ltable.person_id == person_id) & \
@@ -94,19 +79,21 @@ def check_in_status(site, person):
                              ftable.advise_at_id_check,
                              ftable.instructions,
                              )
-
     info = []
     append = info.append
     for flag in flags:
+        # Deny IN/OUT?
         if flag.deny_check_in:
-            check_in_allowed = False
+            allowed_in = False
         if flag.deny_check_out:
-            check_out_allowed = False
+            allowed_out = False
 
         # Show flag instructions?
-        if status == 1:
+        if flag.advise_at_id_check:
+            advise = True
+        elif presence == "IN":
             advise = flag.advise_at_check_out
-        elif status == 2:
+        elif presence == "OUT":
             advise = flag.advise_at_check_in
         else:
             advise = flag.advise_at_check_in or flag.advise_at_check_out
@@ -123,79 +110,146 @@ def check_in_status(site, person):
     if info:
         result["info"] = DIV(_class="checkpoint-advise", *info)
 
-    result["check_in_allowed"] = check_in_allowed
-    result["check_out_allowed"] = check_out_allowed
+    result["allowed_in"] = allowed_in
+    result["allowed_out"] = allowed_out
 
     return result
 
 # -------------------------------------------------------------------------
-def site_check_in(site_id, person_id):
+def staff_site_status(person_id, organisation_ids):
     """
-        When a person is checked-in to a Shelter then update the
-        Shelter Registration
+        Check whether a person to register at a site is a staff member
 
         Args:
-            site_id: the site_id of the shelter
-            person_id: the person_id to check-in
+            person_id: the person ID
+            organisation_ids: IDs of all valid staff organisations for the site
+        Returns:
+            dict, see person_site_status
     """
 
-    s3db = current.s3db
     db = current.db
+    s3db = current.s3db
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id) & \
+            (htable.organisation_id.belongs(organisation_ids)) & \
+            (htable.status == 1) & \
+            (htable.deleted == False)
+    staff = db(query).select(htable.id, limitby=(0, 1)).first()
 
-    query = (stable.site_id == site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby = (0, 1)
-                                    ).first()
-    if not registration:
-        return
+    valid = True if staff else False
 
-    # Update the Shelter Registration
-    registration.update_record(check_in_date = current.request.utcnow,
-                               registration_status = 2,
-                               )
-    s3db.onaccept("cr_shelter_registration", registration, method="update")
+    result = {"valid": valid,
+              "allowed_in": valid,
+              "allowed_out": valid,
+              }
+    return result
 
 # -------------------------------------------------------------------------
-def site_check_out(site_id, person_id):
+def person_site_status(site_id, person):
     """
-        When a person is checked-out from a Shelter then update the
-        Shelter Registration
+        Determine the current status of a person with regard to
+        entering/leaving a site
+
+        Args:
+            site_id: the site ID
+            person: the person record
+        Returns:
+            dict {"valid": Person can be registered in/out at the site,
+                  "error": Error message for the above,
+                  "allowed_in": Person is allowed to enter the site,
+                  "allowed_out": Person is allowed to leave the site,
+                  "info": Instructions for reception staff,
+                  }
+    """
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    result = {"valid": False,
+              "allowed_in": False,
+              "allowed_out": False,
+              }
+    person_id = person.id
+
+    # Get the site type and managing organisation(s)
+    otable = s3db.org_organisation
+    stable = s3db.org_site
+    join = otable.on(otable.id == stable.organisation_id)
+    row = db(stable.site_id == site_id).select(stable.instance_type,
+                                               otable.id,
+                                               otable.root_organisation,
+                                               otable.pe_id,
+                                               join = join,
+                                               limitby = (0, 1),
+                                               ).first()
+    if not row:
+        result["error"] = T("Invalid site")
+        return result
+
+    site = row.org_site
+    organisation = row.org_organisation
+
+    organisation_ids = [organisation.id]
+
+    root_org = organisation.root_organisation
+    if root_org and root_org != organisation.id:
+        # Include all parent organisations
+        pe_ids = s3db.pr_get_ancestors(organisation.pe_id)
+        rows = db((otable.pe_id.belongs(pe_ids))).select(otable.id)
+        organisation_ids += [row.id for row in rows]
+
+    # Check for case
+    ctable = s3db.dvr_case
+    cstable = s3db.dvr_case_status
+    query = (ctable.person_id == person_id) & \
+            (ctable.organisation_id.belongs(organisation_ids)) & \
+            (cstable.id == ctable.status_id)
+    case = db(query).select(ctable.id,
+                            cstable.is_closed,
+                            limitby = (0, 1),
+                            ).first()
+
+    if case.dvr_case.id:
+        # Is a client
+        result.update(client_site_status(person_id,
+                                         site_id,
+                                         site.instance_type,
+                                         case.dvr_case_status,
+                                         ))
+        if not result["valid"] and not result.get("error"):
+            result["error"] = T("Not currently a resident")
+    else:
+        # May be a staff member
+        result.update(staff_site_status(person_id,
+                                        organisation_ids,
+                                        ))
+        if not result["valid"] and not result.get("error"):
+            result["error"] = T("Neither currently a resident nor active staff member")
+
+    return result
+
+# -------------------------------------------------------------------------
+def on_site_presence_event(site_id, person_id):
+    """
+        Update last_seen_on in case file when a site presence event
+        is registered (if the person has a case file)
 
         Args:
             site_id: the site_id of the shelter
             person_id: the person_id to check-in
     """
 
-    s3db = current.s3db
     db = current.db
+    s3db = current.s3db
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
-    query = (stable.site_id == site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby = (0, 1)
-                                    ).first()
-    if not registration:
-        return
-
-    # Update the Shelter Registration
-    registration.update_record(check_out_date = current.request.utcnow,
-                               registration_status = 3,
-                               )
-    s3db.onaccept("cr_shelter_registration", registration, method="update")
+    ctable = s3db.dvr_case
+    query = (ctable.person_id == person_id) & \
+            (ctable.deleted == False)
+    if db(query).select(ctable.id, limitby=(0, 1)).first():
+        current.s3db.dvr_update_last_seen(person_id)
 
 # -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
@@ -224,12 +278,13 @@ def cr_shelter_controller(**attr):
         else:
             result = True
 
-        if r.method == "check-in":
-            # Configure check-in methods
+        if r.method == "presence":
+            # Configure presence event callbacks
             current.s3db.configure("cr_shelter",
-                                   site_check_in = site_check_in,
-                                   site_check_out = site_check_out,
-                                   check_in_status = check_in_status,
+                                   site_presence_in = on_site_presence_event,
+                                   site_presence_out = on_site_presence_event,
+                                   site_presence_seen = on_site_presence_event,
+                                   site_presence_status = person_site_status,
                                    )
 
         else:
