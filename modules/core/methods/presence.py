@@ -378,17 +378,17 @@ class RegisterPresence(CRUDMethod):
 
                 current_status = status.get("status")
                 if current_status != "IN" and not check_in_allowed:
-                    alert = T("Check-in denied")
+                    alert = T("Person not permitted to enter!")
                     alert_type = "error"
                 else:
                     success = SitePresence.register(person.id, site_id, "IN")
                     if success:
                         output["s"] = "IN"
                         if current_status == "IN":
-                            alert = T("Client was already checked-in")
+                            alert = T("Person was already registered as present")
                             alert_type = "warning"
                         else:
-                            alert = T("Checked-in successfully!")
+                            alert = T("Presence registered")
                     else:
                         alert = T("Registration failed!")
                         alert_type = "error"
@@ -402,17 +402,17 @@ class RegisterPresence(CRUDMethod):
 
                 current_status = status.get("status")
                 if current_status != "OUT" and not check_out_allowed:
-                    alert = T("Check-out denied")
+                    alert = T("Person not permitted to leave!")
                     alert_type = "error"
                 else:
                     success = SitePresence.register(person.id, site_id, "OUT")
                     if success:
                         output["s"] = "OUT"
                         if current_status == "OUT":
-                            alert = T("Client was already checked-out")
+                            alert = T("Person was already registered as absent")
                             alert_type = "warning"
                         else:
-                            alert = T("Checked-out successfully!")
+                            alert = T("Absence registered")
                     else:
                         alert = T("Registration failed!")
                         alert_type = "error"
@@ -742,7 +742,6 @@ class RegisterPresence(CRUDMethod):
         if s3.debug:
             script = "/%s/static/scripts/S3/s3.ui.presence.js" % appname
         else:
-            # TODO minify
             script = "/%s/static/scripts/S3/s3.ui.presence.min.js" % appname
         scripts.append(script)
 

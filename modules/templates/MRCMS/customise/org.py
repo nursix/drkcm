@@ -181,4 +181,16 @@ def org_facility_controller(**attr):
 
     return attr
 
+# -------------------------------------------------------------------------
+def org_site_presence_event_resource(r, tablename):
+
+    s3db = current.s3db
+
+    # Represent registering user by their name
+    table = s3db.org_site_presence_event
+    field = table.created_by
+    field.represent = s3db.auth_UserRepresent(show_name=True,
+                                              show_email=False,
+                                              )
+
 # END =========================================================================

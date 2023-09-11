@@ -417,8 +417,8 @@
          */
         _toggleAction: function(buttonClass, status) {
 
-            var button = $('input.' + buttonClass),
-                label = button.val(),
+            var button = $('button.' + buttonClass),
+                label = button.text(),
                 disabled;
 
             if (!button.length) {
@@ -431,11 +431,10 @@
                     button.prop('disabled', true).show();
                     break;
                 case 'deny':
-                    disabled = $('<a class="small alert button disabled-' + buttonClass + '" disabled="disabled"><i class="fa fa-ban"></i>' + label + '</a>');
+                    disabled = $('<button class="small alert button disabled-' + buttonClass + '" disabled="disabled"><i class="fa fa-ban"></i>' + label + '</button>');
                     button.prop('disabled', true).hide().after(disabled);
                     break;
                 default:
-                    button.siblings('.disabled-' + buttonClass).remove();
                     button.prop('disabled', false).show();
                     break;
             }

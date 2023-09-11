@@ -252,12 +252,14 @@ def config(settings):
     from .customise.org import org_group_controller, \
                                org_organisation_controller, \
                                org_facility_resource, \
-                               org_facility_controller
+                               org_facility_controller, \
+                               org_site_presence_event_resource
 
     settings.customise_org_group_controller = org_group_controller
     settings.customise_org_organisation_controller = org_organisation_controller
     settings.customise_org_facility_resource = org_facility_resource
     settings.customise_org_facility_controller = org_facility_controller
+    settings.customise_org_site_presence_event_resource = org_site_presence_event_resource
 
     # -------------------------------------------------------------------------
     # Persons Module Settings

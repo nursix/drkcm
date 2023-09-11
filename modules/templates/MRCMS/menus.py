@@ -43,36 +43,37 @@ class S3MainMenu(default.S3MainMenu):
         from .helpers import mrcms_default_shelter
         shelter_id = mrcms_default_shelter()
 
+        if shelter_id:
+            shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id])
+        else:
+            shelter_menu = MM("Shelters", c="cr", f="shelter")
+
         has_role = current.auth.s3_has_role
         not_admin = not has_role("ADMIN")
 
         if not_admin and has_role("SECURITY"):
             return [
                 MM("Clients", c="security", f="person"),
-                MM("Dashboard", c="cr", f="shelter",
-                   args = [shelter_id, "profile"],
-                   check = shelter_id is not None,
-                   ),
+                #MM("Dashboard", c="cr", f="shelter",
+                #   args = [shelter_id, "profile"],
+                #   check = shelter_id is not None,
+                #   ),
                 #MM("ToDo", c="project", f="task"),
-                MM("Check-In / Check-Out", c="cr", f="shelter",
-                   args = [shelter_id, "check-in"],
-                   check = shelter_id is not None,
-                   ),
-                MM("Confiscation", c="security", f="seized_item"),
+                #MM("Check-In / Check-Out", c="cr", f="shelter",
+                #   args = [shelter_id, "check-in"],
+                #   check = shelter_id is not None,
+                #   ),
+                shelter_menu,
+                MM("Security", c="security", f="seized_item"),
             ]
 
         elif not_admin and has_role("QUARTERMASTER"):
             return [
                 MM("Clients", c=("dvr", "cr"), f=("person", "shelter_registration")),
-                MM("Confiscation", c="security", f="seized_item"),
+                MM("Security", c="security", f="seized_item"),
             ]
 
         else:
-            if shelter_id:
-                shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id])
-            else:
-                shelter_menu = MM("Shelters", c="cr", f="shelter")
-
             return [
                 MM("Clients", c=("dvr", "pr")),
                 MM("Event Registration", c="dvr", f="case_event",
@@ -81,23 +82,23 @@ class S3MainMenu(default.S3MainMenu):
                    # Show only if not authorized to see "Clients"
                    check = lambda this: not this.preceding()[-1].check_permission(),
                    ),
-                MM("Food Distribution", c="dvr", f="case_event",
-                   m = "register_food",
-                   p = "create",
-                   # Show only if not authorized to see "Clients"
-                   check = lambda this: not this.preceding()[-2].check_permission(),
-                   ),
-                MM("Food Distribution Statistics", c="dvr", f="case_event",
-                   m = "report",
-                   vars = {"code": "FOOD*"},
-                   restrict = ("FOOD_STATS",),
-                   # Show only if not authorized to see "Clients"
-                   check = lambda this: not this.preceding()[-3].check_permission(),
-                   ),
-                MM("Dashboard", c="cr", f="shelter",
-                   args = [shelter_id, "profile"],
-                   check = shelter_id is not None,
-                   ),
+                #MM("Food Distribution", c="dvr", f="case_event",
+                #   m = "register_food",
+                #   p = "create",
+                #   # Show only if not authorized to see "Clients"
+                #   check = lambda this: not this.preceding()[-2].check_permission(),
+                #   ),
+                #MM("Food Distribution Statistics", c="dvr", f="case_event",
+                #   m = "report",
+                #   vars = {"code": "FOOD*"},
+                #   restrict = ("FOOD_STATS",),
+                #   # Show only if not authorized to see "Clients"
+                #   check = lambda this: not this.preceding()[-3].check_permission(),
+                #   ),
+                #MM("Dashboard", c="cr", f="shelter",
+                #   args = [shelter_id, "profile"],
+                #   check = shelter_id is not None,
+                #   ),
                 shelter_menu,
                 # @ToDO: Move to Dashboard Widget?
                 #MM("Housing Units", c="cr", f="shelter",
@@ -107,7 +108,7 @@ class S3MainMenu(default.S3MainMenu):
                 #   ),
                 #homepage("cr"),
                 MM("Organizations", c="org", f="organisation"),
-                MM("Confiscation", c="security", f="seized_item"),
+                MM("Security", c="security", f="seized_item"),
             ]
 
     # -------------------------------------------------------------------------

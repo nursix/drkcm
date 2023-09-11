@@ -5,9 +5,9 @@
 """
 
 from gluon import current, URL, \
-                  A, DIV, H2, H3, H4, P, TABLE, TR, TD, XML, HR
+                  A, DIV, H2, H3, H4, P, TABLE, TAG, TR, TD, XML, HR
 
-from core import IS_ONE_OF
+from core import IS_ONE_OF, S3CRUD
 
 # -------------------------------------------------------------------------
 def check_in_status(site, person):
@@ -212,6 +212,7 @@ def cr_shelter_resource(r, tablename):
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
 
+    T = current.T
     s3 = current.response.s3
 
     # Custom prep
@@ -295,11 +296,25 @@ def cr_shelter_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        # Hide side menu and rheader for check-in
-        if r.method == "check-in":
+        # Hide side menu and rheader for presence registration
+        if r.method == "presence":
             current.menu.options = None
             if isinstance(output, dict):
                 output["rheader"] = ""
+
+        # Add presence registration button
+        if not r.component and r.record and \
+           isinstance(output, dict) and "buttons" in output:
+
+            buttons = output["buttons"]
+
+            # Add a "Presence Registration"-button
+            presence_url = URL(c="cr", f="shelter", args=[r.record.id, "presence"])
+            presence_btn = S3CRUD.crud_button(T("Presence Registration"), _href=presence_url)
+
+            delete_btn = buttons.get("delete_btn")
+            buttons["delete_btn"] = TAG[""](presence_btn, delete_btn) \
+                                    if delete_btn else presence_btn
 
         # Custom view for shelter inspection
         if r.method == "inspection":

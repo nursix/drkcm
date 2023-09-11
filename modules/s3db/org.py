@@ -3887,6 +3887,7 @@ class OrgSitePresenceModel(DataModel):
         configure = self.configure
 
         person_id = self.pr_person_id
+        site_represent = self.org_SiteRepresent(show_type=False)
 
         # ---------------------------------------------------------------------
         # Presence Events
@@ -3898,14 +3899,18 @@ class OrgSitePresenceModel(DataModel):
         tablename = "org_site_presence_event"
         define_table(tablename,
                      super_link("site_id", "org_site",
+                                label = T("Place"),
+                                represent = site_represent,
                                 readable = True,
                                 writable = False,
                                 ),
                      person_id(writable=False),
                      DateTimeField(writable = False),
                      Field("event_type",
+                           label = T("Event"),
                            represent = represent_option(event_types),
                            requires = IS_IN_SET(event_types, zero=None),
+                           writable = False,
                            ),
                      Field("vhash",
                            readable = False,
@@ -3913,11 +3918,20 @@ class OrgSitePresenceModel(DataModel):
                            ),
                      )
 
+        # List fields
+        list_fields = ["date",
+                       "event_type",
+                       "site_id",
+                       (T("Registered by"), "created_by"),
+                       ]
+
         configure(tablename,
+                  create_onaccept = self.presence_event_onaccept,
+                  list_fields = list_fields,
+                  orderby = "%s.date desc" % tablename,
                   insertable = False,
                   editable = False,
                   deletable = False,
-                  create_onaccept = self.presence_event_onaccept,
                   )
 
         # ---------------------------------------------------------------------
@@ -3929,6 +3943,7 @@ class OrgSitePresenceModel(DataModel):
         tablename = "org_site_presence"
         define_table(tablename,
                      super_link("site_id", "org_site",
+                                represent = site_represent,
                                 readable = True,
                                 writable = False,
                                 ),
@@ -3946,6 +3961,7 @@ class OrgSitePresenceModel(DataModel):
                            ),
                      )
 
+        # Table configuration
         configure(tablename,
                   insertable = False,
                   editable = False,
