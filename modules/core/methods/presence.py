@@ -378,7 +378,7 @@ class RegisterPresence(CRUDMethod):
 
                 current_status = status.get("status")
                 if current_status != "IN" and not check_in_allowed:
-                    alert = T("Person not permitted to enter!")
+                    alert = T("Person not permitted to enter premises!")
                     alert_type = "error"
                 else:
                     success = SitePresence.register(person.id, site_id, "IN")
@@ -402,7 +402,7 @@ class RegisterPresence(CRUDMethod):
 
                 current_status = status.get("status")
                 if current_status != "OUT" and not check_out_allowed:
-                    alert = T("Person not permitted to leave!")
+                    alert = T("Person not permitted to leave premises!")
                     alert_type = "error"
                 else:
                     success = SitePresence.register(person.id, site_id, "OUT")
