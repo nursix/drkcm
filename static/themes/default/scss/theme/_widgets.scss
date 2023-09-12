@@ -621,6 +621,9 @@ div.s3-groupedopts-widget {
 // Presence Registration
 //
 .presence-registration {
+    .controls {
+        width: 100%;
+    }
     .status-label {
         font-size: 0.9rem;
     }
