@@ -303,11 +303,11 @@ def cr_shelter_controller(**attr):
                     # No suitable prepop found
                     pass
                 else:
-                    pois = dict(active = True,
-                                layer_id = layer_id,
-                                name = current.T("Buildings"),
-                                id = "profile-header-%s-%s" % ("gis_poi", r.id),
-                                )
+                    pois = {"active": True,
+                            "layer_id": layer_id,
+                            "name": current.T("Buildings"),
+                            "id": "profile-header-%s-%s" % ("gis_poi", r.id),
+                            }
                     profile_layers = s3db.get_config("cr_shelter", "profile_layers")
                     profile_layers += (pois,)
                     s3db.configure("cr_shelter",
@@ -333,10 +333,13 @@ def cr_shelter_controller(**attr):
             utable = current.s3db.cr_shelter_unit
             field = utable.transitory
             field.readable = field.writable = True
-            list_fields = ["name",
+
+            # Custom list fields
+            list_fields = [(T("Name"), "name"),
                            "transitory",
                            "capacity",
                            "population",
+                           "blocked_capacity",
                            "available_capacity",
                            ]
             r.component.configure(list_fields=list_fields)
@@ -571,11 +574,11 @@ def profile_header(r):
                   TD(families),
                   )
 
-    TOTAL = TR(TD(T("Population BEA")),
+    TOTAL = TR(TD(T("Current Population##shelter")),
                TD(total),
                _class="dbstats-total",
                )
-    TRANSITORY = TR(TD(T("in staging area (PX)")),
+    TRANSITORY = TR(TD(T("in staging area")),
                     TD(transitory),
                     _class="dbstats-sub",
                     )
@@ -689,15 +692,12 @@ def profile_header(r):
     # Show Check-in/Check-out action only if user is permitted
     # to update shelter registrations (NB controllers may be
     # read-only, therefore checking against default here):
-    if auth.s3_has_permission("update",
-                              "cr_shelter_registration",
-                              c="default",
-                              ):
-        # Action button for check-in/out
-        cico = A("%s / %s" % (T("Check-In"), T("Check-Out")),
-                    _href=r.url(method="check-in"),
-                    _class="action-btn dashboard-action",
-                    )
+    if PresenceRegistration.permitted("cr_shelter", record.site_id):
+        # Action button for presence registration
+        cico = A(T("Presence Registration"),
+                 _href=r.url(method="presence"),
+                 _class="action-btn dashboard-action",
+                 )
     else:
         cico = ""
 
@@ -715,7 +715,7 @@ def profile_header(r):
                                       FAMILIES,
                                       EXTERNAL,
                                       FREE,
-                                      OTHER,
+                                      #OTHER,
                                       _class="dbstats",
                                       ),
                                 ),

@@ -6773,7 +6773,7 @@
 'in Deg Min Sec format': 'im Format Grad Minuten Sekunden',
 'in Stock': 'auf Lager',
 'in housing units': 'in Unterkunftseinheiten',
-'in staging area (PX)': 'im Sammelbereich (PX)',
+'in staging area': 'im Sammelbereich',
 'inactive': 'inaktiv',
 'incomplete': 'unvollständig',
 'injured': 'verletzt',
