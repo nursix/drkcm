@@ -245,8 +245,8 @@ def config(settings):
     #      - the organisation the user has the staff role for
     #settings.org.default_organisation = "Johanniter-Unfall-Hilfe"
     #settings.org.default_site = "Erstaufnahme Mannheim"
-    #settings.org.branches = True
 
+    settings.org.branches = False
     settings.org.site_presence_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
 
     from .customise.org import org_group_controller, \

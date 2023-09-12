@@ -6686,7 +6686,8 @@ class DVRRegisterCaseEvent(CRUDMethod):
         actionable = event_code is not None
 
         label_input = self.label_input
-        use_qr_code = settings.get_org_site_check_in_qrcode()
+        # TODO fix discrepancy between self.parse_code and QRInput
+        use_qr_code = settings.get_org_site_presence_qrcode()
         if use_qr_code:
             if use_qr_code is True:
                 label_input = S3QRInput()

@@ -415,7 +415,7 @@ class CRShelterModel(DataModel):
         # Presence Registration
         set_method("cr_shelter",
                    method = "presence",
-                   action = RegisterPresence,
+                   action = PresenceRegistration,
                    )
 
         # Shelter Inspection method
@@ -736,6 +736,7 @@ class CRShelterUnitModel(DataModel):
                      self.cr_shelter_id(ondelete = "CASCADE"),
                      self.gis_location_id(
                          widget = LocationSelector(#catalog_layers=True,
+                                                   show_postcode = False,
                                                    points = False,
                                                    polygons = True,
                                                    ),

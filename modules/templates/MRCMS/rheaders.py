@@ -60,6 +60,7 @@ def mrcms_dvr_rheader(r, tabs=None):
                             (T("Confiscation"), "seized_item"),
                             ]
                     if current.auth.s3_has_roles(("ORG_ADMIN",
+                                                  "CASE_ADMIN",
                                                   "CASE_MANAGER",
                                                   )):
                         tabs.insert(-3, (T("Events"), "case_event"))

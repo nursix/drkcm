@@ -688,8 +688,8 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
         # Set default shelter for shelter registration
         # TODO alternative when multiple shelters
-        from ..helpers import mrcms_default_shelter
-        shelter_id = mrcms_default_shelter()
+        from ..helpers import get_default_shelter
+        shelter_id = get_default_shelter()
         if shelter_id:
             rtable = s3db.cr_shelter_registration
             field = rtable.shelter_id
@@ -1085,8 +1085,8 @@ def pr_group_membership_controller(**attr):
         if r.controller == "dvr":
 
             # Set default shelter
-            from ..helpers import mrcms_default_shelter
-            shelter_id = mrcms_default_shelter()
+            from ..helpers import get_default_shelter
+            shelter_id = get_default_shelter()
             if shelter_id:
                 rtable = s3db.cr_shelter_registration
                 field = rtable.shelter_id

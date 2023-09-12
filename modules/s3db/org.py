@@ -4055,12 +4055,16 @@ class OrgSitePresenceModel(DataModel):
         new_status = "IN" if record.event_type == "IN" else "OUT"
         if not presence:
             # Create new presence record
-            ptable.insert(person_id = record.person_id,
-                          site_id = record.site_id,
-                          date = now,
-                          status = new_status,
-                          event_id = record.id,
-                          )
+            presence = {"person_id": record.person_id,
+                        "site_id": record.site_id,
+                        "date": now,
+                        "status": new_status,
+                        "event_id": record.id,
+                        }
+            presence["id"] = ptable.insert(**presence)
+            s3db.update_super(ptable, presence)
+            current.auth.s3_set_record_owner(ptable, presence)
+            s3db.onaccept(ptable, presence, method="create")
 
         elif record.event_type == "IN" and presence.status != new_status or \
              record.event_type == "OUT":
@@ -4069,9 +4073,11 @@ class OrgSitePresenceModel(DataModel):
                                    status = new_status,
                                    event_id = record.id,
                                    )
+            s3db.onaccept(ptable, presence, method="update")
         else:
             # Update only the event reference (also updates modified_by/on)
             presence.update_record(event_id = record.id)
+            s3db.onaccept(ptable, presence, method="update")
 
 # =============================================================================
 class OrgSiteGroupModel(DataModel):

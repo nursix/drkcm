@@ -7,7 +7,7 @@
 from gluon import current, URL, \
                   A, DIV, H2, H3, H4, P, TABLE, TAG, TR, TD, XML, HR
 
-from core import IS_ONE_OF, S3CRUD
+from core import IS_ONE_OF, S3CRUD, PresenceRegistration
 
 # -------------------------------------------------------------------------
 def client_site_status(person_id, site_id, site_type, case_status):
@@ -356,25 +356,30 @@ def cr_shelter_controller(**attr):
             current.menu.options = None
             if isinstance(output, dict):
                 output["rheader"] = ""
-
-        # Add presence registration button
-        if not r.component and r.record and \
-           isinstance(output, dict) and "buttons" in output:
-
-            buttons = output["buttons"]
-
-            # Add a "Presence Registration"-button
-            presence_url = URL(c="cr", f="shelter", args=[r.record.id, "presence"])
-            presence_btn = S3CRUD.crud_button(T("Presence Registration"), _href=presence_url)
-
-            delete_btn = buttons.get("delete_btn")
-            buttons["delete_btn"] = TAG[""](presence_btn, delete_btn) \
-                                    if delete_btn else presence_btn
+            return output
 
         # Custom view for shelter inspection
         if r.method == "inspection":
             from core import CustomController
             CustomController._view("MRCMS", "shelter_inspection.html")
+            return output
+
+        record = r.record
+
+        # Add presence registration button, if permitted
+        if record and not r.component and \
+            PresenceRegistration.permitted("cr_shelter", record) and \
+            isinstance(output, dict) and "buttons" in output:
+
+            buttons = output["buttons"]
+
+            # Add a "Presence Registration"-button
+            presence_url = URL(c="cr", f="shelter", args=[record.id, "presence"])
+            presence_btn = S3CRUD.crud_button(T("Presence Registration"), _href=presence_url)
+
+            delete_btn = buttons.get("delete_btn")
+            buttons["delete_btn"] = TAG[""](presence_btn, delete_btn) \
+                                    if delete_btn else presence_btn
 
         return output
     s3.postp = custom_postp
@@ -420,11 +425,11 @@ def cr_shelter_registration_controller(**attr):
 
         if r.method == "assign":
 
-            from ..helpers import mrcms_default_shelter
+            from ..helpers import get_default_shelter
 
             # Prep runs before split into create/update (Create should never happen in Village)
             table = r.table
-            shelter_id = mrcms_default_shelter()
+            shelter_id = get_default_shelter()
             if shelter_id:
                 # Only 1 Shelter
                 f = table.shelter_id

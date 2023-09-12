@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("RegisterPresence",
+__all__ = ("PresenceRegistration",
            "SitePresence",
            )
 
@@ -43,7 +43,7 @@ from ..ui import S3QRInput, ICON
 from .base import CRUDMethod
 
 # =============================================================================
-class RegisterPresence(CRUDMethod):
+class PresenceRegistration(CRUDMethod):
     """ Interactive registration of presence events at sites """
 
     # -------------------------------------------------------------------------
