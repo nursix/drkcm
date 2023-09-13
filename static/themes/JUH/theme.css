@@ -411,6 +411,47 @@ button.toggle-text {
   padding-right: 0.4rem;
 }
 
+/* line 221, ../../default/scss/theme/_represent.scss */
+.workflow-options.workflow-grey {
+  color: #555;
+}
+/* line 224, ../../default/scss/theme/_represent.scss */
+.workflow-options.workflow-red {
+  color: #c42626;
+}
+/* line 227, ../../default/scss/theme/_represent.scss */
+.workflow-options.workflow-amber {
+  color: #ec8d27;
+}
+/* line 230, ../../default/scss/theme/_represent.scss */
+.workflow-options.workflow-green {
+  color: green;
+}
+/* line 233, ../../default/scss/theme/_represent.scss */
+.workflow-options.workflow-advice {
+  border: 1px solid #c42626;
+  background-color: #ffdede;
+  padding: 0.3rem 0.7rem;
+}
+/* line 238, ../../default/scss/theme/_represent.scss */
+.workflow-options .fa {
+  margin-right: 0.2rem;
+}
+/* line 240, ../../default/scss/theme/_represent.scss */
+[dir=rtl] .workflow-options .fa {
+  margin-right: 0;
+  margin-left: 0.2rem;
+}
+/* line 245, ../../default/scss/theme/_represent.scss */
+.controls .workflow-options {
+  margin-left: 0.5rem;
+}
+/* line 247, ../../default/scss/theme/_represent.scss */
+[dir=rtl] .controls .workflow-options {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
 /* line 24, ../../default/scss/theme/_widgets.scss */
 input[type="text"],
 input[type="password"],

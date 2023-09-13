@@ -163,6 +163,7 @@
 
             editableFields: [],
             tags: [],
+            ignoreLabel: false,
 
             chars: 2,
             delay: 800,
@@ -1407,6 +1408,10 @@
                     }
                     if (timer) {
                         clearTimeout(timer);
+                    }
+                    if (opts.ignoreLabel) {
+                        // ID label is only for search
+                        idLabel.val("");
                     }
                 });
             }

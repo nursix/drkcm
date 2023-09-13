@@ -5110,6 +5110,12 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # Persons
     #
+    def get_pr_generate_pe_label(self):
+        """
+            Autogenerate PE labels for all persons
+        """
+        return self.pr.get("generate_pe_label", False)
+
     def get_pr_age_group(self, age):
         """
             Function to provide the age group for an age

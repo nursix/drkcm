@@ -22,30 +22,6 @@ def dvr_home():
     s3_redirect_default(URL(f="person", vars={"closed": "0"}))
 
 # -------------------------------------------------------------------------
-def generate_pe_label(person_id):
-    """
-        Auto-generate a case ID (pe_label)
-
-        Args:
-            person_id: the person ID
-    """
-
-    db = current.db
-    s3db = current.s3db
-
-    table = s3db.pr_person
-    person = db(table.id == person_id).select(table.id,
-                                              table.pe_label,
-                                              limitby = (0, 1),
-                                              ).first()
-    if person and not person.pe_label:
-        pe_label = "MA%05d" % person.id
-        person.update_record(pe_label = pe_label,
-                             modified_on = table.modified_on,
-                             modified_by = table.modified_by,
-                             )
-
-# -------------------------------------------------------------------------
 def dvr_case_onaccept(form):
     """
         If case is archived or closed then remove shelter_registration,
@@ -57,14 +33,10 @@ def dvr_case_onaccept(form):
 
     db = current.db
     s3db = current.s3db
-    settings = current.deployment_settings
 
     form_vars = form.vars
     archived = form_vars.archived
     person_id = form_vars.person_id
-
-    if settings.get_custom("autogenerate_case_ids"):
-        generate_pe_label(person_id)
 
     # Inline shelter registration?
     inline = "sub_shelter_registration_registration_status" in current.request.post_vars

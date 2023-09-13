@@ -31,12 +31,10 @@ __all__ = ("ManagementJournalModel",
 from gluon import current, Field, IS_IN_SET, IS_NOT_EMPTY
 from gluon.storage import Storage
 
-from core import DataModel, DateTimeField, \
+from core import DataModel, DateTimeField, WorkflowOptions, \
                  S3SQLCustomForm, S3SQLInlineComponent, \
                  get_form_record_id, s3_comments_widget, \
                  s3_text_represent
-
-from ..helpers import WorkflowOptions
 
 # =============================================================================
 # Status Options

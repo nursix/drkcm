@@ -4,9 +4,9 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, URL, A
 
-from core import FS, S3DateTime, s3_str
+from core import FS, S3DateTime, WorkflowOptions, s3_str
 
 # =============================================================================
 def get_role_realms(role):
@@ -170,7 +170,9 @@ def get_current_site_organisation():
 
     table = current.s3db.org_site
     query = (table.site_id == site_id)
-    row = db(query).select(table.organisation_id, limitby=(0, 1)).first()
+    row = current.db(query).select(table.organisation_id,
+                                   limitby = (0, 1),
+                                   ).first()
 
     return row.organisation_id if row else None
 
@@ -191,7 +193,7 @@ def get_default_case_organisation():
     table = s3db.org_organisation
     query = (table.pe_id.belongs(permitted_realms)) & \
             (table.deleted == False)
-    rows = db(query).select(otable.id)
+    rows = db(query).select(table.id)
     if not rows:
         return None
     if len(rows) == 1:
@@ -254,6 +256,116 @@ def get_default_shelter():
         s3.mrcms_default_shelter = shelter_id
 
     return shelter_id
+
+# -----------------------------------------------------------------------------
+def account_status(record, represent=True):
+    """
+        Checks the status of the user account for a person
+
+        Args:
+            record: the person record
+            represent: represent the result as workflow option
+
+        Returns:
+            workflow option HTML if represent=True, otherwise boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.pr_person_user
+    utable = current.auth.table_user()
+
+    query = (ltable.pe_id == record.pe_id) & \
+            (ltable.deleted == False) & \
+            (utable.id == ltable.user_id)
+
+    account = db(query).select(utable.id,
+                               utable.registration_key,
+                               cache = s3db.cache,
+                               limitby = (0, 1),
+                               ).first()
+
+    if account:
+        status = "DISABLED" if account.registration_key else "ACTIVE"
+    else:
+        status = "N/A"
+
+    if represent:
+        represent = WorkflowOptions(("N/A", "nonexistent", "grey"),
+                                    ("DISABLED", "disabled##account", "red"),
+                                    ("ACTIVE", "active", "green"),
+                                    ).represent
+        status = represent(status)
+
+    return status
+
+# -----------------------------------------------------------------------------
+def hr_details(record):
+    """
+        Looks up relevant HR details for a person
+
+        Args:
+            record: the pr_person record in question
+
+        Returns:
+            dict {"organisation": organisation name,
+                  "account": account status,
+                  }
+
+        Note:
+            all data returned are represented (not raw data)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    person_id = record.id
+
+    # Get HR record
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id)
+
+    hr_id = current.request.get_vars.get("human_resource.id")
+    if hr_id:
+        query &= (htable.id == hr_id)
+    query &= (htable.deleted == False)
+
+    rows = db(query).select(htable.organisation_id,
+                            htable.org_contact,
+                            htable.status,
+                            orderby = htable.created_on,
+                            )
+    if not rows:
+        human_resource = None
+    elif len(rows) > 1:
+        rrows = rows
+        rrows = rrows.filter(lambda row: row.status == 1) or rrows
+        rrows = rrows.filter(lambda row: row.org_contact) or rrows
+        human_resource = rrows.first()
+    else:
+        human_resource = rows.first()
+
+    output = {"organisation": "",
+              "account": account_status(record),
+              }
+
+    if human_resource:
+        otable = s3db.org_organisation
+
+        # Link to organisation
+        query = (otable.id == human_resource.organisation_id)
+        organisation = db(query).select(otable.id,
+                                        otable.name,
+                                        limitby = (0, 1),
+                                        ).first()
+        output["organisation"] = A(organisation.name,
+                                   _href = URL(c = "org",
+                                               f = "organisation",
+                                               args = [organisation.id],
+                                               ),
+                                   )
+    return output
 
 # =============================================================================
 class MRCMSSiteActivityReport:

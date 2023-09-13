@@ -37,12 +37,12 @@ import os
 from gluon import current, Field, URL, IS_EMPTY_OR, IS_IN_SET, DIV
 from gluon.storage import Storage
 
-from core import BooleanRepresent, DataModel, DateField, S3Duplicate, \
+from core import BooleanRepresent, DataModel, DateField, WorkflowOptions, S3Duplicate, \
                  get_form_record_id, represent_file, represent_option, \
                  DateTimeField, CommentsField, s3_comments_widget, \
                  s3_str, s3_text_represent
 
-from ..helpers import WorkflowOptions, PersonRepresentDetails
+from ..helpers import PersonRepresentDetails
 
 DEFAULT = lambda: None
 

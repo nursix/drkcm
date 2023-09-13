@@ -3131,6 +3131,7 @@ Please go to %(url)s to approve this user."""
                                               entity=realm_entity,
                                               )
                         owner.realm_entity = realm_entity
+                        s3db.onaccept(ptable, person, method="create")
 
                         # Insert a link
                         ltable.insert(user_id=user.id, pe_id=pe_id)

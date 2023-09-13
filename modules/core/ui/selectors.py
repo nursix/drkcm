@@ -2262,6 +2262,7 @@ class PersonSelector(FormWidget):
                  first_name_only = None,
                  occupation = False,
                  pe_label = False,
+                 pe_label_ignore = None,
                  nationality = False,
                  ):
         """
@@ -2286,6 +2287,11 @@ class PersonSelector(FormWidget):
         self.nationality = nationality
         self.occupation = occupation
         self.pe_label = pe_label
+
+        if pe_label_ignore is None:
+            self.pe_label_ignore = current.deployment_settings.get_pr_generate_pe_label()
+        else:
+            self.pe_label_ignore = pe_label_ignore
 
         self.hrm = False
 
@@ -2553,6 +2559,9 @@ class PersonSelector(FormWidget):
         chars = settings.get_ui_autocomplete_min_chars()
         if chars != 2:
             widget_options["chars"] = chars
+
+        if self.pe_label_ignore:
+            widget_options["ignoreLabel"] = True
 
         # Inject the scripts
         self.inject_script(widget_id, widget_options, i18n)
@@ -3218,6 +3227,8 @@ class PersonSelector(FormWidget):
         for f in ptable._filter_fields(data):
             if f == "id":
                 continue
+            if f == "pe_label" and self.pe_label_ignore:
+                continue
             value, error = s3_validate(ptable, f, data[f])
             if error:
                 label = ptable[f].label or f
@@ -3231,9 +3242,8 @@ class PersonSelector(FormWidget):
         update_super = s3db.update_super
 
         # Create new person record
-        person_id = ptable.insert(**person)
-        person_record = {"id": person_id}
-        update_super(ptable, person_record)
+        person["id"] = person_id = ptable.insert(**person)
+        update_super(ptable, person)
 
         if not person_id:
             return (None, T("Could not add person record"))
@@ -3253,10 +3263,11 @@ class PersonSelector(FormWidget):
         # Update ownership & realm
         set_record_owner(ptable, person_id)
 
-        # Onaccept? (not relevant for this case)
+        # Onaccept
+        s3db.onaccept(ptable, person)
 
         # Read the created pe_id
-        pe_id = person_record.get("pe_id")
+        pe_id = person.get("pe_id")
         if not pe_id:
             return (None, T("Could not add person details"))
 

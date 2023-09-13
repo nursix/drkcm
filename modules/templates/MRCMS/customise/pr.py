@@ -249,9 +249,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
         reg_check_out_date = None
     else:
         reg_shelter = "shelter_registration.shelter_id"
-        reg_status = (T("Presence"),
-                      "shelter_registration.registration_status",
-                      )
+        reg_status = "shelter_registration.registration_status"
         reg_unit_id = "shelter_registration.shelter_unit_id"
         reg_check_in_date = "shelter_registration.check_in_date"
         reg_check_out_date = "shelter_registration.check_out_date"
@@ -279,13 +277,13 @@ def configure_case_form(resource, privileged=False, cancel=False):
                 "person_details.marital_status",
 
                 # Process Data ----------------------------
+                "dvr_case.date",
                 # Will always default & be hidden
                 "dvr_case.organisation_id",
                 # Will always default & be hidden
                 #"dvr_case.site_id",
-                (T("EA Arrival"), "dvr_case.date"),
-                "dvr_case.origin_site_id",
-                "dvr_case.destination_site_id",
+                #"dvr_case.origin_site_id",
+                #"dvr_case.destination_site_id",
                 #S3SQLInlineComponent(
                 #        "eo_number",
                 #        fields = [("", "value")],
@@ -359,8 +357,8 @@ def configure_case_form(resource, privileged=False, cancel=False):
 
         subheadings = {"dvr_case_status_id": T("Case Status"),
                        "pe_label": T("Person Details"),
-                       "dvr_case_organisation_id": T("Registration"),
-                       #"dvr_case_date": T("Registration"),
+                       "dvr_case_date": T("Registration"),
+                       #"dvr_case_organisation_id": T("Registration"),
                        "shelter_registration_shelter_unit_id": T("Lodging"),
                        "person_details_occupation": T("Other Details"),
                        "dvr_case_archived": T("File Status")
@@ -619,9 +617,37 @@ def configure_id_cards(r, resource, administration=False):
             s3.formats["card"] = r.url(method="")
 
 # -------------------------------------------------------------------------
-def configure_dvr_person_controller(r, privileged=False, administration=False):
+def configure_hrm_person_controller(r):
 
     T = current.T
+
+    s3db = current.s3db
+
+    if r.interactive:
+
+        table = s3db.pr_person
+        field = table.pe_label
+        field.label = T("ID")
+        field.readable = True
+        field.comment = None
+
+        from core import S3SQLCustomForm
+        crud_form = S3SQLCustomForm(
+                        "pe_label",
+                        "last_name",
+                        "first_name",
+                        "date_of_birth",
+                        "gender",
+                        "person_details.nationality",
+                        )
+
+        s3db.configure("pr_person",
+                       crud_form = crud_form,
+                       )
+
+# -------------------------------------------------------------------------
+def configure_dvr_person_controller(r, privileged=False, administration=False):
+
     db = current.db
     s3db = current.s3db
     settings = current.deployment_settings
@@ -712,6 +738,13 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
         default_site = settings.get_org_default_site()
         default_organisation = settings.get_org_default_organisation()
 
+        from ..helpers import get_default_case_organisation
+        default_case_organisation = get_default_case_organisation()
+        if default_case_organisation:
+            field = ctable.organisation_id
+            field.default = default_organisation
+            field.writable = False
+
         if default_organisation and not default_site:
             # Limit sites to default_organisation
             field = ctable.site_id
@@ -731,10 +764,10 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                 rtable = s3db.cr_shelter_registration
                 field = rtable.check_in_date
                 field.writable = False
-                field.label = T("Last Check-in")
+                #field.label = T("Last Check-in")
                 field = rtable.check_out_date
                 field.writable = False
-                field.label = T("Last Check-out")
+                #field.label = T("Last Check-out")
 
             # Make marital status mandatory, remove "other"
             dtable = s3db.pr_person_details
@@ -999,14 +1032,17 @@ def pr_person_controller(**attr):
             crud_strings["title_list"] = T("Invalid Cases")
 
         controller = r.controller
-        if controller == "security":
-            configure_security_person_controller(r)
-
-        elif controller == "dvr":
+        if controller == "dvr":
             configure_dvr_person_controller(r,
                                             privileged = privileged,
                                             administration = administration,
                                             )
+        elif controller == "security":
+            configure_security_person_controller(r)
+
+        elif controller == "hrm":
+            configure_hrm_person_controller(r)
+
         return result
     s3.prep = prep
 
@@ -1057,8 +1093,11 @@ def pr_person_controller(**attr):
     # Custom rheader tabs
     if current.request.controller == "dvr":
         from ..rheaders import mrcms_dvr_rheader
-        attr = dict(attr)
         attr["rheader"] = mrcms_dvr_rheader
+
+    elif current.request.controller == "hrm":
+        from ..rheaders import mrcms_hrm_rheader
+        attr["rheader"] = mrcms_hrm_rheader
 
     return attr
 

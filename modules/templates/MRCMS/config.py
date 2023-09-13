@@ -266,6 +266,7 @@ def config(settings):
     settings.pr.hide_third_gender = False
     settings.pr.separate_name_fields = 2
     settings.pr.name_format= "%(last_name)s, %(first_name)s"
+    settings.pr.generate_pe_label = True
 
     from .customise.pr import pr_person_resource, \
                               pr_person_controller, \

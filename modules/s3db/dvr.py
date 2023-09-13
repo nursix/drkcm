@@ -373,6 +373,7 @@ class DVRCaseModel(DataModel):
                      # Case assignment
                      self.org_organisation_id(
                             default = default_organisation,
+                            empty = False,
                             readable = not default_organisation,
                             writable = not default_organisation,
                             ),

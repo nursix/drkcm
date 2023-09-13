@@ -1303,14 +1303,60 @@ class PRPersonModel(DataModel):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def pr_person_onaccept(form):
+    def generate_pe_label(person_id):
+
+        db = current.db
+
+        table = current.s3db.pr_person
+        record = db(table.id == person_id).select(table.id,
+                                                  table.uuid,
+                                                  table.pe_label,
+                                                  limitby = (0, 1),
+                                                  ).first()
+        if not record or record.pe_label:
+            return
+
+        try:
+            uid = int(record.uuid[9:14], 16) % 1000000
+        except (TypeError, ValueError):
+            import uuid
+            uid = int(uuid.uuid4().urn[9:14], 16) % 1000000
+
+        # Generate code
+        import random
+        error = False
+        for i in range(20):
+            prefix = "".join(random.choices("ABCEFGHJKLNPSTUWXY", k=3))
+            label = "%s%06d" % (prefix, uid)
+
+            query = (table.id != person_id) & \
+                    (table.pe_label == label)
+            error = bool(db(query).select(table.id, limitby=(0, 1)).first())
+            if not error:
+                break
+
+        if not error:
+            record.update_record(pe_label=label,
+                                 modified_on = table.modified_on,
+                                 modified_by = table.modified_by,
+                                 )
+        else:
+            raise RuntimeError("Could not generate unique ID label")
+
+        return label
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def pr_person_onaccept(cls, form):
         """
             Onaccept callback
                 - update any user record associated with this person
+                - generate a unique PE label
         """
 
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         form_vars_get = form.vars.get
         person_id = form_vars_get("id")
@@ -1339,7 +1385,7 @@ class PRPersonModel(DataModel):
             if first_name and user.first_name != first_name:
                 update["first_name"] = first_name
 
-            middle_as_last = current.deployment_settings.get_L10n_mandatory_middlename()
+            middle_as_last = settings.get_L10n_mandatory_middlename()
 
             name = middle_name if middle_as_last else last_name
             if first_name and user.last_name != name:
@@ -1347,6 +1393,9 @@ class PRPersonModel(DataModel):
 
             if update:
                 user.update_record(**update)
+
+        if settings.get_pr_generate_pe_label():
+            cls.generate_pe_label(person_id)
 
     # -------------------------------------------------------------------------
     @staticmethod

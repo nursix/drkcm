@@ -1,5 +1,5 @@
 """
-    Beneficiary ID Card Layouts for Village
+    Beneficiary ID Card Layouts for MRCMS
 
     License: MIT
 """
