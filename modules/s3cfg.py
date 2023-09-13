@@ -3470,13 +3470,6 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_allocation", False)
 
-    def get_cr_check_out_is_final(self):
-        """
-            Whether checking out of a shelter frees up the place
-            or is just leaving the site temporarily
-        """
-        return self.cr.get("check_out_is_final", True)
-
     def get_cr_tags(self):
         """
             Whether shelters should show a tags tab

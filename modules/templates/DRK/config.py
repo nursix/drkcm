@@ -139,7 +139,6 @@ def config(settings):
     #
     settings.cr.shelter_population_dynamic = True
     settings.cr.shelter_units = True
-    settings.cr.check_out_is_final = False
 
     # Generate tasks for shelter inspections
     settings.cr.shelter_inspection_tasks = True

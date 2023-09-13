@@ -1944,6 +1944,9 @@ class CRShelterRegistrationModel(DataModel):
                           )
 
         # Update registration
+        if current_status != 3:
+            # Remove check-out-date if not checked-out
+            update["check_out_date"] = None
         update["last_shelter_id"] = shelter_id
         update["last_shelter_unit_id"] = unit_id
         registration.update_record(**update)
@@ -2087,8 +2090,6 @@ class Shelter:
         self.manage_registrations = settings.get_cr_shelter_registration()
         self.manage_allocations = settings.get_cr_shelter_allocation()
 
-        self.check_out_is_final = settings.get_cr_check_out_is_final()
-
         self.population_by_type = settings.get_cr_shelter_population_by_type()
         self.population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
@@ -2205,10 +2206,8 @@ class Shelter:
             # Get current population from registration count
             rtable = s3db.cr_shelter_registration
             query = (rtable.shelter_id == shelter_id) & \
+                    (rtable.registration_status != 3) & \
                     (rtable.deleted == False)
-            if self.check_out_is_final:
-                query &= (rtable.registration_status != 3)
-
             cnt = rtable.id.count()
             row = db(query).select(cnt).first()
             update["population"] = row[cnt] if row else 0
@@ -2357,7 +2356,6 @@ class HousingUnit:
 
         self.manage_registrations = settings.get_cr_shelter_registration()
 
-        self.check_out_is_final = settings.get_cr_check_out_is_final()
         self.population_by_age_group = settings.get_cr_shelter_population_by_age_group()
 
     # -------------------------------------------------------------------------
@@ -2390,9 +2388,8 @@ class HousingUnit:
             # Get current population from registration count
             rtable = s3db.cr_shelter_registration
             query = (rtable.shelter_unit_id == unit_id) & \
+                    (rtable.registration_status != 3) & \
                     (rtable.deleted == False)
-            if self.check_out_is_final:
-                query &= (rtable.registration_status != 3)
             cnt = rtable.id.count()
             row = db(query).select(cnt).first()
             population = row[cnt] if row else 0
