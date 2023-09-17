@@ -3851,10 +3851,6 @@ class DVRResidenceStatusModel(DataModel):
                                                               represent,
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = "dvr",
-                                                             f = "residence_status_type",
-                                                             tooltip = T("Create a new status type"),
-                                                             ),
                                        )
 
         # ---------------------------------------------------------------------
@@ -3898,10 +3894,6 @@ class DVRResidenceStatusModel(DataModel):
                                                               represent,
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = "dvr",
-                                                             f = "residence_permit_type",
-                                                             tooltip = T("Create a new permit type"),
-                                                             ),
                                        )
 
         # ---------------------------------------------------------------------

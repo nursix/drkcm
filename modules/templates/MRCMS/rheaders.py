@@ -52,25 +52,27 @@ def mrcms_dvr_rheader(r, tabs=None):
                 if not tabs:
                     tabs = [(T("Basic Details"), None),
                             (T("Family Members"), "group_membership/"),
-                            (T("Activities"), "case_activity"),
+                            (T("ID"), "identity"),
+                            (T("Needs"), "case_activity"),
                             (T("Appointments"), "case_appointment"),
-                            #(T("Allowance"), "allowance"),
-                            #(T("Presence"), "shelter_registration_history"),
-                            (T("Presence"), "site_presence_event"),
+                            # case events
+                            # site presence
                             (T("Photos"), "image"),
                             (T("Notes"), "case_note"),
-                            (T("Confiscation"), "seized_item"),
+                            #(T("Confiscation"), "seized_item"),
                             ]
                     if current.auth.s3_has_roles(("ORG_ADMIN",
                                                   "CASE_ADMIN",
-                                                  "CASE_MANAGER",
+                                                  #"CASE_MANAGER",
                                                   )):
-                        tabs.insert(-3, (T("Events"), "case_event"))
+                        tabs[5:5] = [(T("Presence"), "site_presence_event"),
+                                     (T("Events"), "case_event"),
+                                     ]
 
                 case = resource.select(["dvr_case.status_id",
                                         "dvr_case.archived",
                                         "dvr_case.household_size",
-                                        "dvr_case.transferable",
+                                        #"dvr_case.transferable",
                                         "dvr_case.last_seen_on",
                                         "first_name",
                                         "last_name",
@@ -87,9 +89,8 @@ def mrcms_dvr_rheader(r, tabs=None):
                     case_status = lambda row: case["dvr_case.status_id"]
                     household_size = lambda row: case["dvr_case.household_size"]
                     last_seen_on = lambda row: case["dvr_case.last_seen_on"]
-                    name = s3_fullname
                     shelter = lambda row: case["cr_shelter_registration.shelter_unit_id"]
-                    transferable = lambda row: case["dvr_case.transferable"]
+                    #transferable = lambda row: case["dvr_case.transferable"]
                 else:
                     # Target record exists, but doesn't match filters
                     return None
@@ -98,9 +99,9 @@ def mrcms_dvr_rheader(r, tabs=None):
                                    (T("Case Status"), case_status),
                                    (T("Shelter"), shelter),
                                    ],
-                                  [(T("Name"), name),
-                                   (T("Transferable"), transferable), # TODO disable transferability
-                                   (T("Checked-out"), "absence"),
+                                  [#(T("Name"), name),
+                                   #(T("Transferable"), transferable),
+                                   #(T("Checked-out"), "absence"),
                                    ],
                                   ["date_of_birth",
                                    (T("Size of Family"), household_size),
@@ -111,12 +112,11 @@ def mrcms_dvr_rheader(r, tabs=None):
                 if archived:
                     rheader_fields.insert(0, [(None, hint)])
 
+                rheader_title = s3_fullname
+
                 # Generate rheader XML
-                rheader = S3ResourceHeader(rheader_fields, tabs)(
-                                r,
-                                table = resource.table,
-                                record = record,
-                                )
+                rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+                rheader = rheader(r, table=resource.table, record=record)
 
                 # Add profile picture
                 from core import s3_avatar_represent
@@ -133,17 +133,6 @@ def mrcms_dvr_rheader(r, tabs=None):
                                )
 
                 return rheader
-
-        elif tablename == "dvr_case":
-
-            if not tabs:
-                tabs = [(T("Basic Details"), None),
-                        (T("Activities"), "case_activity"),
-                        ]
-
-            rheader_fields = [["reference"],
-                              ["status_id"],
-                              ]
 
         rheader = S3ResourceHeader(rheader_fields, tabs)(r,
                                                          table=resource.table,
@@ -235,7 +224,7 @@ def mrcms_cr_rheader(r, tabs=None):
         if tablename == "cr_shelter":
 
             if not tabs:
-                tabs = [(T("Basic Details"), None),
+                tabs = [(T("Basic Details"), None, {}, "read"),
                         (T("Housing Units"), "shelter_unit"),
                         #(T("Client Registration"), "shelter_registration"),
                         (T("Images"), "image"),

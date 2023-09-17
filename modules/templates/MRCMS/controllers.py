@@ -43,7 +43,7 @@ class index(CustomController):
             dtrepr = lambda dt: S3DateTime.datetime_represent(dt, utc=True)
 
             filter_roles = roles if sr.ADMIN not in roles else None
-            posts = self.get_announcements(roles=filter_roles)
+            posts = current.s3db.cms_announcements(roles=filter_roles)
 
             # Render announcements list
             announcements = UL(_class="announcements")
@@ -105,55 +105,6 @@ class index(CustomController):
         self._view(settings.get_theme_layouts(), "index.html")
 
         return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_announcements(roles=None):
-        """
-            Get current announcements
-
-            Args:
-                roles: filter announcement by these roles
-
-            Returns:
-                any announcements (Rows)
-        """
-
-        db = current.db
-        s3db = current.s3db
-
-        # Look up all announcements
-        ptable = s3db.cms_post
-        stable = s3db.cms_series
-        join = stable.on((stable.id == ptable.series_id) & \
-                         (stable.name == "Announcements") & \
-                         (stable.deleted == False))
-        query = (ptable.date <= current.request.utcnow) & \
-                (ptable.expired == False) & \
-                (ptable.deleted == False)
-
-        if roles:
-            # Filter posts by roles
-            ltable = s3db.cms_post_role
-            q = (ltable.group_id.belongs(roles)) & \
-                (ltable.deleted == False)
-            rows = db(q).select(ltable.post_id,
-                                cache = s3db.cache,
-                                groupby = ltable.post_id,
-                                )
-            post_ids = {row.post_id for row in rows}
-            query = (ptable.id.belongs(post_ids)) & query
-
-        posts = db(query).select(ptable.name,
-                                 ptable.body,
-                                 ptable.date,
-                                 ptable.priority,
-                                 join = join,
-                                 orderby = (~ptable.priority, ~ptable.date),
-                                 limitby = (0, 5),
-                                 )
-
-        return posts
 
 # =============================================================================
 class transferability(CustomController):

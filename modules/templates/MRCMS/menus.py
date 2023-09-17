@@ -195,10 +195,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
             shelter_id = None
         else:
             shelter_id = get_default_shelter()
-        if shelter_id:
-            shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id])
-        else:
-            shelter_menu = MM("Shelters", c="cr", f="shelter")
 
         if not shelter_id:
             menu = M(c="cr")(
@@ -281,12 +277,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     #      vars = {"code": "FOOD*"},
                     #      ),
                     #    ),
-                    M("Activities", f="case_activity")(
+                    M("Current Needs", f="case_activity")(
                         M("Emergencies",
                           vars = {"~.emergency": "True"},
                           ),
                         M(follow_up_label, f="due_followups"),
-                        M("All Activities"),
                         M("Report", m="report"),
                         ),
                     M("Appointments", f="case_appointment")(
@@ -323,9 +318,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Need Types", f="need"),
                         M("Appointment Types", f="case_appointment_type"),
                         M("Event Types", f="case_event_type"),
-                        M("Check Transferability", c="default", f="index",
-                          args = ["transferability"],
-                          ),
+                        #M("Check Transferability", c="default", f="index",
+                        #  args = ["transferability"],
+                        #  ),
+                        M("Residence Status Types", f="residence_status_type"),
+                        M("Residence Permit Types", f="residence_permit_type"),
                         ),
                     )
 

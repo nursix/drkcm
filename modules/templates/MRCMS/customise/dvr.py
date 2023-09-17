@@ -205,6 +205,21 @@ def dvr_case_activity_resource(r, tablename):
         elif r.component and r.component.tablename == "dvr_case_activity":
             r.component.add_filter(query)
 
+    # CRUD Strings
+    T = current.T
+    current.response.s3.crud_strings["dvr_case_activity"] = Storage(
+        label_create = T("Add Need"),
+        title_display = T("Need Details"),
+        title_list = T("Needs"),
+        title_update = T("Edit Need"),
+        label_list_button = T("List Needs"),
+        label_delete_button = T("Delete Need"),
+        msg_record_created = T("Need added"),
+        msg_record_modified = T("Need updated"),
+        msg_record_deleted = T("Need deleted"),
+        msg_list_empty = T("No Needs currently registered"),
+        )
+
 # -------------------------------------------------------------------------
 def dvr_case_activity_controller(**attr):
 

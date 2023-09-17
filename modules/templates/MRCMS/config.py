@@ -138,9 +138,15 @@ def config(settings):
     settings.customise_auth_user_resource = auth_user_resource
 
     # -------------------------------------------------------------------------
-    # CMS Settings
+    # CMS Settings and Customizations
     #
     settings.cms.hide_index = True
+
+    from .customise.cms import cms_post_resource, \
+                               cms_post_controller
+
+    settings.customise_cms_post_resource = cms_post_resource
+    settings.customise_cms_post_controller = cms_post_controller
 
     # -------------------------------------------------------------------------
     # CR Settings

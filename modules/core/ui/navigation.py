@@ -1522,7 +1522,7 @@ class S3ComponentTabs:
                         args = [record_id]
                 else:
                     if "viewing" not in _vars and record_id:
-                        args = [record_id]
+                        args = [record_id, tab.method] if tab.method else [record_id]
                 _href = URL(function, args=args, vars=_vars)
                 _id = "rheader_tab_%s" % function
 
