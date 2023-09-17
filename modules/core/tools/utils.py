@@ -379,7 +379,7 @@ def s3_represent_value(field,
             text = s3_str(text)
     else:
         if val is None:
-            text = NONE
+            text = s3_str(NONE)
         elif fname == "comments" and not extended_comments:
             ur = s3_str(text)
             if len(ur) > 48:
