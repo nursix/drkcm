@@ -1032,7 +1032,7 @@ def configure_hrm_person_controller(r):
 
         # Reduce form to relevant fields
         if r.record and r.record.id == current.auth.s3_logged_in_person() or \
-           current.auth.s3_has_roles("ORG_ADMIN", "SECURITY"):
+           current.auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
             pe_label = "pe_label"
         else:
             pe_label = None
