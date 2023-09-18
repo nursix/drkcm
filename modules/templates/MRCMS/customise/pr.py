@@ -1005,9 +1005,9 @@ def configure_default_person_controller(r):
                               deletable = False,
                               )
 
-    elif r.component_name == "identity":
+    elif r.component_name in ("identity", "image"):
 
-        # User cannot self modify their identity documents
+        # User cannot self modify their identity details
         r.component.configure(insertable = False,
                               editable = False,
                               deletable = False,

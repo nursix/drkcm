@@ -79,6 +79,8 @@ def org_organisation_resource(r, tablename):
 
 def org_organisation_controller(**attr):
 
+    s3 = current.response.s3
+
     # TODO if not OrgGroupAdmin or OrgAdmin for multiple orgs, and staff of only one org => open that org
 
     # TODO not insertable on main tab unless OrgGroupAdmin
@@ -89,6 +91,20 @@ def org_organisation_controller(**attr):
     # TODO custom list fields
 
     # TODO filters
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if r.component_name == "human_resource":
+            current.deployment_settings.ui.open_read_first = True
+
+        return result
+
+    s3.prep = prep
+
 
     # Custom rheader
     from ..rheaders import org_rheader

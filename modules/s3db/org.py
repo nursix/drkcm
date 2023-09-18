@@ -7363,14 +7363,10 @@ def org_organisation_controller():
                     else:
                         controller = "vol"
                         function = "volunteer"
-                read_url = URL(c=controller, f=function,
-                               args = ["[id]"],
-                               )
-                update_url = URL(c=controller, f=function,
-                                 args = ["[id]", "update"],
-                                 )
-                S3CRUD.action_buttons(r, read_url = read_url,
-                                         update_url = update_url)
+                args = ["[id]", "read"] if settings.get_ui_open_read_first() else ["[id]"]
+                read_url = URL(c=controller, f=function, args=args)
+                update_url = URL(c=controller, f=function, args=["[id]", "update"])
+                S3CRUD.action_buttons(r, read_url=read_url, update_url=update_url)
 
             elif r.component_name == "branch" and r.record and \
                  isinstance(output, dict) and \

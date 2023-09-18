@@ -35,4 +35,24 @@ def hrm_human_resource_resource(r, tablename):
                                        ),
                    )
 
+# -------------------------------------------------------------------------
+def hrm_human_resource_controller(**attr):
+
+    s3 = current.response.s3
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if not r.component:
+            current.deployment_settings.ui.open_read_first = True
+
+        return result
+
+    s3.prep = prep
+
+    return attr
+
 # END =========================================================================

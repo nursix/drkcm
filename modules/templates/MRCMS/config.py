@@ -236,9 +236,11 @@ def config(settings):
     settings.hrm.staff_departments = False
     settings.hrm.deletable = False
 
-    from .customise.hrm import hrm_human_resource_resource
+    from .customise.hrm import hrm_human_resource_resource, \
+                               hrm_human_resource_controller
 
     settings.customise_hrm_human_resource_resource = hrm_human_resource_resource
+    settings.customise_hrm_human_resource_controller = hrm_human_resource_controller
 
     # -------------------------------------------------------------------------
     # Inventory Module Settings

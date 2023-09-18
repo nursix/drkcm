@@ -268,11 +268,12 @@ def hrm_rheader(r, tabs=None):
         if tablename == "pr_person":
             # Staff file
 
-            tabs = [(T("Person Details"), None),
+            tabs = [(T("Person Details"), None, {}, "read"),
                     (T("Contact Information"), "contacts"),
                     (T("Address"), "address"),
                     (T("ID"), "identity"),
                     (T("Staff Record"), "human_resource"),
+                    (T("Photos"), "image"),
                     ]
 
             details = hr_details(record)
@@ -287,6 +288,19 @@ def hrm_rheader(r, tabs=None):
 
             rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
             rheader = rheader(r, table=resource.table, record=record)
+
+            # Add profile picture
+            from core import s3_avatar_represent
+            record_id = record.id
+            rheader.insert(0, A(s3_avatar_represent(record_id,
+                                                    "pr_person",
+                                                    _class = "rheader-avatar",
+                                                    ),
+                                _href=URL(f = "person",
+                                          args = [record_id, "image"],
+                                          vars = r.get_vars,
+                                          ),
+                                ))
 
     return rheader
 
