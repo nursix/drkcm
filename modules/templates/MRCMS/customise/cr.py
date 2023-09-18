@@ -393,9 +393,9 @@ def cr_shelter_controller(**attr):
         return output
     s3.postp = custom_postp
 
-    from ..rheaders import mrcms_cr_rheader
+    from ..rheaders import cr_rheader
     attr = dict(attr)
-    attr["rheader"] = mrcms_cr_rheader
+    attr["rheader"] = cr_rheader
 
     return attr
 

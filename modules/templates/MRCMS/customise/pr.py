@@ -278,22 +278,15 @@ def configure_case_form(resource, privileged=False, cancel=False):
 
                 # Process Data ----------------------------
                 "dvr_case.date",
-                # Will always default & be hidden
+
+                # TODO Set defaults + hide, if possible
                 "dvr_case.organisation_id",
-                # Will always default & be hidden
                 #"dvr_case.site_id",
+
+                # TODO Replace by suitable model:
                 #"dvr_case.origin_site_id",
                 #"dvr_case.destination_site_id",
-                #S3SQLInlineComponent(
-                #        "eo_number",
-                #        fields = [("", "value")],
-                #        filterby = {"field": "tag",
-                #                    "options": "EONUMBER",
-                #                    },
-                #        label = T("EasyOpt Number"),
-                #        multiple = False,
-                #        name = "eo_number",
-                #        ),
+
                 S3SQLInlineComponent(
                         "bamf",
                         fields = [("", "value")],
@@ -305,17 +298,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
                         name = "bamf",
                         ),
                 "dvr_case.valid_until",
-                #S3SQLInlineComponent(
-                #        "identity",
-                #        fields = ["value",
-                #                  "valid_until",
-                #                  ],
-                #        filterby = {"field": "type",
-                #                    "options": 5,
-                #                    },
-                #        label = T("Preliminary Residence Permit"),
-                #        multiple = False,
-                #        ),
+
                 S3SQLInlineComponent(
                         "residence_status",
                         fields = ["status_type_id",
@@ -327,7 +310,6 @@ def configure_case_form(resource, privileged=False, cancel=False):
                         label = T("Residence Status"),
                         multiple = False,
                         ),
-                #"dvr_case.stay_permit_until",
 
                 # Shelter Data ----------------------------
                 # Will always default & be hidden
@@ -360,6 +342,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
                                   ],
                         label = T("Language / Communication Mode"),
                         ),
+                "person_details.religion",
                 "dvr_case.comments",
 
                 # Archived-flag ---------------------------
@@ -628,36 +611,8 @@ def configure_id_cards(r, resource, administration=False):
             s3.formats["card"] = r.url(method="")
 
 # -------------------------------------------------------------------------
-def configure_hrm_person_controller(r):
-
-    T = current.T
-
-    s3db = current.s3db
-
-    if r.interactive:
-
-        table = s3db.pr_person
-        field = table.pe_label
-        field.label = T("ID")
-        field.readable = True
-        field.comment = None
-
-        from core import S3SQLCustomForm
-        crud_form = S3SQLCustomForm(
-                        "pe_label",
-                        "last_name",
-                        "first_name",
-                        "date_of_birth",
-                        "gender",
-                        "person_details.nationality",
-                        )
-
-        s3db.configure("pr_person",
-                       crud_form = crud_form,
-                       )
-
-# -------------------------------------------------------------------------
 def configure_dvr_person_controller(r, privileged=False, administration=False):
+    """ Case File (Full) """
 
     db = current.db
     s3db = current.s3db
@@ -853,6 +808,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
 # -------------------------------------------------------------------------
 def configure_security_person_controller(r):
+    """ Case file (Security) """
 
     T = current.T
     db = current.db
@@ -1004,6 +960,107 @@ def configure_security_person_controller(r):
                        )
 
 # -------------------------------------------------------------------------
+def configure_default_person_controller(r):
+    """ Personal Profile """
+
+    T = current.T
+
+    s3db = current.s3db
+
+    # Expose ID-label (read-only)
+    table = s3db.pr_person
+    field = table.pe_label
+    field.label = T("ID")
+    field.readable = True
+    field.comment = None
+
+    if not r.component:
+
+        # Reduce form to relevant fields
+        from core import S3SQLCustomForm
+        crud_form = S3SQLCustomForm("pe_label",
+                                    "last_name",
+                                    "first_name",
+                                    "date_of_birth",
+                                    "gender",
+                                    "person_details.nationality",
+                                    )
+        s3db.configure("pr_person", crud_form=crud_form)
+
+    elif r.component_name == "human_resource":
+
+        # Reduce to relevant list_fields
+        list_fields = ["organisation_id",
+                       "site_id",
+                       "job_title_id",
+                       "start_date",
+                       "end_date",
+                       "status",
+                       ]
+        r.component.configure(list_fields = list_fields,
+                              # Staff records not modifiable in this view
+                              # => must use tab of organisation for that
+                              insertable = False,
+                              editable = False,
+                              deletable = False,
+                              )
+
+    elif r.component_name == "identity":
+
+        # User cannot self modify their identity documents
+        r.component.configure(insertable = False,
+                              editable = False,
+                              deletable = False,
+                              )
+
+# -------------------------------------------------------------------------
+def configure_hrm_person_controller(r):
+    """ Staff File """
+
+    T = current.T
+
+    s3db = current.s3db
+
+    # Expose ID label (read-only)
+    table = s3db.pr_person
+    field = table.pe_label
+    field.label = T("ID")
+    field.readable = True
+    field.comment = None
+
+    if not r.component:
+
+        # Reduce form to relevant fields
+        if r.record and r.record.id == current.auth.s3_logged_in_person() or \
+           current.auth.s3_has_roles("ORG_ADMIN", "SECURITY"):
+            pe_label = "pe_label"
+        else:
+            pe_label = None
+
+        from core import S3SQLCustomForm
+        crud_form = S3SQLCustomForm(pe_label,
+                                    "last_name",
+                                    "first_name",
+                                    "date_of_birth",
+                                    "gender",
+                                    "person_details.nationality",
+                                    )
+
+        s3db.configure("pr_person", crud_form=crud_form)
+
+    elif r.component_name == "human_resource":
+
+        # Reduce to relevant list_fields
+        list_fields = ["organisation_id",
+                       "site_id",
+                       "job_title_id",
+                       "start_date",
+                       "end_date",
+                       "status",
+                       ]
+        r.component.configure(list_fields=list_fields)
+
+# -------------------------------------------------------------------------
 def pr_person_controller(**attr):
 
     T = current.T
@@ -1054,6 +1111,9 @@ def pr_person_controller(**attr):
         elif controller == "hrm":
             configure_hrm_person_controller(r)
 
+        elif controller == "default":
+            configure_default_person_controller(r)
+
         return result
     s3.prep = prep
 
@@ -1084,7 +1144,7 @@ def pr_person_controller(**attr):
                 buttons = output["buttons"]
 
             # ID-Card button
-            if administration:
+            if administration and r.controller == "dvr":
                 card_button = A(T("Generate ID"),
                                 data = {"url": URL(c="dvr", f="person",
                                                    args = ["%s.card" % r.id]
@@ -1102,13 +1162,13 @@ def pr_person_controller(**attr):
     s3.postp = postp
 
     # Custom rheader tabs
+    from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
     if current.request.controller == "dvr":
-        from ..rheaders import mrcms_dvr_rheader
-        attr["rheader"] = mrcms_dvr_rheader
-
+        attr["rheader"] = dvr_rheader
     elif current.request.controller == "hrm":
-        from ..rheaders import mrcms_hrm_rheader
-        attr["rheader"] = mrcms_hrm_rheader
+        attr["rheader"] = hrm_rheader
+    elif current.request.controller == "default":
+        attr["rheader"] = default_rheader
 
     return attr
 
@@ -1204,8 +1264,8 @@ def pr_group_membership_controller(**attr):
         return result
     s3.prep = prep
 
-    from ..rheaders import mrcms_dvr_rheader
-    attr["rheader"] = mrcms_dvr_rheader
+    from ..rheaders import dvr_rheader
+    attr["rheader"] = dvr_rheader
 
     return attr
 

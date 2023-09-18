@@ -233,6 +233,12 @@ def config(settings):
     # Human Resource Module Settings
     #
     settings.hrm.teams_orgs = False
+    settings.hrm.staff_departments = False
+    settings.hrm.deletable = False
+
+    from .customise.hrm import hrm_human_resource_resource
+
+    settings.customise_hrm_human_resource_resource = hrm_human_resource_resource
 
     # -------------------------------------------------------------------------
     # Inventory Module Settings

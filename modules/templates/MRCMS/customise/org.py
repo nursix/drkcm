@@ -61,8 +61,8 @@ def org_group_controller(**attr):
     # TODO postp to remove DELETE-button for PROVIDERS
 
     # Custom rheader
-    from ..rheaders import mrcms_org_rheader
-    attr["rheader"] = mrcms_org_rheader
+    from ..rheaders import org_rheader
+    attr["rheader"] = org_rheader
 
     return attr
 
@@ -91,8 +91,8 @@ def org_organisation_controller(**attr):
     # TODO filters
 
     # Custom rheader
-    from ..rheaders import mrcms_org_rheader
-    attr["rheader"] = mrcms_org_rheader
+    from ..rheaders import org_rheader
+    attr["rheader"] = org_rheader
 
     return attr
 
@@ -175,9 +175,9 @@ def org_facility_controller(**attr):
 
     # Custom rheader+tabs
     if current.request.controller == "org":
-        from ..rheaders import mrcms_org_rheader
+        from ..rheaders import org_rheader
         attr = dict(attr)
-        attr["rheader"] = mrcms_org_rheader
+        attr["rheader"] = org_rheader
 
     return attr
 

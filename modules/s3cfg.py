@@ -1846,20 +1846,15 @@ class S3Config(Storage):
         return self.L10n.get("languages_readonly", True)
 
     def get_L10n_religions(self):
-        """
-            Religions used in Person Registry
-
-            @ToDo: find a better code
-            http://eden.sahanafoundation.org/ticket/594
-        """
+        """ Religions used in Person Registry """
         T = current.T
-        return self.L10n.get("religions", {"none": T("none"),
+        return self.L10n.get("religions", {"none": T("none##Religion"),
                                            "christian": T("Christian"),
                                            "muslim": T("Muslim"),
                                            "jewish": T("Jewish"),
                                            "buddhist": T("Buddhist"),
                                            "hindu": T("Hindu"),
-                                           "bahai": T("Bahai"),
+                                           "bahai": T("Bahá'í"),
                                            "other": T("other")
                                            })
 
