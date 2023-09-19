@@ -179,7 +179,6 @@ def document_realm_entity(table, row):
 
     # Fallback: use context organisation as realm entity
     if realm_entity == 0 and document.organisation_id:
-
         realm_entity = s3db.pr_get_pe_id("org_organisation",
                                          document.organisation_id,
                                          )

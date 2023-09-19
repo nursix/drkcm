@@ -1015,10 +1015,10 @@ def represent_file(tablename="doc_document", fieldname="file"):
         icon = ICON(icon_type)
 
         output = A(icon,
-                _href = URL(c="default", f="download", args=[value]),
-                _title = name,
-                _class = "file-repr",
-                )
+                   _href = URL(c="default", f="download", args=[value]),
+                   _title = name,
+                   _class = "file-repr",
+                   )
 
         # Determine the file size
         fsize = f.seek(0, 2) if f else None
