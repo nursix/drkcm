@@ -109,9 +109,9 @@ def realm_entity(table, row):
         if group and group.group_type == 7:
             realm_entity = None
 
-    elif tablename == "doc_document":
+    elif tablename in ("doc_document", "doc_image"):
         # Inherit from doc entity, alternatively context organisation
-        realm_entity = document_realm_entity(table, row)
+        realm_entity = doc_realm_entity(table, row)
 
     #elif tablename == "cr_shelter":
     #    # Self-owned, OU of managing organisation (default ok)
@@ -137,9 +137,9 @@ def realm_entity(table, row):
     return realm_entity
 
 # -------------------------------------------------------------------------
-def document_realm_entity(table, row):
+def doc_realm_entity(table, row):
     """
-        Realm rule for doc_document
+        Realm rule for doc_document/doc_image
     """
 
     db = current.db
@@ -147,15 +147,14 @@ def document_realm_entity(table, row):
 
     realm_entity = 0
 
-    dtable = s3db.doc_document
     etable = s3db.doc_entity
 
     # Get the document record including instance type of doc_entity
-    left = etable.on(etable.doc_id == dtable.doc_id)
-    query = (dtable.id == row.id)
-    row = db(query).select(dtable.id,
-                           dtable.doc_id,
-                           dtable.organisation_id,
+    left = etable.on(etable.doc_id == table.doc_id)
+    query = (table.id == row.id)
+    row = db(query).select(table.id,
+                           table.doc_id,
+                           table.organisation_id,
                            etable.instance_type,
                            left = left,
                            limitby = (0, 1),
@@ -163,7 +162,7 @@ def document_realm_entity(table, row):
     if not row:
         return realm_entity
 
-    document = row.doc_document
+    document = row[table]
     instance_type = row.doc_entity.instance_type
 
     # Inherit the realm entity from instance, if available

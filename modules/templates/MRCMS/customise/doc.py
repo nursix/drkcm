@@ -9,6 +9,30 @@ from gluon import current, IS_NOT_EMPTY
 from core import represent_file
 
 # -------------------------------------------------------------------------
+def doc_image_resource(r, tablename):
+
+    T = current.T
+
+    s3db = current.s3db
+    table = s3db.doc_image
+
+    # Disable author-field
+    field = table.person_id
+    field.readable = field.writable = False
+
+    # Hide URL field
+    field = table.url
+    field.readable = field.writable = False
+
+    # Custom label for name-field, make mandatory
+    field = table.name
+    field.label = T("Title")
+    field.requires = [IS_NOT_EMPTY(), field.requires]
+
+    # Set default organisation_id
+    doc_set_default_organisation(r, table=table)
+
+# -------------------------------------------------------------------------
 def doc_document_resource(r, tablename):
 
     T = current.T
@@ -35,7 +59,7 @@ def doc_document_resource(r, tablename):
     field.represent = represent_file()
 
     # Set default organisation_id
-    doc_set_default_organisation(r)
+    doc_set_default_organisation(r, table=table)
 
     # List fields
     list_fields = ["name",
@@ -48,16 +72,17 @@ def doc_document_resource(r, tablename):
                    )
 
 # -------------------------------------------------------------------------
-def doc_set_default_organisation(r):
+def doc_set_default_organisation(r, table=None):
     """
-        Sets the correct default organisation_id for doc_document from
+        Sets the correct default organisation_id for documents/images from
         the upload context (e.g. organisation, shelter)
 
         Args:
             r - the current CRUDRequest
     """
 
-    table = current.s3db.doc_document
+    if table is None:
+        table = current.s3db.doc_document
 
     organisation_id = None
 

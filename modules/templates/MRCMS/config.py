@@ -171,9 +171,11 @@ def config(settings):
     # -------------------------------------------------------------------------
     # DOC Settings and Customizations
     #
-    from .customise.doc import doc_document_resource
+    from .customise.doc import doc_document_resource, \
+                               doc_image_resource
 
     settings.customise_doc_document_resource = doc_document_resource
+    settings.customise_doc_image_resource = doc_image_resource
 
     # -------------------------------------------------------------------------
     # DVR Settings and Customizations
