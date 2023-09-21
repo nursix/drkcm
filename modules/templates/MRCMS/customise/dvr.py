@@ -302,11 +302,13 @@ def dvr_case_activity_controller(**attr):
 # -------------------------------------------------------------------------
 def dvr_case_appointment_controller(**attr):
 
-    # TODO refactor for org-specific appointment types
-
     T = current.T
-    s3 = current.response.s3
+
+    db = current.db
     s3db = current.s3db
+    auth = current.auth
+
+    s3 = current.response.s3
 
     # Custom prep
     standard_prep = s3.prep
@@ -326,14 +328,55 @@ def dvr_case_appointment_controller(**attr):
                     (FS("person_id$dvr_case.archived") == None)
             resource.add_filter(query)
 
+        # Filter for org-specific appointment types
+        # - not necessary since appointments are within the realm of
+        #   the type-defining organisation anyway, so permissions will
+        #   filter anyway
+
         if not r.component:
 
             configure_person_tags()
 
             if r.interactive and not r.id:
 
-                # Custom filter widgets
-                from core import TextFilter, OptionsFilter, DateFilter, get_filter_options
+                # Which organisation can the user see appointments for?
+                permissions = current.auth.permission
+                permitted_realms = permissions.permitted_realms("dvr_case_appointment", "read")
+                if permitted_realms is not None:
+                    otable = s3db.org_organisation
+                    query = (otable.pe_id.belongs(permitted_realms)) & \
+                            (otable.deleted == False)
+                    organisations = db(query).select(otable.id)
+                    organisation_ids = [o.id for o in organisations]
+                else:
+                    organisation_ids = None # global access
+
+                # Which shelters can the user see appointments for?
+                if organisation_ids is None or organisation_ids:
+                    stable = s3db.cr_shelter
+                    query = (stable.status != 1) & (stable.deleted == False)
+                    if organisation_ids:
+                        query = stable.organisation_id.belongs(organisation_ids) & query
+                    shelters = db(query).select(stable.id, stable.name)
+                    shelter_filter_opts = {s.id: s.name for s in shelters}
+                else:
+                    shelters = shelter_filter_opts = None # no shelters available
+
+                # Which appointment types can the user see?
+                ttable = s3db.dvr_case_appointment_type
+                query = auth.s3_accessible_query("read", "dvr_case_appointment_type")
+                if organisation_ids:
+                    query = ttable.organisation_id.belongs(organisation_ids) & query
+                types = db(query).select(ttable.id, ttable.name)
+                type_filter_opts = {t.id: t.name for t in types}
+
+                # Default date interval
+                now = r.utcnow
+                today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                tomorrow = today + datetime.timedelta(days=1)
+
+                # Filter widgets
+                from core import TextFilter, OptionsFilter, DateFilter
                 filter_widgets = [
                     TextFilter(["person_id$pe_label",
                                 "person_id$first_name",
@@ -342,9 +385,7 @@ def dvr_case_appointment_controller(**attr):
                                 label = T("Search"),
                                 ),
                     OptionsFilter("type_id",
-                                  options = get_filter_options("dvr_case_appointment_type",
-                                                               translate = True,
-                                                               ),
+                                  options = type_filter_opts,
                                   cols = 3,
                                   ),
                     OptionsFilter("status",
@@ -352,39 +393,41 @@ def dvr_case_appointment_controller(**attr):
                                   default = 2,
                                   ),
                     DateFilter("date",
+                               default = {"ge": today, "le": tomorrow},
                                ),
-                    OptionsFilter("person_id$dvr_case.status_id$is_closed",
-                                  cols = 2,
-                                  default = False,
-                                  #hidden = True,
-                                  label = T("Case Closed"),
-                                  options = {True: T("Yes"),
-                                             False: T("No"),
-                                             },
-                                  ),
                     TextFilter(["person_id$pe_label"],
                                label = T("IDs"),
                                match_any = True,
                                hidden = True,
                                comment = T("Search for multiple IDs (separated by blanks)"),
                                ),
+                    OptionsFilter("person_id$dvr_case.status_id$is_closed",
+                                  cols = 2,
+                                  default = False,
+                                  hidden = True,
+                                  label = T("Case Closed"),
+                                  options = {True: T("Yes"), False: T("No")},
+                                  ),
                     ]
 
+                # Add organisation filter if user can see appointments
+                # from more than one org
+                if organisation_ids is None or len(organisation_ids) > 1:
+                    filter_widgets.insert(-2,
+                        OptionsFilter("person_id$dvr_case.organisation_id",
+                                      hidden = True,
+                                      ))
+
+                # Add shelter filter if user can see appointments from
+                # more than one shelter
+                if shelter_filter_opts:
+                    filter_widgets.insert(-2,
+                        OptionsFilter("person_id$shelter_registration.shelter_id",
+                                      options = shelter_filter_opts,
+                                      hidden = True,
+                                      ))
+
                 resource.configure(filter_widgets = filter_widgets)
-
-            # Default filter today's and tomorrow's appointments
-            from core import set_default_filter
-            now = r.utcnow
-            today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            tomorrow = today + datetime.timedelta(days=1)
-            set_default_filter("~.date", {"ge": today, "le": tomorrow},
-                               tablename = "dvr_case_appointment",
-                               )
-
-            # Field Visibility
-            table = resource.table
-            field = table.case_id
-            field.readable = field.writable = False
 
             # Custom list fields
             list_fields = [(T("ID"), "person_id$pe_label"),
@@ -396,9 +439,9 @@ def dvr_case_appointment_controller(**attr):
                            "comments",
                            ]
 
-            if r.representation in ("xlsx", "xls"):
-                # Include Person UUID
-                list_fields.append(("UUID", "person_id$uuid"))
+            #if r.representation in ("xlsx", "xls"):
+            #    # Include Person UUID for bulk status update
+            #    list_fields.append(("UUID", "person_id$uuid"))
 
             resource.configure(list_fields = list_fields,
                                insertable = False,

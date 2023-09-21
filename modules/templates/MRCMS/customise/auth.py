@@ -67,10 +67,10 @@ def realm_entity(table, row):
             # Inherit from person via person_id
             realm_entity = person_realm_entity(table, row, default=realm_entity)
 
-    elif tablename == "dvr_appointment":
+    elif tablename == "dvr_case_appointment":
 
         table = s3db.table(tablename)
-        ttable = s3db.dvr_appointment_type
+        ttable = s3db.dvr_case_appointment_type
         query = (table._id == row.id) & (ttable.id == table.type_id)
         atype = db(query).select(ttable.organisation_id, limitby=(0, 1)).first()
         if atype and atype.organisation_id:

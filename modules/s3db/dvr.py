@@ -3620,6 +3620,7 @@ class DVRCaseAppointmentModel(DataModel):
                                       #empty = False,
                                       label = T("Case Number"),
                                       ondelete = "CASCADE",
+                                      readable = False,
                                       writable = False,
                                       ),
                      # Beneficiary (component link):

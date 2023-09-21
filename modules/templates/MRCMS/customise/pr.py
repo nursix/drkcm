@@ -1183,13 +1183,10 @@ def pr_person_controller(**attr):
     auth = current.auth
     s3 = current.response.s3
 
-    ADMINISTRATION = ("ORG_ADMIN",
-                      "CASE_MANAGER",
-                      )
+    ADMINISTRATION = ("ORG_ADMIN", "CASE_ADMIN")
     administration = auth.s3_has_roles(ADMINISTRATION)
 
-    PRIVILEGED = ("SHELTER_MANAGER",
-                  )
+    PRIVILEGED = ("CASE_MANAGER", "CASE_ASSISTANT")
     privileged = administration or auth.s3_has_roles(PRIVILEGED)
 
     QUARTERMASTER = auth.s3_has_role("QUARTERMASTER") and not privileged
