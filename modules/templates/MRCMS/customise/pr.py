@@ -633,24 +633,22 @@ def configure_case_list_fields(resource,
                                show_family_transferable = False,
                                fmt = None,
                                ):
-
-    # TODO review + refactor
+    # TODO docstring
 
     T = current.T
-    db = current.db
-    s3db = current.s3db
 
-    settings = current.deployment_settings
+    #settings = current.deployment_settings
 
-    if fmt in ("html", "iframe", "aadata"):
-        # Delivers HTML, so restrict to GUI:
-        absence_field = (T("Checked-out"), "absence")
-        resource.configure(extra_fields = ["shelter_registration.registration_status",
-                                           "shelter_registration.check_out_date",
-                                           ],
-                           )
-    else:
-        absence_field = None
+    # TODO Restore when absence fixed
+    #if fmt in ("html", "iframe", "aadata"):
+    #    # Delivers HTML, so restrict to GUI:
+    #    absence_field = (T("Checked-out"), "absence")
+    #    resource.configure(extra_fields = ["shelter_registration.registration_status",
+    #                                       "shelter_registration.check_out_date",
+    #                                       ],
+    #                       )
+    #else:
+    #    absence_field = None
 
     # Standard list fields
     list_fields = [(T("ID"), "pe_label"),
@@ -664,88 +662,33 @@ def configure_case_list_fields(resource,
                    # TODO include shelter_id if multiple orgs or multiple shelters
                    (T("Shelter"), "shelter_registration.shelter_unit_id"),
                    ]
+    orderby = "pr_person.last_name"
 
     if privileged:
         # Additional list fields for privileged roles
         list_fields[-1:-1] = ("dvr_case.date",
                               "dvr_case.status_id",
                               )
+        # Show latest on top
+        orderby = "dvr_case.date desc"
 
         # Add fields for managing transferability
-        if settings.get_dvr_manage_transferability() and not check_overdue:
-            transf_fields = ["dvr_case.transferable",
-                             (T("Size of Family"), "dvr_case.household_size"),
-                             ]
-            if show_family_transferable:
-                transf_fields.append((T("Family Transferable"), "dvr_case.household_transferable"))
-            list_fields[-1:-1] = transf_fields
+        #if settings.get_dvr_manage_transferability() and not check_overdue:
+        #    transf_fields = ["dvr_case.transferable",
+        #                     (T("Size of Family"), "dvr_case.household_size"),
+        #                     ]
+        #    if show_family_transferable:
+        #        transf_fields.append((T("Family Transferable"), "dvr_case.household_transferable"))
+        #    list_fields[-1:-1] = transf_fields
 
         # Days of absence (virtual field)
-        if absence_field:
-            list_fields.append(absence_field)
+        # TODO Restore when absence fixed
+        #if absence_field:
+        #    list_fields.append(absence_field)
 
-    if fmt in ("xlsx", "xls"):
-        # Additional fields for XLS export
-
-        # Add appointment dates
-        atypes = ["GU",
-                  "X-Ray",
-                  "Reported Transferable",
-                  "Transfer",
-                  "Sent to RP",
-                  ]
-        COMPLETED = 4
-        afields = []
-        attable = s3db.dvr_case_appointment_type
-        query = attable.name.belongs(atypes)
-        rows = db(query).select(attable.id,
-                                attable.name,
-                                )
-
-        add_components = s3db.add_components
-        for row in rows:
-            type_id = row.id
-            name = "appointment%s" % type_id
-            hook = {"name": name,
-                    "joinby": "person_id",
-                    "filterby": {"type_id": type_id,
-                                 "status": COMPLETED,
-                                 },
-                    }
-            add_components("pr_person",
-                           dvr_case_appointment = hook,
-                           )
-            afields.append((T(row.name), "%s.date" % name))
-
-        list_fields.extend(afields)
-
-        # Add family key
-        s3db.add_components("pr_person",
-                            pr_group = {"name": "family",
-                                        "link": "pr_group_membership",
-                                        "joinby": "person_id",
-                                        "key": "group_id",
-                                        "filterby": {
-                                            "group_type": 7,
-                                            },
-                                        },
-                            )
-
-        list_fields += [# Current check-in/check-out status
-                        (T("Registration Status"),
-                            "shelter_registration.registration_status",
-                            ),
-                        # Last Check-in date
-                        "shelter_registration.check_in_date",
-                        # Last Check-out date
-                        "shelter_registration.check_out_date",
-                        # Person UUID
-                        ("UUID", "uuid"),
-                        # Family Record ID
-                        (T("Family ID"), "family.id"),
-                        ]
-
-    resource.configure(list_fields = list_fields)
+    resource.configure(list_fields = list_fields,
+                       orderby = orderby,
+                       )
 
 # -------------------------------------------------------------------------
 def configure_id_cards(r, resource, administration=False):

@@ -1304,6 +1304,28 @@ class PRPersonModel(DataModel):
     # -------------------------------------------------------------------------
     @staticmethod
     def generate_pe_label(person_id):
+        """
+            Generates a unique, yet handy ID label for a person, with a
+            typical format of ABC1234 (=group of 3 letters followed by a
+            group of 4-8 digits).
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                the generated label as string
+
+            Notes:
+                - if the person record already has a pe_label, it will be returned
+                - otherwise, the record will be updated with the generated pe_label
+                - the format is intended to be easy to memorize and communicate,
+                  although above ~10 million labels they may become longer and harder
+                  to handle (flexible suffix length)
+                - the algorithm may become slow with very high numbers of existing
+                  labels; using an index on pr_person.pe_label will improve performance
+                - while the label is unique within the database, this is not guaranteed
+                  across databases; must use e.g. origin prefixes in such cases
+        """
 
         db = current.db
 
@@ -1313,36 +1335,50 @@ class PRPersonModel(DataModel):
                                                   table.pe_label,
                                                   limitby = (0, 1),
                                                   ).first()
-        if not record or record.pe_label:
-            return
+        if not record:
+            raise RuntimeError("Person record not found")
+        if record.pe_label:
+            return record.pe_label
 
-        try:
-            uid = int(record.uuid[9:14], 16) % 1000000
-        except (TypeError, ValueError):
-            import uuid
-            uid = int(uuid.uuid4().urn[9:14], 16) % 1000000
-
-        # Generate code
+        import uuid
         import random
-        error = False
-        for _ in range(20):
-            prefix = "".join(random.choices("ABCEFGHJKLNPSTUWXY", k=3))
-            label = "%s%06d" % (prefix, uid)
 
-            query = (table.id != person_id) & \
-                    (table.pe_label == label)
-            error = bool(db(query).select(table.id, limitby=(0, 1)).first())
-            if not error:
-                break
+        # Produce a 8-digit integer from the record uid
+        try:
+            uid = int(record.uuid[14:8:-1], 16)
+        except (TypeError, ValueError):
+            # Unusual (non-URN, non-UUID4) or no uid
+            # => fallback to random UID
+            uid = int(uuid.uuid4().urn[14:8:-1], 16)
 
-        if not error:
-            record.update_record(pe_label=label,
-                                 modified_on = table.modified_on,
-                                 modified_by = table.modified_by,
-                                 )
-        else:
+        # Generate code (max 1600 iterations)
+        for i in range(20):
+            # Variable suffix length 4 to 8 digits
+            for suffix_length in range(4, 8):
+                error = False
+                suffix = uid % (10**suffix_length)
+                template = "%%s%%0%sd" % suffix_length
+                for _ in range(20):
+                    prefix = "".join(random.choices("ABCDEFGHJKLNPSTUWY", k=3))
+                    label = template % (prefix, suffix)
+                    query = (table.id != person_id) & \
+                            (table.pe_label == label)
+                    error = bool(db(query).select(table.id, limitby=(0, 1)).first())
+                    if not error:
+                        break
+                if not error:
+                    break
+            if error:
+                # Try another (random) UID
+                uid = int(uuid.uuid4().urn[14:8:-1], 16)
+
+        if error:
             raise RuntimeError("Could not generate unique ID label")
 
+        record.update_record(pe_label=label,
+                             modified_on = table.modified_on,
+                             modified_by = table.modified_by,
+                             )
         return label
 
     # -------------------------------------------------------------------------

@@ -4378,7 +4378,7 @@ class DVRCaseEventModel(DataModel):
         # Table Configuration
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("code", "name"),
-                                            secondary = ("organisation_id"),
+                                            secondary = ("organisation_id",),
                                             ignore_deleted = True,
                                             ),
                   onaccept = self.case_event_type_onaccept,

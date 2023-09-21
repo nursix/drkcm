@@ -387,6 +387,7 @@ class CRShelterModel(DataModel):
                   list_fields = list_fields,
                   onvalidation = self.shelter_onvalidation,
                   onaccept = self.shelter_onaccept,
+                  orderby = "%s.name" % tablename,
                   report_options = Storage(
                         rows = report_fields,
                         cols = report_fields,
@@ -865,6 +866,7 @@ class CRShelterUnitModel(DataModel):
                                        ],
                        onaccept = self.shelter_unit_onaccept,
                        ondelete = self.shelter_unit_ondelete,
+                       orderby = "%s.name" % tablename,
                        )
 
         # Reusable Field
