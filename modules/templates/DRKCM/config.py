@@ -209,7 +209,7 @@ def config(settings):
     settings.dvr.household_size = "auto"
 
     # Group/Case activities per sector
-    settings.dvr.activity_sectors = True
+    settings.dvr.case_activity_sectors = True
     # Case activities use status field
     settings.dvr.case_activity_use_status = True
     # Case activities cover multiple needs

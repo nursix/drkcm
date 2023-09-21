@@ -160,11 +160,13 @@ def config(settings):
 
     from .customise.cr import cr_shelter_resource, \
                               cr_shelter_controller, \
+                              cr_shelter_unit_controller, \
                               cr_shelter_registration_resource, \
                               cr_shelter_registration_controller
 
     settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
+    settings.customise_cr_shelter_unit_controller = cr_shelter_unit_controller
     settings.customise_cr_shelter_registration_resource = cr_shelter_registration_resource
     settings.customise_cr_shelter_registration_controller = cr_shelter_registration_controller
 
@@ -180,32 +182,42 @@ def config(settings):
     # -------------------------------------------------------------------------
     # DVR Settings and Customizations
     #
-    # Uncomment this to enable tracking of transfer origin/destination sites
-    settings.dvr.track_transfer_sites = True
-    # Uncomment this to enable features to manage transferability of cases
-    settings.dvr.manage_transferability = True
-    # Uncomment this to enable household size in cases, set to "auto" for automatic counting
-    settings.dvr.household_size = "auto"
-    # Uncomment this to enable features to manage case flags
-    settings.dvr.case_flags = True
-    # Case activities use single Needs
-    #settings.dvr.case_activity_needs_multiple = True
-    # Uncomment this to expose flags to mark appointment types as mandatory
-    settings.dvr.mandatory_appointments = True
-    # Uncomment this to have appointments with personal presence update last_seen_on
-    settings.dvr.appointments_update_last_seen_on = True
-    # Uncomment this to have allowance payments update last_seen_on
-    settings.dvr.payments_update_last_seen_on = True
-    # Uncomment this to automatically update the case status when appointments are completed
-    settings.dvr.appointments_update_case_status = True
-    # Uncomment this to automatically close appointments when registering certain case events
-    settings.dvr.case_events_close_appointments = True
     # Configure a regular expression pattern for ID Codes (QR Codes)
     settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<family>[^,]*),(?P<last_name>[^,]*),(?P<first_name>[^,]*),(?P<date_of_birth>[^,]*),.*"
+    # Uncomment this to enable household size in cases, set to "auto" for automatic counting
+    settings.dvr.household_size = "auto"
+
+    # Manage case flags
+    settings.dvr.case_flags = True
+    # Use org-specific case flags
+    settings.dvr.case_flags_org_specific = True
+
+    # Use org-specific case event types
+    settings.dvr.case_event_types_org_specific = True
     # Issue a "not checked-in" warning in case event registration
     settings.dvr.event_registration_checkin_warning = True
+    # Case events can close appointments
+    settings.dvr.case_events_close_appointments = True
     # Exclude FOOD and SURPLUS-MEALS events from event registration
-    settings.dvr.event_registration_exclude_codes = ("FOOD*", "SURPLUS-MEALS")
+    #settings.dvr.event_registration_exclude_codes = ("FOOD*", "SURPLUS-MEALS")
+
+    # Use org-specific appointment types
+    settings.dvr.appointment_types_org_specific = True
+    # Appointments can be marked as mandatory
+    settings.dvr.mandatory_appointments = True
+    # Appointments update last-seen-on when completed
+    settings.dvr.appointments_update_last_seen_on = True
+    # Appointments update case status when completed
+    settings.dvr.appointments_update_case_status = True
+
+    # Uncomment this to enable tracking of transfer origin/destination sites
+    #settings.dvr.track_transfer_sites = True
+    # Uncomment this to enable features to manage transferability of cases
+    #settings.dvr.manage_transferability = True
+    # Case activities use single Needs
+    #settings.dvr.case_activity_needs_multiple = True
+    # Uncomment this to have allowance payments update last_seen_on
+    #settings.dvr.payments_update_last_seen_on = True
 
     from .customise.dvr import dvr_home, \
                                dvr_allowance_controller, \
@@ -262,6 +274,7 @@ def config(settings):
     #settings.org.default_site = "Erstaufnahme Mannheim"
 
     settings.org.branches = False
+    settings.org.site_presence_site_types = ("cr_shelter",)
     settings.org.site_presence_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
 
     from .customise.org import org_group_controller, \

@@ -67,7 +67,7 @@ def dvr_rheader(r, tabs=None):
                                                   #"CASE_MANAGER",
                                                   )):
                         tabs[5:5] = [(T("Presence"), "site_presence_event"),
-                                     (T("Events"), "case_event"),
+                                     #(T("Events"), "case_event"),
                                      ]
 
                 case = resource.select(["dvr_case.status_id",
@@ -78,6 +78,7 @@ def dvr_rheader(r, tabs=None):
                                         "first_name",
                                         "last_name",
                                         "shelter_registration.shelter_unit_id",
+                                        #"absence",
                                         ],
                                         represent = True,
                                         raw_data = True,
@@ -91,19 +92,23 @@ def dvr_rheader(r, tabs=None):
                     household_size = lambda row: case["dvr_case.household_size"]
                     last_seen_on = lambda row: case["dvr_case.last_seen_on"]
                     shelter = lambda row: case["cr_shelter_registration.shelter_unit_id"]
+                    #absence = lambda row: case["pr_person.absence"]
                     #transferable = lambda row: case["dvr_case.transferable"]
                 else:
                     # Target record exists, but doesn't match filters
                     return None
 
+                # TODO Refactor:
+                # - presence and shelter information only if the organisation has a shelter
+                # - presence and last_seen_on requires privileged role
                 rheader_fields = [[(T("ID"), "pe_label"),
                                    (T("Case Status"), case_status),
                                    (T("Shelter"), shelter),
                                    ],
-                                  [#(T("Name"), name),
-                                   #(T("Transferable"), transferable),
-                                   #(T("Checked-out"), "absence"),
-                                   ],
+                                  #[("", None),
+                                  # ("", None),
+                                  # (T("Absent##presence"), absence),
+                                  # ],
                                   ["date_of_birth",
                                    (T("Size of Family"), household_size),
                                    (T("Last seen on"), last_seen_on),
@@ -167,7 +172,7 @@ def org_rheader(r, tabs=None):
             if not tabs:
                 tabs = [(T("Basic Details"), None),
                         (T("Member Organizations"), "organisation"),
-                        (T("Documents"), "document"), # TODO customise docs (see rlpptm)
+                        (T("Documents"), "document"),
                         ]
 
             rheader_fields = []
@@ -179,7 +184,7 @@ def org_rheader(r, tabs=None):
                 tabs = [(T("Basic Details"), None),
                         (T("Offices"), "office"),
                         (T("Staff"), "human_resource"),
-                        (T("Documents"), "document"), # TODO customise docs (see rlpptm)
+                        (T("Documents"), "document"),
                         ]
 
             rheader_fields = []
@@ -227,9 +232,8 @@ def cr_rheader(r, tabs=None):
             if not tabs:
                 tabs = [(T("Basic Details"), None, {}, "read"),
                         (T("Housing Units"), "shelter_unit"),
-                        #(T("Client Registration"), "shelter_registration"),
                         (T("Images"), "image"),
-                        (T("Documents"), "document"), # TODO customise docs (see rlpptm)
+                        (T("Documents"), "document"),
                         ]
 
             rheader_fields = [["organisation_id",

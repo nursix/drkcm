@@ -5579,6 +5579,8 @@
 'Shelter Types': 'Unterkunftstypen',
 'Shelter added': 'Unterkunft hinzugefügt',
 'Shelter deleted': 'Unterkunft gelöscht',
+'Shelter is closed': 'Unterkunft ist geschlossen',
+'Shelter is currently occupied and cannot be closed': 'Unterkunft ist aktuell belegt und kann nicht geschlossen werden',
 'Shelter or housing unit required': 'Unterkunft oder Unterkunftseinheit erforderlich',
 'Shelter updated': 'Unterkunft aktualisiert',
 'Shelter': 'Unterkunft',

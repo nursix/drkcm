@@ -3618,11 +3618,18 @@ class S3Config(Storage):
         """
         return self.dvr.get("label", None)
 
+    # Case Flags ------------------------------------------
     def get_dvr_case_flags(self):
         """
             Enable features to manage case flags
         """
         return self.dvr.get("case_flags", False)
+
+    def get_dvr_case_flags_org_specific(self):
+        """
+            Use organisation-specific case flags
+        """
+        return self.dvr.get("case_flags_org_specific", False)
 
     def get_dvr_track_transfer_sites(self):
         """
@@ -3656,17 +3663,18 @@ class S3Config(Storage):
         """
         return self.dvr.get("household_size", False)
 
+    # Appointments ----------------------------------------
+    def get_dvr_appointment_types_org_specific(self):
+        """
+            Use organisation-specific appointment types
+        """
+        return self.dvr.get("appointment_types_org_specific", False)
+
     def get_dvr_mandatory_appointments(self):
         """
             Expose flags to mark appointment types as mandatory
         """
         return self.dvr.get("mandatory_appointments", False)
-
-    def get_dvr_case_events_close_appointments(self):
-        """
-            Whether case events automatically close appointments
-        """
-        return self.dvr.get("case_events_close_appointments", False)
 
     def get_dvr_appointments_update_last_seen_on(self):
         """
@@ -3683,29 +3691,18 @@ class S3Config(Storage):
         """
         return self.dvr.get("appointments_update_case_status", False)
 
-    def get_dvr_payments_update_last_seen_on(self):
+    # Case Events -----------------------------------------
+    def get_dvr_case_event_types_org_specific(self):
         """
-            Whether payments (e.g. allowance) shall automatically update
-            the "last seen on" date when set to "paid"
+            Use organisation-specific case event types
         """
-        return self.dvr.get("payments_update_last_seen_on", False)
+        return self.dvr.get("case_event_types_org_specific", False)
 
-    def get_dvr_id_code_pattern(self):
+    def get_dvr_case_events_close_appointments(self):
         """
-            A regular expression pattern to parse ID Codes (QR codes),
-            None to disable ID code parsing
-
-            Should return the following groups:
-                label                   the PE label, mandatory
-                family                  the PE label of the head of family, optional
-                first_name              optional
-                last_name               optional
-                date_of_birth           optional
-
-            Example:
-                "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
+            Whether case events automatically close appointments
         """
-        return self.dvr.get("id_code_pattern", None)
+        return self.dvr.get("case_events_close_appointments", False)
 
     def get_dvr_event_registration_checkin_warning(self):
         """
@@ -3733,24 +3730,49 @@ class S3Config(Storage):
         """
         return self.dvr.get("event_registration_exclude_codes", None)
 
-    def get_dvr_activity_use_service_type(self):
+    def get_dvr_payments_update_last_seen_on(self):
         """
-            Use service type in group/case activities
+            Whether payments (e.g. allowance) shall automatically update
+            the "last seen on" date when set to "paid"
         """
-        return self.dvr.get("activity_use_service_type", False)
+        return self.dvr.get("payments_update_last_seen_on", False)
 
-    def get_dvr_activity_sectors(self):
+    def get_dvr_id_code_pattern(self):
         """
-            Use sectors in group/case activities
-        """
-        return self.dvr.get("activity_sectors", False)
+            A regular expression pattern to parse ID Codes (QR codes),
+            None to disable ID code parsing
 
+            Should return the following groups:
+                label                   the PE label, mandatory
+                family                  the PE label of the head of family, optional
+                first_name              optional
+                last_name               optional
+                date_of_birth           optional
+
+            Example:
+                "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
+        """
+        return self.dvr.get("id_code_pattern", None)
+
+    # Case Activities -------------------------------------
     def get_dvr_case_activity_use_status(self):
         """
             Use configurable statuses in case activities
             instead of simple completed-flag
         """
         return self.dvr.get("case_activity_use_status", False)
+
+    def get_dvr_case_activity_sectors(self):
+        """
+            Use sectors in group/case activities
+        """
+        return self.dvr.get("case_activity_sectors", False)
+
+    def get_dvr_case_activity_use_service_type(self):
+        """
+            Use service type in case activities
+        """
+        return self.dvr.get("case_activity_use_service_type", False)
 
     def get_dvr_case_activity_needs_multiple(self):
         """
@@ -3778,6 +3800,7 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_include_group_docs", False)
 
+    # Needs -----------------------------------------------
     def get_dvr_needs_use_service_type(self):
         """
             Use service type in needs
@@ -3790,6 +3813,7 @@ class S3Config(Storage):
         """
         return self.dvr.get("needs_hierarchical", False)
 
+    # Response Actions ------------------------------------
     def get_dvr_manage_response_actions(self):
         """
             Manage individual response actions in case activities
@@ -5011,7 +5035,6 @@ class S3Config(Storage):
         """
         return self.org.get("site_check")
 
-    # TODO *** update default config.py
     def get_org_site_presence_site_types(self):
         """
             Site types where presence registration is allowed
@@ -5036,53 +5059,6 @@ class S3Config(Storage):
                 - False to disable
         """
         return self.org.get("site_presence_qrcode", False)
-
-    def get_org_site_check_in_qrcode(self):
-        """
-            Use QRInput for site check-in/out
-                - True to enable and use QR contents verbatim
-                - a tuple (pattern, index) for QR contents parsing
-                - False to disable
-        """
-        # TODO deprecate
-        return self.org.get("site_check_in_qrcode", False)
-
-    def set_org_dependent_field(self,
-                                tablename=None,
-                                fieldname=None,
-                                enable_field=True):
-        """
-            Enables/Disables optional fields according to a user's Organisation
-            - must specify either field or tablename/fieldname
-                                           (e.g. for virtual fields)
-            @ToDo: Deprecate this (old way IFRC template did some things)
-        """
-
-        enabled = False
-        dependent_fields = self.org.get("dependent_fields")
-        if dependent_fields:
-            org_name_list = dependent_fields.get("%s.%s" % (tablename,
-                                                            fieldname),
-                                                 None)
-
-            if org_name_list:
-                auth = current.auth
-                if auth.s3_has_role(auth.get_system_roles().ADMIN):
-                    # Admins see all fields unless disabled for all orgs in this deployment
-                    enabled = True
-                else:
-                    root_org = auth.root_org_name()
-                    enabled = root_org in org_name_list
-            else:
-                # Enable if empty list
-                enabled = True
-
-        if enable_field:
-            field = current.s3db[tablename][fieldname]
-            field.readable = enabled
-            field.writable = enabled
-
-        return enabled
 
     def get_org_office_code_unique(self):
         """

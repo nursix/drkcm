@@ -48,6 +48,13 @@ def realm_entity(table, row):
         if organisation_id:
             realm_entity = s3db.pr_get_pe_id("org_organisation", organisation_id)
 
+    #elif tablename in ("dvr_case_flag",
+    #                   "dvr_case_event_type",
+    #                   "dvr_appointment_type",
+    #                   ):
+    #    # Owned by the organisation for which they are defined (default okay)
+    #    pass
+
     elif tablename in ("dvr_case_activity",
                        "dvr_case_details",
                        "dvr_case_flag_case",

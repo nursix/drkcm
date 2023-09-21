@@ -80,7 +80,7 @@ def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
                                     )
     return [o.id for o in orgs]
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 def get_user_orgs(roles=None, cacheable=True, limit=None):
     """
         Get the IDs of all organisations the user has any of the
@@ -159,7 +159,13 @@ def get_user_sites(roles=None, site_type="cr_shelter", cacheable=True, limit=Non
 
 # =============================================================================
 def get_current_site_organisation():
-    # TODO docstring
+    """
+        The organisation that manages the site where the user is currently
+        registered as present;
+
+        Returns:
+            organisation ID
+    """
 
     person_id = current.auth.s3_logged_in_person()
     if not person_id:
@@ -177,8 +183,75 @@ def get_current_site_organisation():
     return row.organisation_id if row else None
 
 # =============================================================================
+def get_default_organisation():
+    """
+        The organisation the user has the STAFF or ORG_ADMIN role for
+        (if only one organisation)
+
+        Returns:
+            organisation ID
+    """
+
+    auth = current.auth
+    if not auth.s3_logged_in() or auth.s3_has_roles("ADMIN", "ORG_GROUP_ADMIN"):
+        return None
+
+    s3 = current.response.s3
+    organisation_id = s3.mrcms_default_organisation
+
+    if organisation_id is None:
+
+        organisation_ids = get_user_orgs(limit=2)
+        if len(organisation_ids) == 1:
+            organisation_id = organisation_ids[0]
+        else:
+            organisation_id = None
+        s3.mrcms_default_organisation = organisation_id
+
+    return organisation_id
+
+# -----------------------------------------------------------------------------
+def get_default_shelter():
+    """
+        The single shelter of the default organisation (if there is a default
+        organisation with only a single shelter)
+
+        Returns:
+            shelter ID
+    """
+    # TODO refactor
+    #      - use default organisation instead of user orgs (i.e. no default
+    #        shelter without default organisation)
+
+    auth = current.auth
+    if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
+        return None
+
+    s3 = current.response.s3
+    shelter_id = s3.mrcms_default_shelter
+
+    if shelter_id is None:
+
+        shelter_ids = get_user_sites(site_type="cr_shelter", limit=2)
+        if len(shelter_ids) == 1:
+            shelter_id = shelter_ids[0]
+        else:
+            shelter_id = None
+        s3.mrcms_default_shelter = shelter_id
+
+    return shelter_id
+
+# =============================================================================
 def get_default_case_organisation():
-    # TODO docstring
+    """
+        The organisation in the PROVIDERS group the user can access case
+        files for (if only one organisation)
+
+        Returns:
+            organisation ID
+    """
+    # TODO limit to provider group
+    # TODO parametrize permission
 
     auth = current.auth
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
@@ -199,6 +272,7 @@ def get_default_case_organisation():
     if len(rows) == 1:
         return rows.first().id
 
+    # TODO remove this fallback?
     site_org = get_current_site_organisation()
     if site_org:
         organisation_ids = [row.id for row in rows]
@@ -207,57 +281,14 @@ def get_default_case_organisation():
 
     return None
 
-# =============================================================================
-def get_default_organisation():
-    """
-        Lazy getter for default organisation_id
-    """
-    # TODO docstring
-
-    auth = current.auth
-    if not auth.s3_logged_in() or auth.s3_has_roles("ADMIN", "ORG_GROUP_ADMIN"):
-        return None
-
-    s3 = current.response.s3
-    organisation_id = s3.mrcms_default_organisation
-
-    if organisation_id is None:
-
-        organisation_ids = get_user_orgs(limit=2)
-        if len(organisation_ids) == 1:
-            organisation_id = organisation_ids[0]
-        else:
-            organisation_id = None
-        s3.mrcms_default_organisation = organisation_id
-
-    return organisation_id
-
-# =============================================================================
-def get_default_shelter():
-    """
-        Lazy getter for the default shelter_id
-    """
-    # TODO docstring
-
-    auth = current.auth
-    if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
-        return None
-
-    s3 = current.response.s3
-    shelter_id = s3.mrcms_default_shelter
-
-    if shelter_id is None:
-
-        shelter_ids = get_user_sites(site_type="cr_shelter", limit=2)
-        if len(shelter_ids) == 1:
-            shelter_id = shelter_ids[0]
-        else:
-            shelter_id = None
-        s3.mrcms_default_shelter = shelter_id
-
-    return shelter_id
-
 # -----------------------------------------------------------------------------
+def get_default_case_shelter():
+    # TODO implement
+    #      - single shelter of the default_case_organisation
+    #      - parameter person_id (client) to use actual case org instead
+    pass
+
+# =============================================================================
 def account_status(record, represent=True):
     """
         Checks the status of the user account for a person

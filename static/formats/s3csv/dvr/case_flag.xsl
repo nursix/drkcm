@@ -7,6 +7,10 @@
 
          CSV column...........Format..........Content
 
+         Organisation.........string..........Organisation Name
+         Branch...............string..........Organisation Branch Name (optional)
+         ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
+
          Name.................string..........Type Name
          External.............string..........Flag indicates that person is
                                               currently external
@@ -16,11 +20,21 @@
          Comments.............string..........Comments
 
     *********************************************************************** -->
+    <xsl:import href="../orgh.xsl"/>
+
     <xsl:output method="xml"/>
 
     <!-- ****************************************************************** -->
     <xsl:template match="/">
         <s3xml>
+            <!-- Import the organisation hierarchy -->
+            <xsl:for-each select="table/row[1]">
+                <xsl:call-template name="OrganisationHierarchy">
+                    <xsl:with-param name="level">Organisation</xsl:with-param>
+                    <xsl:with-param name="rows" select="//table/row"/>
+                </xsl:call-template>
+            </xsl:for-each>
+
             <xsl:apply-templates select="./table/row"/>
         </s3xml>
     </xsl:template>
@@ -28,6 +42,13 @@
     <!-- ****************************************************************** -->
     <xsl:template match="row">
         <resource name="dvr_case_flag">
+
+            <!-- Link to Organisation -->
+            <reference field="organisation_id" resource="org_organisation">
+                <xsl:attribute name="tuid">
+                    <xsl:call-template name="OrganisationID"/>
+                </xsl:attribute>
+            </reference>
 
             <data field="name">
                 <xsl:value-of select="col[@field='Name']"/>

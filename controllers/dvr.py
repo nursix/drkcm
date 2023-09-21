@@ -605,6 +605,13 @@ def case():
 def case_flag():
     """ Case Flags: RESTful CRUD Controller """
 
+    def prep(r):
+        if settings.get_dvr_case_event_types_org_specific():
+            s3db.org_restrict_for_organisations(r.resource)
+
+        return True
+    s3.prep = prep
+
     return crud_controller()
 
 # -----------------------------------------------------------------------------
@@ -905,7 +912,7 @@ def termination_type():
 
     def prep(r):
 
-        if settings.get_dvr_activity_use_service_type() and \
+        if settings.get_dvr_case_activity_use_service_type() and \
            settings.get_org_services_hierarchical():
 
             # Limit the selection to root services (case activity
@@ -1067,6 +1074,13 @@ def case_appointment():
 def case_appointment_type():
     """ Appointment Type: RESTful CRUD Controller """
 
+    def prep(r):
+        if settings.get_dvr_case_event_types_org_specific():
+            s3db.org_restrict_for_organisations(r.resource)
+
+        return True
+    s3.prep = prep
+
     return crud_controller()
 
 # =============================================================================
@@ -1094,6 +1108,13 @@ def case_event():
 # -----------------------------------------------------------------------------
 def case_event_type():
     """ Case Event Types: RESTful CRUD Controller """
+
+    def prep(r):
+        if settings.get_dvr_case_event_types_org_specific():
+            s3db.org_restrict_for_organisations(r.resource)
+
+        return True
+    s3.prep = prep
 
     return crud_controller()
 

@@ -252,79 +252,72 @@ class S3OptionsMenu(default.S3OptionsMenu):
                                        due_followups,
                                        )
 
-        ADMIN = current.auth.get_system_roles().ADMIN
+        sr = current.auth.get_system_roles()
+        ADMIN = sr.ADMIN
+        ORG_ADMIN = sr.ORG_ADMIN
 
         return M(c="dvr")(
-                    M("Current Cases", c=("dvr", "pr"), f="person",
-                      vars = {"closed": "0"})(
-                        M("Create", m="create", t="pr_person", p="create"),
-                        M("All Cases", vars = {}),
+                M("Current Cases", c=("dvr", "pr"), f="person",
+                    vars = {"closed": "0"})(
+                    M("Create", m="create", t="pr_person", p="create"),
+                    M("All Cases", vars = {}),
+                    ),
+                #M("Reports", link=False)(
+                #    M("Check-in overdue", c=("dvr", "pr"), f="person",
+                #      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                #      vars = {"closed": "0", "overdue": "check-in"},
+                #      ),
+                #    M("Food Distribution overdue", c=("dvr", "pr"), f="person",
+                #      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                #      vars = {"closed": "0", "overdue": "FOOD*"},
+                #      ),
+                #    M("Clients Reports", c="dvr", f="site_activity",
+                #      ),
+                #    M("Food Distribution Statistics", c="dvr", f="case_event",
+                #      m = "report",
+                #      restrict = (ADMIN, ORG_ADMIN),
+                #      vars = {"code": "FOOD*"},
+                #      ),
+                #    ),
+                M("Current Needs", f="case_activity")(
+                    M("Emergencies", vars={"~.emergency": "True"}),
+                    M(follow_up_label, f="due_followups"),
+                    M("Report", m="report"),
+                    ),
+                M("Appointments", f="case_appointment")(
+                    M("Overview"),
+                    #M("Import Updates", m="import", p="create",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  ),
+                    #M("Bulk Status Update", m="manage", p="update",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  ),
+                    ),
+                #M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
+                #M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                M("Archive", link=False)(
+                    M("Closed Cases", f="person",
+                        restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                        vars={"closed": "1"},
                         ),
-                    #M("Reports", link=False)(
-                    #    M("Check-in overdue", c=("dvr", "pr"), f="person",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                    #      vars = {"closed": "0", "overdue": "check-in"},
-                    #      ),
-                    #    M("Food Distribution overdue", c=("dvr", "pr"), f="person",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                    #      vars = {"closed": "0", "overdue": "FOOD*"},
-                    #      ),
-                    #    M("Clients Reports", c="dvr", f="site_activity",
-                    #      ),
-                    #    M("Food Distribution Statistics", c="dvr", f="case_event",
-                    #      m = "report",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD", "SECURITY_HEAD", "RP"),
-                    #      vars = {"code": "FOOD*"},
-                    #      ),
-                    #    ),
-                    M("Current Needs", f="case_activity")(
-                        M("Emergencies",
-                          vars = {"~.emergency": "True"},
-                          ),
-                        M(follow_up_label, f="due_followups"),
-                        M("Report", m="report"),
+                    M("Invalid Cases", f="person",
+                        vars={"archived": "1"},
+                        restrict = (ADMIN, ORG_ADMIN),
                         ),
-                    M("Appointments", f="case_appointment")(
-                        M("Overview"),
-                        M("Import Updates", m="import", p="create",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          ),
-                        M("Bulk Status Update", m="manage", p="update",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          ),
-                        ),
-                    #M("Allowances", f="allowance")(
-                    #    M("Overview"),
-                    #    M("Payment Registration", m="register", p="update"),
-                    #    M("Status Update", m="manage", p="update"),
-                    #    M("Import", m="import", p="create"),
-                    #    ),
-                    M("Event Registration", c="dvr", f="case_event", m="register", p="create")(
-                        ),
-                    #M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create")(
-                    #    ),
-                    M("Archive", link=False)(
-                        M("Closed Cases", f="person",
-                          vars={"closed": "1"},
-                          ),
-                        M("Invalid Cases", f="person",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          vars={"archived": "1"},
-                          ),
-                        ),
-                    M("Administration", restrict=(ADMIN, "ADMIN_HEAD"))(
-                        M("Flags", f="case_flag"),
-                        M("Case Status", f="case_status"),
-                        M("Need Types", f="need"),
-                        M("Appointment Types", f="case_appointment_type"),
-                        M("Event Types", f="case_event_type"),
-                        #M("Check Transferability", c="default", f="index",
-                        #  args = ["transferability"],
-                        #  ),
-                        M("Residence Status Types", f="residence_status_type"),
-                        M("Residence Permit Types", f="residence_permit_type"),
-                        ),
-                    )
+                    ),
+                M("Administration", link=False, restrict=(ADMIN, ORG_ADMIN))(
+                    # Org-specific types
+                    M("Flags", f="case_flag"),
+                    M("Appointment Types", f="case_appointment_type"),
+                    #M("Event Types", f="case_event_type"),
+
+                    # Global types
+                    M("Case Status", f="case_status", restrict=ADMIN),
+                    M("Need Types", f="need", restrict=ADMIN),
+                    M("Residence Status Types", f="residence_status_type", restrict=ADMIN),
+                    M("Residence Permit Types", f="residence_permit_type", restrict=ADMIN),
+                    ),
+                )
 
     # -------------------------------------------------------------------------
     @staticmethod

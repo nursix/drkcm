@@ -8732,15 +8732,6 @@ def hrm_person_controller(**attr):
                 # No point showing the 'Occupation' field - that's the Job Title in the Staff Record
                 person_details_table.occupation.readable = person_details_table.occupation.writable = False
 
-                # Organisation Dependent Fields
-                # - deprecated (IFRC template only)
-                #set_org_dependent_field = settings.set_org_dependent_field
-                #set_org_dependent_field("pr_person", "middle_name")
-                #set_org_dependent_field("pr_person_details", "father_name")
-                #set_org_dependent_field("pr_person_details", "mother_name")
-                #set_org_dependent_field("pr_person_details", "grandfather_name")
-                #set_org_dependent_field("pr_person_details", "affiliations")
-                #set_org_dependent_field("pr_person_details", "company")
             else:
                 component_name = r.component_name
                 if component_name == "physical_description":

@@ -223,7 +223,7 @@ def config(settings):
     settings.org.default_organisation = "Deutsches Rotes Kreuz"
     settings.org.default_site = "Erstaufnahme Mannheim"
 
-    settings.org.site_check_in_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
+    settings.org.site_presence_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
 
     from .customise.org import org_facility_resource, \
                                org_facility_controller

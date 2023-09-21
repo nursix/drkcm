@@ -7,7 +7,7 @@
 from gluon import current, URL, \
                   A, DIV, H2, H3, H4, P, TABLE, TAG, TR, TD, XML, HR
 
-from core import IS_ONE_OF, S3CRUD, PresenceRegistration
+from core import S3CRUD, FS, IS_ONE_OF, PresenceRegistration
 
 # -------------------------------------------------------------------------
 def client_site_status(person_id, site_id, site_type, case_status):
@@ -275,10 +275,7 @@ def cr_shelter_controller(**attr):
     standard_prep = s3.prep
     def custom_prep(r):
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         if r.method == "presence":
             # Configure presence event callbacks
@@ -323,12 +320,11 @@ def cr_shelter_controller(**attr):
                     current.auth.permission.fail()
 
             if r.interactive:
-
-                resource = r.resource
-                resource.configure(filter_widgets = None,
-                                   insertable = False,
-                                   deletable = False,
-                                   )
+                # TODO should also be deletable while there are no shelter registrations
+                #      => probably the individual record only, not from list
+                r.resource.configure(filter_widgets = None,
+                                     deletable = False,
+                                     )
 
         if not r.component:
             # Open shelter basic details in read mode
@@ -400,19 +396,61 @@ def cr_shelter_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def cr_shelter_unit_controller(**attr):
+
+    db = current.db
+    s3db = current.s3db
+
+    s3 = current.response.s3
+
+    standard_prep = s3.prep
+    def custom_prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if not r.record and r.representation == "json":
+            # Shelter unit selector => return only available units
+            status_query = (FS("status") == 1)
+
+            # Include current unit, if known
+            person_id = str(r.get_vars.get("person"))
+            if person_id.isdigit():
+                rtable = s3db.cr_shelter_registration
+                query = (rtable.person_id == person_id) & \
+                        (rtable.deleted == False)
+                reg = db(query).select(rtable.shelter_unit_id,
+                                        limitby = (0, 1),
+                                        orderby = ~rtable.id,
+                                        ).first()
+                current_unit = reg.shelter_unit_id
+            else:
+                current_unit = None
+
+            if current_unit:
+                status_query |= (FS("id") == current_unit)
+
+            r.resource.add_filter(status_query)
+
+        return result
+    s3.prep = custom_prep
+
+    return attr
+
+# -------------------------------------------------------------------------
 def cr_shelter_registration_resource(r, tablename):
 
     table = current.s3db.cr_shelter_registration
     field = table.shelter_unit_id
 
-    # Filter to available housing units
-    from gluon import IS_EMPTY_OR
-    field.requires = IS_EMPTY_OR(IS_ONE_OF(current.db, "cr_shelter_unit.id",
-                                           field.represent,
-                                           filterby = "status",
-                                           filter_opts = (1,),
-                                           orderby = "shelter_id",
-                                           ))
+    if r.controller == "cr":
+        # Filter to available housing units
+        from gluon import IS_EMPTY_OR
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(current.db, "cr_shelter_unit.id",
+                                               field.represent,
+                                               filterby = "status",
+                                               filter_opts = (1,),
+                                               orderby = "shelter_id",
+                                               ))
 
 # -------------------------------------------------------------------------
 def cr_shelter_registration_controller(**attr):
@@ -434,6 +472,7 @@ def cr_shelter_registration_controller(**attr):
 
         if r.method == "assign":
 
+            # TODO replace with default_case_shelter, using viewing
             from ..helpers import get_default_shelter
 
             # Prep runs before split into create/update (Create should never happen in Village)

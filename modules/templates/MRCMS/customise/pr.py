@@ -89,6 +89,7 @@ def event_overdue(code, interval):
             code: the event code
             interval: the interval in days
     """
+    # TODO refactor with event class instead of event code
 
     db = current.db
     s3db = current.s3db
@@ -146,6 +147,7 @@ def event_overdue(code, interval):
 
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
+    # TODO review + refactor
 
     s3db = current.s3db
     auth = current.auth
@@ -208,19 +210,11 @@ def configure_person_tags():
     """
         Configure filtered pr_person_tag components for
         registration numbers:
-            - EasyOpt Number (tag=EONUMBER)
             - BAMF Registration Number (tag=BAMF)
     """
 
     current.s3db.add_components("pr_person",
-                                pr_person_tag = (#{"name": "eo_number",
-                                                 # "joinby": "person_id",
-                                                 # "filterby": {
-                                                 #   "tag": "EONUMBER",
-                                                 #   },
-                                                 # "multiple": False,
-                                                 # },
-                                                 {"name": "bamf",
+                                pr_person_tag = ({"name": "bamf",
                                                   "joinby": "person_id",
                                                   "filterby": {
                                                     "tag": "BAMF",
@@ -231,28 +225,206 @@ def configure_person_tags():
                                 )
 
 # -------------------------------------------------------------------------
-def configure_case_form(resource, privileged=False, cancel=False):
+def get_case_organisation(person_id):
+    # TODO docstring
 
-    T = current.T
+    table = current.s3db.dvr_case
+    query = (table.person_id == person_id) & \
+            (table.deleted == False)
+    row = current.db(query).select(table.organisation_id,
+                                   orderby = ~table.id,
+                                   limitby = (0, 1),
+                                   ).first()
+
+    return row.organisation_id if row else None
+
+# -------------------------------------------------------------------------
+def get_available_shelters(organisation_id, person_id=None):
+    """
+        The available shelters of the case organisation, to configure
+        inline shelter registration in case form
+
+        Args:
+            organisation_id: the ID of the case organisation
+            person_id: the person_id of the client
+
+        Returns:
+            list of shelter IDs
+
+        Note:
+            - includes the current shelter where the client is registered,
+              even if it is closed
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get the current shelter registration for person_id
+    if person_id:
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        reg = db(query).select(rtable.shelter_id,
+                               limitby = (0, 1),
+                               orderby = ~rtable.id,
+                               ).first()
+        current_shelter = reg.shelter_id
+    else:
+        current_shelter = None
+
+    stable = s3db.cr_shelter
+    status_query = (stable.status == 2)
+    if current_shelter:
+        status_query |= (stable.id == current_shelter)
+
+    query = (stable.organisation_id == organisation_id) & \
+            status_query & \
+            (stable.deleted == False)
+    rows = db(query).select(stable.id)
+    shelters = [row.id for row in rows]
+
+    return shelters
+
+# -------------------------------------------------------------------------
+def configure_inline_shelter_registration(component, shelters, person_id=None):
+    """
+        Configure inline shelter registration in case form
+
+        Args:
+            component: the shelter registration component (aliased table)
+            shelters: the available shelters of the case organisation (if
+                      case organisation is known)
+            person_id: the person_id of the client (if known)
+
+        Returns:
+            boolean whether to show the shelter registration inline
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    if shelters:
+        rtable = component.table
+
+        default_shelter = shelters[0] if len(shelters) == 1 else None
+
+        # Configure shelter ID
+        field = rtable.shelter_id
+        field.default = default_shelter
+        field.writable = False if default_shelter else True
+        field.comment = None
+        field.widget = None
+
+        if len(shelters) > 1:
+            # Configure dynamic options filter for shelter unit
+            script = '''
+$.filterOptionsS3({
+ 'trigger':'sub_shelter_registration_shelter_id',
+ 'target':'sub_shelter_registration_shelter_unit_id',
+ 'lookupResource':'shelter_unit',
+ 'lookupPrefix':'cr',
+ 'lookupKey':'shelter_id',
+ 'lookupURL':S3.Ap.concat('/cr/shelter_unit.json?person=%s&shelter_unit.shelter_id=')
+})''' % person_id
+            #cr/shelter_unit.json?shelter_unit.shelter_id=1&represent=1
+            current.response.s3.jquery_ready.append(script)
+        else:
+            # Statically filter shelter units to default shelter
+            from gluon import IS_EMPTY_OR
+
+            # Get current registration unit
+            if person_id:
+                rtable = s3db.cr_shelter_registration
+                query = (rtable.person_id == person_id) & \
+                        (rtable.deleted == False)
+                reg = db(query).select(rtable.shelter_unit_id,
+                                       limitby = (0, 1),
+                                       orderby = ~rtable.id,
+                                       ).first()
+                current_unit = reg.shelter_unit_id
+            else:
+                current_unit = None
+
+            field = rtable.shelter_unit_id
+            utable = s3db.cr_shelter_unit
+            status_query = (utable.status == 1)
+            if current_unit:
+                status_query |= (utable.id == current_unit)
+            dbset = db((utable.shelter_id == default_shelter) & status_query)
+            field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset,
+                                                   "cr_shelter_unit.id",
+                                                   field.represent,
+                                                   sort = True,
+                                                   ))
+        show_inline = True
+    else:
+        # - hide shelter registration
+        show_inline = False
+
+    return show_inline
+
+# -------------------------------------------------------------------------
+def configure_case_form(resource,
+                        organisation_id=None,
+                        shelters=None,
+                        person_id=None,
+                        privileged=False,
+                        cancel=False,
+                        ):
+    """
+        Configure the case form
+
+        Args:
+            resource: the pr_person resource
+            organisation_id: the case organisation (if known)
+            shelters: the available shelters of the case organisation
+            person_id: the person_id of the client
+            privileged: whether the user has a privileged role
+            cancel: whether the case is to be archived, and thence
+                    the shelter registration to be canceled
+
+        Notes:
+            - Case flags only available if case organisation is known
+            - Shelter registration only shown inline if case organisation is known
+    """
 
     from core import S3SQLCustomForm, S3SQLInlineComponent, S3SQLInlineLink
 
-    if cancel:
+    T = current.T
+
+    # Configure shelter registration component
+    component = resource.components.get("shelter_registration")
+    show_inline = configure_inline_shelter_registration(component, shelters, person_id)
+
+    if cancel or not show_inline:
         # Ignore registration data in form if the registration
         # is to be cancelled - otherwise a new registration is
         # created by the subform-processing right after
         # dvr_case_onaccept deletes the current one:
         reg_shelter = None
-        reg_status = None
         reg_unit_id = None
+        reg_status = None
         reg_check_in_date = None
         reg_check_out_date = None
     else:
-        reg_shelter = "shelter_registration.shelter_id"
-        reg_status = "shelter_registration.registration_status"
+        reg_shelter = "shelter_registration.shelter_id" \
+                      if shelters and len(shelters) > 1 else None
         reg_unit_id = "shelter_registration.shelter_unit_id"
+        reg_status = "shelter_registration.registration_status"
         reg_check_in_date = "shelter_registration.check_in_date"
         reg_check_out_date = "shelter_registration.check_out_date"
+
+    # Filter flags for case organisation
+    if organisation_id:
+        flags = S3SQLInlineLink("case_flag",
+                                label = T("Flags"),
+                                field = "flag_id",
+                                help_field = "comments",
+                                filterby = {"organisation_id": organisation_id},
+                                cols = 4,
+                                )
+    else:
+        flags = None
 
     if privileged:
 
@@ -260,12 +432,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
         crud_form = S3SQLCustomForm(
                 # Case Details ----------------------------
                 (T("Case Status"), "dvr_case.status_id"),
-                S3SQLInlineLink("case_flag",
-                                label = T("Flags"),
-                                field = "flag_id",
-                                help_field = "comments",
-                                cols = 4,
-                                ),
+                flags,
 
                 # Person Details --------------------------
                 (T("ID"), "pe_label"),
@@ -278,10 +445,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
 
                 # Process Data ----------------------------
                 "dvr_case.date",
-
-                # TODO Set defaults + hide, if possible
                 "dvr_case.organisation_id",
-                #"dvr_case.site_id",
 
                 # TODO Replace by suitable model:
                 #"dvr_case.origin_site_id",
@@ -312,10 +476,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
                         ),
 
                 # Shelter Data ----------------------------
-                # Will always default & be hidden
-                #"shelter_registration.site_id",
                 reg_shelter,
-                # @ ToDo: Automate this from the Case Status?
                 reg_unit_id,
                 reg_status,
                 reg_check_in_date,
@@ -346,32 +507,28 @@ def configure_case_form(resource, privileged=False, cancel=False):
                 "dvr_case.comments",
 
                 # Archived-flag ---------------------------
+                # TODO make this available only to case admins and org admins
                 (T("Invalid"), "dvr_case.archived"),
                 )
 
         subheadings = {"dvr_case_status_id": T("Case Status"),
                        "pe_label": T("Person Details"),
                        "dvr_case_date": T("Registration"),
-                       #"dvr_case_organisation_id": T("Registration"),
-                       "shelter_registration_shelter_unit_id": T("Lodging"),
+                       "shelter_registration_shelter_id": T("Lodging"),
                        "person_details_occupation": T("Other Details"),
                        "dvr_case_archived": T("File Status")
                        }
     else:
         # Reduced form for non-privileged user roles
         crud_form = S3SQLCustomForm(
-                S3SQLInlineLink("case_flag",
-                                label = T("Flags"),
-                                field = "flag_id",
-                                help_field = "comments",
-                                cols = 4,
-                                ),
+                flags,
                 (T("ID"), "pe_label"),
                 "last_name",
                 "first_name",
                 "person_details.nationality",
                 "date_of_birth",
                 "gender",
+                reg_shelter,
                 reg_unit_id,
                 S3SQLInlineComponent(
                         "contact",
@@ -394,6 +551,7 @@ def configure_case_form(resource, privileged=False, cancel=False):
 
 # -------------------------------------------------------------------------
 def configure_case_filters(resource, privileged=False, show_family_transferable=False):
+    # TODO review + refactor
 
     T = current.T
     s3db = current.s3db
@@ -413,8 +571,7 @@ def configure_case_filters(resource, privileged=False, show_family_transferable=
                 fw.opts.size = None
             # Text filter includes EasyOpt Number and Case Comments
             if extend_text_filter and isinstance(fw, TextFilter):
-                fw.field.extend((#"eo_number.value",
-                                 "dvr_case.comments",
+                fw.field.extend(("dvr_case.comments",
                                  ))
                 fw.opts.comment = T("You can search by name, ID or comments")
                 extend_text_filter = False
@@ -477,6 +634,8 @@ def configure_case_list_fields(resource,
                                fmt = None,
                                ):
 
+    # TODO review + refactor
+
     T = current.T
     db = current.db
     s3db = current.s3db
@@ -495,7 +654,6 @@ def configure_case_list_fields(resource,
 
     # Standard list fields
     list_fields = [(T("ID"), "pe_label"),
-                   #(T("EasyOpt No."), "eo_number.value"),
                    "last_name",
                    "first_name",
                    "date_of_birth",
@@ -503,12 +661,12 @@ def configure_case_list_fields(resource,
                    "person_details.nationality",
                    #"dvr_case.date",
                    #"dvr_case.status_id",
+                   # TODO include shelter_id if multiple orgs or multiple shelters
                    (T("Shelter"), "shelter_registration.shelter_unit_id"),
                    ]
 
     if privileged:
         # Additional list fields for privileged roles
-        #list_fields.insert(1, (T("EasyOpt No."), "eo_number.value"))
         list_fields[-1:-1] = ("dvr_case.date",
                               "dvr_case.status_id",
                               )
@@ -591,6 +749,7 @@ def configure_case_list_fields(resource,
 
 # -------------------------------------------------------------------------
 def configure_id_cards(r, resource, administration=False):
+    # TODO review + refactor
 
     if administration:
         s3 = current.response.s3
@@ -614,114 +773,90 @@ def configure_id_cards(r, resource, administration=False):
 def configure_dvr_person_controller(r, privileged=False, administration=False):
     """ Case File (Full) """
 
+    # TODO review + refactor
+
     db = current.db
     s3db = current.s3db
     settings = current.deployment_settings
 
     resource = r.resource
 
-    from gluon import Field, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY
+    from gluon import Field, IS_IN_SET, IS_NOT_EMPTY
 
     table = r.table
-    ctable = s3db.dvr_case
+    #ctable = s3db.dvr_case
 
     # Used in both list_fields and rheader
     table.absence = Field.Method("absence", mrcms_absence)
 
     # List modes
-    check_overdue = False
-    show_family_transferable = False
+    #check_overdue = False
+    #show_family_transferable = False
 
     # ID Card Export
     configure_id_cards(r, resource, administration=administration)
 
-    if not r.record:
+    # TODO: this is not currently needed
+    #if not r.record:
 
-        get_vars = r.get_vars
+        #get_vars = r.get_vars
 
-        overdue = get_vars.get("overdue")
-        if overdue in ("check-in", "!check-in"):
-            # Filter case list for overdue check-in
-            reg_status = FS("shelter_registration.registration_status")
-            checkout_date = FS("shelter_registration.check_out_date")
+        #overdue = get_vars.get("overdue")
+        #if overdue in ("check-in", "!check-in"):
+            ## TODO replace by site_presence
+            ## Filter case list for overdue check-in
+            #reg_status = FS("shelter_registration.registration_status")
+            #checkout_date = FS("shelter_registration.check_out_date")
 
-            checked_out = (reg_status == 3)
-            # Must catch None explicitly because it is neither
-            # equal nor unequal with anything according to SQL rules
-            not_checked_out = ((reg_status == None) | (reg_status != 3))
+            #checked_out = (reg_status == 3)
+            ## Must catch None explicitly because it is neither
+            ## equal nor unequal with anything according to SQL rules
+            #not_checked_out = ((reg_status == None) | (reg_status != 3))
 
-            # Due date for check-in
-            due_date = r.utcnow - \
-                        datetime.timedelta(days=ABSENCE_LIMIT)
+            ## Due date for check-in
+            #due_date = r.utcnow - \
+                        #datetime.timedelta(days=ABSENCE_LIMIT)
 
-            if overdue[0] == "!":
-                query = not_checked_out | \
-                        checked_out & (checkout_date >= due_date)
-            else:
-                query = checked_out & \
-                        ((checkout_date < due_date) | (checkout_date == None))
-            resource.add_filter(query)
-            check_overdue = True
+            #if overdue[0] == "!":
+                #query = not_checked_out | \
+                        #checked_out & (checkout_date >= due_date)
+            #else:
+                #query = checked_out & \
+                        #((checkout_date < due_date) | (checkout_date == None))
+            #resource.add_filter(query)
+            #check_overdue = True
 
-        elif overdue:
-            # Filter for cases for which no such event was
-            # registered for at least 3 days:
-            record_ids = event_overdue(overdue.upper(), 3)
-            query = FS("id").belongs(record_ids)
-            resource.add_filter(query)
+        #elif overdue:
+            ## Filter for cases for which no such event was
+            ## registered for at least 3 days:
+            #record_ids = event_overdue(overdue.upper(), 3)
+            #query = FS("id").belongs(record_ids)
+            #resource.add_filter(query)
 
-        show_family_transferable = get_vars.get("show_family_transferable")
-        if show_family_transferable == "1":
-            show_family_transferable = True
+        #show_family_transferable = get_vars.get("show_family_transferable")
+        #if show_family_transferable == "1":
+            #show_family_transferable = True
 
     if not r.component:
 
         configure_person_tags()
 
-        # Set default shelter for shelter registration
-        # TODO alternative when multiple shelters
-        from ..helpers import get_default_shelter
-        shelter_id = get_default_shelter()
-        if shelter_id:
-            rtable = s3db.cr_shelter_registration
-            field = rtable.shelter_id
-            field.default = shelter_id
-            field.readable = field.writable = False
+        # Determine case organisation
+        case_resource = resource.components.get("dvr_case")
+        default_case_organisation = s3db.org_restrict_for_organisations(case_resource)
+        record = r.record
+        if record:
+            person_id = record.id
+            case_organisation = get_case_organisation(person_id)
+        else:
+            person_id = None
+            case_organisation = default_case_organisation
 
-            # Filter housing units to units of this shelter
-            field = rtable.shelter_unit_id
-            dbset = db(s3db.cr_shelter_unit.shelter_id == shelter_id)
-            field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset,
-                                "cr_shelter_unit.id",
-                                field.represent,
-                                # Only available units:
-                                filterby = "status",
-                                filter_opts = (1,),
-                                sort=True,
-                                ))
-
-        settings = current.deployment_settings
-        default_site = settings.get_org_default_site()
-        default_organisation = settings.get_org_default_organisation()
-
-        from ..helpers import get_default_case_organisation
-        default_case_organisation = get_default_case_organisation()
-        if default_case_organisation:
-            field = ctable.organisation_id
-            field.default = default_organisation
-            field.writable = False
-
-        if default_organisation and not default_site:
-            # Limit sites to default_organisation
-            field = ctable.site_id
-            requires = field.requires
-            if requires:
-                if isinstance(requires, IS_EMPTY_OR):
-                    requires = requires.other
-                if hasattr(requires, "dbset"):
-                    stable = s3db.org_site
-                    query = (stable.organisation_id == default_organisation)
-                    requires.dbset = db(query)
+        # Determine available shelters and default
+        if case_organisation:
+            shelters = get_available_shelters(case_organisation, person_id)
+        else:
+            shelters = None
 
         if r.interactive and r.method != "import":
 
@@ -730,10 +865,8 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                 rtable = s3db.cr_shelter_registration
                 field = rtable.check_in_date
                 field.writable = False
-                #field.label = T("Last Check-in")
                 field = rtable.check_out_date
                 field.writable = False
-                #field.label = T("Last Check-out")
 
             # Make marital status mandatory, remove "other"
             dtable = s3db.pr_person_details
@@ -759,6 +892,8 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
             field = table.last_name
             field.requires = IS_NOT_EMPTY()
 
+            # TODO make nationality mandatory
+
             # Check whether the shelter registration shall be cancelled
             cancel = False
             if r.http == "POST":
@@ -779,23 +914,28 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
             configure_case_form(resource,
                                 privileged = privileged,
                                 cancel = cancel,
+                                shelters = shelters,
+                                organisation_id = case_organisation,
+                                person_id = person_id,
                                 )
 
             # Configure case filters
             configure_case_filters(resource,
                                    privileged = privileged,
-                                   show_family_transferable = show_family_transferable,
+                                   #show_family_transferable = show_family_transferable,
                                    )
 
         # Configure case list fields (must be outside of r.interactive)
         configure_case_list_fields(resource,
                                    privileged = privileged,
-                                   check_overdue = check_overdue,
-                                   show_family_transferable = show_family_transferable,
+                                   #check_overdue = check_overdue,
+                                   #show_family_transferable = show_family_transferable,
                                    fmt = r.representation,
                                    )
 
     elif r.component_name == "case_appointment":
+
+        # TODO filter to appointment types of the case organisation
 
         # Make appointments tab read-only even if the user is permitted
         # to create or update appointments (via event registration),
@@ -809,6 +949,8 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 # -------------------------------------------------------------------------
 def configure_security_person_controller(r):
     """ Case file (Security) """
+
+    # TODO review + refactor
 
     T = current.T
     db = current.db
@@ -1062,6 +1204,7 @@ def configure_hrm_person_controller(r):
 
 # -------------------------------------------------------------------------
 def pr_person_controller(**attr):
+    # TODO review + refactor
 
     T = current.T
     auth = current.auth
@@ -1087,10 +1230,7 @@ def pr_person_controller(**attr):
             r.vars["closed"] = r.get_vars["closed"] = "0"
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         get_vars = r.get_vars
 
@@ -1174,6 +1314,8 @@ def pr_person_controller(**attr):
 
 # -------------------------------------------------------------------------
 def pr_group_membership_controller(**attr):
+
+    # TODO review + refactor
 
     T = current.T
     s3db = current.s3db

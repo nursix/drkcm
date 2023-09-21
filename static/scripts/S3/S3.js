@@ -1162,8 +1162,11 @@ S3.openPopup = function(url, center) {
                     // Options list not populated yet?
                     currentValue = widget.prop('value');
                 }
+                if (!currentValue) {
+                    currentValue = widget.data('initialValue');
+                }
                 if (!Array.isArray(currentValue)) {
-                    currentValue = [currentValue];
+                    currentValue = currentValue ? [currentValue] : [];
                 }
                 for (var i = 0, len = currentValue.length, val; i < len; i++) {
                     val = currentValue[i];
@@ -1295,6 +1298,15 @@ S3.openPopup = function(url, center) {
             } else {
                 // Multiple rows inside an inline form
                 multiple = true;
+            }
+        }
+
+        if (!multiple && !userChange) {
+            // Store initial value
+            var initialValue = target.val(),
+                storedInitialValue = target.data('initialValue');
+            if (storedInitialValue == undefined) {
+                target.data('initialValue', initialValue);
             }
         }
 

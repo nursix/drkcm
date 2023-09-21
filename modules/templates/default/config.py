@@ -649,6 +649,11 @@ def config(settings):
     # Uncomment to use the term Beneficiary instead of Case
     #settings.dvr.label = "Beneficiary"
 
+    # Manage case flags
+    #settings.dvr.case_flags = True
+    # Use org-specific case flags
+    #settings.dvr.case_flags_org_specific = True
+
     # Uncomment this to enable tracking of transfer origin/destination sites
     #settings.dvr.track_transfer_sites = True
     # Uncomment this to enable features to manage transferability of cases
@@ -657,12 +662,17 @@ def config(settings):
     # Uncomment this to enable household size in cases, set to "auto" for automatic counting
     #settings.dvr.household_size = True
 
+    # Use org-specific appointment types
+    #settings.dvr.appointment_types_org_specific = True
     # Uncomment this to expose flags to mark appointment types as mandatory
     #settings.dvr.mandatory_appointments = True
     # Uncomment this to have appointments with personal presence update last_seen_on
     #settings.dvr.appointments_update_last_seen_on = True
     # Uncomment this to automatically update the case status when appointments are completed
     #settings.dvr.appointments_update_case_status = True
+
+    # Use org-specific case event types
+    #settings.dvr.case_event_types_org_specific = True
     # Uncomment this to automatically close appointments when registering certain case events
     #settings.dvr.case_events_close_appointments = True
 
@@ -670,9 +680,9 @@ def config(settings):
     #settings.dvr.payments_update_last_seen_on = True
 
     # Uncomment this to use service types for group/case activites
-    #settings.dvr.activity_use_service_type = True
+    #settings.dvr.case_activity_use_service_type = True
     # Uncomment this to use sectors in group/case activities
-    #settings.dvr.activity_sectors = True
+    #settings.dvr.case_activity_sectors = True
     # Uncomment this to use case activity types
     #settings.dvr.activity_types = True
     # Uncomment this to use hierarchical case activity types
@@ -790,39 +800,53 @@ def config(settings):
 
     # -------------------------------------------------------------------------
     # Organisations
+    #
+
     # Uncomment to use an Autocomplete for Organisation lookup fields
     #settings.org.autocomplete = True
+
     # Enable the Organisation Sector field
     #settings.org.sector = True
     # But hide it from the rheader
     #settings.org.sector_rheader = False
+
     # Enable the use of Organisation Branches
     #settings.org.branches = True
     # Show branches as tree rather than as table
     #settings.org.branches_tree_view = True
+
     # Make Facility Types Hierarchical
     #settings.org.facility_types_hierarchical = True
+    # Uncomment to make Facility codes unique
+    #settings.org.facility_code_unique = True
+
     # Enable the use of Organisation Groups & what their name is
     #settings.org.groups = "Coalition"
     #settings.org.groups = "Network"
+
     # Organisation Location context
     #settings.org.organisation_location_context = "organisation_location.location_id"
+
     # Make Organisation Types Hierarchical
     #settings.org.organisation_types_hierarchical = True
     # Make Organisation Types Multiple
     #settings.org.organisation_types_multiple = True
     # Show Organisation Types in the rheader
     #settings.org.organisation_type_rheader = True
+
     # Enable the use of Organisation Regions
     #settings.org.regions = True
     # Make Organisation Regions Hierarchical
     #settings.org.regions_hierarchical = True
     # Enable the use of Organisation Region Countries
     #settings.org.region_countries = True
+
     # Uncomment to show a Tab for Organisation Resources
     #settings.org.resources_tab = True
+
     # Make Services Hierarchical
     #settings.org.services_hierarchical = True
+
     # Set the length of the auto-generated org/site code the default is 10
     #settings.org.site_code_len = 3
     # Set the label for Sites
@@ -837,22 +861,13 @@ def config(settings):
     #settings.org.site_inv_req_tabs = False
     # Uncomment to allow Sites to be staffed by Volunteers
     #settings.org.site_volunteers = True
-    # Enable certain fields just for specific Organisations
-    # Requires a call to settings.set_org_dependent_field(field)
-    # empty list => disabled for all (including Admin)
-    #settings.org.dependent_fields = \
-    #    {#"<table name>.<field name>"  : ["<Organisation Name>"],
-    #     "pr_person_details.mother_name"             : [],
-    #     "pr_person_details.father_name"             : [],
-    #     "vol_volunteer.active"                      : [],
-    #     "vol_volunteer_cluster.vol_cluster_type_id"      : [],
-    #     "vol_volunteer_cluster.vol_cluster_id"          : [],
-    #     "vol_volunteer_cluster.vol_cluster_position_id" : [],
-    #     }
+
+    # Site types for presence tracking
+    #settings.org.site_presence_site_types = ("cr_shelter", )
+
     # Uncomment to make Office codes unique
     #settings.org.office_code_unique = True
-    # Uncomment to make Facility codes unique
-    #settings.org.facility_code_unique = True
+
     # Uncomment to use Tags for Organisations, Offices & Facilities
     #settings.org.tags = True
 

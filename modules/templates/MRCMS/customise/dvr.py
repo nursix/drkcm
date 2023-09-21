@@ -29,6 +29,8 @@ def dvr_case_onaccept(form):
         open and valid case
     """
 
+    # TODO review + refactor
+
     T = current.T
 
     db = current.db
@@ -86,6 +88,7 @@ def dvr_case_onaccept(form):
 
 # -------------------------------------------------------------------------
 def dvr_case_resource(r, tablename):
+    # TODO review + refactor
 
     T = current.T
     s3db = current.s3db
@@ -113,6 +116,7 @@ def dvr_case_resource(r, tablename):
 
 # -------------------------------------------------------------------------
 def dvr_note_resource(r, tablename):
+    # TODO review + refactor
 
     T = current.T
     auth = current.auth
@@ -247,16 +251,6 @@ def dvr_case_activity_controller(**attr):
 
         if not r.component:
 
-            # Add EasyOpt Number to text filter fields
-            #filter_widgets = resource.get_config("filter_widgets")
-            #if filter_widgets:
-            #    configure_person_tags()
-            #    from core import TextFilter
-            #    for fw in filter_widgets:
-            #        if isinstance(fw, TextFilter):
-            #            fw.field.append("person_id$eo_number.value")
-            #            break
-
             if r.interactive:
                 # Represent person_id as link (including ID)
                 table = resource.table
@@ -308,6 +302,8 @@ def dvr_case_activity_controller(**attr):
 # -------------------------------------------------------------------------
 def dvr_case_appointment_controller(**attr):
 
+    # TODO refactor for org-specific appointment types
+
     T = current.T
     s3 = current.response.s3
     s3db = current.s3db
@@ -342,7 +338,6 @@ def dvr_case_appointment_controller(**attr):
                     TextFilter(["person_id$pe_label",
                                 "person_id$first_name",
                                 "person_id$last_name",
-                                #"person_id$eo_number.value",
                                 ],
                                 label = T("Search"),
                                 ),
@@ -418,6 +413,8 @@ def dvr_case_appointment_controller(**attr):
 
 # -------------------------------------------------------------------------
 def dvr_allowance_controller(**attr):
+
+    # TODO disable for now (allowance not used)
 
     T = current.T
     s3 = current.response.s3
@@ -667,13 +664,12 @@ def dvr_case_event_controller(**attr):
 # -------------------------------------------------------------------------
 def dvr_case_event_type_resource(r, tablename):
 
-    T = current.T
     s3db = current.s3db
 
-    from core import S3SQLCustomForm, \
-                        S3SQLInlineLink
+    from core import S3SQLCustomForm
 
-    crud_form = S3SQLCustomForm("code",
+    crud_form = S3SQLCustomForm("organisation_id",
+                                "code",
                                 "name",
                                 "is_inactive",
                                 "is_default",
@@ -681,10 +677,10 @@ def dvr_case_event_type_resource(r, tablename):
                                 "appointment_type_id",
                                 "min_interval",
                                 "max_per_day",
-                                S3SQLInlineLink("excluded_by",
-                                                field = "excluded_by_id",
-                                                label = T("Not Combinable With"),
-                                                ),
+                                #S3SQLInlineLink("excluded_by",
+                                #                field = "excluded_by_id",
+                                #                label = current.T("Not Combinable With"),
+                                #                ),
                                 "presence_required",
                                 )
 
