@@ -788,6 +788,7 @@ class DVRCaseModel(DataModel):
     def case_onaccept(form, create=False):
         """
             Case onaccept routine:
+                - set/remove closed-on date according to status
                 - auto-create active appointments
                 - count household size for new cases
 
@@ -798,6 +799,8 @@ class DVRCaseModel(DataModel):
 
         db = current.db
         s3db = current.s3db
+
+        settings = current.deployment_settings
 
         # Read form data
         form_vars = form.vars
@@ -814,6 +817,7 @@ class DVRCaseModel(DataModel):
         left = stable.on(stable.id == ctable.status_id)
         query = (ctable.id == record_id)
         row = db(query).select(ctable.id,
+                               ctable.organisation_id,
                                ctable.person_id,
                                ctable.closed_on,
                                stable.is_closed,
@@ -822,34 +826,45 @@ class DVRCaseModel(DataModel):
                                ).first()
         if not row:
             return
-
-        # Update closed_on date
         case = row.dvr_case
+
+        # Update closed_on date when status is closed
         if row.dvr_case_status.is_closed:
             if not case.closed_on:
                 case.update_record(closed_on = current.request.utcnow.date())
         elif case.closed_on:
             case.update_record(closed_on = None)
 
-        # Get the person ID
         person_id = case.person_id
+        organisation_id = case.organisation_id
 
-        # TODO with org-specific appointment types => filter for case organisation
-        atable = s3db.dvr_case_appointment
-        ttable = s3db.dvr_case_appointment_type
-        left = atable.on((atable.type_id == ttable.id) &
-                         (atable.person_id == person_id) &
-                         (atable.deleted != True))
-        query = (atable.id == None) & \
-                (ttable.active == True) & \
-                (ttable.deleted != True)
-        rows = db(query).select(ttable.id, left=left)
-        for row in rows:
-            atable.insert(case_id = record_id,
-                          person_id = person_id,
-                          type_id = row.id,
-                          )
-            # TODO postprocess create (record owner, realm, onaccept)
+        # Auto-create active appointments
+        org_specific = settings.get_dvr_appointment_types_org_specific()
+        if not org_specific or org_specific and organisation_id:
+
+            # Get types for which there is no appointment in this case yet
+            atable = s3db.dvr_case_appointment
+            ttable = s3db.dvr_case_appointment_type
+            left = atable.on((atable.type_id == ttable.id) &
+                             (atable.person_id == person_id) &
+                             (atable.deleted == False))
+            query = (atable.id == None) & (ttable.active == True)
+            if org_specific:
+                query &= (ttable.organisation_id == organisation_id)
+            query &= (ttable.deleted == False)
+            rows = db(query).select(ttable.id, left=left)
+
+            # Create the missing appointments with defaults
+            set_record_owner = current.auth.s3_set_record_owner
+            for row in rows:
+                appointment = {"case_id": case.id,
+                               "person_id": person_id,
+                               "type_id": row.id,
+                               }
+                appointment["id"] = atable.insert(**appointment)
+                s3db.update_super(atable, appointment)
+                set_record_owner(atable, appointment)
+                s3db.onaccept(atable, appointment, method="create")
 
         if create and \
            current.deployment_settings.get_dvr_household_size() == "auto":
@@ -858,7 +873,7 @@ class DVRCaseModel(DataModel):
             gtable = s3db.pr_group
             mtable = s3db.pr_group_membership
             query = ((mtable.person_id == person_id) & \
-                     (mtable.deleted != True) & \
+                     (mtable.deleted == False) & \
                      (gtable.id == mtable.group_id) & \
                      (gtable.group_type == 7))
             rows = db(query).select(gtable.id)
