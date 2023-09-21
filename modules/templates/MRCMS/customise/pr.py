@@ -771,9 +771,14 @@ def configure_id_cards(r, resource, administration=False):
 
 # -------------------------------------------------------------------------
 def configure_dvr_person_controller(r, privileged=False, administration=False):
-    """ Case File (Full) """
+    """
+        Case File (Full)
 
-    # TODO review + refactor
+        Args:
+            r: the CRUDRequest
+            privileged: user has privileged role (to see extended case details)
+            administration: user has an administrive role (ORG_ADMIN|CASE_ADMIN)
+    """
 
     db = current.db
     s3db = current.s3db
@@ -783,74 +788,27 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
     from gluon import Field, IS_IN_SET, IS_NOT_EMPTY
 
+    # Absence-days method, used in both list_fields and rheader
     table = r.table
-    #ctable = s3db.dvr_case
-
-    # Used in both list_fields and rheader
     table.absence = Field.Method("absence", mrcms_absence)
-
-    # List modes
-    #check_overdue = False
-    #show_family_transferable = False
 
     # ID Card Export
     configure_id_cards(r, resource, administration=administration)
 
-    # TODO: this is not currently needed
-    #if not r.record:
-
-        #get_vars = r.get_vars
-
-        #overdue = get_vars.get("overdue")
-        #if overdue in ("check-in", "!check-in"):
-            ## TODO replace by site_presence
-            ## Filter case list for overdue check-in
-            #reg_status = FS("shelter_registration.registration_status")
-            #checkout_date = FS("shelter_registration.check_out_date")
-
-            #checked_out = (reg_status == 3)
-            ## Must catch None explicitly because it is neither
-            ## equal nor unequal with anything according to SQL rules
-            #not_checked_out = ((reg_status == None) | (reg_status != 3))
-
-            ## Due date for check-in
-            #due_date = r.utcnow - \
-                        #datetime.timedelta(days=ABSENCE_LIMIT)
-
-            #if overdue[0] == "!":
-                #query = not_checked_out | \
-                        #checked_out & (checkout_date >= due_date)
-            #else:
-                #query = checked_out & \
-                        #((checkout_date < due_date) | (checkout_date == None))
-            #resource.add_filter(query)
-            #check_overdue = True
-
-        #elif overdue:
-            ## Filter for cases for which no such event was
-            ## registered for at least 3 days:
-            #record_ids = event_overdue(overdue.upper(), 3)
-            #query = FS("id").belongs(record_ids)
-            #resource.add_filter(query)
-
-        #show_family_transferable = get_vars.get("show_family_transferable")
-        #if show_family_transferable == "1":
-            #show_family_transferable = True
+    # Determine case organisation
+    case_resource = resource.components.get("dvr_case")
+    default_case_organisation = s3db.org_restrict_for_organisations(case_resource)
+    record = r.record
+    if record:
+        person_id = record.id
+        case_organisation = get_case_organisation(person_id)
+    else:
+        person_id = None
+        case_organisation = default_case_organisation
 
     if not r.component:
 
         configure_person_tags()
-
-        # Determine case organisation
-        case_resource = resource.components.get("dvr_case")
-        default_case_organisation = s3db.org_restrict_for_organisations(case_resource)
-        record = r.record
-        if record:
-            person_id = record.id
-            case_organisation = get_case_organisation(person_id)
-        else:
-            person_id = None
-            case_organisation = default_case_organisation
 
         # Determine available shelters and default
         if case_organisation:
@@ -935,16 +893,31 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
     elif r.component_name == "case_appointment":
 
-        # TODO filter to appointment types of the case organisation
+        component = r.component
+
+        # Filter to appointment types of the case organisation
+        if case_organisation:
+
+            # Filter records
+            component.add_filter(FS("type_id$organisation_id") == case_organisation)
+
+            # Filter type selector
+            ctable = component.table
+            ttable = s3db.dvr_case_appointment_type
+            field = ctable.type_id
+            dbset = db(ttable.organisation_id == case_organisation)
+            field.requires = IS_ONE_OF(dbset, "dvr_case_appointment_type.id",
+                                       field.represent,
+                                       )
 
         # Make appointments tab read-only even if the user is permitted
-        # to create or update appointments (via event registration),
-        # except for ADMINISTRATION/ADMIN_HEAD:
+        # to create or update appointments (via event registration), except
+        # for ORG_ADMIN/CASE_ADMIN:
         if not administration:
-            r.component.configure(insertable = False,
-                                  editable = False,
-                                  deletable = False,
-                                  )
+            component.configure(insertable = False,
+                                editable = False,
+                                deletable = False,
+                                )
 
 # -------------------------------------------------------------------------
 def configure_security_person_controller(r):
