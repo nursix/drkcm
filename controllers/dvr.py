@@ -81,17 +81,20 @@ def person():
             # (also filtering status filter opts)
             closed = get_vars.get("closed")
             get_status_opts = s3db.dvr_case_status_filter_opts
-            if closed == "1":
+            if closed == "only":
+                # Show only closed cases
                 CASES = CLOSED
                 query &= FS("dvr_case.status_id$is_closed") == True
                 status_opts = lambda: get_status_opts(closed=True)
-            elif closed == "0":
+            elif closed == "1" or closed == "include":
+                # Show both closed and open cases
+                status_opts = get_status_opts
+            else:
+                # show only open cases (default)
                 CASES = CURRENT
                 query &= (FS("dvr_case.status_id$is_closed") == False) | \
                          (FS("dvr_case.status_id$is_closed") == None)
                 status_opts = lambda: get_status_opts(closed=False)
-            else:
-                status_opts = get_status_opts
 
             resource.add_filter(query)
         else:

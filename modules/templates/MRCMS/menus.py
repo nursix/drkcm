@@ -257,19 +257,18 @@ class S3OptionsMenu(default.S3OptionsMenu):
         ORG_ADMIN = sr.ORG_ADMIN
 
         return M(c="dvr")(
-                M("Current Cases", c=("dvr", "pr"), f="person",
-                    vars = {"closed": "0"})(
+                M("Current Cases", c=("dvr", "pr"), f="person")(
                     M("Create", m="create", t="pr_person", p="create"),
-                    M("All Cases", vars = {}),
+                    M("All Cases", vars = {"closed": "include"}),
                     ),
                 #M("Reports", link=False)(
                 #    M("Check-in overdue", c=("dvr", "pr"), f="person",
                 #      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                #      vars = {"closed": "0", "overdue": "check-in"},
+                #      vars = {"overdue": "check-in"},
                 #      ),
                 #    M("Food Distribution overdue", c=("dvr", "pr"), f="person",
                 #      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                #      vars = {"closed": "0", "overdue": "FOOD*"},
+                #      vars = {"overdue": "FOOD*"},
                 #      ),
                 #    M("Clients Reports", c="dvr", f="site_activity",
                 #      ),
@@ -298,7 +297,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 M("Archive", link=False)(
                     M("Closed Cases", f="person",
                         restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                        vars={"closed": "1"},
+                        vars={"closed": "only"},
                         ),
                     M("Invalid Cases", f="person",
                         vars={"archived": "1"},

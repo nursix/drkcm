@@ -45,7 +45,7 @@ class S3MainMenu(default.S3MainMenu):
         auth = current.auth
         ui_options = get_ui_options()
 
-        case_vars = {"closed": "0"}
+        case_vars = {}
         if not ui_options.get("case_collaboration") and \
            auth.s3_logged_in_human_resource() and \
            auth.s3_has_role("CASE_MANAGEMENT"):
@@ -238,13 +238,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
             case_collaboration = ui_options_get("case_collaboration")
             if case_collaboration:
                 # Current Cases as lead item
-                case_menu = M("Current Cases", c=("dvr", "pr"), f="person", t="dvr_case",
-                              vars = {"closed": "0"},
-                              )
+                case_menu = M("Current Cases", c=("dvr", "pr"), f="person", t="dvr_case")
             else:
                 # My Cases as lead item (Current Cases in Overviews)
                 case_menu = M("My Cases", c=("dvr", "pr"), f="person", t="dvr_case",
-                              vars = {"closed": "0", "mine": "1"},
+                              vars = {"mine": "1"},
                               )
 
             # Actions sub-menu
@@ -268,7 +266,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     case_menu(
                         M("Create Case", m="create", t="pr_person", p="create"),
                         M("My Cases", f="person", t="dvr_case",
-                          vars = {"closed": "0", "mine": "1"},
+                          vars = {"mine": "1"},
                           check = case_collaboration,
                           ),
                         M("My Activities", c="dvr", f="case_activity", vars={"mine": "1"}),
@@ -280,7 +278,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     my_actions,
                     M("Overviews", c=("dvr", "pr"), link=False)(
                         M("Current Cases", f="person", t="dvr_case",
-                          vars = {"closed": "0"},
                           check = not case_collaboration,
                           ),
                         M("All Cases", f="person", t="dvr_case"),
@@ -303,8 +300,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                                                        )
 
             menu = M(c="dvr")(
-                    M("Current Cases", c=("dvr", "pr"), f="person", t="dvr_case",
-                      vars = {"closed": "0"})(
+                    M("Current Cases", c=("dvr", "pr"), f="person", t="dvr_case")(
                         M("Create Case", m="create", t="pr_person", p="create"),
                         M("All Cases", vars = {}),
                         M("Actions", f="response_action"),
@@ -340,11 +336,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
         return menu(M("Statistics", c="dvr", link=False)(
                         M("Actions", f="response_action", t="dvr_response_action", m="report"),
                         M("Activities", f="case_activity", t="dvr_case_activity", m="report"),
-                        M("Cases", f="person", m="report", t="dvr_case", vars={"closed": "0"}),
+                        M("Cases", f="person", m="report", t="dvr_case"),
                         ),
                     M("Archive", link=False)(
                         M("Closed Cases", f="person", t="dvr_case",
-                          vars={"closed": "1"},
+                          vars={"closed": "only"},
                           ),
                         M("Invalid Cases", f="person", t="dvr_case",
                           restrict = (ADMIN, ORG_ADMIN),

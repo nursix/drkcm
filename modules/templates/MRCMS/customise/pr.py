@@ -147,7 +147,6 @@ def event_overdue(code, interval):
 
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
-    # TODO review + refactor
 
     s3db = current.s3db
     auth = current.auth
@@ -164,18 +163,18 @@ def pr_person_resource(r, tablename):
         for field in ptable:
             field.writable = False
 
-        # Can not add or edit contact data in person form
-        s3db.configure("pr_contact", insertable=False)
+        # Can not add or modify contact or identity information
+        for tn in ("pr_contact", "pr_identity", "pr_image"):
+            s3db.configure(tn,
+                           insertable = False,
+                           editable = False,
+                           deletable = False,
+                           )
 
-        # Can not update shelter registration from person form
-        # - check-in/check-out may still be permitted, however
-        # - STAFF can update housing unit
-
-        is_staff = auth.s3_has_role("STAFF")
-
+        # Can not update shelter registration (except housing unit)
         rtable = s3db.cr_shelter_registration
         for field in rtable:
-            if field.name != "shelter_unit_id" or not is_staff:
+            if field.name != "shelter_unit_id":
                 field.writable = False
 
     # Do not include acronym in Case-Org Representation
@@ -188,7 +187,6 @@ def pr_person_resource(r, tablename):
     s3db.configure("pr_person",
                    realm_components = ("case_activity",
                                        "case_details",
-                                       "case_flag_case",
                                        "case_language",
                                        "case_note",
                                        "residence_status",
