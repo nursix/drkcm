@@ -224,7 +224,14 @@ def configure_person_tags():
 
 # -------------------------------------------------------------------------
 def get_case_organisation(person_id):
-    # TODO docstring
+    """
+        Determines the current case organisation for a person record
+
+        Args:
+            person_id: the person record ID
+        Returns:
+            the organisation record ID, or None if no case could be found
+    """
 
     table = current.s3db.dvr_case
     query = (table.person_id == person_id) & \
@@ -1118,7 +1125,6 @@ def configure_hrm_person_controller(r):
 
 # -------------------------------------------------------------------------
 def pr_person_controller(**attr):
-    # TODO review + refactor
 
     T = current.T
     auth = current.auth
@@ -1145,6 +1151,7 @@ def pr_person_controller(**attr):
 
         get_vars = r.get_vars
 
+        # Adjust list title for invalid cases (normally "Archived")
         archived = get_vars.get("archived")
         if archived in ("1", "true", "yes"):
             crud_strings = s3.crud_strings["pr_person"]
