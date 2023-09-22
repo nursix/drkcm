@@ -807,6 +807,11 @@ class SitePresence:
         db = current.db
         s3db = current.s3db
 
+        # Customise site_presence_event (to allow custom onaccept callbacks)
+        from ..controller import CRUDRequest
+        r = CRUDRequest("org", "site_presence_event", args=[], get_vars={})
+        r.customise_resource("org_site_presence_event")
+
         # Create a new event
         event = {"person_id": person_id,
                  "site_id": site_id,

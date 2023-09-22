@@ -198,6 +198,19 @@ def org_facility_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def site_presence_event_onaccept(form):
+    """
+        Update last-seen-on date when a site presence event is registered
+    """
+
+    try:
+        person_id = form.vars.person_id
+    except AttributeError:
+        return
+
+    current.s3db.dvr_update_last_seen(person_id)
+
+# -------------------------------------------------------------------------
 def org_site_presence_event_resource(r, tablename):
 
     s3db = current.s3db
@@ -208,5 +221,10 @@ def org_site_presence_event_resource(r, tablename):
     field.represent = s3db.auth_UserRepresent(show_name=True,
                                               show_email=False,
                                               )
+
+    # Add custom callback to update last-seen-on date
+    s3db.add_custom_callback("org_site_presence_event", "onaccept",
+                             site_presence_event_onaccept,
+                             )
 
 # END =========================================================================

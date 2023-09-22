@@ -2009,7 +2009,9 @@ class CRShelterRegistrationModel(DataModel):
         else:
             effective_date = registration.modified_on
 
+        # Status change?
         if current_status != previous_status:
+
             # Insert new history entry
             htable.insert(previous_status = previous_status,
                           status = current_status,
@@ -2017,6 +2019,17 @@ class CRShelterRegistrationModel(DataModel):
                           person_id = person_id,
                           shelter_id = shelter_id,
                           )
+
+            if current_status == 3: # checked-out
+
+                # Look up site_id of shelter
+                stable = s3db.cr_shelter
+                shelter = db(stable.id==shelter_id).select(stable.site_id,
+                                                           limitby = (0, 1),
+                                                           ).first()
+                # Register a CHECKOUT-event
+                if shelter and shelter.site_id:
+                    SitePresence.register(person_id, shelter.site_id, "CHECKOUT")
 
         # Update registration
         if current_status != 3:

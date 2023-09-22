@@ -1933,11 +1933,9 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                         args = [],
                         get_vars = {},
                         )
-        customise_resource = current.deployment_settings.customise_resource
         for tablename in (component.tablename, link.tablename):
-            customise = customise_resource(tablename)
-            if customise:
-                customise(r, tablename)
+            if tablename:
+                r.customise_resource(tablename)
 
         if record_id:
             rkey = component.rkey

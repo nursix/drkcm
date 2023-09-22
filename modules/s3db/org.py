@@ -3896,6 +3896,11 @@ class OrgSitePresenceModel(DataModel):
         event_types = {"IN": T("Entering"),
                        "OUT": T("Leaving"),
                        "SEEN": T("Seen"),
+                       # CHECKOUT means that the person is *declared* as having
+                       # left the site (permanently), which unlike OUT does not
+                       # imply an observed movement or even physical presence of
+                       # the person at the time of the event:
+                       "CHECKOUT": T("Checked-out"),
                        }
         tablename = "org_site_presence_event"
         define_table(tablename,
@@ -4025,17 +4030,21 @@ class OrgSitePresenceModel(DataModel):
 
         # Update the record date+vhash
         record.update_record(date=now, vhash=vhash)
+        event_type = record.event_type
 
         # Create/update presence record(s)
         ptable = s3db.org_site_presence
 
-        # Register as OUT at all sites where the person is currently
-        # registered as IN, other than the event site
-        query = (ptable.person_id == record.person_id) & \
-                (ptable.site_id != record.site_id) & \
-                (ptable.status == "IN") & \
-                (ptable.deleted == False)
-        db(query).update(status="OUT", date=now, event_id=record.id)
+        if event_type in ("IN", "OUT", "SEEN"):
+            # These events imply actual observation of presence:
+            # => register as OUT at all sites where the person is currently
+            #    registered as IN, other than the event site (as they cannot
+            #    be in multiple places at once)
+            query = (ptable.person_id == record.person_id) & \
+                    (ptable.site_id != record.site_id) & \
+                    (ptable.status == "IN") & \
+                    (ptable.deleted == False)
+            db(query).update(status="OUT", date=now, event_id=record.id)
 
         # Get the presence record for the event site
         query = (ptable.person_id == record.person_id) & \
@@ -4049,11 +4058,11 @@ class OrgSitePresenceModel(DataModel):
 
         # Update presence at the site
         # Notes:
-        #    - multiple consecutive IN will retain the earliest IN date
-        #    - multiple consecutive OUT will update to the latest OUT date
+        #    - IN/CHECKOUT will update the presence date only if the status
+        #      changes, whereas OUT will always update the presence date
         #    - a SEEN event does not change presence status/date at the site
         #    - the tracking reference (event_id) will always be updated
-        new_status = "IN" if record.event_type == "IN" else "OUT"
+        new_status = "IN" if event_type == "IN" else "OUT"
         if not presence:
             # Create new presence record
             presence = {"person_id": record.person_id,
@@ -4067,9 +4076,9 @@ class OrgSitePresenceModel(DataModel):
             current.auth.s3_set_record_owner(ptable, presence)
             s3db.onaccept(ptable, presence, method="create")
 
-        elif record.event_type == "IN" and presence.status != new_status or \
-             record.event_type == "OUT":
-            # Update the presence record according to this movement
+        elif event_type in ("IN", "CHECKOUT") and presence.status != new_status or \
+             event_type == "OUT":
+            # Update the presence record according to this event
             presence.update_record(date = now,
                                    status = new_status,
                                    event_id = record.id,
