@@ -3896,10 +3896,12 @@ class OrgSitePresenceModel(DataModel):
         event_types = {"IN": T("Entering"),
                        "OUT": T("Leaving"),
                        "SEEN": T("Seen"),
-                       # CHECKOUT means that the person is *declared* as having
-                       # left the site (permanently), which unlike OUT does not
-                       # imply an observed movement or even physical presence of
-                       # the person at the time of the event:
+                       # Presence events without observation (i.e. those do not
+                       # imply that the person was physically present at the
+                       # time of the event):
+                       # NOTFOUND: person could not be found at the site during a search
+                       # CHECKOUT: person is declared as having left the site permanently
+                       "NOTFOUND": T("Not found##presence"),
                        "CHECKOUT": T("Checked-out"),
                        }
         tablename = "org_site_presence_event"
@@ -4058,10 +4060,12 @@ class OrgSitePresenceModel(DataModel):
 
         # Update presence at the site
         # Notes:
-        #    - IN/CHECKOUT will update the presence date only if the status
-        #      changes, whereas OUT will always update the presence date
+        #    - IN/NOTFOUND/CHECKOUT will update the presence date only
+        #      if the status changes (tracking earliest date), whereas
+        #      OUT will always update the presence date
         #    - a SEEN event does not change presence status/date at the site
         #    - the tracking reference (event_id) will always be updated
+        track_earliest = ("IN", "NOTFOUND", "CHECKOUT")
         new_status = "IN" if event_type == "IN" else "OUT"
         if not presence:
             # Create new presence record
@@ -4076,7 +4080,7 @@ class OrgSitePresenceModel(DataModel):
             current.auth.s3_set_record_owner(ptable, presence)
             s3db.onaccept(ptable, presence, method="create")
 
-        elif event_type in ("IN", "CHECKOUT") and presence.status != new_status or \
+        elif event_type in track_earliest and presence.status != new_status or \
              event_type == "OUT":
             # Update the presence record according to this event
             presence.update_record(date = now,

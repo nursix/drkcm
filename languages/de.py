@@ -4105,6 +4105,7 @@
 'Not Set': 'Nicht festgelegt',
 'Not Transferable': 'Nicht Transferierbar',
 'Not currently a resident': 'Kein aktueller Bewohner',
+'Not found##presence': 'Nicht auffindbar',
 'Not installed or incorrectly configured.': 'Nicht installiert oder nicht korrekt konfiguriert.',
 'Not orderable': 'Nicht bestellbar',
 'Not yet a Member of any Group': 'Bis jetzt kein Mitglied irgendeiner Gruppe',
