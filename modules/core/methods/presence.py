@@ -470,6 +470,9 @@ class PresenceRegistration(CRUDMethod):
                 label: the PE label
         """
 
+        if not label:
+            return None
+
         # Fields to extract
         fields = ["id",
                   "pe_id",
@@ -484,7 +487,7 @@ class PresenceRegistration(CRUDMethod):
 
         presource = current.s3db.resource("pr_person",
                                           components = [],
-                                          filter = (FS("pe_label") == label),
+                                          filter = (FS("pe_label").upper() == label.upper()),
                                           )
         rows = presource.select(fields, limit=1, as_rows=True)
 

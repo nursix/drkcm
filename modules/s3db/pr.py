@@ -5245,7 +5245,9 @@ class PREducationModel(DataModel):
 class PRIdentityModel(DataModel):
     """ Identities for Persons """
 
-    names = ("pr_identity",)
+    names = ("pr_identity",
+             "pr_identity_document",
+             )
 
     def model(self):
 
@@ -5266,13 +5268,15 @@ class PRIdentityModel(DataModel):
         #  <xs:enumeration value="Certificate"/>
         #  <xs:enumeration value="MileageProgram"/>
         #
-        pr_id_type_opts = {1:  T("Passport"),
-                           2:  T("National ID Card"),
-                           3:  T("Driving License"),
-                           #4: T("Credit Card"),
-                           5:  T("Residence Permit"),
-                           99: T("other")
-                           }
+        id_types = {1:  T("Passport"),
+                    2:  T("National ID Card"),
+                    3:  T("Driving License"),
+                    #4: T("Credit Card"),
+                    5:  T("Residence Permit"),
+                    99: T("other"),
+                    999: T("System-generated"),
+                    }
+        selectable_opts = {k:v for k, v in id_types.items() if k != 999}
 
         tablename = "pr_identity"
         self.define_table(tablename,
@@ -5282,9 +5286,8 @@ class PRIdentityModel(DataModel):
                           Field("type", "integer",
                                 default = 1,
                                 label = T("Document Type"),
-                                represent = represent_option(pr_id_type_opts),
-                                requires = IS_IN_SET(pr_id_type_opts,
-                                                     zero=None),
+                                represent = represent_option(id_types),
+                                requires = IS_IN_SET(selectable_opts, zero=None),
                                 ),
                           Field("description",
                                 label = T("Description"),
@@ -5326,10 +5329,17 @@ class PRIdentityModel(DataModel):
                                 uploadfolder = os.path.join(current.request.folder, "uploads"),
                                 represent = represent_file("pr_identity", "image"),
                                 ),
-                          # For internally-issued IDs,
-                          # activate in template as required
+                          # For internally-issued IDs:
+                          Field("system", "boolean",
+                                default = False,
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("vhash", length=256,
+                                readable = False,
+                                writable = False,
+                                ),
                           Field("invalid", "boolean",
-                                label = T("Invalid"),
                                 default = False,
                                 readable = False,
                                 writable = False,
@@ -5367,6 +5377,23 @@ class PRIdentityModel(DataModel):
                                       #"ia_name"
                                       ],
                        )
+
+        # ---------------------------------------------------------------------
+        # TODO documentation + DRY
+        tablename = "pr_identity_document"
+        self.define_table(tablename,
+                          Field("identity_id", "reference pr_identity",
+                                ondelete = "CASCADE",
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("file", "upload",
+                                autodelete = True,
+                                uploadfolder = os.path.join(current.request.folder, "uploads", "ids"),
+                                represent = represent_file("pr_identity_document", "file"),
+                                writable = False,
+                                ),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)

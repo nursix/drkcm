@@ -703,6 +703,14 @@ def configure_id_cards(r, resource, administration=False):
         s3 = current.response.s3
         settings = current.deployment_settings
 
+        from ..idcards import GenerateIDCard
+        current.s3db.set_method("pr_person",
+                                component = "identity",
+                                method = "generate",
+                                action = GenerateIDCard,
+                                )
+
+        # TODO Remove this?
         if r.representation == "card":
             # Configure ID card layout
             from ..idcards import IDCardLayout
@@ -710,12 +718,13 @@ def configure_id_cards(r, resource, administration=False):
                                pdf_card_pagesize = "A4",
                                )
 
-        if not r.id and not r.component:
-            # Add export-icon for ID cards
-            export_formats = list(settings.get_ui_export_formats())
-            export_formats.append(("card", "fa fa-id-card", current.T("Export ID Cards")))
-            settings.ui.export_formats = export_formats
-            s3.formats["card"] = r.url(method="")
+        # TODO Remove this?
+        #if not r.id and not r.component:
+        #    # Add export-icon for ID cards
+        #    export_formats = list(settings.get_ui_export_formats())
+        #    export_formats.append(("card", "fa fa-id-card", current.T("Export ID Cards")))
+        #    settings.ui.export_formats = export_formats
+        #    s3.formats["card"] = r.url(method="")
 
 # -------------------------------------------------------------------------
 def configure_dvr_person_controller(r, privileged=False, administration=False):
@@ -1202,13 +1211,18 @@ def pr_person_controller(**attr):
                 buttons = output["buttons"]
 
             # ID-Card button
+            # TODO we want this on ID tab only
             if administration and r.controller == "dvr":
                 card_button = A(T("Generate ID"),
-                                data = {"url": URL(c="dvr", f="person",
-                                                   args = ["%s.card" % r.id]
-                                                   ),
-                                        },
-                                _class = "action-btn s3-download-button",
+                                _href = r.url(component = "identity",
+                                              method = "generate",
+                                              ),
+                                #data = {"url": URL(c="dvr", f="person",
+                                #                   args = ["%s.card" % r.id]
+                                #                   ),
+                                #        },
+                                #_class = "action-btn s3-download-button",
+                                _class = "action-btn",
                                 )
             else:
                 card_button = ""
