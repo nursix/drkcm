@@ -212,7 +212,7 @@ def person_site_status(site_id, person):
                             limitby = (0, 1),
                             ).first()
 
-    if case.dvr_case.id:
+    if case and case.dvr_case.id:
         # Is a client
         result.update(client_site_status(person_id,
                                          site_id,
@@ -227,7 +227,8 @@ def person_site_status(site_id, person):
                                         organisation_ids,
                                         ))
         if not result["valid"] and not result.get("error"):
-            result["error"] = T("Neither currently a resident nor active staff member")
+            # Neither resident nor active staff member, so invalid ID
+            result["error"] = T("Invalid ID")
 
     return result
 

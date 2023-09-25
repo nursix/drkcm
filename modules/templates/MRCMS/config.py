@@ -278,9 +278,12 @@ def config(settings):
     #settings.org.default_organisation = "Johanniter-Unfall-Hilfe"
     #settings.org.default_site = "Erstaufnahme Mannheim"
 
+    from .customise.org import site_presence_validate_id
+
     settings.org.branches = False
     settings.org.site_presence_site_types = ("cr_shelter",)
-    settings.org.site_presence_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
+    settings.org.site_presence_qrcode = (r"(?<code>[A-Z]{3}\d+)##.*##.*", None) #,"code")
+    settings.org.site_presence_validate_id = site_presence_validate_id
 
     from .customise.org import org_group_controller, \
                                org_organisation_controller, \

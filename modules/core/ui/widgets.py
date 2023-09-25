@@ -1531,6 +1531,7 @@ class S3QRInput(EdenFormWidget):
                  placeholder = None,
                  pattern = None,
                  index = None,
+                 keep_original = False,
                  ):
         """
             Args:
@@ -1538,8 +1539,16 @@ class S3QRInput(EdenFormWidget):
                 icon: show icon on button
                 label: show label on button
                 placeholder: placeholder for visible input
-                pattern: a JS regular expression to parse the QR Code
-                index: group index or name for the regex match
+                pattern: a JS regular expression to parse the QR code,
+                         if specified, the QR contents must match the
+                         pattern in order to be accepted
+                index: group index or name for the regex match to
+                       extract the visible detail; if omitted, the
+                       entire contents of the QR code will be shown
+                keep_original: submit the original QR contents, unless
+                               the user enters a value manually; if
+                               set to False, the visible detail will
+                               be submitted instead
         """
 
         self.hidden = hidden
@@ -1549,6 +1558,7 @@ class S3QRInput(EdenFormWidget):
 
         self.pattern = pattern
         self.index = index
+        self.keep_original = keep_original
 
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
@@ -1604,17 +1614,26 @@ class S3QRInput(EdenFormWidget):
                          _class = "tiny primary button qrscan-btn",
                          )
 
+        # The hidden input carries the submitted value
+        hidden = INPUT(_type = "hidden",
+                       _name = attr.pop("_name", widget_id),
+                       _class = "qrinput-hidden",
+                       requires = attr.pop("requires", None),
+                       )
+
         widget = DIV(INPUT(**attr),
                      SPAN(ICON("fa fa-close"),
                           _class = "postfix clear-btn",
                           _title = T("Clear"),
                           ),
                      scanbtn,
+                     hidden,
                      _class = "qrinput",
                      )
 
         options = {"inputPattern": self.pattern,
                    "inputIndex": self.index,
+                   "keepOriginalInput": bool(self.keep_original),
                    }
         self.inject_script(widget_id, options)
 

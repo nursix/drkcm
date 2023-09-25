@@ -1206,61 +1206,66 @@ div.s3-groupedopts-widget input.s3-groupedopts-option {
 }
 
 /* line 677, ../scss/theme/_widgets.scss */
-.qrinput-success {
+.qrinput-success, .qrinput-invalid {
   text-align: center;
   font-size: 4rem;
   padding: 1rem;
   color: darkgreen;
 }
 
-/* line 687, ../scss/theme/_widgets.scss */
+/* line 683, ../scss/theme/_widgets.scss */
+.qrinput-invalid {
+  color: #b31c1f;
+}
+
+/* line 690, ../scss/theme/_widgets.scss */
 form.anonymize-form,
 .anonymize-success {
   padding: 1rem;
 }
 
-/* line 691, ../scss/theme/_widgets.scss */
+/* line 694, ../scss/theme/_widgets.scss */
 .anonymize-select,
 .anonymize-confirm {
   margin-left: 1rem;
 }
-/* line 694, ../scss/theme/_widgets.scss */
+/* line 697, ../scss/theme/_widgets.scss */
 [dir=rtl] .anonymize-select, [dir=rtl]
 .anonymize-confirm {
   margin-left: 0;
   margin-right: 1rem;
 }
 
-/* line 699, ../scss/theme/_widgets.scss */
+/* line 702, ../scss/theme/_widgets.scss */
 .anonymize-buttons {
   margin-top: 1rem;
 }
 
-/* line 702, ../scss/theme/_widgets.scss */
+/* line 705, ../scss/theme/_widgets.scss */
 .anonymize-btn {
   background-color: #b31c1f;
 }
-/* line 704, ../scss/theme/_widgets.scss */
+/* line 707, ../scss/theme/_widgets.scss */
 .anonymize-btn:hover {
   background-color: #8f1619;
 }
 
-/* line 708, ../scss/theme/_widgets.scss */
+/* line 711, ../scss/theme/_widgets.scss */
 .s3-anonymize {
   display: inline-block;
   margin: 0.2rem;
 }
 
-/* line 716, ../scss/theme/_widgets.scss */
+/* line 719, ../scss/theme/_widgets.scss */
 .consent-widget {
   border: 1px solid #E0E0E0;
   padding: 0.5rem 1rem;
 }
-/* line 719, ../scss/theme/_widgets.scss */
+/* line 722, ../scss/theme/_widgets.scss */
 .consent-widget .consent-option {
   margin-top: 0.3rem;
 }
-/* line 722, ../scss/theme/_widgets.scss */
+/* line 725, ../scss/theme/_widgets.scss */
 .consent-widget .consent-explanation {
   white-space: pre-wrap;
   padding: 0.3rem 1.7rem;
@@ -1268,19 +1273,19 @@ form.anonymize-form,
   font-style: italic;
   color: #7F7F7F;
 }
-/* line 729, ../scss/theme/_widgets.scss */
+/* line 732, ../scss/theme/_widgets.scss */
 .consent-widget .consent-title {
   font-weight: bold;
 }
-/* line 732, ../scss/theme/_widgets.scss */
+/* line 735, ../scss/theme/_widgets.scss */
 .consent-widget .consent-checkbox {
   margin-right: 0.5rem !important;
 }
-/* line 735, ../scss/theme/_widgets.scss */
+/* line 738, ../scss/theme/_widgets.scss */
 .consent-widget .req {
   padding: 0 0.2rem;
 }
-/* line 738, ../scss/theme/_widgets.scss */
+/* line 741, ../scss/theme/_widgets.scss */
 .consent-widget .req_key {
   font-size: 0.7rem;
   font-weight: normal;
@@ -1288,45 +1293,45 @@ form.anonymize-form,
   margin: 0 0.5rem;
 }
 
-/* line 749, ../scss/theme/_widgets.scss */
+/* line 752, ../scss/theme/_widgets.scss */
 .wh-raster {
   margin-top: 0.3rem;
 }
-/* line 751, ../scss/theme/_widgets.scss */
+/* line 754, ../scss/theme/_widgets.scss */
 .wh-raster tr {
   border-bottom: 1px solid #ccc;
 }
-/* line 754, ../scss/theme/_widgets.scss */
+/* line 757, ../scss/theme/_widgets.scss */
 .wh-raster td {
   border-left: 1px solid #ccc;
 }
-/* line 756, ../scss/theme/_widgets.scss */
+/* line 759, ../scss/theme/_widgets.scss */
 .wh-raster td.wh-tick {
   border-left-width: 2px;
 }
-/* line 761, ../scss/theme/_widgets.scss */
+/* line 764, ../scss/theme/_widgets.scss */
 .wh-raster thead td {
   min-width: 1.8rem;
   padding-right: 0.6rem !important;
   font-size: 0.6rem;
   font-weight: normal;
 }
-/* line 770, ../scss/theme/_widgets.scss */
+/* line 773, ../scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-hour {
   text-align: center;
   font-weight: normal;
 }
-/* line 773, ../scss/theme/_widgets.scss */
+/* line 776, ../scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-hour.wh-on {
   color: darkgreen;
 }
-/* line 777, ../scss/theme/_widgets.scss */
+/* line 780, ../scss/theme/_widgets.scss */
 .wh-raster tbody td.wh-day {
   text-align: left;
   font-size: 0.7rem;
   padding: 0.2rem 0.4rem;
 }
-/* line 784, ../scss/theme/_widgets.scss */
+/* line 787, ../scss/theme/_widgets.scss */
 .wh-raster .wh-hour {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -1335,35 +1340,35 @@ form.anonymize-form,
   -ms-user-select: none;
   user-select: none;
 }
-/* line 792, ../scss/theme/_widgets.scss */
+/* line 795, ../scss/theme/_widgets.scss */
 .wh-raster .wh-hour.wh-on {
   background-color: lightgreen;
 }
-/* line 795, ../scss/theme/_widgets.scss */
+/* line 798, ../scss/theme/_widgets.scss */
 .wh-raster .wh-hour.wh-off {
   background-color: transparent;
 }
 
-/* line 804, ../scss/theme/_widgets.scss */
+/* line 807, ../scss/theme/_widgets.scss */
 #comments {
   margin: 0;
   padding: 0;
   list-style: none outside none;
 }
-/* line 808, ../scss/theme/_widgets.scss */
+/* line 811, ../scss/theme/_widgets.scss */
 #comments ul, #comments ol {
   padding-left: 20px;
   list-style: none outside none;
 }
-/* line 812, ../scss/theme/_widgets.scss */
+/* line 815, ../scss/theme/_widgets.scss */
 #comments li {
   padding: 10px 0 0;
 }
-/* line 814, ../scss/theme/_widgets.scss */
+/* line 817, ../scss/theme/_widgets.scss */
 #comments li a.jcollapsible:hover {
   background: none;
 }
-/* line 818, ../scss/theme/_widgets.scss */
+/* line 821, ../scss/theme/_widgets.scss */
 #comments .comment-box {
   overflow: hidden;
   padding: 15px 0;
@@ -1372,82 +1377,82 @@ form.anonymize-form,
   overflow: hidden;
   padding: 10px;
 }
-/* line 825, ../scss/theme/_widgets.scss */
+/* line 828, ../scss/theme/_widgets.scss */
 #comments .comment-box .avatar {
   display: inline-block;
   vertical-align: top;
 }
-/* line 830, ../scss/theme/_widgets.scss */
+/* line 833, ../scss/theme/_widgets.scss */
 #comments .comment-text {
   padding: 0 0 0 0.5rem;
   display: inline-block;
 }
-/* line 833, ../scss/theme/_widgets.scss */
+/* line 836, ../scss/theme/_widgets.scss */
 #comments .comment-text ul {
   list-style: disc outside none;
 }
-/* line 836, ../scss/theme/_widgets.scss */
+/* line 839, ../scss/theme/_widgets.scss */
 #comments .comment-text ol {
   list-style: decimal outside none;
 }
-/* line 839, ../scss/theme/_widgets.scss */
+/* line 842, ../scss/theme/_widgets.scss */
 #comments .comment-text li {
   padding: 0;
 }
-/* line 842, ../scss/theme/_widgets.scss */
+/* line 845, ../scss/theme/_widgets.scss */
 #comments .comment-text div {
   white-space: pre-line;
 }
-/* line 845, ../scss/theme/_widgets.scss */
+/* line 848, ../scss/theme/_widgets.scss */
 #comments .comment-text .comment-header {
   font-size: 0.8rem;
 }
-/* line 849, ../scss/theme/_widgets.scss */
+/* line 852, ../scss/theme/_widgets.scss */
 #comments .comment-text .comment-body p, #comments .comment-text .comment-body li {
   font-size: 0.9rem;
 }
-/* line 854, ../scss/theme/_widgets.scss */
+/* line 857, ../scss/theme/_widgets.scss */
 #comments .fright {
   float: right;
   text-align: right;
 }
-/* line 858, ../scss/theme/_widgets.scss */
+/* line 861, ../scss/theme/_widgets.scss */
 #comments .comment-date {
   font-size: 0.7rem;
   margin-bottom: 0.5rem;
 }
-/* line 863, ../scss/theme/_widgets.scss */
+/* line 866, ../scss/theme/_widgets.scss */
 #comments .comment-footer {
   clear: left;
 }
-/* line 867, ../scss/theme/_widgets.scss */
+/* line 870, ../scss/theme/_widgets.scss */
 #comments em {
   font-style: italic;
 }
-/* line 870, ../scss/theme/_widgets.scss */
+/* line 873, ../scss/theme/_widgets.scss */
 #comments strong {
   font-weight: bold;
 }
-/* line 874, ../scss/theme/_widgets.scss */
+/* line 877, ../scss/theme/_widgets.scss */
 [dir=rtl] #comments ul, [dir=rtl] #comments ol {
   padding-left: 0;
   padding-right: 20px;
 }
-/* line 878, ../scss/theme/_widgets.scss */
+/* line 881, ../scss/theme/_widgets.scss */
 [dir=rtl] #comments .comment-text {
   padding: 0 0.5rem 0 0;
 }
-/* line 881, ../scss/theme/_widgets.scss */
+/* line 884, ../scss/theme/_widgets.scss */
 [dir=rtl] #comments .fright {
   float: left;
   text-align: left;
 }
-/* line 885, ../scss/theme/_widgets.scss */
+/* line 888, ../scss/theme/_widgets.scss */
 [dir=rtl] #comments .comment-footer {
   clear: right;
 }
 
-/* line 890, ../scss/theme/_widgets.scss */
+/* line 893, ../scss/theme/_widgets.scss */
 #comment-form {
   width: 40rem;
   max-width: 100%;
@@ -1456,28 +1461,28 @@ form.anonymize-form,
   margin-top: 0.5rem;
 }
 
-/* line 901, ../scss/theme/_widgets.scss */
+/* line 904, ../scss/theme/_widgets.scss */
 .ajax_more {
   float: right;
   margin: 0 2px 2px 0;
   width: 16px;
   height: 16px;
 }
-/* line 904, ../scss/theme/_widgets.scss */
+/* line 907, ../scss/theme/_widgets.scss */
 [dir=rtl] .ajax_more {
   float: left;
   margin: 0 0 2px 2px;
 }
-/* line 910, ../scss/theme/_widgets.scss */
+/* line 913, ../scss/theme/_widgets.scss */
 .ajax_more.collapsed {
   background: url(../../img/icon_blue_plus15px.png) no-repeat left top;
 }
-/* line 913, ../scss/theme/_widgets.scss */
+/* line 916, ../scss/theme/_widgets.scss */
 .ajax_more.expanded {
   background: url(../../img/icon_blue_minus15px.png) no-repeat left top;
 }
 
-/* line 921, ../scss/theme/_widgets.scss */
+/* line 924, ../scss/theme/_widgets.scss */
 .rfilter {
   float: left;
   padding: 10px 20px 10px 10px;

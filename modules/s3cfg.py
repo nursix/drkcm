@@ -5055,10 +5055,20 @@ class S3Config(Storage):
         """
             Use QRInput for site presence registration
                 - True to enable and use QR contents verbatim
-                - a tuple (pattern, index) for QR contents parsing
+                - a tuple (pattern, index) for client-side QR contents parsing
                 - False to disable
         """
         return self.org.get("site_presence_qrcode", False)
+
+    def get_org_site_presence_validate_id(self):
+        """
+            A function to parse and validate the ID label input
+            server-side; passes the original QR contents if a
+            QR code was scanned, or otherwise whatever the user
+            entered into the manual input field
+            (pe_label, advice, error) = function(id_input)
+        """
+        return self.org.get("site_presence_validate_id", False)
 
     def get_org_office_code_unique(self):
         """

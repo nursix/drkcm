@@ -28,6 +28,8 @@
 
             inputPattern: null, // e.g. '(?<code>\\d+)##.+##.+##.+'
             inputIndex: null, // e.g. 'code'
+
+            keepOriginalInput: false
         },
 
         /**
@@ -48,6 +50,7 @@
 
             this.container = $(this.element).closest('.qrinput');
             this.scanButton = $('.qrscan-btn', this.container);
+            this.hiddenInput = $(this.element).siblings('.qrinput-hidden');
 
             // Set up qr-scanner worker
             let workerPath = this.options.workerPath;
@@ -85,6 +88,7 @@
         refresh: function() {
 
             let $el = $(this.element),
+                $hidden = this.hiddenInput,
                 self = this;
 
             this._unbindEvents();
@@ -110,6 +114,7 @@
                         scanForm = $('<div class="qrinput-scan">'),
                         // TODO make success-message configurable
                         success = $('<div class="qrinput-success">').html('<i class="fa fa-check">').hide().appendTo(scanForm),
+                        invalid = $('<div class="qrinput-invalid">').html('<i class="fa fa-times">').hide().appendTo(scanForm),
                         videoInput = $('<video>').appendTo(scanForm);
 
                     // TODO make width/height configurable or auto-adapt to screen size
@@ -130,21 +135,44 @@
                     });
 
                     scanButton.on('click', function() {
-                        videoInput.show();
+                        invalid.hide();
                         success.hide();
+                        videoInput.show();
                         dialog.dialog('open');
                         scanner = new QrScanner(videoInput.get(0),
                             function(result) {
+                                // Hide the scanner
                                 scanner.stop();
                                 videoInput.hide();
-                                success.show();
                                 window.navigator.vibrate(100);
+
+                                // Try parsing the result
+                                let parsed = '';
                                 try {
-                                    result = self._parse(result);
+                                    parsed = self._parse(result);
                                 } catch(e) {
-                                    // pass
+                                    parsed = false;
                                 }
-                                $el.val(result).trigger('change' + self.eventNamespace);
+
+                                // Handle invalid results
+                                if (parsed === false) {
+                                    result = '';
+                                    parsed = '';
+                                    invalid.show();
+                                } else {
+                                    success.show();
+                                }
+
+                                // Replace the original result with parsed value?
+                                if (!self.options.keepOriginalInput) {
+                                    result = parsed;
+                                }
+
+                                // Update the inputs
+                                $el.val(parsed).trigger('change' + self.eventNamespace);
+                                $hidden.val(result).trigger('change' + self.eventNamespace);
+
+                                // Close the dialog
                                 setTimeout(function() {
                                     dialog.dialog('close');
                                 }, 400);
@@ -167,6 +195,7 @@
          */
         _clearInput: function() {
 
+            this.hiddenInput.val('').trigger('change' + this.eventNamespace);
             $(this.element).val('').trigger('change' + this.eventNamespace);
         },
 
@@ -188,14 +217,19 @@
                 parsed = expr.exec(result);
             if (parsed) {
                 let index = opts.inputIndex;
-                if (typeof index == 'string') {
+                if (!index && index !== 0) {
+                    parsed = result;
+                } else if (typeof index == 'string') {
                     parsed = parsed.groups[index];
                 } else {
                     parsed = parsed[index];
                 }
             } else {
                 // Invalid input - do not expose the contents
-                parsed = '';
+                parsed = false;
+            }
+            if (parsed === undefined) {
+                parsed = false;
             }
 
             return parsed;
@@ -210,8 +244,12 @@
                 ns = this.eventNamespace,
                 self = this;
 
-            $('.clear-btn', $el.closest('.qrinput')).on('click' + ns, function() {
+            $('.clear-btn', $el.closest('.qrinput')).off(ns).on('click' + ns, function() {
                 self._clearInput();
+            });
+
+            $el.off(ns).on('input', function() {
+                self.hiddenInput.val($el.val().trim());
             });
 
             return true;
@@ -224,6 +262,8 @@
 
             let $el = $(this.element),
                 ns = this.eventNamespace;
+
+            $el.off(ns);
 
             $('.clear-btn', $el.closest('.qrinput')).off(ns);
 

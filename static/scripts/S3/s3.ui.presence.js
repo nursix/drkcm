@@ -36,7 +36,9 @@
             statusIn: 'present',
             statusOut: 'not present',
             statusNone: '-',
-            statusLabel: 'Status'
+            statusLabel: 'Status',
+
+            sendOriginalQRInput: true,
         },
 
         /**
@@ -61,6 +63,9 @@
             this.idPrefix = '#' + this.options.tableName;
 
             this.personData = $(this.element).find('input[type=hidden][name=data]');
+
+            this.labelInput = $(this.idPrefix + '_label');
+            this.hiddenInput = this.labelInput.siblings('.qrinput-hidden');
 
             this.refresh();
         },
@@ -90,17 +95,32 @@
             this._bindEvents();
         },
 
+        _getLabel: function() {
+
+            let labelInput = this.labelInput,
+                hiddenInput = this.hiddenInput,
+                opts = this.options,
+                label = labelInput.val().trim();
+
+            labelInput.val(label);
+            if (opts.sendOriginalQRInput) {
+                let qrdata = hiddenInput.val();
+                if (qrdata) {
+                    label = qrdata;
+                }
+            }
+            return label;
+
+        },
+
         /**
          * Ajax-method to retrieve the person data for the label
          */
         _checkID: function() {
 
             var prefix = this.idPrefix,
-                labelInput = $(prefix + '_label'),
-                label = labelInput.val().trim();
-
-            // Update label input with trimmed label
-            labelInput.val(label);
+                labelInput = this.labelInput,
+                label = this._getLabel();
 
             // Don't do anything if label is empty
             if (!label) {
@@ -137,17 +157,13 @@
 
                     // Process the data
                     if (data.e) {
-
                         // Show error message on label input
-                        var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.e + '</div></div>').hide();
-
-                        var outer = labelInput.closest('.controls');
-                        if (outer.length) {
-                            msg.appendTo(outer).slideDown();
-                        } else {
-                            msg.insertAfter(labelInput).slideDown();
-                        }
+                        self._showInputError(data.e);
                     } else {
+                        // Show advice on label input
+                        if (data.q) {
+                            self._showInputError(data.q);
+                        }
 
                         // Show person data
                         self._showPersonData(data);
@@ -182,11 +198,8 @@
         _register: function(method) {
 
             var prefix = this.idPrefix,
-                labelInput = $(prefix + '_label'),
-                label = labelInput.val().trim();
-
-            // Update label input with trimmed label
-            labelInput.val(label);
+                labelInput = this.labelInput,
+                label = this._getLabel();
 
             // Don't do anything if label is empty
             if (!label) {
@@ -226,11 +239,8 @@
 
                     // Process the data
                     if (data.e) {
-
                         // Show error message on label input
-                        var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.e + '</div></div>').hide();
-                        msg.insertAfter(labelInput).slideDown();
-
+                        self._showInputError(data.e);
                     } else {
 
                         // Show person data if we have announcements
@@ -310,6 +320,23 @@
         },
 
         /**
+         * Shows an error message on the label input
+         *
+         * @param {string} error: the error message
+         */
+        _showInputError: function(error) {
+
+            let labelInput = this.labelInput,
+                msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + error + '</div></div>').hide(),
+                outer = labelInput.closest('.controls');
+            if (outer.length) {
+                msg.appendTo(outer).slideDown();
+            } else {
+                msg.insertAfter(labelInput).slideDown();
+            }
+        },
+
+        /**
          * Generate HTML for the current check-in status
          *
          * @param {integer} status (IN|OUT|null)
@@ -355,9 +382,10 @@
                 this._clearAlert();
             }
 
-            // Clear ID label
+            // Clear input(s)
             if (!keepInput) {
-                $(prefix + '_label').val('').trigger('focus');
+                this.hiddenInput.val('');
+                this.labelInput.val('').trigger('focus');
             }
 
             // Clear details
@@ -489,7 +517,7 @@
             });
 
             // Events for the label input
-            var labelInput = $(prefix + '_label');
+            var labelInput = this.labelInput;
 
             // Changing the label resets form
             labelInput.on('input' + ns, function(e) {

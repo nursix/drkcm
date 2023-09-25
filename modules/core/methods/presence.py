@@ -148,6 +148,7 @@ class PresenceRegistration(CRUDMethod):
                 person_data = self.ajax_data(person, status)
 
         # Configure label input
+        validate_serverside = bool(settings.get_org_site_presence_validate_id())
         label_input = self.label_input
         use_qr_code = settings.get_org_site_presence_qrcode()
         if use_qr_code:
@@ -158,6 +159,7 @@ class PresenceRegistration(CRUDMethod):
                 label_input = S3QRInput(placeholder = T("Enter or scan ID"),
                                         pattern = pattern,
                                         index = index,
+                                        keep_original = validate_serverside,
                                         )
 
         # Standard form fields and data
@@ -255,6 +257,7 @@ class PresenceRegistration(CRUDMethod):
                    "statusOut": s3_str(label_out),
                    "statusNone": "-",
                    "statusLabel": s3_str(T("Status")),
+                   "sendOriginalQRInput": validate_serverside,
                    }
         self.inject_js(widget_id, options)
 
@@ -352,10 +355,18 @@ class PresenceRegistration(CRUDMethod):
 
         # Identify the person
         label = data.get("l")
-        person = self.get_person(label)
+        validate = current.deployment_settings.get_org_site_presence_validate_id()
+        if callable(validate):
+            label, advice, error = validate(label)
+            person = self.get_person(label) if label else None
+            if advice:
+                output["q"] = s3_str(advice)
+        else:
+            person = self.get_person(label)
 
         if person is None:
-            error = T("No person found with this ID number")
+            if not error:
+                error = T("No person found with this ID number")
         else:
             status = self.status(resource.tablename, site_id, person)
             if not status.get("valid"):

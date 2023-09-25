@@ -227,4 +227,44 @@ def org_site_presence_event_resource(r, tablename):
                              site_presence_event_onaccept,
                              )
 
+# -------------------------------------------------------------------------
+def site_presence_validate_id(label):
+    # TODO docstring
+
+    from ..idcards import IDCard
+
+    T = current.T
+
+    person_id = None
+    verified = False
+    advice = None
+    error = None
+
+    if label:
+        label = label.strip().upper()
+        pe_label = label.split("##")[0]
+        try:
+            person_id, verified = IDCard.identify(label, verify=True)
+        except SyntaxError:
+            # Malformed label
+            person_id, error = None, T("Invalid ID")
+        except ValueError:
+            # Invalid label
+            person_id, error = None, T("Registration card invalid")
+    else:
+        pe_label = None
+
+    if person_id:
+        if not verified:
+            signature = IDCard.get_id_fingerprint(pe_label)
+            if signature:
+                advice = T("Verify signature: %(signature)s") % {"signature": signature}
+            else:
+                advice = T("No valid registration card found")
+    elif not error:
+        # No person found with this ID
+        pass
+
+    return pe_label, advice, error
+
 # END =========================================================================

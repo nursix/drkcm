@@ -674,11 +674,14 @@ div.s3-groupedopts-widget {
         max-width: 14rem;
     }
 }
-.qrinput-success {
+.qrinput-success, .qrinput-invalid {
     text-align: center;
     font-size: 4rem;
     padding: 1rem;
     color: darkgreen;
+}
+.qrinput-invalid {
+    color: $alert-color;
 }
 
 // ----------------------------------------------------------------------------

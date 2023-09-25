@@ -361,7 +361,7 @@ class IDCard:
             pe_label = row.pr_person.pe_label
             record = row.pr_identity
             try:
-                uid = uuid.UUID(record.uuid)
+                uid = uuid.UUID(record.uuid).hex.upper()
             except ValueError:
                 pass
             else:
@@ -389,17 +389,14 @@ class IDCard:
         db = current.db
         s3db = current.s3db
 
-        error = None
-
         data = label.strip().split("##") if label else None
         if not data:
-            return None, "no data"
+            raise SyntaxError("No data for identification")
         elif len(data) == 3:
             label, token, chash = data
         else:
             label, token, chash = data[0], None, None
             verify = False
-            error = "Insufficient data for verification"
 
         # Find the person record
         ptable = s3db.pr_person
@@ -411,15 +408,12 @@ class IDCard:
                                   ).first()
         if not person:
             # Label does not match any registered person
-            return None, "person not found"
+            return None, False
 
         if verify:
-            try:
-                cls._verify(person, token, chash)
-            except ValueError as e:
-                error = str(e)
+            cls._verify(person, token, chash)
 
-        return person.id, error
+        return person.id, verify
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -431,7 +425,7 @@ class IDCard:
         s3db = current.s3db
 
         if not token or not hash:
-            raise ValueError("Insufficient data for ID verification")
+            raise SyntaxError("Insufficient data for ID verification")
 
         # Compute ID record verification hash
         try:
@@ -598,7 +592,7 @@ class IDCardLayout(PDFCardLayout):
         # TODO enforce default language for labels (settings.L10n.default_language = "de")
         T = current.T
 
-        c = self.canv
+        #c = self.canv
         w = self.width
         h = self.height
         common = self.common
