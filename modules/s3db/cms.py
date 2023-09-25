@@ -37,7 +37,7 @@ __all__ = ("CMSContentModel",
            "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
-           "cms_accessible_newsletters",
+           "cms_received_newsletters",
            "cms_unread_newsletters",
            "cms_mark_newsletter",
            "cms_index",
@@ -2230,9 +2230,10 @@ def cms_newsletter_actions(newsletter):
     return actions
 
 # =============================================================================
-def cms_accessible_newsletters():
+def cms_received_newsletters():
     """
-        Constructs a subquery for newsletters accessible by the current user
+        Constructs a subquery for newsletters directed at any recipient
+        accessible by the current user
 
         Returns:
             - a subquery (SQL string) for use with belongs(), or
@@ -2296,17 +2297,22 @@ def cms_unread_newsletters(count=True, cached=True):
             pass
 
     now = datetime.datetime.utcnow()
-    if expire and expire > now:
+    if expire and expire > now and False:
         return number if count else record_ids
 
     if auth.user:
+        # Newsletters that can be read by the user:
+        accessible_newsletters = auth.s3_accessible_query("read", ntable,
+                                                          c = "cms",
+                                                          f = "read_newsletter",
+                                                          )
         user_id = auth.user.id
         left = rtable.on((rtable.newsletter_id == ntable.id) & \
                          (rtable.user_id == user_id) & \
                          (rtable.deleted == False))
-        query = (ntable.id.belongs(cms_accessible_newsletters())) & \
+        query = (ntable.id.belongs(cms_received_newsletters())) & \
                 (ntable.status == "SENT") & \
-                auth.s3_accessible_query("read", ntable) & \
+                accessible_newsletters & \
                 (ntable.deleted == False) & \
                 (rtable.id == None)
     else:

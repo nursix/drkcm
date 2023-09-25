@@ -141,10 +141,15 @@ def config(settings):
     # CMS Settings and Customizations
     #
     settings.cms.hide_index = True
+    settings.cms.newsletter_recipient_types = ("org_organisation",)
 
-    from .customise.cms import cms_post_resource, \
+    from .customise.cms import cms_newsletter_resource, \
+                               cms_newsletter_controller, \
+                               cms_post_resource, \
                                cms_post_controller
 
+    settings.customise_cms_newsletter_resource = cms_newsletter_resource
+    settings.customise_cms_newsletter_controller = cms_newsletter_controller
     settings.customise_cms_post_resource = cms_post_resource
     settings.customise_cms_post_controller = cms_post_controller
 

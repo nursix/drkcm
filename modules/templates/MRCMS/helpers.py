@@ -38,6 +38,101 @@ def get_role_realms(role):
     return role_realms
 
 # -----------------------------------------------------------------------------
+def get_role_users(role_uid, pe_id=None, organisation_id=None):
+    """
+        Look up users with a certain user role for a certain organisation
+
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
+
+        Returns:
+            a dict {user_id: pe_id} of all active users with this
+            role for the organisation
+    """
+
+    db = current.db
+
+    auth = current.auth
+    s3db = current.s3db
+
+    if not pe_id and organisation_id:
+        # Look up the realm pe_id from the organisation
+        otable = s3db.org_organisation
+        query = (otable.id == organisation_id) & \
+                (otable.deleted == False)
+        organisation = db(query).select(otable.pe_id,
+                                        limitby = (0, 1),
+                                        ).first()
+        pe_id = organisation.pe_id if organisation else None
+
+    # Get all users with this realm as direct OU ancestor
+    from s3db.pr import pr_realm_users
+    users = pr_realm_users(pe_id) if pe_id else None
+    if users:
+        # Look up those among the realm users who have
+        # the role for either pe_id or for their default realm
+        gtable = auth.settings.table_group
+        mtable = auth.settings.table_membership
+        ltable = s3db.pr_person_user
+        utable = auth.settings.table_user
+        join = [mtable.on((mtable.user_id == ltable.user_id) & \
+                          ((mtable.pe_id == None) | (mtable.pe_id == pe_id)) & \
+                          (mtable.deleted == False)),
+                gtable.on((gtable.id == mtable.group_id) & \
+                          (gtable.uuid == role_uid)),
+                # Only verified+active accounts:
+                utable.on((utable.id == mtable.user_id) & \
+                          ((utable.registration_key == None) | \
+                           (utable.registration_key == "")))
+                ]
+        query = (ltable.user_id.belongs(set(users.keys()))) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ltable.user_id,
+                                ltable.pe_id,
+                                join = join,
+                                )
+        users = {row.user_id: row.pe_id for row in rows}
+
+    return users if users else None
+
+# -----------------------------------------------------------------------------
+def get_role_emails(role_uid, pe_id=None, organisation_id=None):
+    """
+        Look up the emails addresses of users with a certain user role
+        for a certain organisation
+
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
+
+        Returns:
+            a list of email addresses
+    """
+
+    contacts = None
+
+    users = get_role_users(role_uid,
+                           pe_id = pe_id,
+                           organisation_id = organisation_id,
+                           )
+
+    if users:
+        # Look up their email addresses
+        ctable = current.s3db.pr_contact
+        query = (ctable.pe_id.belongs(set(users.values()))) & \
+                (ctable.contact_method == "EMAIL") & \
+                (ctable.deleted == False)
+        rows = current.db(query).select(ctable.value,
+                                        orderby = ~ctable.priority,
+                                        )
+        contacts = list(set(row.value for row in rows))
+
+    return contacts if contacts else None
+
+# -----------------------------------------------------------------------------
 def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
     """
         Get organisations managed by the current user

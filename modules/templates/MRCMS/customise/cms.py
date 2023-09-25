@@ -22,11 +22,7 @@ def lookup_newsletter_recipients(resource):
             a list of pe_ids of the recipients
     """
 
-    if resource.tablename == "org_facility":
-        rows = resource.select(["organisation_id$pe_id"], as_rows=True)
-        return [row.org_organisation.pe_id for row in rows]
-
-    elif resource.tablename == "org_organisation":
+    if resource.tablename == "org_organisation":
         rows = resource.select(["pe_id"], as_rows=True)
         return [row.pe_id for row in rows]
 
@@ -109,7 +105,7 @@ def cms_newsletter_controller(**attr):
             query = accessible_pe_query(instance_types = types,
                                         method = "read",
                                         c = "org",
-                                        f = "facility",
+                                        f = "organisation",
                                         )
 
             # Filter out existing recipients

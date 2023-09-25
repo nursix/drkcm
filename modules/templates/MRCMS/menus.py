@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, URL
+from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import MM, M, ML, MP, MA
 try:
@@ -186,6 +186,15 @@ class S3OptionsMenu(default.S3OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------
+    @classmethod
+    def cms(cls):
+
+        if not current.auth.s3_has_role("ADMIN"):
+            return cls.org()
+
+        return super().cms()
+
+    # -------------------------------------------------------------------------
     @staticmethod
     def cr():
         """ CR / Shelter Registry """
@@ -323,10 +332,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
     def org():
         """ ORG / Organization Registry """
 
+        T = current.T
+        auth = current.auth
+
         ADMIN = current.session.s3.system_roles.ADMIN
 
         # Single or multiple organisations?
-        if current.auth.s3_has_permission("create", "org_organisation"):
+        if auth.s3_has_permission("create", "org_organisation"):
             organisation_id = None
         else:
             organisation_id = get_default_organisation()
@@ -337,8 +349,23 @@ class S3OptionsMenu(default.S3OptionsMenu):
                             M("Create", m="create"),
                             )
 
+        # Newsletter menu
+        author = auth.s3_has_permission("create", "cms_newsletter", c="cms", f="newsletter")
+        inbox_label = T("Inbox") if author else T("Newsletters")
+        unread = current.s3db.cms_unread_newsletters()
+        if unread:
+            inbox_label = TAG[""](inbox_label, SPAN(unread, _class="num-pending"))
+        if author:
+            cms_menu = M("Newsletters", c="cms", f="read_newsletter")(
+                            M(inbox_label, f="read_newsletter", translate=False),
+                            M("Compose and Send", f="newsletter", p="create"),
+                            )
+        else:
+            cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
+
         return M(c=("org", "hrm"))(
                     org_menu,
+                    cms_menu,
                     M("Organization Groups", f="group")(
                         M("Create", m="create"),
                         ),
