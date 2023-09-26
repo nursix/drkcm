@@ -133,6 +133,9 @@ class S3NavigationItem:
                 mandatory: item is always active
                 ltr: item is always rendered LTR
                 attributes: attributes to use in layout
+
+            Keyword Args:
+                ignore_args: ignore args when matching current request
         """
 
         # Label
@@ -700,7 +703,6 @@ class S3NavigationItem:
         if not c and self.parent is None:
             return 1
 
-
         rvars = request.get_vars
         controller = request.controller
         function = request.function
@@ -728,11 +730,11 @@ class S3NavigationItem:
             mf = self.get("match_function")
             if function == f or function in mf:
                 level = 2
-            elif f == "index" or "index" in mf:
-                # "weak" match: homepage link matches any function
-                return 1
+            elif f == "index" or "index" in mf or "*" in mf:
+                # "weak" match: homepage link or * matches any function
+                level = 1
             elif f is not None:
-                return 0
+                level = 0
 
         # Args and vars
         # Match levels (=order of preference):
@@ -744,7 +746,7 @@ class S3NavigationItem:
         #   5 = args match but vars mismatch
         #   6 = args match and no vars in item
         #   7 = args match and vars match
-        if level == 2:
+        if level == 2 and not self.opts.ignore_args:
             extra = 1
             for k, v in link_vars.items():
                 if k not in rvars or k in rvars and rvars[k] != s3_str(v):
@@ -755,7 +757,7 @@ class S3NavigationItem:
             rargs = request.args
             if rargs:
                 if args:
-                    largs = [a for a in request.args if not a.isdigit()]
+                    largs = [a for a in rargs if not a.isdigit()]
                     if len(args) == len(largs) and \
                        all([args[i] == largs[i] for i in range(len(args))]):
                         level = 5

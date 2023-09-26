@@ -42,43 +42,39 @@ class S3MainMenu(default.S3MainMenu):
     def menu_modules(cls):
         """ Custom Modules Menu """
 
-        has_permission = current.auth.s3_has_permission
+        auth = current.auth
+
+        has_role = auth.s3_has_role
+        has_permission = auth.s3_has_permission
 
         # Single or multiple organisations?
-        if has_permission("create", "org_organisation"):
+        if has_permission("create", "org_organisation", c="org", f="organisation"):
             organisation_id = None
         else:
             organisation_id = get_default_organisation()
+
+        # Organisation menu
+        c = ("org", "hrm") if has_role("ADMIN") else ("org", "hrm", "cms")
+        f = ("organisation", "*")
         if organisation_id:
-            org_menu = MM("Organization", c="org", f="organisation", args=[organisation_id])
+            org_menu = MM("Organization", c=c, f=f, args=[organisation_id], ignore_args=True)
         else:
-            org_menu = MM("Organizations", c="org", f="organisation")
+            org_menu = MM("Organizations", c=c, f=f)
 
         # Single or multiple shelters?
-        if has_permission("create", "cr_shelter"):
+        if has_permission("create", "cr_shelter", c="cr", f="shelter"):
             shelter_id = None
         else:
             shelter_id = get_default_shelter()
+
+        # Shelter menu
         if shelter_id:
-            shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id])
+            shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id], ignore_args=True)
         else:
             shelter_menu = MM("Shelters", c="cr", f="shelter")
 
-        #Clients
-            #dvr/person
-        #Shelter(s)
-            #Shelter if default shelter and not permitted to create shelters else Shelter list
-            #Create if permitted to create shelters
-            #Presence Registration if default shelter
-        #Organisation(s) <= plural if not single or permitted to create orgs
-            #Organisation if default organisation and not permitted to create orgs else Organisation list
-            #Staff
-        #Security <= requires default organisation/shelter
-            #Confiscation
-            #Presence list if default shelter
-
         return [
-            MM("Clients", c=("dvr", "pr"), f="person"),
+            MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             shelter_menu,
             org_menu,
             MM("Security", c="security", f="seized_item"),
@@ -200,7 +196,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
         """ CR / Shelter Registry """
 
         # Single or multiple shelters?
-        if current.auth.s3_has_permission("create", "cr_shelter"):
+        if current.auth.s3_has_permission("create", "cr_shelter", c="cr", f="shelter"):
             shelter_id = None
         else:
             shelter_id = get_default_shelter()
@@ -216,7 +212,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
             #ADMIN = current.auth.get_system_roles().ADMIN
 
             menu = M(c="cr")(
-                        M("Shelter", f="shelter", args=[shelter_id])(
+                        M("Shelter", f="shelter", args=[shelter_id], ignore_args=True)(
                             M("Overview",
                             args = [shelter_id, "profile"],
                             ),
@@ -338,12 +334,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
         ADMIN = current.session.s3.system_roles.ADMIN
 
         # Single or multiple organisations?
-        if auth.s3_has_permission("create", "org_organisation"):
+        if auth.s3_has_permission("create", "org_organisation", c="org", f="organisation"):
             organisation_id = None
         else:
             organisation_id = get_default_organisation()
         if organisation_id:
-            org_menu = M("Organization", c="org", f="organisation", args=[organisation_id])
+            org_menu = M("Organization", c="org", f="organisation", args=[organisation_id], ignore_args=True)
         else:
             org_menu = M("Organizations", c="org", f="organisation")(
                             M("Create", m="create"),
