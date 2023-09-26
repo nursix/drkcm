@@ -166,6 +166,7 @@ def org_rheader(r, tabs=None):
 
     if record:
         T = current.T
+        auth = current.auth
 
         if tablename == "org_group":
 
@@ -183,9 +184,11 @@ def org_rheader(r, tabs=None):
             if not tabs:
                 tabs = [(T("Basic Details"), None),
                         (T("Offices"), "office"),
-                        (T("Staff"), "human_resource"),
+                        #(T("Staff"), "human_resource"),
                         (T("Documents"), "document"),
                         ]
+                if auth.s3_has_permission("read", "pr_person", c="hrm", f="person"):
+                    tabs.insert(-1, (T("Staff"), "human_resource"))
 
             rheader_fields = []
             rheader_title = "name"

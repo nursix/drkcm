@@ -313,12 +313,12 @@ def cr_shelter_controller(**attr):
                     s3db.configure("cr_shelter",
                                    profile_layers = profile_layers,
                                    )
-            else:
-                has_role = current.auth.s3_has_role
-                if has_role("SECURITY") and not has_role("ADMIN"):
-                    # Security can access nothing in cr/shelter except
-                    # Dashboard and Check-in/out UI
-                    current.auth.permission.fail()
+            #else:
+                #has_role = current.auth.s3_has_role
+                #if has_role("SECURITY") and not has_role("ADMIN"):
+                #    # Security can access nothing in cr/shelter except
+                #    # Dashboard and Check-in/out UI
+                #    current.auth.permission.fail()
 
             if r.interactive:
                 # TODO should also be deletable while there are no shelter registrations
