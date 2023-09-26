@@ -468,6 +468,8 @@ class IDCard:
 class IDCardLayout(PDFCardLayout):
     """
         Layout for printable beneficiary ID cards
+
+        TODO subclass for staff
     """
 
     cardsize = A4
@@ -487,11 +489,6 @@ class IDCardLayout(PDFCardLayout):
                 list of field selectors
         """
 
-        # TODO we do not need DoB and Nationality
-        # TODO however, we do need hrm_human_resource.organisation_id$root_organisation
-        #      if the item is a staff member (or the context is staff)...maybe subclass
-        #      and use alternative in Generator-Method
-        # TODO we also need the shelter address, if available (L3,L4,postcode,address)
         return ["id",
                 "pe_id",
                 "pe_label",
@@ -501,6 +498,7 @@ class IDCardLayout(PDFCardLayout):
                 "date_of_birth",
                 "dvr_case.organisation_id$root_organisation",
                 "shelter_registration.shelter_id",
+                "shelter_registration.shelter_unit_id",
                 "shelter_registration.shelter_id$location_id$L2",
                 "shelter_registration.shelter_id$location_id$L3",
                 "shelter_registration.shelter_id$location_id$L4",
@@ -533,7 +531,7 @@ class IDCardLayout(PDFCardLayout):
         # Look up all logos
         otable = s3db.org_organisation
         query = (otable.id.belongs(root_orgs))
-        rows = db(query).select(otable.id, otable.name, otable.phone, otable.logo)
+        rows = db(query).select(otable.id, otable.name, otable.logo)
 
         field = otable.logo
         path = field.uploadfolder if field.uploadfolder else defaultpath
@@ -546,8 +544,6 @@ class IDCardLayout(PDFCardLayout):
             root_org_names = represent.bulk(list(root_orgs), show_link=False)
         else:
             root_org_names = None
-
-        phone_numbers = {row.id: row.phone for row in rows if row.phone}
 
         # Get all PE IDs
         pe_ids = set(item["_row"]["pr_person.pe_id"] for item in items)
@@ -566,7 +562,6 @@ class IDCardLayout(PDFCardLayout):
         return {"pictures": pictures,
                 "root_org_names": root_org_names,
                 "logos": logos,
-                "phone_numbers": phone_numbers,
                 }
 
     # -------------------------------------------------------------------------
@@ -622,7 +617,7 @@ class IDCardLayout(PDFCardLayout):
             logos = common.get("logos")
             logo = logos.get(root_org) if logos else None
             if not logo:
-                # Make this a setting
+                # TODO Make this a setting
                 default_logo = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
                 logo = os.path.join(current.request.folder, default_logo)
             if logo:
@@ -633,18 +628,18 @@ class IDCardLayout(PDFCardLayout):
                 draw_string(20, h-140, root_org_name, width=w/2-40, height=20, size=12, bold=True, halign="center")
 
             # Document Title
-            # TODO alternative title for staff
-            draw_string(20, h-170, "Registrierungskarte", width=w/2-40, height=20, size=14, bold=True, halign="center")
+            draw_string(20, h-165, "Registrierungskarte", width=w/2-40, height=20, size=14, bold=True, halign="center")
 
             # -------- Left ---------
 
             x = 40
-            y = h * 13/16 - 55
+            y = h * 13/16 - 45
             wt = w/2-2*x
 
-            self.draw_box(30, y - 110, w/2-60, 140)
+            self.draw_box(30, y - 120, w/2-60, 150)
 
             # Shelter Name
+            # TODO not for staff
             shelter = item["cr_shelter_registration.shelter_id"]
             if shelter:
                 draw_string(x, y + 14, T("Shelter"))
@@ -653,35 +648,47 @@ class IDCardLayout(PDFCardLayout):
                 postcode = item["gis_location.addr_postcode"]
                 address = item["gis_location.addr_street"]
 
-                # TODO include shelter address
+                # Include shelter address
                 place = "%s %s" % (postcode, location) if postcode else location
                 if address:
-                    draw_string(x, y-15, address, width=wt, height=20, size=9)
+                    draw_string(x, y-13, address, width=wt, height=20, size=9)
                 if place:
-                    draw_string(x, y-30, place, width=wt, height=20, size=9)
+                    draw_string(x, y-26, place, width=wt, height=20, size=9)
 
             # Names
-            y = y - 65
+            y = y - 60
             name = s3_format_fullname(fname = raw["pr_person.first_name"],
                                       #mname = raw["pr_person.middle_name"],
                                       lname = raw["pr_person.last_name"],
                                       truncate = False,
                                       )
-            draw_string(x, y + 14, T("Name"))
+            draw_string(x, y + 13, T("Name"))
             draw_string(x, y, name, width=wt, height=20, size=12)
 
             # Date of birth
-            y = y - 30
+            y = y - 26
             dob = item["pr_person.date_of_birth"]
-            draw_string(x, y + 14, T("Date of Birth"))
+            draw_string(x, y + 13, T("Date of Birth"))
             draw_string(x, y, dob, size=12, width=wt)
 
+            # Shelter Unit
+            # TODO not for staff
+            # TODO do not draw if transitory unit?
+            y = y - 26
+            unit = item["_row"]["cr_shelter_registration.shelter_unit_id"]
+            if unit:
+                unit = item["cr_shelter_registration.shelter_unit_id"]
+                draw_string(x, y + 13, T("Housing Unit"))
+                draw_string(x, y, unit, size=12, width=wt)
+
+            # --------- Bottom --------
+
             # ID Number and barcode
-            y = y - 50
+            y = y - 40
             code = raw["pr_person.pe_label"]
             if code:
                 draw_string(20, y, s3_str(code), width=w/2-40, size=28, bold=True, halign="center")
-                self.draw_barcode(s3_str(code), w / 4, y - 45, height=28, halign="center", maxwidth=w/2-40)
+                self.draw_barcode(s3_str(code), w / 4, y - 40, height=28, halign="center", maxwidth=w/2-40)
 
             # -------- Right ---------
 
@@ -724,10 +731,6 @@ class IDCardLayout(PDFCardLayout):
 
             # Advice
             advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
-            phone_numbers = common.get("phone_numbers")
-            phone = phone_numbers.get(root_org) if phone_numbers else None
-            if phone:
-                advice = "%s Kontakt: %s" % (advice, phone)
             self.draw_vertical_string(h/2+20, 25, advice, width=h/2-50)
 
             # Outline
