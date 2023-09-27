@@ -367,7 +367,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         ),
                     M("Staff", c="hrm", f="staff"),
                     M("Administration", link=False, restrict=[ADMIN])(
-                        M("Organization Types", f="organisation_type"),
+                        M("Organization Types", c="org", f="organisation_type"),
+                        M("Job Titles", c="hrm", f="job_title"),
                         ),
                     )
 

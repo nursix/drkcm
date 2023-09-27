@@ -697,34 +697,17 @@ def configure_case_list_fields(resource,
 
 # -------------------------------------------------------------------------
 def configure_id_cards(r, resource, administration=False):
-    # TODO review + refactor
+    """
+        Configure ID card generator
+    """
 
     if administration:
-        s3 = current.response.s3
-        settings = current.deployment_settings
-
         from ..idcards import GenerateIDCard
         current.s3db.set_method("pr_person",
                                 component = "identity",
                                 method = "generate",
                                 action = GenerateIDCard,
                                 )
-
-        # TODO Remove this?
-        if r.representation == "card":
-            # Configure ID card layout
-            from ..idcards import IDCardLayout
-            resource.configure(pdf_card_layout = IDCardLayout,
-                               pdf_card_pagesize = "A4",
-                               )
-
-        # TODO Remove this?
-        #if not r.id and not r.component:
-        #    # Add export-icon for ID cards
-        #    export_formats = list(settings.get_ui_export_formats())
-        #    export_formats.append(("card", "fa fa-id-card", current.T("Export ID Cards")))
-        #    settings.ui.export_formats = export_formats
-        #    s3.formats["card"] = r.url(method="")
 
 # -------------------------------------------------------------------------
 def configure_dvr_person_controller(r, privileged=False, administration=False):
@@ -1092,6 +1075,7 @@ def configure_hrm_person_controller(r):
     T = current.T
 
     s3db = current.s3db
+    auth = current.auth
 
     # Expose ID label (read-only)
     table = s3db.pr_person
@@ -1100,11 +1084,15 @@ def configure_hrm_person_controller(r):
     field.readable = True
     field.comment = None
 
+    # ID Card Export
+    administration = auth.s3_has_role("ORG_ADMIN")
+    configure_id_cards(r, r.resource, administration=administration)
+
     if not r.component:
 
         # Reduce form to relevant fields
-        if r.record and r.record.id == current.auth.s3_logged_in_person() or \
-           current.auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
+        if r.record and r.record.id == auth.s3_logged_in_person() or \
+           auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
             pe_label = "pe_label"
         else:
             pe_label = None
@@ -1139,8 +1127,10 @@ def pr_person_controller(**attr):
     auth = current.auth
     s3 = current.response.s3
 
-    ADMINISTRATION = ("ORG_ADMIN", "CASE_ADMIN")
-    administration = auth.s3_has_roles(ADMINISTRATION)
+    is_org_admin = auth.s3_has_role("ORG_ADMIN")
+
+    ADMINISTRATION = ("CASE_ADMIN",)
+    administration = is_org_admin or auth.s3_has_roles(ADMINISTRATION)
 
     PRIVILEGED = ("CASE_MANAGER", "CASE_ASSISTANT")
     privileged = administration or auth.s3_has_roles(PRIVILEGED)
@@ -1210,18 +1200,13 @@ def pr_person_controller(**attr):
             else:
                 buttons = output["buttons"]
 
-            # ID-Card button
-            # TODO we want this on ID tab only
-            if administration and r.controller == "dvr":
+            # Button to generate ID
+            if administration and r.controller == "dvr" or \
+               is_org_admin and r.controller == "hrm":
                 card_button = A(T("Generate ID"),
                                 _href = r.url(component = "identity",
                                               method = "generate",
                                               ),
-                                #data = {"url": URL(c="dvr", f="person",
-                                #                   args = ["%s.card" % r.id]
-                                #                   ),
-                                #        },
-                                #_class = "action-btn s3-download-button",
                                 _class = "action-btn",
                                 )
             else:

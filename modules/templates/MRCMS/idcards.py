@@ -99,13 +99,17 @@ class GenerateIDCard(CRUDMethod):
                         ):
 
             idcard = IDCard(person_id)
+            if r.controller == "hrm":
+                layout = StaffIDCardLayout
+            else:
+                layout = IDCardLayout
 
             # Generate PDF document (with registration callback)
             # TODO choose alternative IDCardLayout depending on controller (dvr/hrm - default dvr)
             resource.configure(id_card_callback = idcard.register)
             from core import DataExporter
             document = DataExporter.pdfcard(resource,
-                                            layout = IDCardLayout,
+                                            layout = layout,
                                             pagesize = "A4",
                                             )
             resource.clear_config("id_card_callback")
@@ -483,6 +487,8 @@ class IDCardLayout(PDFCardLayout):
     orientation = "Portrait"
     doublesided = False
 
+    border_color = HexColor(0x000548) # HexColor(0x27548F)
+
     # -------------------------------------------------------------------------
     @classmethod
     def fields(cls, resource):
@@ -693,22 +699,24 @@ class IDCardLayout(PDFCardLayout):
         y = bottom + 120
         wt = w/2-2*x # text width
 
-        # Shelter Name
-        # TODO not for staff
-        shelter = item["cr_shelter_registration.shelter_id"]
-        if shelter:
+        # Shelter
+        shelter_id = raw["cr_shelter_registration.shelter_id"]
+        if shelter_id:
+            # Shelter Name
+            shelter = item["cr_shelter_registration.shelter_id"]
             draw_string(x, y + 14, t_("Shelter"))
             draw_string(x, y, shelter, width=wt, height=20, size=10)
-            location = item["_row"]["gis_location.L4"] or item["_row"]["gis_location.L3"]
-            postcode = item["gis_location.addr_postcode"]
-            address = item["gis_location.addr_street"]
 
-            # Include shelter address
-            place = "%s %s" % (postcode, location) if postcode else location
-            if address:
-                draw_string(x, y-13, address, width=wt, height=20, size=9)
-            if place:
-                draw_string(x, y-26, place, width=wt, height=20, size=9)
+            # Shelter address
+            location = raw["gis_location.L4"] or raw["gis_location.L3"]
+            if location:
+                address = item["gis_location.addr_street"]
+                if address:
+                    draw_string(x, y-13, address, width=wt, height=20, size=9)
+                postcode = item["gis_location.addr_postcode"]
+                place = "%s %s" % (postcode, location) if postcode else location
+                if place:
+                    draw_string(x, y-26, place, width=wt, height=20, size=9)
 
         y = bottom + 55
 
@@ -723,15 +731,17 @@ class IDCardLayout(PDFCardLayout):
 
         # Date of birth
         y = y - 26
-        dob = item["pr_person.date_of_birth"]
-        draw_string(x, y + 13, t_("Date of Birth"))
-        draw_string(x, y, dob, size=12, width=wt)
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
+            dob = item["pr_person.date_of_birth"]
+            draw_string(x, y + 13, t_("Date of Birth"))
+            draw_string(x, y, dob, size=12, width=wt)
 
         # Shelter Unit
         # TODO not for staff
         # TODO do not draw if transitory unit?
         y = y - 26
-        unit = item["_row"]["cr_shelter_registration.shelter_unit_id"]
+        unit = raw["cr_shelter_registration.shelter_unit_id"]
         if unit:
             unit = item["cr_shelter_registration.shelter_unit_id"]
             draw_string(x, y + 13, t_("Housing Unit"))
@@ -922,9 +932,8 @@ class IDCardLayout(PDFCardLayout):
 
         w = self.width
         h = self.height
-        blue = HexColor(0x27548F)
 
-        c.setFillColor(blue)
+        c.setFillColor(self.border_color)
 
         # Horizontal bars
         c.rect(18, h-22, w-36, 12, fill=1, stroke=0) # horizontal top
@@ -958,5 +967,125 @@ class IDCardLayout(PDFCardLayout):
         c.rect(x, y, width, height, stroke=1, fill=0)
 
         c.restoreState()
+
+# =============================================================================
+class StaffIDCardLayout(IDCardLayout):
+
+    border_color = HexColor(0xeb003c)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def fields(cls, resource):
+        """
+            The layout-specific list of fields to look up from the resource
+
+            Args:
+                resource: the resource
+
+            Returns:
+                list of field selectors
+        """
+
+        return ["id",
+                "pe_id",
+                "pe_label",
+                "first_name",
+                #"middle_name",
+                "last_name",
+                "date_of_birth",
+                "human_resource.organisation_id$root_organisation",
+                "human_resource.job_title_id",
+                ]
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        # TODO docstring
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        # ----- Left -----
+
+        # Draw box around person data
+        left = 30
+        bottom = h/2 + 95
+        self.draw_box(left, bottom, w/2-60, 130)
+
+        x = left + 10
+        y = bottom + 105
+        wt = w/2-2*x # text width
+
+        # Staff Role
+        draw_string(x, y, t_("Staff"), width=wt, height=20, size=18, bold=True)
+        job_title_id = raw["hrm_human_resource.job_title_id"]
+        if job_title_id:
+            job_title = item["hrm_human_resource.job_title_id"]
+            draw_string(x, y-16, job_title, width=wt, height=20, size=12)
+
+        # Shelter
+        # TODO Replace by Job Title
+        #shelter_id = raw["cr_shelter_registration.shelter_id"]
+        #if shelter_id:
+            ## Shelter Name
+            #shelter = item["cr_shelter_registration.shelter_id"]
+            #draw_string(x, y + 14, t_("Shelter"))
+            #draw_string(x, y, shelter, width=wt, height=20, size=10)
+
+            ## Shelter address
+            #location = raw["gis_location.L4"] or raw["gis_location.L3"]
+            #if location:
+                #address = item["gis_location.addr_street"]
+                #if address:
+                    #draw_string(x, y-13, address, width=wt, height=20, size=9)
+                #postcode = item["gis_location.addr_postcode"]
+                #place = "%s %s" % (postcode, location) if postcode else location
+                #if place:
+                    #draw_string(x, y-26, place, width=wt, height=20, size=9)
+
+        y = bottom + 55
+
+        # Names
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  #mname = raw["pr_person.middle_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y + 13, t_("Name"))
+        draw_string(x, y, name, width=wt, height=20, size=12)
+
+        # Date of birth
+        y = y - 26
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
+            dob = item["pr_person.date_of_birth"]
+            draw_string(x, y + 13, t_("Date of Birth"))
+            draw_string(x, y, dob, size=12, width=wt)
+
+        # Shelter Unit
+        # TODO not for staff
+        # TODO do not draw if transitory unit?
+        #y = y - 26
+        #unit = raw["cr_shelter_registration.shelter_unit_id"]
+        #if unit:
+        #    unit = item["cr_shelter_registration.shelter_unit_id"]
+        #    draw_string(x, y + 13, t_("Housing Unit"))
+        #    draw_string(x, y, unit, size=12, width=wt)
+
+        # ----- Right -----
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60,
+                            halign = "center",
+                            valign = "middle",
+                            )
 
 # END =========================================================================

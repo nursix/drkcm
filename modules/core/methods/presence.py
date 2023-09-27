@@ -381,52 +381,54 @@ class PresenceRegistration(CRUDMethod):
                 output.update(ajax_data)
 
             elif method == "IN":
+                current_status = status.get("status")
                 check_in_allowed = status.get("allowed_in")
 
                 if not check_in_allowed or status.get("info") is not None:
                     ajax_data = self.ajax_data(person, status)
                     output.update(ajax_data)
 
-                current_status = status.get("status")
-                if current_status != "IN" and not check_in_allowed:
+                success = False
+                if check_in_allowed:
+                    success = SitePresence.register(person.id, site_id, "IN")
+                if success:
+                    output["s"] = "IN"
+                    if current_status == "IN":
+                        alert = T("Person was already registered as present")
+                        alert_type = "warning"
+                    else:
+                        alert = T("Presence registered")
+                elif check_in_allowed is False:
                     alert = T("Person not permitted to enter premises!")
                     alert_type = "error"
                 else:
-                    success = SitePresence.register(person.id, site_id, "IN")
-                    if success:
-                        output["s"] = "IN"
-                        if current_status == "IN":
-                            alert = T("Person was already registered as present")
-                            alert_type = "warning"
-                        else:
-                            alert = T("Presence registered")
-                    else:
-                        alert = T("Registration failed!")
-                        alert_type = "error"
+                    alert = T("Registration failed!")
+                    alert_type = "error"
 
             elif method == "OUT":
+                current_status = status.get("status")
                 check_out_allowed = status.get("allowed_out")
 
                 if not check_out_allowed or status.get("info") is not None:
                     ajax_data = self.ajax_data(person, status)
                     output.update(ajax_data)
 
-                current_status = status.get("status")
-                if current_status != "OUT" and not check_out_allowed:
+                success = False
+                if check_out_allowed:
+                    success = SitePresence.register(person.id, site_id, "OUT")
+                if success:
+                    output["s"] = "OUT"
+                    if current_status == "OUT":
+                        alert = T("Person was already registered as absent")
+                        alert_type = "warning"
+                    else:
+                        alert = T("Absence registered")
+                elif check_out_allowed is False:
                     alert = T("Person not permitted to leave premises!")
                     alert_type = "error"
                 else:
-                    success = SitePresence.register(person.id, site_id, "OUT")
-                    if success:
-                        output["s"] = "OUT"
-                        if current_status == "OUT":
-                            alert = T("Person was already registered as absent")
-                            alert_type = "warning"
-                        else:
-                            alert = T("Absence registered")
-                    else:
-                        alert = T("Registration failed!")
-                        alert_type = "error"
+                    alert = T("Registration failed!")
+                    alert_type = "error"
             else:
                 r.error(405, current.ERROR.BAD_METHOD)
 

@@ -49,6 +49,16 @@ def hrm_human_resource_controller(**attr):
         if not r.component:
             current.deployment_settings.ui.open_read_first = True
 
+            # TODO Adjust filters
+
+            # Not insertable here, only from org-tab
+            r.resource.configure(insertable=False)
+
+        elif r.component_name == "identity" and r.method == "generate":
+            # Require OrgAdmin role for staff ID generation
+            if not current.auth.s3_has_role("ORG_ADMIN"):
+                r.unauthorised()
+
         return result
 
     s3.prep = prep

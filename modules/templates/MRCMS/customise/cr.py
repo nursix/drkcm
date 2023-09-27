@@ -116,7 +116,7 @@ def client_site_status(person_id, site_id, site_type, case_status):
     return result
 
 # -------------------------------------------------------------------------
-def staff_site_status(person_id, organisation_ids):
+def staff_site_status(person_id, site_id, organisation_ids):
     """
         Check whether a person to register at a site is a staff member
 
@@ -224,12 +224,33 @@ def person_site_status(site_id, person):
     else:
         # May be a staff member
         result.update(staff_site_status(person_id,
+                                        site_id,
                                         organisation_ids,
                                         ))
         if not result["valid"] and not result.get("error"):
             # Neither resident nor active staff member, so invalid ID
             result["error"] = T("Invalid ID")
 
+    if result["valid"] and not result.get("error"):
+
+        auth = current.auth
+        instructions = None
+
+        uperson_id = auth.s3_logged_in_person()
+        if uperson_id == person_id:
+            if not auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
+                result["allowed_in"] = None
+                instructions = T("Self-registration not permitted. Please register with authorized staff at the site.")
+        elif not PresenceRegistration.present(site_id):
+            result["allowed_in"] = result["allowed_out"] = None
+            instructions = T("You must be reported as present at the site yourself in order to register the presence of others.")
+
+        if instructions:
+            result["info"] = DIV(DIV(P(instructions),
+                                     _class="checkpoint-instructions",
+                                     ),
+                                 _class="checkpoint-advise",
+                                 )
     return result
 
 # -------------------------------------------------------------------------
