@@ -53,6 +53,49 @@ def org_group_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def org_organisation_filter_widgets(is_org_group_admin=False):
+    """
+        Determine filter widgets for organisations view
+
+        Args:
+            is_org_group_admin: user is ORG_GROUP_ADMIN
+
+        Returns:
+            list of filter widgets
+    """
+
+    from core import OptionsFilter, TextFilter, get_filter_options
+
+    T = current.T
+
+    text_fields = ["name", "acronym", "email.value"]
+    filter_widgets = [TextFilter(
+                        text_fields,
+                        label = T("Search"),
+                        ),
+                      OptionsFilter(
+                        "organisation_type__link.organisation_type_id",
+                        label = T("Type"),
+                        options = lambda: get_filter_options("org_organisation_type"),
+                        hidden = True,
+                        ),
+                      OptionsFilter(
+                        "group__link.group_id",
+                        label = T("Group"),
+                        options = lambda: get_filter_options("org_group"),
+                        hidden = True,
+                        ),
+                      OptionsFilter(
+                        "sector__link.sector_id",
+                        label = T("Sector"),
+                        options = lambda: get_filter_options("org_sector"),
+                        hidden = True,
+                        ),
+                      ]
+
+    return filter_widgets
+
+# -------------------------------------------------------------------------
 def org_organisation_controller(**attr):
 
     T = current.T
@@ -78,7 +121,7 @@ def org_organisation_controller(**attr):
                              S3SQLInlineComponent, \
                              S3SQLInlineLink
 
-            # Show organisation type(s) as required
+            # Show organisation type(s)
             types = S3SQLInlineLink("organisation_type",
                                     field = "organisation_type_id",
                                     search = False,
@@ -87,6 +130,15 @@ def org_organisation_controller(**attr):
                                     widget = "multiselect",
                                     readonly = not is_org_group_admin,
                                     )
+
+            # Show organisation sectors (=commission types)
+            sectors = S3SQLInlineLink("sector",
+                                      field = "sector_id",
+                                      search = False,
+                                      label = T("Sectors"),
+                                      widget = "multiselect",
+                                      readonly = not is_org_group_admin,
+                                      )
 
             if is_org_group_admin:
 
@@ -117,6 +169,7 @@ def org_organisation_controller(**attr):
                            "acronym",
                            groups,
                            types,
+                           sectors,
                            "phone",
                            S3SQLInlineComponent(
                                 "contact",
@@ -140,14 +193,23 @@ def org_organisation_controller(**attr):
             # Add post-process to add/update verification
             crud_form = S3SQLCustomForm(*crud_fields)
 
-            # TODO Configure filter widgets
-            #filter_widgets = org_organisation_filter_widgets(
-            #                        is_org_group_admin = is_org_group_admin,
-            #                        )
+            list_fields = ["name",
+                           "acronym",
+                           (T("Organization Group"), "group__link.group_id"),
+                           (T("Type"), "organisation_type__link.organisation_type_id"),
+                           (T("Sectors"), "sector__link.sector_id"),
+                           (T("Email"), "email.value"),
+                           ]
+
+            # Filter widgets
+            filter_widgets = org_organisation_filter_widgets(
+                                   is_org_group_admin = is_org_group_admin,
+                                   )
 
             resource.configure(crud_form = crud_form,
-                               #filter_widgets = filter_widgets,
                                subheadings = subheadings,
+                               filter_widgets = filter_widgets,
+                               list_fields = list_fields,
                                )
 
 

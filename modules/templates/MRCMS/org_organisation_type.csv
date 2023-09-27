@@ -1,5 +1,11 @@
-Type,KV:OrgGroup,Comments
-Erstaufnahmeeinrichtung,Johanniter-Unfall-Hilfe,
-Gemeinschaftsunterkunft,Johanniter-Unfall-Hilfe,
-Beratungsdienst,Johanniter-Unfall-Hilfe,
-Verwaltung,Johanniter-Unfall-Hilfe,
+Type,Comments
+Ankerzentrum,
+Anschlussunterbringung (AU),
+Aufnahmeeinrichtung (AE),
+Erstaufnahmeeinrichtung (EA),
+Gemeinschaftsunterkunft (GU),
+Kommunale Unterkunft,
+Landeserstaufnahmeeinrichtung (LEA),
+Notunterkunft (NuK),
+Verwaltung,
+Wohnprojekt,
