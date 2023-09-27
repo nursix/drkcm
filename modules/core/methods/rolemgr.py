@@ -1185,7 +1185,6 @@ class S3RoleManager(CRUDMethod):
         sr = auth.get_system_roles()
 
         AUTO = (sr.AUTHENTICATED, sr.ANONYMOUS)
-        ADMINS = (sr.ADMIN, sr.ORG_ADMIN, sr.ORG_GROUP_ADMIN)
         UNRESTRICTABLE = (sr.ADMIN, sr.AUTHENTICATED, sr.ANONYMOUS)
 
         # Check whether certain roles require another role to be assignable
@@ -1204,6 +1203,7 @@ class S3RoleManager(CRUDMethod):
                                         )
 
         has_role = auth.s3_has_role
+        has_roles = auth.s3_has_roles
 
         roles = {}
         for row in rows:
@@ -1211,27 +1211,33 @@ class S3RoleManager(CRUDMethod):
             role_id = row.id
             role_uuid = row.uuid
 
-            role = {"l": row.role or role_uuid}
-
-            if role_id in ADMINS:
-                assignable = has_role(role_id)
+            if role_id in AUTO:
+                assignable = False
+            elif role_id == sr.ADMIN:
+                assignable = has_role(sr.ADMIN)
+            elif role_id == sr.ORG_GROUP_ADMIN:
+                assignable = has_roles((sr.ADMIN, sr.ORG_GROUP_ADMIN))
+            elif role_id == sr.ORG_ADMIN:
+                assignable = has_roles((sr.ADMIN, sr.ORG_GROUP_ADMIN, sr.ORG_ADMIN))
             elif role_uuid in privileged_roles:
-                assignable = has_role(privileged_roles[role_uuid])
+                required = privileged_roles[role_uuid]
+                if isinstance(required, (tuple, list, set)):
+                    assignable = has_roles(required)
+                else:
+                    assignable = has_role(required)
             else:
-                assignable = role_id not in AUTO
+                assignable = True
 
             if role_id == sr.ADMIN and auth.user.id == user_id:
                 removable = False
             else:
                 removable = assignable
 
-            if not assignable:
-                role["a"] = False
-            if not removable:
-                role["r"] = False
-            if role_id in UNRESTRICTABLE:
-                role["u"] = True
-
+            role = {"l": row.role or role_uuid,
+                    "a": assignable,
+                    "r": removable,
+                    "u": role_id in UNRESTRICTABLE,
+                    }
             roles[role_id] = role
 
         return roles

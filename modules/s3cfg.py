@@ -924,7 +924,8 @@ class S3Config(Storage):
             a certain required role themselves:
             - a tuple|list of role UUIDs = user must have the roles
               themselves in order to assign them
-            - a dict {assignable_role:required_role}
+            - a dict {assignable_role:required_role}, where required_role
+              can be a single role UID or a tuple|list of alternatives
         """
         return self.__lazy("auth", "privileged_roles", default=[])
 

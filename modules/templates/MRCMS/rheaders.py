@@ -183,7 +183,7 @@ def org_rheader(r, tabs=None):
 
             if not tabs:
                 tabs = [(T("Basic Details"), None),
-                        (T("Offices"), "office"),
+                        #(T("Offices"), "office"),
                         #(T("Staff"), "human_resource"),
                         (T("Documents"), "document"),
                         ]

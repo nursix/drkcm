@@ -6,8 +6,6 @@
 
 from gluon import current
 
-from ..config import PROVIDERS
-
 # -------------------------------------------------------------------------
 def org_group_controller(**attr):
 
@@ -20,16 +18,6 @@ def org_group_controller(**attr):
         result = standard_prep(r) if callable(standard_prep) else True
 
         resource = r.resource
-        table = resource.table
-
-        record = r.record
-        if record and record.name == PROVIDERS:
-            # Group name cannot be changed
-            field = table.name
-            field.writable = False
-
-            # Group cannot be deleted
-            resource.configure(deletable = False)
 
         # Cannot create new groups unless Admin or site-wide OrgGroupAdmin
         from ..helpers import get_role_realms
@@ -58,8 +46,6 @@ def org_group_controller(**attr):
         return result
     s3.prep = prep
 
-    # TODO postp to remove DELETE-button for PROVIDERS
-
     # Custom rheader
     from ..rheaders import org_rheader
     attr["rheader"] = org_rheader
@@ -67,30 +53,15 @@ def org_group_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def org_organisation_resource(r, tablename):
-
-    # TODO implement
-    # use branches
-    # customise form+filters
-    # only OrgGroupAdmin can create new root orgs, but org admin can create branches
-    # org group mandatory when any org group exists
-    # default org group by tag?
-    pass
-
 def org_organisation_controller(**attr):
 
+    T = current.T
+    auth = current.auth
+
     s3 = current.response.s3
+    settings = current.deployment_settings
 
-    # TODO if not OrgGroupAdmin or OrgAdmin for multiple orgs, and staff of only one org => open that org
-
-    # TODO not insertable on main tab unless OrgGroupAdmin
-
-    # TODO form with reduced fields
-    #      => also customise component forms (via resource)
-
-    # TODO custom list fields
-
-    # TODO filters
+    is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
     # Custom prep
     standard_prep = s3.prep
@@ -98,134 +69,119 @@ def org_organisation_controller(**attr):
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
 
-        if r.component_name == "human_resource":
-            current.deployment_settings.ui.open_read_first = True
+        resource = r.resource
+        record = r.record
+
+        if not r.component:
+
+            from core import S3SQLCustomForm, \
+                             S3SQLInlineComponent, \
+                             S3SQLInlineLink
+
+            # Show organisation type(s) as required
+            types = S3SQLInlineLink("organisation_type",
+                                    field = "organisation_type_id",
+                                    search = False,
+                                    label = T("Type"),
+                                    multiple = False,
+                                    widget = "multiselect",
+                                    readonly = not is_org_group_admin,
+                                    )
+
+            if is_org_group_admin:
+
+                # Show org groups
+                if record:
+                    groups_readonly = True
+                    user = auth.user
+                    if user:
+                        # Only OrgGroupAdmins managing this organisation can
+                        # change its group memberships
+                        realm = user.realms.get(auth.get_system_roles().ORG_GROUP_ADMIN)
+                        groups_readonly = realm is not None and record.pe_id not in realm
+                else:
+                    groups_readonly = False
+
+                groups = S3SQLInlineLink("group",
+                                         field = "group_id",
+                                         label = T("Organization Group"),
+                                         multiple = False,
+                                         readonly = groups_readonly,
+                                         )
+
+            else:
+
+                groups = None
+
+            crud_fields = ["name",
+                           "acronym",
+                           groups,
+                           types,
+                           "phone",
+                           S3SQLInlineComponent(
+                                "contact",
+                                fields = [("", "value")],
+                                filterby = {"field": "contact_method",
+                                            "options": "EMAIL",
+                                            },
+                                label = T("Email"),
+                                multiple = False,
+                                name = "email",
+                                ),
+                           "logo",
+                           "comments",
+                           ]
+
+            subheadings = {"name": T("Organization"),
+                           "phone": T("Contact Information"),
+                           "logo": T("Other Details"),
+                           }
+
+            # Add post-process to add/update verification
+            crud_form = S3SQLCustomForm(*crud_fields)
+
+            # TODO Configure filter widgets
+            #filter_widgets = org_organisation_filter_widgets(
+            #                        is_org_group_admin = is_org_group_admin,
+            #                        )
+
+            resource.configure(crud_form = crud_form,
+                               #filter_widgets = filter_widgets,
+                               subheadings = subheadings,
+                               )
+
+
+        elif r.component_name == "human_resource":
+
+            settings.ui.open_read_first = True
+
+            phone_label = settings.get_ui_label_mobile_phone()
+            list_fields = ["person_id",
+                           "job_title_id",
+                           (T("Email"), "person_id$email.value"),
+                           (phone_label, "person_id$phone.value"),
+                           "status",
+                           ]
+            r.component.configure(list_fields=list_fields)
 
         return result
-
     s3.prep = prep
 
+    standard_postp = s3.postp
+    def postp(r, output):
+
+        if not auth.s3_has_permission("read", "pr_person", c="hrm", f="person"):
+            if callable(standard_postp):
+                output = standard_postp(r, output)
+
+        return output
+    s3.postp = postp
 
     # Custom rheader
     from ..rheaders import org_rheader
     attr["rheader"] = org_rheader
 
     return attr
-
-# -------------------------------------------------------------------------
-# TODO drop?
-def org_facility_resource(r, tablename):
-
-    T = current.T
-    s3db = current.s3db
-
-    # Hide "code" field (not needed)
-    table = s3db.org_facility
-    field = table.code
-    field.readable = field.writable = False
-
-    # Location selector just needs country + address
-    from core import LocationSelector
-    field = table.location_id
-    field.widget = LocationSelector(levels = ["L0"],
-                                    show_address=True,
-                                    show_map = False,
-                                    )
-
-    field = table.obsolete
-    field.label = T("Inactive")
-    field.represent = lambda opt: T("Inactive") if opt else current.messages["NONE"]
-
-    # Custom list fields
-    list_fields = ["name",
-                   "site_facility_type.facility_type_id",
-                   "organisation_id",
-                   "location_id",
-                   "contact",
-                   "phone1",
-                   "phone2",
-                   "email",
-                   #"website",
-                   "obsolete",
-                   "comments",
-                   ]
-
-    # Custom filter widgets
-    from core import TextFilter, OptionsFilter, get_filter_options
-    filter_widgets = [TextFilter(["name",
-                                  "organisation_id$name",
-                                  "organisation_id$acronym",
-                                  "comments",
-                                  ],
-                                 label = T("Search"),
-                                 ),
-                      OptionsFilter("site_facility_type.facility_type_id",
-                                    options = lambda: get_filter_options(
-                                                            "org_facility_type",
-                                                            translate = True,
-                                                            ),
-                                    ),
-                      OptionsFilter("organisation_id",
-                                    ),
-                      OptionsFilter("obsolete",
-                                    options = {False: T("No"),
-                                               True: T("Yes"),
-                                               },
-                                    default = [False],
-                                    cols = 2,
-                                    )
-                      ]
-
-    s3db.configure("org_facility",
-                   #deletable = False,
-                   filter_widgets = filter_widgets,
-                   list_fields = list_fields,
-                   )
-
-# -------------------------------------------------------------------------
-# TODO drop?
-def org_facility_controller(**attr):
-
-    # Allow selection of all countries
-    current.deployment_settings.gis.countries = []
-
-    # Custom rheader+tabs
-    if current.request.controller == "org":
-        from ..rheaders import org_rheader
-        attr = dict(attr)
-        attr["rheader"] = org_rheader
-
-    return attr
-
-# -------------------------------------------------------------------------
-def site_presence_event_onaccept(form):
-    """
-        Update last-seen-on date when a site presence event is registered
-    """
-
-    try:
-        person_id = form.vars.person_id
-    except AttributeError:
-        return
-
-    current.s3db.dvr_update_last_seen(person_id)
-
-# -------------------------------------------------------------------------
-def org_site_presence_event_resource(r, tablename):
-
-    s3db = current.s3db
-
-    # Represent registering user by their name
-    table = s3db.org_site_presence_event
-    field = table.created_by
-    field.represent = s3db.auth_UserRepresent(show_name=True,
-                                              show_email=False,
-                                              )
-
-    # Add custom callback to update last-seen-on date
-    s3db.add_custom_callback("org_site_presence_event", "onaccept",
-                             site_presence_event_onaccept,
-                             )
 
 # -------------------------------------------------------------------------
 def site_presence_validate_id(label):
@@ -266,5 +222,36 @@ def site_presence_validate_id(label):
         pass
 
     return pe_label, advice, error
+
+# -------------------------------------------------------------------------
+def site_presence_event_onaccept(form):
+    """
+        Onaccept of site presence event:
+            - update last-seen-on time stamp (applies only to clients)
+    """
+
+    try:
+        person_id = form.vars.person_id
+    except AttributeError:
+        return
+
+    current.s3db.dvr_update_last_seen(person_id)
+
+# -------------------------------------------------------------------------
+def org_site_presence_event_resource(r, tablename):
+
+    s3db = current.s3db
+
+    # Represent registering user by their name
+    table = s3db.org_site_presence_event
+    field = table.created_by
+    field.represent = s3db.auth_UserRepresent(show_name=True,
+                                              show_email=False,
+                                              )
+
+    # Add custom callback to update last-seen-on date
+    s3db.add_custom_callback("org_site_presence_event", "onaccept",
+                             site_presence_event_onaccept,
+                             )
 
 # END =========================================================================

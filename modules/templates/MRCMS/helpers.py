@@ -339,13 +339,12 @@ def get_default_shelter():
 # =============================================================================
 def get_default_case_organisation():
     """
-        The organisation in the PROVIDERS group the user can access case
-        files for (if only one organisation)
+        The organisation the user can access case files for (if only one
+        organisation)
 
         Returns:
             organisation ID
     """
-    # TODO limit to provider group
     # TODO parametrize permission
 
     auth = current.auth

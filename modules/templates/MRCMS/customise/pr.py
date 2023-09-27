@@ -1171,6 +1171,25 @@ def pr_person_controller(**attr):
         elif controller == "default":
             configure_default_person_controller(r)
 
+        if r.component_name == "identity":
+
+            if r.component_id:
+                component = r.component
+                component.load()
+                crecord = component.records().first()
+                if crecord and crecord.system:
+                    # Restrict modifications
+                    ctable = component.table
+                    readonly = ["type", "value", "valid_from"]
+                    for fn in readonly:
+                        ctable[fn].writable = False
+                    hidden = ["description", "ia_name", "image"]
+                    for fn in hidden:
+                        field = ctable[fn]
+                        field.readable = field.writable = False
+                    if crecord.invalid:
+                        ctable.valid_until.writable = False
+
         return result
     s3.prep = prep
 

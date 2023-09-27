@@ -11,8 +11,6 @@ from collections import OrderedDict
 from gluon import current
 from gluon.storage import Storage
 
-PROVIDERS = "Johanniter-Unfall-Hilfe"
-
 # =============================================================================
 def config(settings):
 
@@ -133,6 +131,21 @@ def config(settings):
     #
     from .customise.auth import realm_entity, \
                                 auth_user_resource
+
+    settings.auth.privileged_roles = {"NEWSLETTER_AUTHOR": "ADMIN",
+                                      "SHELTER_ADMIN": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
+                                      "SHELTER_MANAGER": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
+                                      "STAFF": ("ORG_GROUP_ADMIN", "ORG_ADMIN"),
+                                      "CASE_ADMIN": "ORG_ADMIN",
+                                      "CASE_MANAGER": "ORG_ADMIN",
+                                      "SECURITY": "ORG_ADMIN",
+                                      # These are restricted for now until better-defined
+                                      "CASE_ASSISTANT": "ADMIN",
+                                      "QUARTERMASTER": "ADMIN",
+                                      "JANITOR": "ADMIN",
+                                      "CHECKPOINT": "ADMIN",
+                                      "CATERING": "ADMIN",
+                                      }
 
     settings.auth.realm_entity = realm_entity
     settings.customise_auth_user_resource = auth_user_resource
@@ -287,14 +300,10 @@ def config(settings):
 
     from .customise.org import org_group_controller, \
                                org_organisation_controller, \
-                               org_facility_resource, \
-                               org_facility_controller, \
                                org_site_presence_event_resource
 
     settings.customise_org_group_controller = org_group_controller
     settings.customise_org_organisation_controller = org_organisation_controller
-    settings.customise_org_facility_resource = org_facility_resource
-    settings.customise_org_facility_controller = org_facility_controller
     settings.customise_org_site_presence_event_resource = org_site_presence_event_resource
 
     # -------------------------------------------------------------------------

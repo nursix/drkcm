@@ -332,8 +332,6 @@ class PresenceRegistration(CRUDMethod):
 
         site_id = record.site_id
 
-        # TODO User must be present at the site
-
         # Load JSON data from request body
         s = r.body
         s.seek(0)

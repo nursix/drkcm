@@ -138,6 +138,7 @@ CASE_MANAGER,Case Manager / Counselor,,,,,pr_person_tag,CREATE|READ|UPDATE|DELET
 CATERING,Catering,,,dvr,,,READ,,,
 CHECKPOINT,Checkpoint,,,dvr,,,READ,,,
 JANITOR,Janitor / Cleaner,,,cr,,,READ,,,
+MAP_ADMIN,Map Admin,,true,gis,index,,READ,,,
 NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,READ|DELETE,,any,
 NEWSLETTER_AUTHOR,Newsletter Author,,,cms,newsletter,,CREATE|READ|UPDATE|DELETE,,,
 NEWSLETTER_AUTHOR,Newsletter Author,,,cms,read_newsletter,,READ,,,

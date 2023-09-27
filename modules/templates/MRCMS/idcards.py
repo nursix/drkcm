@@ -275,6 +275,7 @@ class IDCard:
                    "type": 999,
                    "system": True,
                    "invalid": False,
+                   "valid_from": current.request.utcnow.date(),
                    "vhash": record_vhash,
                    }
         # TODO postprocess create?
@@ -349,15 +350,17 @@ class IDCard:
         db = current.db
         s3db = current.s3db
 
-        # Get the person record
+        # Find the relevant identity record
         itable = s3db.pr_identity
         ptable = s3db.pr_person
 
+        today = current.request.utcnow.date()
         join = ptable.on((ptable.id == itable.person_id) & \
                          (ptable.pe_label == pe_label) & \
                          (ptable.deleted == False))
         query = (itable.system == True) & \
                 (itable.invalid == False) & \
+                ((itable.valid_until == None) | (itable.valid_until >= today)) & \
                 (itable.vhash != None)
         row = db(query).select(ptable.pe_label,
                                itable.uuid,
@@ -446,11 +449,13 @@ class IDCard:
         vhash = cls.get_vhash(person.pe_label, uid, token)
 
         # Find a valid system ID record for this person that matches the vhash
+        today = current.request.utcnow.date()
         itable = s3db.pr_identity
         query = (itable.person_id == person.id) & \
                 (itable.vhash == vhash) & \
                 (itable.system == True) & \
                 (itable.invalid == False) & \
+                ((itable.valid_until == None) | (itable.valid_until >= today)) & \
                 (itable.deleted == False)
         rows = db(query).select(itable.id,
                                 itable.uuid,
@@ -479,15 +484,13 @@ class IDCard:
 class IDCardLayout(PDFCardLayout):
     """
         Layout for printable beneficiary ID cards
-
-        TODO subclass for staff
     """
 
     cardsize = A4
     orientation = "Portrait"
     doublesided = False
 
-    border_color = HexColor(0x000548) # HexColor(0x27548F)
+    border_color = HexColor(0x6084bf) # HexColor(0x27548F)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -970,6 +973,9 @@ class IDCardLayout(PDFCardLayout):
 
 # =============================================================================
 class StaffIDCardLayout(IDCardLayout):
+    """
+        Variant of IDCardLayout for staff members
+    """
 
     border_color = HexColor(0xeb003c)
 
@@ -1027,26 +1033,6 @@ class StaffIDCardLayout(IDCardLayout):
             job_title = item["hrm_human_resource.job_title_id"]
             draw_string(x, y-16, job_title, width=wt, height=20, size=12)
 
-        # Shelter
-        # TODO Replace by Job Title
-        #shelter_id = raw["cr_shelter_registration.shelter_id"]
-        #if shelter_id:
-            ## Shelter Name
-            #shelter = item["cr_shelter_registration.shelter_id"]
-            #draw_string(x, y + 14, t_("Shelter"))
-            #draw_string(x, y, shelter, width=wt, height=20, size=10)
-
-            ## Shelter address
-            #location = raw["gis_location.L4"] or raw["gis_location.L3"]
-            #if location:
-                #address = item["gis_location.addr_street"]
-                #if address:
-                    #draw_string(x, y-13, address, width=wt, height=20, size=9)
-                #postcode = item["gis_location.addr_postcode"]
-                #place = "%s %s" % (postcode, location) if postcode else location
-                #if place:
-                    #draw_string(x, y-26, place, width=wt, height=20, size=9)
-
         y = bottom + 55
 
         # Names
@@ -1065,16 +1051,6 @@ class StaffIDCardLayout(IDCardLayout):
             dob = item["pr_person.date_of_birth"]
             draw_string(x, y + 13, t_("Date of Birth"))
             draw_string(x, y, dob, size=12, width=wt)
-
-        # Shelter Unit
-        # TODO not for staff
-        # TODO do not draw if transitory unit?
-        #y = y - 26
-        #unit = raw["cr_shelter_registration.shelter_unit_id"]
-        #if unit:
-        #    unit = item["cr_shelter_registration.shelter_unit_id"]
-        #    draw_string(x, y + 13, t_("Housing Unit"))
-        #    draw_string(x, y, unit, size=12, width=wt)
 
         # ----- Right -----
 
