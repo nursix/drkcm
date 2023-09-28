@@ -1,5 +1,5 @@
 """
-    Helper functions and classes for RLPPTM
+    Helper functions and classes for MRCMS
 
     License: MIT
 """

@@ -213,13 +213,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
             menu = M(c="cr")(
                         M("Shelter", f="shelter", args=[shelter_id], ignore_args=True)(
-                            M("Overview",
-                            args = [shelter_id, "profile"],
-                            ),
-                            M("Housing Units",
-                            t = "cr_shelter_unit",
-                            args = [shelter_id, "shelter_unit"],
-                            ),
+                            M("Overview", m="overview", args=[shelter_id]),
+                            M("Housing Units", t="cr_shelter_unit", args=[shelter_id, "shelter_unit"]),
                         ),
                         #M("Room Inspection", f = "shelter", link=False)(
                         #    M("Register",

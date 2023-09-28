@@ -370,18 +370,8 @@ class CRShelterModel(DataModel):
         filter_widgets.append(RangeFilter("capacity",
                                           label = T("Total Capacity"),
                                           ))
-
-        # Custom create_next
-        if settings.get_cr_shelter_registration():
-            # Go to People check-in for this shelter after creation
-            create_next = URL(c="cr", f="shelter",
-                              args=["[id]", "shelter_registration"])
-        else:
-            create_next = None
-
         # Table configuration
         configure(tablename,
-                  create_next = create_next,
                   deduplicate = S3Duplicate(),
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,

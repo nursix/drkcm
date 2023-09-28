@@ -122,10 +122,6 @@ def config(settings):
     #
     settings.ui.calendar_clear_icon = True
 
-    from .customise.cr import profile_header
-
-    settings.ui.profile_header = profile_header
-
     # -------------------------------------------------------------------------
     # AUTH Settings
     #
