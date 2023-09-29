@@ -323,10 +323,10 @@ def cr_shelter_resource(r, tablename):
                    subheadings = subheadings,
                    realm_components = ("shelter_unit",
                                        ),
-                   create_onaccept = URL(c ="cr",
-                                         f ="shelter",
-                                         args = ["[id]", "shelter_unit"],
-                                         ),
+                   create_next = URL(c ="cr",
+                                     f ="shelter",
+                                     args = ["[id]", "shelter_unit"],
+                                     ),
                    )
 
     # Shelter overview method
