@@ -739,6 +739,7 @@ class CRShelterUnitModel(DataModel):
         T = current.T
         db = current.db
         settings = current.deployment_settings
+        crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
 
@@ -858,6 +859,19 @@ class CRShelterUnitModel(DataModel):
                        ondelete = self.shelter_unit_ondelete,
                        orderby = "%s.name" % tablename,
                        )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Housing Unit"),
+            title_display = T("Housing Unit Details"),
+            title_list = T("Housing Units"),
+            title_update = T("Edit Housing Unit"),
+            label_list_button = T("List Housing Units"),
+            msg_record_created = T("Housing Unit added"),
+            msg_record_modified = T("Housing Unit updated"),
+            msg_record_deleted = T("Housing Unit deleted"),
+            msg_list_empty = T("No Housing Units currently registered"),
+            )
 
         # Reusable Field
         represent = S3Represent(lookup="cr_shelter_unit")
