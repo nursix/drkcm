@@ -6,7 +6,7 @@
 
 from gluon import current, URL, DIV, H4, P, TAG
 
-from core import S3CRUD, FS, IS_ONE_OF, PresenceRegistration
+from core import S3CRUD, FS, IS_ONE_OF, PresenceRegistration, s3_fieldmethod
 
 # -------------------------------------------------------------------------
 def client_site_status(person_id, site_id, site_type, case_status):
@@ -361,21 +361,21 @@ def cr_shelter_controller(**attr):
             # Open shelter basic details in read mode
             settings.ui.open_read_first = True
 
-        elif r.component_name == "shelter_unit":
-            # Expose "transitory" flag for housing units
-            utable = current.s3db.cr_shelter_unit
-            field = utable.transitory
-            field.readable = field.writable = True
+        #elif r.component_name == "shelter_unit":
+            ## Expose "transitory" flag for housing units
+            #utable = current.s3db.cr_shelter_unit
+            #field = utable.transitory
+            #field.readable = field.writable = True
 
-            # Custom list fields
-            list_fields = [(T("Name"), "name"),
-                           "transitory",
-                           "capacity",
-                           "population",
-                           "blocked_capacity",
-                           "available_capacity",
-                           ]
-            r.component.configure(list_fields=list_fields)
+            ## Custom list fields
+            #list_fields = [(T("Name"), "name"),
+                           #"transitory",
+                           #"capacity",
+                           #"population",
+                           #"blocked_capacity",
+                           #"available_capacity",
+                           #]
+            #r.component.configure(list_fields=list_fields)
 
         return result
     s3.prep = custom_prep
@@ -425,6 +425,98 @@ def cr_shelter_controller(**attr):
     attr["rheader"] = cr_rheader
 
     return attr
+
+# -------------------------------------------------------------------------
+def cr_shelter_unit_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    table = s3db.cr_shelter_unit
+
+    field = table.location_id
+    field.readable = field.writable = False
+
+    field = table.transitory
+    field.readable = field.writable = True
+
+    table.occupancy = s3_fieldmethod("occupancy",
+                                     shelter_unit_occupancy,
+                                     represent = occupancy_represent,
+                                     )
+
+    list_fields = [(T("Name"), "name"),
+                   "transitory",
+                   "capacity",
+                   "population",
+                   "blocked_capacity",
+                   "available_capacity",
+                   (T("Occupancy %"), "occupancy"),
+                   ]
+    s3db.configure("cr_shelter_unit",
+                   list_fields = list_fields,
+                   extra_fields = ("capacity", "blocked_capacity", "popuplation"),
+                   )
+
+# -------------------------------------------------------------------------
+def shelter_unit_occupancy(row):
+    """
+        Returns the occupancy of a housing unit in %, field method
+
+        Args:
+            the shelter unit Row (capacity, blocked_capacity, popuplation)
+
+        Returns:
+            integer
+    """
+
+    if hasattr(row, "cr_shelter_unit"):
+        row = row.cr_shelter_unit
+    try:
+        ct = row.capacity
+        cb = row.blocked_capacity
+        pt = row.population
+    except AttributeError:
+        return None
+
+    if not ct:
+        return None
+    if not cb:
+        cb = 0
+    capacity = ct - cb
+    if capacity == 0:
+        return 100
+    else:
+        import math
+        return math.ceil(pt / capacity * 100)
+
+# -------------------------------------------------------------------------
+def occupancy_represent(value):
+    """
+        Represents occupancy% as progress bar
+
+        Args:
+            value - the occupancy in % (integer >= 0)
+        Returns:
+            DIV.occupancy-bar
+    """
+
+    if value is None:
+        return DIV("?", _class="occupancy-bar")
+    elif not value:
+        value = 0
+        css_class = "occupancy-0"
+    else:
+        reprval = (value - 1) // 10 * 10 + 10
+        if reprval > 100:
+            css_class = "occupancy-exc"
+        else:
+            css_class = "occupancy-%s" % reprval
+
+    return DIV("%s%%" % value,
+               DIV(_class="occupancy %s" % css_class),
+               _class="occupancy-bar",
+               )
 
 # -------------------------------------------------------------------------
 def cr_shelter_unit_controller(**attr):

@@ -905,14 +905,28 @@ class CRShelterUnitModel(DataModel):
         if not record_id:
             return
 
-        HousingUnit(record_id).update_population()
-
         table = current.s3db.cr_shelter_unit
         query = (table.id == record_id) & \
                 (table.deleted == False)
-        unit = current.db(query).select(table.shelter_id,
+        unit = current.db(query).select(table.id,
+                                        table.shelter_id,
+                                        table.capacity,
+                                        table.blocked_capacity,
                                         limitby = (0, 1),
                                         ).first()
+
+        # Fix capacity<=>blocked_capacity
+        capacity = unit.capacity
+        blocked_capacity = unit.blocked_capacity
+        if capacity is None:
+            if blocked_capacity is not None and blocked_capacity > 0:
+                unit.update_record(capacity=blocked_capacity)
+        else:
+            if blocked_capacity is not None and blocked_capacity > capacity:
+                unit.update_record(blocked_capacity=capacity)
+
+        HousingUnit(record_id).update_population()
+
         shelter_id = unit.shelter_id if unit else None
         if shelter_id:
             shelter = Shelter(shelter_id)

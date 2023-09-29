@@ -167,6 +167,7 @@ def config(settings):
     #
     settings.cr.shelter_population_dynamic = True
     settings.cr.shelter_units = True
+    settings.cr.shelter_blocked_capacity = True
 
     # Generate tasks for shelter inspections
     settings.cr.shelter_inspection_tasks = True
@@ -174,12 +175,14 @@ def config(settings):
 
     from .customise.cr import cr_shelter_resource, \
                               cr_shelter_controller, \
+                              cr_shelter_unit_resource, \
                               cr_shelter_unit_controller, \
                               cr_shelter_registration_resource, \
                               cr_shelter_registration_controller
 
     settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
+    settings.customise_cr_shelter_unit_resource = cr_shelter_unit_resource
     settings.customise_cr_shelter_unit_controller = cr_shelter_unit_controller
     settings.customise_cr_shelter_registration_resource = cr_shelter_registration_resource
     settings.customise_cr_shelter_registration_controller = cr_shelter_registration_controller

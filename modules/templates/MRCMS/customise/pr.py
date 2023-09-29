@@ -466,7 +466,6 @@ def configure_case_form(resource,
                         multiple = False,
                         name = "bamf",
                         ),
-                "dvr_case.valid_until",
 
                 S3SQLInlineComponent(
                         "residence_status",
