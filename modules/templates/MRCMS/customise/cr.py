@@ -6,7 +6,9 @@
 
 from gluon import current, URL, DIV, H4, P, TAG
 
-from core import S3CRUD, FS, IS_ONE_OF, PresenceRegistration, s3_fieldmethod
+from core import S3CRUD, FS, IS_ONE_OF, \
+                 LocationSelector, PresenceRegistration, S3SQLCustomForm, \
+                 s3_fieldmethod
 
 # -------------------------------------------------------------------------
 def client_site_status(person_id, site_id, site_type, case_status):
@@ -275,10 +277,50 @@ def on_site_presence_event(site_id, person_id):
 # -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
 
+    T = current.T
     s3db = current.s3db
+
+    table = s3db.cr_shelter
+
+    # Configure fields
+    field = table.location_id
+    field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                    required_levels = ("L1", "L2", "L3"),
+                                    show_address = True,
+                                    show_postcode = True,
+                                    address_required = True,
+                                    postcode_required = True,
+                                    show_map = False,
+                                    )
+    field.represent = s3db.gis_LocationRepresent(show_link = False)
+
+    field = table.obsolete
+    field.label = T("Defunct")
+
+    # Custom form
+    crud_fields = ["name",
+                   "organisation_id",
+                   "shelter_type_id",
+                   "status",
+                   "location_id",
+                   "capacity",
+                   "blocked_capacity",
+                   "population",
+                   "available_capacity",
+                   "comments",
+                   "obsolete"
+                   ]
+
+    subheadings = {"name": T("Shelter"),
+                   "location_id": T("Location"),
+                   "capacity": T("Capacity"),
+                   "comments": T("Other"),
+                   }
 
     # Table configuration
     s3db.configure("cr_shelter",
+                   crud_form = S3SQLCustomForm(*crud_fields),
+                   subheadings = subheadings,
                    realm_components = ("shelter_unit",
                                        ),
                    create_onaccept = URL(c ="cr",
