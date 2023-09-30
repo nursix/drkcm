@@ -438,6 +438,8 @@ class ShelterOverview(CRUDMethod):
     @staticmethod
     def unit_header(unit):
 
+        T = current.T
+
         header = DIV(unit.name if unit else T("No housing unit"),
                      _class="occupancy-unit-header",
                      )
