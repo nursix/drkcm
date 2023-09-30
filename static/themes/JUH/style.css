@@ -1,0 +1,29 @@
+.occupancy-data .reg-planned td {
+  font-style: italic;
+  color: #ccc;
+}
+.occupancy-data .group-even {
+    background-color: #fdfdfd
+}
+.occupancy-data .group-odd {
+    background-color: #f9f9f9;
+}
+.occupancy-data .occupancy-unit {
+    padding: 0;
+    background-color: #DDD;
+    border-top: 3px solid #333;
+}
+.occupancy-data .occupancy-unit .occupancy-unit-header {
+    padding: 0.3rem 0.1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+.occupancy-data .capacity-free {
+    background-color: #b9ffb9;
+}
+.occupancy-data .capacity-blocked {
+    background-color: #ffced5;
+}
+table.occupancy-data {
+    width: 100%;
+}
