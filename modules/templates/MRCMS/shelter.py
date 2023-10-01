@@ -6,8 +6,7 @@
 
 from dateutil.relativedelta import relativedelta
 from gluon import current, URL, \
-                  A, DIV, I, P, SPAN, TABLE, TD, TR, TH, TAG
-from gluon.storage import Storage
+                  A, DIV, I, P, TABLE, TD, TR, TH, TAG
 
 from core import CRUDMethod, PresenceRegistration, s3_format_fullname
 
@@ -423,7 +422,7 @@ class ShelterOverview(CRUDMethod):
         T = current.T
 
         if not unit:
-            label = T("No housing unit")
+            label = T("Not assigned")
         else:
             # TODO also show capacity/occupancy data
             if unit.status == 1:
@@ -489,12 +488,12 @@ class ShelterOverview(CRUDMethod):
     def resident(row, css=None, show_link=False):
         # TODO docstring
 
-        T = current.T
+        #T = current.T
         s3db = current.s3db
 
         ptable = s3db.pr_person
         dtable = s3db.pr_person_details
-        sptable = s3db.org_site_presence
+        #sptable = s3db.org_site_presence
 
         person = row.pr_person
         details = row.pr_person_details
