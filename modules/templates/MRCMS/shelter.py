@@ -330,7 +330,6 @@ class ShelterOverview(CRUDMethod):
             unit_id = unit.id
             residents = all_residents.get(unit_id)
             self.add_residents(occupancy_data, unit, residents, show_links=show_links)
-            occupancy_data.append(TR(TD(_colspan=8),_class="residents-list-spacer"))
         # Append residents not assigned to any housing unit
         unassigned = all_residents.get(None)
         if unassigned:
@@ -413,6 +412,7 @@ class ShelterOverview(CRUDMethod):
                                )
                     overview.append(empty)
 
+        overview.append(TR(TD(_colspan=8),_class="residents-list-spacer"))
         return overview
 
     # -------------------------------------------------------------------------
