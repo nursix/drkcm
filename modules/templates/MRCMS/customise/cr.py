@@ -515,22 +515,29 @@ def shelter_unit_occupancy(row):
     if hasattr(row, "cr_shelter_unit"):
         row = row.cr_shelter_unit
     try:
-        ct = row.capacity
-        cb = row.blocked_capacity
-        pt = row.population
+        total_capacity = row.capacity
+        blocked_capacity = row.blocked_capacity
+        population = row.population
     except AttributeError:
         return None
 
-    if not ct:
+    if not total_capacity:
         return None
-    if not cb:
-        cb = 0
-    capacity = ct - cb
-    if capacity == 0:
-        return 100
-    else:
-        import math
-        return math.ceil(pt / capacity * 100)
+    if blocked_capacity is None:
+        blocked_capacity = 0
+    if population is None:
+        population = 0
+
+    # Blocked capacity
+    blocked_capacity = min(total_capacity, blocked_capacity)
+
+    # Available capacity
+    available = total_capacity - blocked_capacity
+    if available < population:
+        available = min(total_capacity, population)
+
+    import math
+    return math.ceil(population / available * 100)
 
 # -------------------------------------------------------------------------
 def occupancy_represent(value):

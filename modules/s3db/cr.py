@@ -757,7 +757,7 @@ class CRShelterUnitModel(DataModel):
         # Housing units
         #
         cr_housing_unit_opts = {1: T("Available"),
-                                2: T("Not Available"),
+                                2: T("Not allocable"),
                                 }
 
         tablename = "cr_shelter_unit"

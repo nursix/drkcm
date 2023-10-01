@@ -319,4 +319,104 @@ body.rtl {
     }
 }
 
+// Residents list
+.residents-overview {
+    .residents-list { /* table */
+        tr {
+            border-left: 2px solid #AAA;
+            border-right: 2px solid #AAA;
+            &.residents-list-spacer {
+                border: none;
+                border-top: 3px solid #AAA;
+                td {
+                    border: none;
+                    min-height: 0.5rem;
+                }
+            }
+        }
+        .residents-unit { /* tr unit header */
+            padding: 0;
+            background-color: #DDD;
+            border-top: 3px solid #AAA;
+            border-collapse: separate;
+            .residents-unit-header  { /* div */
+                padding: 0.3rem 0.1rem;
+                font-size: 1.1rem;
+                font-weight: bold;
+            }
+            .residents-unit-link {
+                i.fa {
+                    margin-right: 1.2rem;
+                    &.fa-ban {
+                        color: red;
+                    }
+                    &.fa-check {
+                        color: #070;
+                    }
+                }
+            }
+        }
+        .residents-status { /* subheader tr */
+            border-top: 2px solid #AAA;
+            .residents-status-header.residents-planned { /* div */
+                font-size: 0.7rem;
+                padding: 0.2rem;
+                color: #666;
+            }
+        }
+        .residents-header {
+            th {
+                font-size: 0.9rem;
+                color: #777;
+                padding: 0.2rem 0.5rem
+            }
+        }
+        .resident-data { /* tr */
+            td {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.9rem;
+                color: #333;
+                &.resident-name {
+                    font-weight: bold;
+                }
+                &.resident-presence {
+                    text-align: center;
+                }
+            }
+            &.resident-checked-in {
+
+            }
+            &.resident-planned {
+                td {
+                    font-style: italic;
+                    color: #888;
+                    a {
+                        color: #888;
+                    }
+                }
+            }
+            &.group-even {
+                background-color: #fdfdfd
+            }
+            &.group-odd {
+                background-color: #f9f9f9;
+            }
+        }
+        .capacity-free { /* tr */
+            td {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            background-color: #b9ffb9;
+        }
+        .capacity-blocked { /* tr */
+            td {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.9rem;
+            }
+            background-color: #ffced5;
+        }
+    }
+}
+
 // END ========================================================================

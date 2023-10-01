@@ -5,11 +5,11 @@
 """
 
 from dateutil.relativedelta import relativedelta
-from gluon import current, \
-                  A, DIV, I, P, TABLE, TD, TR, TH, TAG
+from gluon import current, URL, \
+                  A, DIV, I, P, SPAN, TABLE, TD, TR, TH, TAG
 from gluon.storage import Storage
 
-from core import CRUDMethod, PresenceRegistration
+from core import CRUDMethod, PresenceRegistration, s3_format_fullname
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -235,21 +235,22 @@ class ShelterOverview(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def occupancy_data(self, shelter):
+        # TODO docstring
 
         db = current.db
         s3db = current.s3db
 
         shelter_id = shelter.id
-        #site_id = shelter.site_id
+        site_id = shelter.site_id
 
-        overview = DIV(_class="occupancy-overview")
+        overview = DIV(_class="residents-overview")
 
         # Get all housing units for this shelter
-        # - id, name, status, capacity, blocked_capacity
         utable = s3db.cr_shelter_unit
         query = (utable.shelter_id == shelter_id) & \
                 (utable.deleted == False)
         units = db(query).select(utable.id,
+                                 utable.shelter_id,
                                  utable.name,
                                  utable.status,
                                  utable.capacity,
@@ -258,43 +259,27 @@ class ShelterOverview(CRUDMethod):
                                  orderby = utable.name,
                                  )
 
-        # Get all active shelter registrations for any of these units
-        # person_id, status, check-in date
+        # Get all active shelter registrations for this shelter
         rtable = s3db.cr_shelter_registration
-        #query = (rtable.shelter_id == shelter_id) & \
-                #(rtable.registration_status != 3) & \
-                #(rtable.deleted == False)
-
-        #registrations = db(query).select(rtable.id,
-                                         #rtable.person_id,
-                                         #rtable.shelter_unit_id,
-                                         #rtable.registration_status,
-                                         #rtable.check_in_date,
-                                         #)
-        #print(registrations)
-        #persons = {r.person_id: None for r in registrations}
-        #person_ids = set(persons.keys())
-
-        # Get all persons
-        # pe_label, label, first_name, last_name, gender, DoB
-        # Left joins:
-        # pr_person_details: nationality
-        # dvr_case: last_seen_on
-        # pr_group_membership (filtered to case groups) <= orderby
         ptable = s3db.pr_person
         dtable = s3db.pr_person_details
         ctable = s3db.dvr_case
         mtable = s3db.pr_group_membership
+        sptable = s3db.org_site_presence
 
         left = [dtable.on((dtable.person_id == ptable.id) & \
                           (dtable.deleted == False)),
                 mtable.on((mtable.person_id == ptable.id) & \
                           (mtable.deleted == False)),
+                sptable.on((sptable.person_id == ptable.id) & \
+                           (sptable.site_id == site_id) & \
+                           (sptable.deleted == False)),
                 ]
         join = [rtable.on((rtable.person_id == ptable.id) & \
                           (rtable.shelter_id == shelter_id) & \
                           (rtable.registration_status != 3) & \
                           (rtable.deleted == False)),
+                # TODO case must belong to organisation operating the shelter
                 ctable.on((ctable.person_id == ptable.id) & \
                           (ctable.deleted == False)),
                 ]
@@ -306,7 +291,7 @@ class ShelterOverview(CRUDMethod):
                                 ptable.gender,
                                 ptable.date_of_birth,
                                 dtable.nationality,
-                                ctable.last_seen_on,
+                                sptable.status,
                                 mtable.id,
                                 mtable.group_id,
                                 rtable.shelter_unit_id,
@@ -324,6 +309,7 @@ class ShelterOverview(CRUDMethod):
                                            ),
                                 )
 
+        # Split up residents by housing unit
         all_residents = {}
         for row in rows:
             registration = row.cr_shelter_registration
@@ -334,47 +320,29 @@ class ShelterOverview(CRUDMethod):
                 residents = all_residents[unit_id] = []
             residents.append(row)
 
-        occupancy_data = TABLE(_class="occupancy-data")
-
+        # Generate residents list
+        # TODO verify user is permitted to read cases of the shelter org
+        # TODO if not permitted to read cases, show anonymous
+        # TODO show_links always true if permitted
+        show_links = current.auth.s3_has_permission("read", "pr_person", c="dvr", f="person")
+        occupancy_data = TABLE(_class="residents-list")
         for unit in units:
             unit_id = unit.id
             residents = all_residents.get(unit_id)
-            self.add_residents(occupancy_data, unit, residents)
-
+            self.add_residents(occupancy_data, unit, residents, show_links=show_links)
+            occupancy_data.append(TR(TD(_colspan=8),_class="residents-list-spacer"))
+        # Append residents not assigned to any housing unit
         unassigned = all_residents.get(None)
         if unassigned:
-            self.add_residents(occupancy_data, None, unassigned)
+            self.add_residents(occupancy_data, None, unassigned, show_links=show_links)
 
         overview.append(occupancy_data)
         return overview
 
-        #checked_in = {}
-        #planned = {}
-        #seen = set()
-        #for row in rows:
-            #person_id = row.pr_person.id
-            #if person_id in seen:
-                #continue
-            #seen.add(person_id)
-            #reg = row.cr_shelter_registration
-            #unit_id = reg.shelter_unit_id
-            #if reg.registration_status == 1:
-                #if unit_id in planned:
-                    #records = planned[unit_id]
-                #else:
-                    #records = planned[unit_id] = []
-                #records.append(row)
-            #elif reg.registration_status == 2:
-                #if unit_id in checked_in:
-                    #records = checked_in[unit_id]
-                #else:
-                    #records = checked_in[unit_id] = []
-                #records.append(row)
-
-
     # -------------------------------------------------------------------------
     @classmethod
-    def add_residents(cls, overview, unit, residents):
+    def add_residents(cls, overview, unit, residents, show_links=False):
+        # TODO docstring
 
         unit_header = cls.unit_header(unit)
         overview.append(unit_header)
@@ -394,12 +362,12 @@ class ShelterOverview(CRUDMethod):
 
             if i == 0:
                 # Checked-in residents
-                css = "reg-checked-in"
+                css = "resident-checked-in"
                 overview.append(cls.resident_header())
-            else:
+            elif persons:
                 # Planned residents
-                css = "reg-planned"
-                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css=css)
+                css = "resident-planned"
+                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="residents-planned")
                 overview.append(subheader)
 
             group_id = None
@@ -409,25 +377,38 @@ class ShelterOverview(CRUDMethod):
                 if not gid or gid != group_id:
                     group_id = gid
                     even, odd = odd, even
-                overview.append(cls.resident(person, css="%s %s" % (css, even)))
+                overview.append(cls.resident(person,
+                                             css = "resident-data %s %s" % (css, even),
+                                             show_link = show_links,
+                                             ))
 
             # Render placeholder rows for unoccupied capacity
-            if unit and i == 0 and not unit.transitory:
-                occupied = len(persons)
+            if i == 0 and unit and not unit.transitory:
+                # Total and free capacity
                 total = unit.capacity
-                free = total - occupied
+                if total is None:
+                    total = 0
+                free = max(total - len(persons), 0)
+
+                # Blocked capacity (can be at most all free capacity)
                 blocked = min(free, unit.blocked_capacity)
-                free = free - blocked
+
+                # Remaining free capacity
+                if unit.status == 1:
+                    free = free - blocked
+                else:
+                    blocked = free
+                    free = 0
 
                 for _ in range(free):
                     empty = TR(TD(I(_class="fa fa-bed")),
-                               TD(T("Available"), _colspan = 7),
+                               TD(T("Available"), _colspan = 6),
                                _class = "capacity-free",
                                )
                     overview.append(empty)
                 for _ in range(blocked):
                     empty = TR(TD(I(_class="fa fa-times-circle")),
-                               TD(T("Unavailable"), _colspan = 7),
+                               TD(T("Not allocable"), _colspan = 6),
                                _class = "capacity-blocked",
                                )
                     overview.append(empty)
@@ -437,71 +418,100 @@ class ShelterOverview(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def unit_header(unit):
+        # TODO docstring
 
         T = current.T
 
-        header = DIV(unit.name if unit else T("No housing unit"),
-                     _class="occupancy-unit-header",
+        if not unit:
+            label = T("No housing unit")
+        else:
+            # TODO also show capacity/occupancy data
+            if unit.status == 1:
+                icon = I(_class="fa fa-check", _title=T("Available"))
+            else:
+                icon = I(_class="fa fa-ban", _title=T("Not allocable"))
+            label = A(icon,
+                      unit.name,
+                      _href=URL(c = "cr",
+                                f = "shelter",
+                                args = [unit.shelter_id, "shelter_unit", unit.id],
+                                ),
+                      _class = "residents-unit-link",
+                      )
+
+        header = DIV(label,
+                     _class = "residents-unit-header",
                      )
-        return TR(TD(header, _colspan=8),
-                  _class="occupancy-unit",
+        return TR(TD(header, _colspan=7),
+                  _class = "residents-unit",
                   )
 
     # -------------------------------------------------------------------------
     @staticmethod
     def unit_subheader(status, number, css=None):
+        # TODO docstring
 
         s3db = current.s3db
         rtable = s3db.cr_shelter_registration
 
         status_label = rtable.registration_status.represent(status)
 
-        css_class = "occupancy-registration-status"
+        css_class = "residents-status-header"
         if css:
             css_class = "%s %s" % (css_class, css)
 
         header = DIV("%s: %s" % (status_label, number),
-                     _class=css_class,
+                     _class = css_class,
                      )
-        return TR(TD(header, _colspan=8),
-                  _class="occupancy-subset"
+        return TR(TD(header, _colspan=7),
+                  _class="residents-status"
                   )
 
     # -------------------------------------------------------------------------
     @staticmethod
     def resident_header():
+        # TODO docstring
 
         T = current.T
 
         return TR(TH(),
                   TH(T("ID")),
-                  TH(T("Last Name")),
-                  TH(T("First Name")),
+                  TH(T("Name")),
                   TH(T("Gender")),
                   TH(T("Age")),
                   TH(T("Nationality")),
-                  TH(T("Last seen on")),
-                  _class = "occupancy-resident-header",
+                  TH(T("Presence")),
+                  _class = "residents-header",
                   )
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def resident(row, css=None):
+    def resident(row, css=None, show_link=False):
+        # TODO docstring
 
+        T = current.T
         s3db = current.s3db
+
         ptable = s3db.pr_person
         dtable = s3db.pr_person_details
-        ctable = s3db.dvr_case
+        sptable = s3db.org_site_presence
 
         person = row.pr_person
         details = row.pr_person_details
-        case = row.dvr_case
+        presence = row.org_site_presence
 
         # ID and names
         represent_str = lambda s: s if s else "-"
         label = represent_str(person.pe_label)
         lname = represent_str(person.last_name)
         fname = represent_str(person.first_name)
+        name = s3_format_fullname(fname = fname,
+                                  lname = lname,
+                                  truncate = True,
+                                  )
+        if show_link:
+            case_file = URL(c="dvr", f="person", args=[person.id])
+            name = A(name, _href=case_file)
 
         # Gender, age, nationality
         gender = ptable.gender.represent(person.gender)
@@ -510,8 +520,14 @@ class ShelterOverview(CRUDMethod):
         age = str(relativedelta(now, dob).years) if dob else "-"
         nationality = dtable.nationality.represent(details.nationality)
 
-        # Last-seen-date
-        last_seen_on = ctable.last_seen_on.represent(case.last_seen_on)
+        # Presence
+        # TODO use workflow options
+        if presence.status == "IN":
+            p = I(_class="fa fa-check")
+        elif presence.status == "OUT":
+            p = I(_class="fa fa-times")
+        else:
+            p = "-"
 
         # Registration status
         reg = row.cr_shelter_registration
@@ -522,12 +538,11 @@ class ShelterOverview(CRUDMethod):
 
         trow = TR(TD(I(_class=icon)),
                   TD(label),
-                  TD(lname),
-                  TD(fname),
+                  TD(name, _class="resident-name"),
                   TD(gender),
                   TD(age),
                   TD(nationality),
-                  TD(last_seen_on),
+                  TD(p, _class="resident-presence"),
                   _class = css,
                   )
         return trow
