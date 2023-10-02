@@ -273,7 +273,7 @@ def get_available_shelters(organisation_id, person_id=None):
                                limitby = (0, 1),
                                orderby = ~rtable.id,
                                ).first()
-        current_shelter = reg.shelter_id
+        current_shelter = reg.shelter_id if reg else None
     else:
         current_shelter = None
 
