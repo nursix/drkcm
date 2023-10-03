@@ -986,8 +986,15 @@
 
             let data = {
                 id: eventObj.id,
-                s: eventObj.start.toISOString() // start date
             };
+
+            if (resource.useTime) {
+                data.s = eventObj.start.toISOString();
+            } else {
+                // Remove the timezone offset, and convert to bare ISO date without time
+                let offset = eventObj.start.getTimezoneOffset();
+                data.s = moment(eventObj.start).subtract(offset, 'minutes').toISOString().slice(0, 10);
+            }
 
             // Add end date?
             if (resource.end) {
@@ -997,7 +1004,10 @@
                     data.e = moment(eventObj.end).subtract(1, 'seconds').toISOString();
                 } else {
                     // Record end is end of previous day before item end
-                    data.e = moment(eventObj.end).subtract(1, 'days').endOf('day').toISOString();
+                    let offset = eventObj.start.getTimezoneOffset(),
+                        end = moment(eventObj.end).subtract(1, 'days').endOf('day');
+                    // Remove the timezone offset, and convert to bare ISO date without time
+                    data.e = end.subtract(offset, "minutes").toISOString().slice(0, 10);
                 }
             }
 

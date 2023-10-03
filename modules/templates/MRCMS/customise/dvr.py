@@ -300,6 +300,55 @@ def dvr_case_activity_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def dvr_case_appointment_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    # Organizer popups
+    if r.tablename == "pr_person":
+        title = "type_id"
+        description = ["type_id",
+                       "status",
+                       "comments",
+                       ]
+    elif r.tablename == "dvr_case_appointment":
+        title = "person_id"
+        description = [(T("ID"), "person_id$pe_label"),
+                       "type_id",
+                       "status",
+                       "comments",
+                       ]
+    else:
+        title = description = None
+
+    table = s3db.dvr_case_appointment
+
+    field = table.comments
+    field.label = T("Details")
+    field.comment = None
+
+    # Configure Organizer
+    if title:
+        s3db.configure("dvr_case_appointment",
+                       organize = {"start": "date",
+                                   "title": title,
+                                   "description": description,
+                                   # Color by status
+                                   "color": "status",
+                                   "colors": {
+                                       1: "#ffaa00", # required (amber)
+                                       2: "#10427b", # planned (blue)
+                                       3: "#009f00", # in progress (light green)
+                                       4: "#006100", # completed (green)
+                                       5: "#d10000", # missed (red)
+                                       6: "#666",    # canceled (gray)
+                                       7: "#666",    # not required (gray)
+                                       }
+                                   },
+                       )
+
+# -------------------------------------------------------------------------
 def dvr_case_appointment_controller(**attr):
 
     T = current.T
@@ -370,11 +419,6 @@ def dvr_case_appointment_controller(**attr):
                 types = db(query).select(ttable.id, ttable.name)
                 type_filter_opts = {t.id: t.name for t in types}
 
-                # Default date interval
-                now = r.utcnow
-                today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-                tomorrow = today + datetime.timedelta(days=1)
-
                 # Filter widgets
                 filter_widgets = [
                     TextFilter(["person_id$pe_label",
@@ -391,9 +435,7 @@ def dvr_case_appointment_controller(**attr):
                                   options = s3db.dvr_appointment_status_opts,
                                   default = 2,
                                   ),
-                    DateFilter("date",
-                               default = {"ge": today, "le": tomorrow},
-                               ),
+
                     TextFilter(["person_id$pe_label"],
                                label = T("IDs"),
                                match_any = True,
@@ -408,6 +450,15 @@ def dvr_case_appointment_controller(**attr):
                                   options = {True: T("Yes"), False: T("No")},
                                   ),
                     ]
+                if r.method != "organize":
+                    now = r.utcnow
+                    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+                    tomorrow = today + datetime.timedelta(days=1)
+                    filter_widgets.insert(-2, DateFilter("date",
+                                                        default = {"ge": today,
+                                                                   "le": tomorrow,
+                                                                   },
+                                              ))
 
                 # Add organisation filter if user can see appointments
                 # from more than one org

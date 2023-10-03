@@ -1186,29 +1186,44 @@ def pr_person_controller(**attr):
                                        )),
                           ]
 
-        if not r.component and r.record and isinstance(output, dict):
+        if r.record and isinstance(output, dict):
 
-            # Custom CRUD buttons
-            if "buttons" not in output:
-                buttons = output["buttons"] = {}
-            else:
-                buttons = output["buttons"]
-
-            # Button to generate ID
+            # Generate-ID button (required appropriate role)
             if administration and r.controller == "dvr" or \
                is_org_admin and r.controller == "hrm":
-                card_button = A(T("Generate ID"),
-                                _href = r.url(component = "identity",
-                                              method = "generate",
-                                              ),
-                                _class = "action-btn",
-                                )
-            else:
-                card_button = ""
+                id_btn = A(T("Generate ID"),
+                           _href = r.url(component = "identity",
+                                         method = "generate",
+                                         ),
+                          _class = "action-btn activity button",
+                          )
+                if not r.component:
+                    if "buttons" not in output:
+                        buttons = output["buttons"] = {}
+                    else:
+                        buttons = output["buttons"]
+                    buttons["delete_btn"] = TAG[""](id_btn)
+                elif r.component_name == "identity":
+                    showadd_btn = output.get("showadd_btn")
+                    if showadd_btn:
+                        output["showadd_btn"] = TAG[""](id_btn, showadd_btn)
+                    else:
+                        output["showadd_btn"] = id_btn
 
-            # Render in place of the delete-button
-            buttons["delete_btn"] = TAG[""](card_button,
-                                            )
+            # Organizer-button for appointments
+            if r.component_name == "case_appointment":
+                oa_btn = A(T("Calendar"),
+                           _href = r.url(component = "case_appointment",
+                                         method = "organize",
+                                         ),
+                           _class = "action-btn activity button",
+                           )
+                showadd_btn = output.get("showadd_btn")
+                if showadd_btn:
+                    output["showadd_btn"] = TAG[""](oa_btn, showadd_btn)
+                else:
+                    output["showadd_btn"] = oa_btn
+
         return output
     s3.postp = postp
 

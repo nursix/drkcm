@@ -612,7 +612,7 @@ class S3Organizer(CRUDMethod):
         if not end and introspect:
             for fn in ("end_date", "closed_on"):
                 if fn in table.fields:
-                    start = fn
+                    end = fn
                     break
         if end:
             end_rfield = resource.resolve_selector(prefix(end))

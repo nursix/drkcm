@@ -241,6 +241,7 @@ def config(settings):
                                dvr_case_resource, \
                                dvr_case_activity_resource, \
                                dvr_case_activity_controller, \
+                               dvr_case_appointment_resource, \
                                dvr_case_appointment_controller, \
                                dvr_case_event_resource, \
                                dvr_case_event_controller, \
@@ -253,6 +254,7 @@ def config(settings):
     settings.customise_dvr_case_resource = dvr_case_resource
     settings.customise_dvr_case_activity_resource = dvr_case_activity_resource
     settings.customise_dvr_case_activity_controller = dvr_case_activity_controller
+    settings.customise_dvr_case_appointment_resource = dvr_case_appointment_resource
     settings.customise_dvr_case_appointment_controller = dvr_case_appointment_controller
     settings.customise_dvr_case_event_resource = dvr_case_event_resource
     settings.customise_dvr_case_event_controller = dvr_case_event_controller

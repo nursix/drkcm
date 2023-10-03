@@ -3605,10 +3605,10 @@ class DVRCaseAppointmentModel(DataModel):
         # ---------------------------------------------------------------------
         # Case Appointments
         #
-        appointment_status_opts = {1: T("Planning"),
+        appointment_status_opts = {1: T("Required"),
                                    2: T("Planned"),
-                                   3: T("In Progress"),
-                                   4: T("Completed"),
+                                   #3: T("In Progress"),
+                                   4: T("Completed##appointment"),
                                    5: T("Missed"),
                                    6: T("Cancelled"),
                                    7: T("Not Required"),
@@ -3726,6 +3726,7 @@ class DVRCaseAppointmentModel(DataModel):
     def case_appointment_onaccept(form):
         """
             Actions after creating/updating appointments
+                - Fix status+date to plausible combinations
                 - Update last_seen_on in the corresponding case(s)
                 - Update the case status if configured to do so
 
@@ -3734,35 +3735,49 @@ class DVRCaseAppointmentModel(DataModel):
         """
 
         # Read form data
-        formvars = form.vars
-        if "id" in formvars:
-            record_id = formvars.id
-        elif hasattr(form, "record_id"):
-            record_id = form.record_id
-        else:
-            record_id = None
+        record_id = get_form_record_id(form)
         if not record_id:
             return
 
+        formvars = form.vars
+
         db = current.db
         s3db = current.s3db
-
         settings = current.deployment_settings
 
+        # Reload the record
         table = s3db.dvr_case_appointment
+        record = db(table.id == record_id).select(table.id,
+                                                  table.case_id,
+                                                  table.person_id,
+                                                  table.date,
+                                                  table.status,
+                                                  limitby = (0, 1),
+                                                  ).first()
 
-        person_id = formvars.get("person_id")
-        case_id = formvars.get("case_id")
+        person_id = record.person_id
+        case_id = record.case_id
 
-        if not person_id or not case_id:
-            row = db(table.id == record_id).select(table.case_id,
-                                                   table.person_id,
-                                                   limitby = (0, 1),
-                                                   ).first()
-            if row:
-                person_id = row.person_id
-                case_id = row.case_id
+        # Fix up status+date to plausible combination
+        today = current.request.utcnow.date()
+        date = record.date
+        status = record.status
+        if status == 3: # in progress
+            record.update_record(date=today)
+        elif date:
+            if status == 7: # not required
+                record.update_record(date=None)
+            elif date >= today:
+                if status == 1: # required
+                    record.update_record(status=2)
+                elif status == 4: # completed
+                    record.update_record(date=today)
+        elif status == 2: # planned
+            record.update_record(status=1)
+        elif status == 4: # completed
+            record.update_record(date=today)
 
+        # Update last-seen-on date when appointment gets updated
         if settings.get_dvr_appointments_update_last_seen_on() and person_id:
             # Update last_seen_on
             dvr_update_last_seen(person_id)
@@ -3851,24 +3866,10 @@ class DVRCaseAppointmentModel(DataModel):
 
         if current.deployment_settings.get_dvr_appointments_update_last_seen_on():
 
-            # Get the deleted keys
-            table = current.s3db.dvr_case_appointment
-            row = current.db(table.id == row.id).select(table.deleted_fk,
-                                                        limitby = (0, 1),
-                                                        ).first()
-            if row and row.deleted_fk:
-
-                # Get the person ID
-                try:
-                    deleted_fk = json.loads(row.deleted_fk)
-                except (ValueError, TypeError):
-                    person_id = None
-                else:
-                    person_id = deleted_fk.get("person_id")
-
-                # Update last_seen_on
-                if person_id:
-                    dvr_update_last_seen(person_id)
+            # Update last_seen_on
+            person_id = row.person_id
+            if person_id:
+                dvr_update_last_seen(person_id)
 
 # =============================================================================
 class DVRResidenceStatusModel(DataModel):
