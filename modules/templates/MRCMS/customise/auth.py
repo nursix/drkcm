@@ -8,6 +8,8 @@ from gluon import current
 
 from s3dal import original_tablename
 
+from core import IS_ONE_OF
+
 # -------------------------------------------------------------------------
 def realm_entity(table, row):
     """
@@ -251,17 +253,29 @@ def person_realm_entity(table, row, key="person_id", default=0):
 
 # -------------------------------------------------------------------------
 def auth_user_resource(r, tablename):
-    # TODO adjust to multitenancy
-    #      org-admin created users: use managed org if single
-    #      otherwise: provide selector of managed orgs
 
-    settings = current.deployment_settings
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
 
-    table = current.s3db.auth_user
-    field = table.organisation_id
+    if not auth.s3_has_roles(("ADMIN", "ORG_GROUP_ADMIN")):
+        # Limit OrgAdmins to their managed organisations
+        table = auth.settings.table_user
+        field = table.organisation_id
 
+        from ..helpers import get_managed_orgs
+        organisation_ids = get_managed_orgs()
 
+        otable = s3db.org_organisation
+        dbset = db(otable.id.belongs(organisation_ids))
+        field.requires = IS_ONE_OF(dbset, "org_organisation.id",
+                                   field.represent,
+                                   orderby = "name",
+                                   )
 
-    field.default = settings.get_org_default_organisation()
+        # Default if single organisation
+        if len(organisation_ids) == 1:
+            field.default = organisation_ids[0]
+            field.writable = False
 
 # END =========================================================================
