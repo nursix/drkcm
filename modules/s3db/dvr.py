@@ -53,6 +53,7 @@ __all__ = ("DVRCaseModel",
            "dvr_response_default_status",
            "dvr_response_status_colors",
            "dvr_case_household_size",
+           "dvr_group_membership_onaccept",
            "dvr_due_followups",
            "dvr_get_flag_instructions",
            "dvr_get_household_size",
@@ -5397,6 +5398,121 @@ def dvr_case_household_size(group_id):
         for case_id, members in groups.items():
             number_of_members = len(members)
             db(ctable.id == case_id).update(household_size = number_of_members)
+
+# =============================================================================
+def dvr_group_membership_onaccept(record, group, group_id, person_id):
+    """
+        Onaccept of a case group
+            - update household size
+            - add case records for new group members
+
+        Args:
+            record: the pr_group_membership record
+            group: the pr_group Row (including id and group_type)
+            group_id: the pr_group record ID (if the group was deleted)
+            person_id: the person ID (if the group membership was deleted)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.pr_group_membership
+    ctable = s3db.dvr_case
+    gtable = s3db.pr_group
+
+    settings = current.deployment_settings
+    response = current.response
+    s3 = response.s3
+
+    if s3.purge_case_groups:
+        return
+
+    # Get the group
+    if group.id is None and group_id:
+        query = (gtable.id == group_id) & (gtable.deleted == False)
+        group = db(query).select(gtable.id,
+                                 gtable.group_type,
+                                 limitby = (0, 1),
+                                 ).first()
+    if not group or group.group_type != 7:
+        return
+
+    # Case groups should only have one group head
+    if not record.deleted and record.group_head:
+        query = (table.group_id == group_id) & \
+                (table.id != record.id) & \
+                (table.group_head == True)
+        db(query).update(group_head=False)
+
+    update_household_size = settings.get_dvr_household_size() == "auto"
+    recount = dvr_case_household_size
+
+    if update_household_size and record.deleted and person_id:
+        # Update the household size for removed group member
+        query = (table.person_id == person_id) & \
+                (table.group_id != group_id) & \
+                (table.deleted != True) & \
+                (gtable.id == table.group_id) & \
+                (gtable.group_type == 7)
+        row = db(query).select(table.group_id, limitby=(0, 1)).first()
+        if row:
+            # Person still belongs to other case groups, count properly:
+            recount(row.group_id)
+        else:
+            # No further case groups, so household size is 1
+            cquery = (ctable.person_id == person_id)
+            db(cquery).update(household_size = 1)
+
+    if not s3.bulk:
+        # Get number of (remaining) members in this group
+        query = (table.group_id == group_id) & \
+                (table.deleted != True)
+        rows = db(query).select(table.id, limitby=(0, 2))
+
+        if len(rows) < 2: # Single member
+
+            # Update the household size for remaining member
+            # (they could still belong to other case groups)
+            if update_household_size:
+                recount(group_id)
+                update_household_size = False
+
+            # Remove the case group
+            s3.purge_case_groups = True
+            resource = s3db.resource("pr_group", id=group_id)
+            resource.delete()
+            s3.purge_case_groups = False
+
+        elif not record.deleted:
+            # Either added or updated a group member
+            # ...make sure there is a case record for them
+
+            query = (ctable.person_id == person_id) & \
+                    (ctable.deleted != True)
+            row = db(query).select(ctable.id, limitby=(0, 1)).first()
+            if not row:
+                # Customise case resource
+                r = CRUDRequest("dvr", "case", current.request)
+                r.customise_resource("dvr_case")
+
+                # Get the default case status from database
+                s3db.dvr_case_default_status()
+
+                # Create a case
+                cresource = s3db.resource("dvr_case")
+                try:
+                    # Using resource.insert for proper authorization
+                    # and post-processing (=audit, ownership, realm,
+                    # onaccept)
+                    cresource.insert(person_id=person_id)
+                except S3PermissionError:
+                    # Unlikely (but possible) that this situation
+                    # is deliberate => issue a warning
+                    response.warning = current.T("No permission to create a case record for new group member")
+
+    # Update the household size for current group members
+    if update_household_size:
+        recount(group_id)
 
 # =============================================================================
 def dvr_due_followups(human_resource_id=None):

@@ -375,12 +375,99 @@ def get_default_case_organisation():
 
     return None
 
+# -------------------------------------------------------------------------
+def get_available_shelters(organisation_id, person_id=None):
+    """
+        The available shelters of the case organisation, to configure
+        inline shelter registration in case form
+
+        Args:
+            organisation_id: the ID of the case organisation
+            person_id: the person_id of the client
+
+        Returns:
+            list of shelter IDs
+
+        Note:
+            - includes the current shelter where the client is registered,
+              even if it is closed
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get the current shelter registration for person_id
+    if person_id:
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        reg = db(query).select(rtable.shelter_id,
+                               limitby = (0, 1),
+                               orderby = ~rtable.id,
+                               ).first()
+        current_shelter = reg.shelter_id if reg else None
+    else:
+        current_shelter = None
+
+    stable = s3db.cr_shelter
+    status_query = (stable.status == 2) & \
+                   (stable.obsolete == False)
+    if current_shelter:
+        status_query |= (stable.id == current_shelter)
+
+    query = (stable.organisation_id == organisation_id) & \
+            status_query & \
+            (stable.deleted == False)
+    rows = db(query).select(stable.id)
+    shelters = [row.id for row in rows]
+
+    return shelters
+
 # -----------------------------------------------------------------------------
-def get_default_case_shelter():
-    # TODO implement
-    #      - single shelter of the default_case_organisation
-    #      - parameter person_id (client) to use actual case org instead
-    pass
+def get_default_case_shelter(person_id):
+    """
+        Get the default shelter (and housing unit) for a case
+
+        Args:
+            person_id: use the shelter registration of this person as
+                       reference, if available
+        Returns:
+            tuple (shelter_id, unit_id)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    shelter_id = unit_id = None
+
+    if person_id:
+        # Get the current shelter_id and unit_id for the person_id
+        # if they are registered as planned or checked-in to a shelter
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        row = db(query).select(rtable.shelter_id,
+                               rtable.shelter_unit_id,
+                               rtable.registration_status,
+                               limitby = (0, 1),
+                               ).first()
+        if row:
+            shelter_id = row.shelter_id
+            if row.registration_status != 3:
+                unit_id = row.shelter_unit_id
+            else:
+                # Person is checked-out, so housing unit no longer valid
+                unit_id = None
+
+    if not shelter_id:
+        # Look up the only available shelter from the default case organisation
+        organisation_id = get_default_case_organisation()
+        if organisation_id:
+            available_shelters = get_available_shelters(organisation_id)
+            if len(available_shelters) == 1:
+                shelter_id = available_shelters[0]
+
+    return shelter_id, unit_id
 
 # =============================================================================
 def account_status(record, represent=True):

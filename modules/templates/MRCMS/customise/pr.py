@@ -244,53 +244,6 @@ def get_case_organisation(person_id):
     return row.organisation_id if row else None
 
 # -------------------------------------------------------------------------
-def get_available_shelters(organisation_id, person_id=None):
-    """
-        The available shelters of the case organisation, to configure
-        inline shelter registration in case form
-
-        Args:
-            organisation_id: the ID of the case organisation
-            person_id: the person_id of the client
-
-        Returns:
-            list of shelter IDs
-
-        Note:
-            - includes the current shelter where the client is registered,
-              even if it is closed
-    """
-
-    db = current.db
-    s3db = current.s3db
-
-    # Get the current shelter registration for person_id
-    if person_id:
-        rtable = s3db.cr_shelter_registration
-        query = (rtable.person_id == person_id) & \
-                (rtable.deleted == False)
-        reg = db(query).select(rtable.shelter_id,
-                               limitby = (0, 1),
-                               orderby = ~rtable.id,
-                               ).first()
-        current_shelter = reg.shelter_id if reg else None
-    else:
-        current_shelter = None
-
-    stable = s3db.cr_shelter
-    status_query = (stable.status == 2)
-    if current_shelter:
-        status_query |= (stable.id == current_shelter)
-
-    query = (stable.organisation_id == organisation_id) & \
-            status_query & \
-            (stable.deleted == False)
-    rows = db(query).select(stable.id)
-    shelters = [row.id for row in rows]
-
-    return shelters
-
-# -------------------------------------------------------------------------
 def configure_inline_shelter_registration(component, shelters, person_id=None):
     """
         Configure inline shelter registration in case form
@@ -751,6 +704,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
         # Determine available shelters and default
         if case_organisation:
+            from ..helpers import get_available_shelters
             shelters = get_available_shelters(case_organisation, person_id)
         else:
             shelters = None
@@ -1271,13 +1225,28 @@ def pr_group_membership_controller(**attr):
         resource = r.resource
         if r.controller == "dvr":
 
-            # Set default shelter
-            from ..helpers import get_default_shelter
-            shelter_id = get_default_shelter()
-            if shelter_id:
-                rtable = s3db.cr_shelter_registration
-                field = rtable.shelter_id
-                field.default = shelter_id
+            viewing = r.viewing
+            if viewing and viewing[0] == "pr_person":
+                person_id = viewing[1]
+            else:
+                person_id = None
+
+            from ..helpers import get_default_case_organisation, get_default_case_shelter
+            if person_id:
+                organisation_id = get_case_organisation(person_id)
+                shelter_id, unit_id = get_default_case_shelter(person_id)
+            else:
+                organisation_id = get_default_case_organisation()
+                shelter_id, unit_id = get_default_case_shelter(person_id)
+
+            # Set default case organisation
+            ctable = s3db.dvr_case
+            ctable.organisation_id.default = organisation_id
+
+            # Set default shelter and housing unit
+            rtable = s3db.cr_shelter_registration
+            rtable.shelter_id.default = shelter_id
+            rtable.shelter_unit_id.default = unit_id
 
             if r.interactive:
                 table = resource.table

@@ -290,7 +290,7 @@ class IDCard:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def invalidate_ids(person_id, keep=None):
+    def invalidate_ids(person_id, keep=None, expire_only=False):
         """
             Invalidate all system-generated IDs for a person
 
@@ -318,11 +318,12 @@ class IDCard:
             db(dtable.identity_id == row.id).update(file=None)
 
             # Mark the identity record as invalid
-            update = {"invalid": True}
+            update = {} if expire_only else {"invalid": True}
             if not row.valid_until or row.valid_until > today:
                 update["valid_until"] = today
-            row.update_record(**update)
-            # TODO postprocess update?
+            if update:
+                row.update_record(**update)
+                s3db.onaccept(itable, row, method="update")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -479,6 +480,40 @@ class IDCard:
             raise ValueError("Verification hash mismatch")
 
         return person.id
+
+    # -------------------------------------------------------------------------
+    def auto_expire(self):
+        """
+            Auto-expire all ID cards unless holder is still registered
+            at a shelter, or an active staff member
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        person_id = self.person_id
+
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.shelter_id != None) & \
+                (rtable.status != 3) & \
+                (rtable.deleted == False)
+        row = db(query).select(rtable.id, limitby=(0, 1)).first()
+        if row:
+            # ...still planned or checked-in to a shelter
+            return
+
+        htable = s3db.hrm_human_resource
+        query = (htable.person_id == person_id) & \
+                (htable.organisation_id != None) & \
+                (htable.status == 1) & \
+                (htable.deleted == False)
+        row = db(query).select(htable.id, limitby=(0, 1)).first()
+        if row:
+            # ...still an active staff member
+            return
+
+        self.invalidate_ids(person_id, expire_only=True)
 
 # =============================================================================
 class IDCardLayout(PDFCardLayout):

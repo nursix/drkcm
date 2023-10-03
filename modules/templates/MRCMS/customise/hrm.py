@@ -4,8 +4,6 @@
     License: MIT
 """
 
-import datetime
-
 from gluon import current
 
 from core import get_form_record_id
@@ -15,7 +13,7 @@ def human_resource_onaccept(form):
     """
         Onaccept of staff record:
             - disable user account when no longer active
-            - invalidate ID cards when no longer active
+            - auto-expire ID cards when no longer active
     """
 
     record_id = get_form_record_id(form)
@@ -33,14 +31,14 @@ def human_resource_onaccept(form):
     if record and record.status != 1:
         disable_user_account(record.person_id)
         from ..idcards import IDCard
-        IDCard.invalidate_ids(record.person_id)
+        IDCard(record.person_id).auto_expire()
 
 # -------------------------------------------------------------------------
 def human_resource_ondelete(row):
     """
         Ondelete of staff record
             - disable user account
-            - invalidate all ID cards
+            - auto-expire all ID cards
     """
 
     try:
@@ -50,7 +48,7 @@ def human_resource_ondelete(row):
 
     disable_user_account(person_id)
     from ..idcards import IDCard
-    IDCard.invalidate_ids(person_id)
+    IDCard(person_id).auto_expire()
 
 # -------------------------------------------------------------------------
 def disable_user_account(person_id):

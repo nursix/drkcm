@@ -8,7 +8,7 @@ from gluon import current, URL, DIV, H4, P, TAG
 
 from core import S3CRUD, FS, IS_ONE_OF, \
                  LocationSelector, PresenceRegistration, S3SQLCustomForm, \
-                 s3_fieldmethod
+                 get_form_record_id, s3_fieldmethod
 
 # -------------------------------------------------------------------------
 def client_site_status(person_id, site_id, site_type, case_status):
@@ -609,6 +609,33 @@ def cr_shelter_unit_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def cr_shelter_registration_onaccept(form):
+    """
+        Onaccept of shelter registration
+            - when checked-out, expire all system-generated ID cards
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return
+
+    table = s3db.cr_shelter_registration
+    record = db(table.id == record_id).select(table.id,
+                                              table.person_id,
+                                              table.status,
+                                              limitby = (0, 1),
+                                              ).first()
+    if not record:
+        return
+
+    if record.status == 3:
+        from ..idcards import IDCard
+        IDCard(record.person_id).auto_expire()
+
+# -------------------------------------------------------------------------
 def cr_shelter_registration_resource(r, tablename):
 
     table = current.s3db.cr_shelter_registration
@@ -623,6 +650,12 @@ def cr_shelter_registration_resource(r, tablename):
                                                filter_opts = (1,),
                                                orderby = "shelter_id",
                                                ))
+
+    # Custom-callback to trigger status-dependent actions
+    current.s3db.add_custom_callback("cr_shelter_registration",
+                                     "onaccept",
+                                     cr_shelter_registration_onaccept,
+                                     )
 
 # -------------------------------------------------------------------------
 def cr_shelter_registration_controller(**attr):
