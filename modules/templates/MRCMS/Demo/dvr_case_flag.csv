@@ -1,8 +1,11 @@
 Organisation,Name,External,Not Transferable,Comments
-Betreuungsverband LUK Rendsburg,Priority,false,false,
-Betreuungsverband LUK Rendsburg,Security,false,false,
-Betreuungsverband LUK Rendsburg,Medical,false,false,
-Betreuungsverband LUK Rendsburg,Mail,false,false,
-Betreuungsverband LUK Rendsburg,Sought,false,false,
-Betreuungsverband LUK Rendsburg,Police,true,true,"With the police, still entitled to benefits, cannot be transferred"
-Betreuungsverband LUK Rendsburg,Hospital,true,true,"In Hospital, still entitled to benefits, cannot be transferred"
+Betreuungsverband LUK Rendsburg,Gesucht,false,false,Person is sought by the administration
+Betreuungsverband LUK Rendsburg,Inobhutnahme,true,false,Child taken into care of child welfare authorities
+Betreuungsverband LUK Rendsburg,Krankenhaus,true,true,"In Hospital, still entitled to benefits, cannot be transferred"
+Betreuungsverband LUK Rendsburg,Medizin,false,false,Medical conditions that require special handling
+Betreuungsverband LUK Rendsburg,Polizeigewahrsam,true,true,"With the police, still entitled to benefits, cannot be transferred"
+Betreuungsverband LUK Rendsburg,Post,false,false,Client has mail to fetch from the info point
+Betreuungsverband LUK Rendsburg,Priorität,false,false,Conditions exist that require prioritized handling of the case
+Betreuungsverband LUK Rendsburg,Quarantäne,false,true,"Person is to be quarantined, cannot be transferred"
+Betreuungsverband LUK Rendsburg,Schutz,false,false,Vulnerabilities that require protective measures
+Betreuungsverband LUK Rendsburg,Sicherheit,false,false,Security risks that require special handling

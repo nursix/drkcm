@@ -3935,6 +3935,14 @@ Please go to %(url)s to approve this user."""
 
             user_id = self.user.id
 
+            # Logout disabled/blocked users immediately
+            utable = self.settings.table_user
+            query = (utable.id == user_id) & \
+                    (utable.registration_key.belongs(("disabled", "blocked")))
+            if db(query).select(utable.id, limitby=(0, 1)).first():
+                session.renew(clear_session=True)
+                redirect(URL(c="default", f="index"))
+
             # Set pe_id for current user
             ltable = s3db.table("pr_person_user")
             if ltable is not None:
