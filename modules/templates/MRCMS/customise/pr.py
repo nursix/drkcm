@@ -1095,6 +1095,15 @@ def configure_hrm_person_controller(r):
                        ]
         r.component.configure(list_fields=list_fields)
 
+    elif r.component_name == "image":
+
+        # Only OrgAdmin can modify staff photographs
+        if not current.auth.s3_has_role("ORG_ADMIN"):
+            r.component.configure(insertable = False,
+                                  editable = False,
+                                  deletable = False,
+                                  )
+
 # -------------------------------------------------------------------------
 def pr_person_controller(**attr):
 

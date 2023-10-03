@@ -51,9 +51,6 @@ def security_seized_item_resource(r, tablename):
     # Customise options for status field
     field = table.status
     status_opts = s3db.security_seized_item_status_opts
-    status_opts["FWD"] = current.T("forwarded to RP")
-    field.requires = IS_IN_SET(status_opts, zero=None)
-    field.represent = S3Represent(options=status_opts)
 
     # Can't add item type from item form
     field = table.item_type_id
@@ -77,8 +74,8 @@ def security_seized_item_resource(r, tablename):
                                     "date",
                                     "confiscated_by",
                                     "status",
-                                    "depository_id",
                                     "status_comment",
+                                    "depository_id",
                                     "returned_on",
                                     "returned_by",
                                     S3SQLInlineComponent("image",
