@@ -157,14 +157,24 @@ def pr_person_resource(r, tablename):
     # only limited write-access to basic details of residents
     if r.controller == "dvr" and not has_permission("create", "pr_person"):
 
-        # Can not write any fields in main person record
-        # (fields in components may still be writable, though)
+        # Cannot modify any fields in main person record
         ptable = s3db.pr_person
         for field in ptable:
             field.writable = False
 
-        # Can not add or modify contact or identity information
-        for tn in ("pr_contact", "pr_identity", "pr_image"):
+        # Cannot modify certain details
+        dtable = s3db.pr_person_details
+        for fn in ("nationality", "marital_status"):
+            dtable[fn].writable = False
+
+        # Can not add or modify contact or identity information,
+        # images, tags or residence status
+        for tn in ("pr_contact",
+                   "pr_identity",
+                   "pr_image",
+                   "pr_person_tag",
+                   "dvr_residence_status",
+                   ):
             s3db.configure(tn,
                            insertable = False,
                            editable = False,
@@ -327,6 +337,7 @@ def configure_case_form(resource,
                         shelters=None,
                         person_id=None,
                         privileged=False,
+                        administration=False,
                         cancel=False,
                         ):
     """
@@ -338,6 +349,7 @@ def configure_case_form(resource,
             shelters: the available shelters of the case organisation
             person_id: the person_id of the client
             privileged: whether the user has a privileged role
+            administration: whether the user has an administrative role
             cancel: whether the case is to be archived, and thence
                     the shelter registration to be canceled
 
@@ -355,22 +367,31 @@ def configure_case_form(resource,
     show_inline = configure_inline_shelter_registration(component, shelters, person_id)
 
     if cancel or not show_inline:
-        # Ignore registration data in form if the registration
-        # is to be cancelled - otherwise a new registration is
-        # created by the subform-processing right after
-        # dvr_case_onaccept deletes the current one:
+        # Ignore registration data in form if the registration is to be
+        # cancelled (i.e. case closed or marked as invalid) - otherwise
+        # the implicit cancelation (dvr_case_onaccept) is subsequently
+        # overridden by the subform processing:
         reg_shelter = None
         reg_unit_id = None
         reg_status = None
         reg_check_in_date = None
         reg_check_out_date = None
     else:
+        # Show shelter selector only if there are multiple alternatives,
+        # otherwise this will default (see configure_inline_shelter_registration)
         reg_shelter = "shelter_registration.shelter_id" \
                       if shelters and len(shelters) > 1 else None
         reg_unit_id = "shelter_registration.shelter_unit_id"
         reg_status = "shelter_registration.registration_status"
         reg_check_in_date = "shelter_registration.check_in_date"
         reg_check_out_date = "shelter_registration.check_out_date"
+
+    # Configure case component
+    component = resource.components.get("dvr_case")
+    if not administration:
+        field = component.table.archived
+        field.readable = False
+        field.writable = False
 
     # Filter flags for case organisation
     if organisation_id:
@@ -764,6 +785,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
             # Configure case form
             configure_case_form(resource,
                                 privileged = privileged,
+                                administration = administration,
                                 cancel = cancel,
                                 shelters = shelters,
                                 organisation_id = case_organisation,

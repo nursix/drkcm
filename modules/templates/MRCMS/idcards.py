@@ -496,7 +496,7 @@ class IDCard:
         rtable = s3db.cr_shelter_registration
         query = (rtable.person_id == person_id) & \
                 (rtable.shelter_id != None) & \
-                (rtable.status != 3) & \
+                (rtable.registration_status != 3) & \
                 (rtable.deleted == False)
         row = db(query).select(rtable.id, limitby=(0, 1)).first()
         if row:

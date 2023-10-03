@@ -83,7 +83,7 @@ def dvr_case_onaccept(form):
         if reg:
             r = CRUDRequest("cr", "shelter_registration", args=[], get_vars={})
             r.customise_resource("cr_shelter_registration")
-            reg.update_record(status=3)
+            reg.update_record(registration_status=3)
             s3db.onaccept(rtable, reg, method="update")
 
     elif not inline:

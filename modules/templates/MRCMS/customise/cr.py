@@ -625,13 +625,13 @@ def cr_shelter_registration_onaccept(form):
     table = s3db.cr_shelter_registration
     record = db(table.id == record_id).select(table.id,
                                               table.person_id,
-                                              table.status,
+                                              table.registration_status,
                                               limitby = (0, 1),
                                               ).first()
     if not record:
         return
 
-    if record.status == 3:
+    if record.registration_status == 3:
         from ..idcards import IDCard
         IDCard(record.person_id).auto_expire()
 
