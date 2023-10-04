@@ -258,11 +258,12 @@ def auth_user_resource(r, tablename):
     s3db = current.s3db
     auth = current.auth
 
+    table = auth.settings.table_user
+    field = table.organisation_id
+    field.comment = None
+
     if not auth.s3_has_roles(("ADMIN", "ORG_GROUP_ADMIN")):
         # Limit OrgAdmins to their managed organisations
-        table = auth.settings.table_user
-        field = table.organisation_id
-
         from ..helpers import get_managed_orgs
         organisation_ids = get_managed_orgs()
 

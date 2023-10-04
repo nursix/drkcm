@@ -14,10 +14,8 @@ def security_seized_item_resource(r, tablename):
 
     T = current.T
 
-    from gluon import IS_IN_SET
     from core import DateFilter, \
                      OptionsFilter, \
-                     S3Represent, \
                      S3SQLCustomForm, \
                      S3SQLInlineComponent, \
                      TextFilter, \
