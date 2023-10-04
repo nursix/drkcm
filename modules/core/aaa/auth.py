@@ -2715,7 +2715,7 @@ Please go to %(url)s to approve this user."""
         return approved
 
     # -------------------------------------------------------------------------
-    def s3_approve_user(self, user, password=None):
+    def s3_approve_user(self, user, password=None, defaults=False):
         """
             Adds user to the 'Authenticated' role, and any default roles
 
@@ -2737,21 +2737,29 @@ Please go to %(url)s to approve this user."""
 
         db = current.db
         s3db = current.s3db
+
         deployment_settings = current.deployment_settings
         settings = self.settings
 
-        utable = settings.table_user
+        sr = self.get_system_roles()
 
-        # Add to 'Authenticated' role
-        authenticated = self.id_group("Authenticated")
+        # Add to AUTHENTICATED role
         add_membership = self.add_membership
-        add_membership(authenticated, user_id)
+        add_membership(sr.AUTHENTICATED, user_id)
+
+        # Reload the user record if any details are missing
+        utable = settings.table_user
+        fields = ("id", "email", "organisation_id", "org_group_id", "site_id", "link_user_to")
+        if any(fn not in user for fn in fields):
+            user = db(utable.id == user_id).select(*fields, limitby=(0, 1)).first()
+        if not user:
+            return
 
         organisation_id = user.organisation_id
+        link_user_to = user.link_user_to or utable.link_user_to.default or []
 
         # Add User to required registration roles
         entity_roles = deployment_settings.get_auth_registration_roles()
-        link_user_to = user.link_user_to or utable.link_user_to.default or []
         if entity_roles:
             gtable = settings.table_group
             get_pe_id = s3db.pr_get_pe_id
@@ -2775,41 +2783,40 @@ Please go to %(url)s to approve this user."""
 
         if organisation_id and \
            deployment_settings.get_auth_org_admin_to_first():
-            # If this is the 1st user to register for an Org, give them ORG_ADMIN for that Org
+            # If this is the 1st user to register for an organisation, give
+            # them the OrgAdmin role for that organisation
             entity = s3db.pr_get_pe_id("org_organisation", organisation_id)
-            gtable = settings.table_group
-            ORG_ADMIN = db(gtable.uuid == "ORG_ADMIN").select(gtable.id,
-                                                              limitby=(0, 1)
-                                                              ).first().id
-            mtable = settings.table_membership
-            query = (mtable.group_id == ORG_ADMIN) & \
-                    (mtable.pe_id == entity)
-            exists = db(query).select(mtable.id,
-                                      limitby=(0, 1))
-            if not exists:
-                add_membership(ORG_ADMIN, user_id, entity=entity)
 
+            # We only need to check whether there is an OrgAdmin yet, because
+            # if there were any other user for this organisation, they would
+            # necessarily be OrgAdmin due to this rule
+            mtable = settings.table_membership
+            query = (mtable.group_id == sr.ORG_ADMIN) & \
+                    (mtable.pe_id == entity)
+            if not db(query).select(mtable.id, limitby=(0, 1)).first():
+                # No OrgAdmin yet
+                add_membership(sr.ORG_ADMIN, user_id, entity=entity)
+
+        # Link user to person, staff and other records as required
         self.s3_link_user(user)
 
         # Track consent
         if deployment_settings.get_auth_consent_tracking():
             ConsentTracking.register_consent(user_id)
 
-        user_email = db(utable.id == user_id).select(utable.email,
-                                                     ).first().email
-        self.s3_auth_user_register_onaccept(user_email, user_id)
+        # Run any custom on-approval routines
+        self.s3_auth_user_register_onaccept(user.email, user_id)
 
         if current.response.s3.bulk is True:
             # Non-interactive imports should stop here
             return
 
-        # Allow them to login
-        db(utable.id == user_id).update(registration_key = "")
+        # Allow them to login (enable the account)
+        db(utable.id == user_id).update(registration_key="")
 
-        # Approve User's Organisation
+        # Approve User's Organisation (if they created a new one during registration)
         if organisation_id and \
-           "org_organisation" in \
-           deployment_settings.get_auth_record_approval_required_for():
+           "org_organisation" in deployment_settings.get_auth_record_approval_required_for():
             org_resource = s3db.resource("org_organisation",
                                          organisation_id,
                                          # Do not re-approve (would

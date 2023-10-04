@@ -144,6 +144,7 @@ def config(settings):
                                       }
 
     settings.auth.realm_entity = realm_entity
+    settings.auth.registration_roles = {None: ["STAFF"]}
     settings.customise_auth_user_resource = auth_user_resource
 
     # -------------------------------------------------------------------------
@@ -237,7 +238,6 @@ def config(settings):
     #settings.dvr.payments_update_last_seen_on = True
 
     from .customise.dvr import dvr_home, \
-                               dvr_allowance_controller, \
                                dvr_case_resource, \
                                dvr_case_activity_resource, \
                                dvr_case_activity_controller, \
@@ -245,12 +245,13 @@ def config(settings):
                                dvr_case_appointment_controller, \
                                dvr_case_event_resource, \
                                dvr_case_event_controller, \
+                               dvr_case_appointment_type_controller, \
                                dvr_case_event_type_resource, \
+                               dvr_case_flag_controller, \
                                dvr_note_resource, \
                                dvr_site_activity_resource
 
     settings.customise_dvr_home = dvr_home
-    settings.customise_dvr_allowance_controller = dvr_allowance_controller
     settings.customise_dvr_case_resource = dvr_case_resource
     settings.customise_dvr_case_activity_resource = dvr_case_activity_resource
     settings.customise_dvr_case_activity_controller = dvr_case_activity_controller
@@ -258,7 +259,11 @@ def config(settings):
     settings.customise_dvr_case_appointment_controller = dvr_case_appointment_controller
     settings.customise_dvr_case_event_resource = dvr_case_event_resource
     settings.customise_dvr_case_event_controller = dvr_case_event_controller
+
+    settings.customise_dvr_case_appointment_type_controller = dvr_case_appointment_type_controller
     settings.customise_dvr_case_event_type_resource = dvr_case_event_type_resource
+    settings.customise_dvr_case_flag_controller = dvr_case_flag_controller
+
     settings.customise_dvr_note_resource = dvr_note_resource
     settings.customise_dvr_site_activity_resource = dvr_site_activity_resource
 

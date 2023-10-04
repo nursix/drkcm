@@ -8,9 +8,10 @@ import datetime
 
 from dateutil import tz
 
-from gluon import current, URL, A, INPUT, IS_EMPTY_OR, SQLFORM
+from gluon import current, URL, A, INPUT, IS_EMPTY_OR, SQLFORM, TAG
 from gluon.storage import Storage
 
+from s3dal import Field
 from core import CRUDMethod, CRUDRequest, CustomController, FS, IS_ONE_OF, \
                  S3PermissionError, S3DateTime, S3SQLCustomForm, \
                  DateFilter, OptionsFilter, TextFilter, \
@@ -506,121 +507,6 @@ def dvr_case_appointment_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def dvr_allowance_controller(**attr):
-
-    # TODO disable for now (allowance not used)
-
-    T = current.T
-    s3 = current.response.s3
-    s3db = current.s3db
-
-    # Custom prep
-    standard_prep = s3.prep
-    def custom_prep(r):
-
-        # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
-
-        resource = r.resource
-
-        # Filter to active cases
-        if not r.record:
-            query = (FS("person_id$dvr_case.archived") == False) | \
-                    (FS("person_id$dvr_case.archived") == None)
-            resource.add_filter(query)
-
-        if not r.component:
-
-            if r.interactive and not r.id:
-                # Custom filter widgets
-                filter_widgets = [
-                    TextFilter(["person_id$pe_label",
-                                "person_id$first_name",
-                                "person_id$middle_name",
-                                "person_id$last_name",
-                                ],
-                                label = T("Search"),
-                                ),
-                    OptionsFilter("status",
-                                  default = 1,
-                                  cols = 4,
-                                  options = s3db.dvr_allowance_status_opts,
-                                  ),
-                    DateFilter("date"),
-                    DateFilter("paid_on"),
-                    DateFilter("entitlement_period",
-                               hidden = True,
-                               )
-                    ]
-                resource.configure(filter_widgets = filter_widgets)
-
-            # Field Visibility
-            table = resource.table
-            field = table.case_id
-            field.readable = field.writable = False
-
-            # Can't change beneficiary
-            field = table.person_id
-            field.writable = False
-
-            # Custom list fields
-            list_fields = [(T("ID"), "person_id$pe_label"),
-                           "person_id",
-                           "entitlement_period",
-                           "date",
-                           "currency",
-                           "amount",
-                           "status",
-                           "paid_on",
-                           "comments",
-                           ]
-            if r.representation in ("xlsx", "xls"):
-                list_fields.append(("UUID", "person_id$uuid"))
-
-            resource.configure(list_fields = list_fields,
-                               insertable = False,
-                               deletable = False,
-                               #editable = False,
-                               )
-
-        return result
-    s3.prep = custom_prep
-
-    # Custom postp
-    standard_postp = s3.postp
-    def custom_postp(r, output):
-        # Call standard postp
-        if callable(standard_postp):
-            output = standard_postp(r, output)
-
-        if r.method == "register":
-            CustomController._view("MRCMS", "register_case_event.html")
-        return output
-    s3.postp = custom_postp
-
-    return attr
-
-# -------------------------------------------------------------------------
-def dvr_case_event_resource(r, tablename):
-
-    s3db = current.s3db
-
-    from ..food import MRCMSRegisterFoodEvent
-    s3db.set_method("dvr_case_event",
-                    method = "register_food",
-                    action = MRCMSRegisterFoodEvent,
-                    )
-
-    #s3db.add_custom_callback("dvr_case_event",
-    #                         "onaccept",
-    #                         case_event_create_onaccept,
-    #                         method = "create",
-    #                         )
-
-# -------------------------------------------------------------------------
 def case_event_report_default_filters(event_code=None):
     """
         Set default filters for case event report
@@ -660,6 +546,23 @@ def case_event_report_default_filters(event_code=None):
                         },
                        tablename = "dvr_case_event",
                        )
+
+# -------------------------------------------------------------------------
+def dvr_case_event_resource(r, tablename):
+
+    s3db = current.s3db
+
+    from ..food import MRCMSRegisterFoodEvent
+    s3db.set_method("dvr_case_event",
+                    method = "register_food",
+                    action = MRCMSRegisterFoodEvent,
+                    )
+
+    #s3db.add_custom_callback("dvr_case_event",
+    #                         "onaccept",
+    #                         case_event_create_onaccept,
+    #                         method = "create",
+    #                         )
 
 # -------------------------------------------------------------------------
 def dvr_case_event_controller(**attr):
@@ -747,6 +650,73 @@ def dvr_case_event_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def managed_orgs_field():
+    """
+        Returns a Field with an organisation selector, to be used
+        for imports of organisation-specific types
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    from ..helpers import get_managed_orgs
+
+    if auth.s3_has_role("ADMIN"):
+        dbset = db
+    else:
+        managed_orgs = []
+        for role in ("ORG_GROUP_ADMIN", "ORG_ADMIN"):
+            if auth.s3_has_role(role):
+                managed_orgs = get_managed_orgs(role=role)
+        otable = s3db.org_organisation
+        dbset = db(otable.id.belongs(managed_orgs))
+
+    field = Field("organisation_id", "reference org_organisation",
+                  requires = IS_ONE_OF(dbset, "org_organisation.id", "%(name)s"),
+                  represent = s3db.org_OrganisationRepresent(),
+                  )
+    return field
+
+# -------------------------------------------------------------------------
+def dvr_case_appointment_type_controller(**attr):
+
+    T = current.T
+    auth = current.auth
+
+    s3 = current.response.s3
+
+    # Selectable organisation
+    attr["csv_extra_fields"] = [{"label": "Organisation",
+                                 "field": managed_orgs_field(),
+                                 }]
+
+    # Custom postp
+    standard_postp = s3.postp
+    def postp(r, output):
+        # Call standard postp
+        if callable(standard_postp):
+            output = standard_postp(r, output)
+
+        # Import-button
+        if not r.record and not r.method and auth.s3_has_permission("create", "dvr_case_appointment_type"):
+            if isinstance(output, dict):
+                import_btn = A(T("Import"),
+                               _href = r.url(method="import"),
+                               _class = "action-btn activity button",
+                               )
+                showadd_btn = output.get("showadd_btn")
+                if showadd_btn:
+                    output["showadd_btn"] = TAG[""](import_btn, showadd_btn)
+                else:
+                    output["showadd_btn"] = import_btn
+
+        return output
+    s3.postp = postp
+
+    return attr
+
+# -------------------------------------------------------------------------
 def dvr_case_event_type_resource(r, tablename):
 
     s3db = current.s3db
@@ -770,6 +740,44 @@ def dvr_case_event_type_resource(r, tablename):
     s3db.configure("dvr_case_event_type",
                    crud_form = crud_form,
                    )
+
+# -------------------------------------------------------------------------
+def dvr_case_flag_controller(**attr):
+
+    T = current.T
+    auth = current.auth
+
+    s3 = current.response.s3
+
+    # Selectable organisation
+    attr["csv_extra_fields"] = [{"label": "Organisation",
+                                 "field": managed_orgs_field(),
+                                 }]
+
+    # Custom postp
+    standard_postp = s3.postp
+    def postp(r, output):
+        # Call standard postp
+        if callable(standard_postp):
+            output = standard_postp(r, output)
+
+        # Import-button
+        if not r.record and not r.method and auth.s3_has_permission("create", "dvr_case_flag"):
+            if isinstance(output, dict):
+                import_btn = A(T("Import"),
+                               _href = r.url(method="import"),
+                               _class = "action-btn activity button",
+                               )
+                showadd_btn = output.get("showadd_btn")
+                if showadd_btn:
+                    output["showadd_btn"] = TAG[""](import_btn, showadd_btn)
+                else:
+                    output["showadd_btn"] = import_btn
+
+        return output
+    s3.postp = postp
+
+    return attr
 
 # -------------------------------------------------------------------------
 def dvr_site_activity_resource(r, tablename):
