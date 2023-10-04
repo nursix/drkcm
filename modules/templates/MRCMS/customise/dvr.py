@@ -305,6 +305,13 @@ def dvr_case_appointment_resource(r, tablename):
     T = current.T
     s3db = current.s3db
 
+    table = s3db.dvr_case_appointment
+
+    # Custom label for comments-field
+    field = table.comments
+    field.label = T("Details")
+    field.comment = None
+
     # Organizer popups
     if r.tablename == "pr_person":
         title = "type_id"
@@ -321,12 +328,6 @@ def dvr_case_appointment_resource(r, tablename):
                        ]
     else:
         title = description = None
-
-    table = s3db.dvr_case_appointment
-
-    field = table.comments
-    field.label = T("Details")
-    field.comment = None
 
     # Configure Organizer
     if title:
