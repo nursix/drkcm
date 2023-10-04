@@ -4740,7 +4740,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                 centroid = shape.centroid
                 lat = centroid.y
                 lon = centroid.x
-                geom_type = GEOM_TYPES[shape.type.lower()]
+                geom_type = GEOM_TYPES[shape.geom_type.lower()]
                 bbox = shape.bounds
             else:
                 lat = None
@@ -5998,7 +5998,7 @@ page.render('%(filename)s', {format: 'jpeg', quality: '100'});''' % \
                     if warning:
                         current.session.warning = warning
 
-                gis_feature_type = shape.type
+                gis_feature_type = shape.geom_type
                 if gis_feature_type == "Point":
                     form_vars.gis_feature_type = 1
                 elif gis_feature_type == "LineString":

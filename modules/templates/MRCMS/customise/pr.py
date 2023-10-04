@@ -1112,9 +1112,9 @@ def pr_person_controller(**attr):
     s3 = current.response.s3
 
     is_org_admin = auth.s3_has_role("ORG_ADMIN")
+    is_case_admin = auth.s3_has_role("CASE_ADMIN")
 
-    ADMINISTRATION = ("CASE_ADMIN",)
-    administration = is_org_admin or auth.s3_has_roles(ADMINISTRATION)
+    administration = is_org_admin or is_case_admin
 
     PRIVILEGED = ("CASE_MANAGER", "CASE_ASSISTANT")
     privileged = administration or auth.s3_has_roles(PRIVILEGED)
@@ -1198,8 +1198,8 @@ def pr_person_controller(**attr):
         if r.record and isinstance(output, dict):
 
             # Generate-ID button (required appropriate role)
-            if administration and r.controller == "dvr" or \
-               is_org_admin and r.controller == "hrm":
+            if r.controller == "dvr" and is_case_admin or \
+               r.controller == "hrm" and is_org_admin:
                 id_btn = A(T("Generate ID"),
                            _href = r.url(component = "identity",
                                          method = "generate",
