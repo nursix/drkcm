@@ -134,6 +134,7 @@
                         }
                     });
 
+                    const canVibrate = window.navigator.vibrate;
                     scanButton.on('click', function() {
                         invalid.hide();
                         success.hide();
@@ -144,7 +145,9 @@
                                 // Hide the scanner
                                 scanner.stop();
                                 videoInput.hide();
-                                window.navigator.vibrate(100);
+                                if (canVibrate) {
+                                    window.navigator.vibrate(100);
+                                }
 
                                 // Try parsing the result
                                 let parsed = '';
