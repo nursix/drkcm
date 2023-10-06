@@ -4,11 +4,14 @@
     License: MIT
 """
 
-from dateutil.relativedelta import relativedelta
-from gluon import current, URL, \
-                  A, DIV, I, P, TABLE, TD, TR, TH, TAG
+import datetime
 
-from core import CRUDMethod, PresenceRegistration, s3_format_fullname
+from dateutil.relativedelta import relativedelta
+
+from gluon import current, URL, \
+                  A, DIV, H4, H5, I, TABLE, TD, TR, TH
+
+from core import CustomController, CRUDMethod, PresenceRegistration, s3_format_fullname
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -18,231 +21,139 @@ class ShelterOverview(CRUDMethod):
 
     def apply_method(self, r, **attr):
         # TODO docstring
-        # TODO cleanup
 
         if not r.record:
             r.error(405, current.ERROR.BAD_METHOD)
 
         if r.http == "GET" and r.representation == "html":
-            output = self.legacy_overview(r, **attr)
+            output = self.overview(r, **attr)
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 
         return output
 
     # -------------------------------------------------------------------------
-    def legacy_overview(self, r, **attr):
+    def overview(self, r, **attr):
         # TODO docstring
-        # TODO refactor
 
         T = current.T
-        db = current.db
-        s3db = current.s3db
-
-        rtable = s3db.cr_shelter_registration
-        utable = s3db.cr_shelter_unit
-        ctable = s3db.dvr_case
-        stable = s3db.dvr_case_status
-
-        output = {}
 
         record = r.record
-        if not record:
-            return output
-
         shelter_id = record.id
 
-        # Get nostats flags
-        ftable = s3db.dvr_case_flag
-        query = (ftable.nostats == True) & \
-                (ftable.deleted == False)
-        rows = db(query).select(ftable.id)
-        nostats = set(row.id for row in rows)
+        status = ShelterStatus(shelter_id)
 
-        # Get person_ids with nostats-flags
-        # (=persons who are registered as residents, but not BEA responsibility)
-        if nostats:
-            ltable = s3db.dvr_case_flag_case
-            query = (ltable.flag_id.belongs(nostats)) & \
-                    (ltable.deleted == False)
-            rows = db(query).select(ltable.person_id)
-            exclude = set(row.person_id for row in rows)
-        else:
-            exclude = set()
+        # 1) Capacity
+        total_capacity = status.capacity()
 
-        # Count total shelter registrations for non-BEA persons
-        query = (rtable.person_id.belongs(exclude)) & \
-                (rtable.shelter_id == shelter_id) & \
-                (rtable.deleted != True)
-        other_total = db(query).count()
+        cap_regular = total_capacity.get("regular", 0)
+        cap_transitory = total_capacity.get("transitory", 0)
+        blocked = total_capacity.get("blocked", 0)
 
-        # Count number of shelter registrations for this shelter,
-        # grouped by transitory-status of the housing unit
-        left = utable.on(utable.id == rtable.shelter_unit_id)
-        query = (~(rtable.person_id.belongs(exclude))) & \
-                (rtable.shelter_id == shelter_id) & \
-                (rtable.deleted != True)
-        count = rtable.id.count()
-        rows = db(query).select(utable.transitory,
-                                count,
-                                groupby = utable.transitory,
-                                left = left,
-                                )
-        transitory = 0
-        regular = 0
-        for row in rows:
-            if row[utable.transitory]:
-                transitory += row[count]
-            else:
-                regular += row[count]
-        total = transitory + regular
+        unallocated = total_capacity.get("unallocated", 0)
+        allocable = total_capacity.get("allocable", 0)
 
-        # Children
-        EIGHTEEN = r.utcnow - relativedelta(years=18)
-        ptable = s3db.pr_person
-        query = (ptable.date_of_birth > EIGHTEEN) & \
-                (~(ptable.id.belongs(exclude))) & \
-                (ptable.id == rtable.person_id) & \
-                (rtable.shelter_id == shelter_id)
-        count = ptable.id.count()
-        row = db(query).select(count).first()
-        children = row[count]
+        capacity = DIV(H5(T("Capacity")),
+                       TABLE(TR(TH(T("Housing Units")), TD(cap_regular)),
+                             TR(TH(T("Staging Area")), TD(cap_transitory)),
+                             TR(TD(_class="spacer", _colspan=2)),
+                             TR(TH(T("Free places")), TD(unallocated)),
+                             TR(TH(T("Non-allocable##shelter")), TD(blocked)),
+                             TR(TH(T("Allocable##shelter")), TD(allocable), _class="stats-total"),
+                             ),
+                       _class="shelter-overview-stats",
+                       )
 
-        CHILDREN = TR(TD(T("Children")),
-                    TD(children),
-                    )
+        # 2) Current Occupancy
+        population = status.population()
 
-        # Families on-site
-        gtable = s3db.pr_group
-        mtable = s3db.pr_group_membership
-        join = [mtable.on((~(mtable.person_id.belongs(exclude))) & \
-                        (mtable.group_id == gtable.id) & \
-                        (mtable.deleted != True)),
-                rtable.on((rtable.person_id == mtable.person_id) & \
-                        (rtable.shelter_id == shelter_id) & \
-                        (rtable.deleted != True)),
-                ]
-        query = (gtable.group_type == 7) & \
-                (gtable.deleted != True)
+        regular = population.get("regular", 0)
+        transitory = population.get("transitory", 0)
+        total = regular + transitory
 
-        rows = db(query).select(gtable.id,
-                                having = (mtable.id.count() > 1),
-                                groupby = gtable.id,
-                                join = join,
-                                )
-        families = len(rows)
-        FAMILIES = TR(TD(T("Families")),
-                    TD(families),
-                    )
+        families = status.families()
+        children = status.children(max_age=18)
 
-        TOTAL = TR(TD(T("Current Population##shelter")),
-                TD(total),
-                _class="dbstats-total",
-                )
-        TRANSITORY = TR(TD(T("in staging area")),
-                        TD(transitory),
-                        _class="dbstats-sub",
+        cap_total = cap_regular + cap_transitory
+        regular_css = "stats-excess" if regular > cap_regular else None
+        transit_css = "stats-excess" if transitory > cap_transitory else None
+        total_css = "stats_excess" if total > cap_total else ""
+
+        occupancy = DIV(H5(T("Current Population##shelter")),
+                        TABLE(TR(TH(T("Housing Units")), TD(regular), _class=regular_css),
+                              TR(TH(T("Staging Area")), TD(transitory), _class=transit_css),
+                              TR(TH(T("Total##set")), TD(total), _class="stats-total %s" % total_css),
+                              TR(TD(_class="spacer", _colspan=2)),
+                              TR(TH(T("Families")), TD(families)),
+                              TR(TH(T("Children")), TD(children)),
+                              ),
+                        _class="shelter-overview-stats",
                         )
-        REGULAR = TR(TD(T("in housing units")),
-                    TD(regular),
-                    _class="dbstats-sub",
-                    )
 
-        #OTHER = TR(TD(T("Population Other")),
-        #           TD(other_total),
-        #           _class="dbstats-extra",
-        #           )
+        # 3) Change
+        days = 7
+        ins = status.arrivals(days=days)
+        outs = status.leavings(days=days)
+        planned = status.planned(days=days)
 
-        # Get the IDs of open case statuses
-        query = (stable.is_closed == False) & (stable.deleted != True)
-        rows = db(query).select(stable.id)
-        OPEN = set(row.id for row in rows)
+        change = "%+d" % (ins - outs)
+        available = max(0, total_capacity.get("available", 0) - planned)
 
-        # Count number of external persons
-        ftable = s3db.dvr_case_flag
-        ltable = s3db.dvr_case_flag_case
-        left = [ltable.on((ltable.flag_id == ftable.id) & \
-                        (ltable.deleted != True)),
-                ctable.on((ctable.person_id == ltable.person_id) & \
-                        (~(ctable.person_id.belongs(exclude))) & \
-                        (ctable.status_id.belongs(OPEN)) & \
-                        ((ctable.archived == False) | (ctable.archived == None)) & \
-                        (ctable.deleted != True)),
-                rtable.on((rtable.person_id == ltable.person_id) & \
-                        (rtable.deleted != True)),
-                ]
-        query = (ftable.is_external == True) & \
-                (ftable.deleted != True) & \
-                (ltable.id != None) & \
-                (ctable.id != None) & \
-                (rtable.shelter_id == shelter_id)
-        count = ctable.id.count()
-        rows = db(query).select(count, left=left)
-        external = rows.first()[count] if rows else 0
+        change = DIV(H5(T("Change (%(days)s Days)") % {"days": days}),
+                     TABLE(TR(TH(T("Arrivals##shelter")), TD(ins)),
+                           TR(TH(T("Leavings##shelter")), TD(outs)),
+                           TR(TH(T("Change")), TD(change)),
+                           TR(TD(_class="spacer", _colspan=2)),
+                           TR(TH(T("Planned")), TD(planned)),
+                           TR(TH(T("Available##disposable")), TD(available), _class="stats-total"),
+                           ),
+                     _class="shelter-overview-stats",
+                     )
 
-        EXTERNAL = TR(TD(T("External (Hospital / Police)")),
-                    TD(external),
-                    )
+        # 4) Residents Overview
+        residents = self.residents_overview(record)
 
-        # Get the number of free places in the BEA
-        # => Non-BEA registrations do not occupy BEA capacity,
-        #    so need to re-add the total here:
-        free = (record.available_capacity or 0) + other_total
-        FREE = TR(TD(T("Free places")),
-                TD(free),
-                _class="dbstats-total",
-                )
-
-        # Show Check-in/Check-out action only if user is permitted
-        # to update shelter registrations (NB controllers may be
-        # read-only, therefore checking against default here):
+        # 5) Presence Registration
         if PresenceRegistration.permitted("cr_shelter", record.site_id):
             # Action button for presence registration
-            cico = A(T("Presence Registration"),
-                    _href=r.url(method="presence"),
-                    _class="action-btn dashboard-action",
-                    )
+            registration = A(T("Presence Registration"),
+                             _href = r.url(method="presence"),
+                             _class = "action-btn dashboard-action",
+                             )
         else:
-            cico = ""
+            registration = ""
 
-        # Generate profile header HTML
-        overview = DIV(P(record.comments or ""),
-                       TABLE(TR(TD(TABLE(TOTAL,
-                                         TRANSITORY,
-                                         REGULAR,
-                                         CHILDREN,
-                                         FAMILIES,
-                                         EXTERNAL,
-                                         FREE,
-                                         #OTHER,
-                                         _class="dbstats",
-                                         ),
-                                    ),
-                                ),
-                            ),
-                        cico,
-                        _class="profile-header",
-                        )
-
-        occupancy = self.occupancy_data(record)
-        overview = TAG[""](overview, occupancy)
-
-        output["item"] = overview
-        current.response.view = self._view(r, "display.html")
-
+        output = {"title": T("Shelter Overview"),
+                  "occupancy": occupancy,
+                  "capacity": capacity,
+                  "change": change,
+                  "residents": residents,
+                  "registration": registration,
+                  }
+        CustomController._view("MRCMS", "shelter_overview.html")
         return output
 
     # -------------------------------------------------------------------------
-    def occupancy_data(self, shelter):
-        # TODO docstring
+    def residents_overview(self, shelter):
+        """
+            Generates a HTML representation of residents per housing unit
 
+            Args:
+                shelter: the cr_shelter Row
+            Returns:
+                DIV
+        """
+
+        T = current.T
         db = current.db
         s3db = current.s3db
 
         shelter_id = shelter.id
         site_id = shelter.site_id
 
-        overview = DIV(_class="residents-overview")
+        overview = DIV(H4(T("Residents Overview")),
+                       _class = "shelter-overview-residents",
+                       )
 
         # Get all housing units for this shelter
         utable = s3db.cr_shelter_unit
@@ -278,8 +189,8 @@ class ShelterOverview(CRUDMethod):
                           (rtable.shelter_id == shelter_id) & \
                           (rtable.registration_status != 3) & \
                           (rtable.deleted == False)),
-                # TODO case must belong to organisation operating the shelter
                 ctable.on((ctable.person_id == ptable.id) & \
+                          (ctable.organisation_id == shelter.organisation_id) & \
                           (ctable.deleted == False)),
                 ]
         query = (ptable.deleted == False)
@@ -395,12 +306,12 @@ class ShelterOverview(CRUDMethod):
                 if unit.status == 1:
                     free = free - blocked
                 else:
-                    blocked = free
+                    blocked = 0
                     free = 0
 
                 for _ in range(free):
                     empty = TR(TD(I(_class="fa fa-bed")),
-                               TD(T("Available"), _colspan = 6),
+                               TD(T("Allocable##shelter"), _colspan = 6),
                                _class = "capacity-free",
                                )
                     overview.append(empty)
@@ -545,5 +456,362 @@ class ShelterOverview(CRUDMethod):
                   _class = css,
                   )
         return trow
+
+# =============================================================================
+class ShelterStatus:
+    """ The current capacity/occupation status of a shelter """
+
+    def __init__(self, shelter_id):
+        """
+            Args:
+                shelter_id: the cr_shelter record ID
+        """
+
+        self.shelter_id = shelter_id
+
+        # Initialize
+        self._units = None
+        self._capacity = None
+        self._population = None
+
+    # -------------------------------------------------------------------------
+    @property
+    def units(self):
+        """
+            The housing units of the shelter (lazy property)
+
+            Returns:
+                a dict {unit_id: Row(cr_shelter_unit)}
+        """
+
+        units = self._units
+        if not units:
+
+            table = current.s3db.cr_shelter_unit
+            query = (table.shelter_id == self.shelter_id) & \
+                    (table.deleted == False)
+            rows = current.db(query).select(table.id,
+                                            table.transitory,
+                                            table.status,
+                                            table.capacity,
+                                            table.blocked_capacity,
+                                            )
+            units = self._units = {row.id: row for row in rows}
+
+        return units
+
+    # -------------------------------------------------------------------------
+    @property
+    def unit_capacity(self):
+        """
+            The capacities of housing units in the shelter (lazy property)
+
+            Returns:
+                a dict {unit_id: {"total": the total capacity of the unit,
+                                  "excess": excess occupancy,
+                                  "unallocated": number of unallocated places,
+                                  "blocked": number of blocked places,
+                                  "allocable": number of allocable places,
+                                  }}
+        """
+
+        capacity = self._capacity
+
+        if capacity is None:
+            self._capacity = capacity = {}
+
+            population = self.unit_population
+            for unit_id, unit in self.units.items():
+
+                total_capacity = unit.capacity if unit.status == 1 else 0
+
+                occupied = population.get(unit_id, 0)
+                free = total_capacity - occupied
+
+                unallocated = max(0, free)
+                excess_occupancy = max(0, -free)
+
+                blocked = min(unallocated, unit.blocked_capacity)
+                allocable = unallocated - blocked
+
+                capacity[unit_id] = {"total": total_capacity,
+                                     "excess": excess_occupancy,
+                                     "unallocated": unallocated,
+                                     "blocked": blocked,
+                                     "allocable": allocable,
+                                     }
+        return capacity
+
+    # -------------------------------------------------------------------------
+    @property
+    def unit_population(self):
+        """
+            The current population numbers of housing units in the
+            shelter (lazy property)
+
+            Returns: a dict {unit_id: population number}
+        """
+
+        population = self._population
+        if not population:
+            # Initialize
+            population = {u: 0 for u in self.units}
+            population[None] = 0
+
+            # Look up registrations
+            table = current.s3db.cr_shelter_registration
+            query = (table.shelter_id == self.shelter_id) & \
+                    (table.registration_status == 2) & \
+                    (table.deleted == False)
+            unit_id = table.shelter_unit_id
+            num_persons = table.person_id.count()
+            rows = current.db(query).select(num_persons,
+                                            table.shelter_unit_id,
+                                            groupby = table.shelter_unit_id,
+                                            )
+
+            # Update population numbers from registrations
+            for row in rows:
+                population[row[unit_id]] = row[num_persons]
+
+            self._population = population
+
+        return population
+
+    # -------------------------------------------------------------------------
+    def capacity(self):
+        """
+            Calculates the overall capacity details for the shelter
+
+            Returns:
+                a dict {"regular": total capacity in regular housing units,
+                        "transitory": total capacity in transitory units,
+                        "unallocated": number of unallocated places,
+                        "blocked": number of blocked places,
+                        "allocable": number of allocable places,
+                        "available": number of available places,
+                        }
+        """
+
+        units = self.units
+        unit_capacity = self.unit_capacity
+
+        capacity_regular = 0
+        capacity_transitory = 0
+        capacity_unallocated = 0
+        capacity_blocked = 0
+
+        allocable = excess = 0
+        for unit_id, u in unit_capacity.items():
+
+            unit = units.get(unit_id)
+            if not unit:
+                continue
+
+            if unit.transitory:
+                capacity_transitory += u["total"]
+                continue
+
+            capacity_regular += u["total"]
+            capacity_blocked += u["blocked"]
+            capacity_unallocated += u["unallocated"]
+
+            allocable += u["allocable"]
+            excess += u["excess"]
+
+        # Unallocated places and excess occupancy in units even out
+        capacity_unallocated = max(0, capacity_unallocated - excess)
+
+        # Allocable capacity is reduced by excess occupancy too
+        capacity_allocable = max(0, allocable - excess)
+
+        # Available capacity is allocable capacity reduced by unassigned people
+        unassigned = self.population().get("transitory", 0)
+        capacity_available = max(0, capacity_allocable - unassigned)
+
+        return {"regular": capacity_regular,
+                "transitory": capacity_transitory,
+                "unallocated": capacity_unallocated,
+                "blocked": capacity_blocked,
+                "allocable": capacity_allocable,
+                "available": capacity_available,
+                }
+
+    # -------------------------------------------------------------------------
+    def population(self):
+        """
+            Returns the current total population of the shelter,
+            differentiated by housing unit group_type
+
+            Returns:
+                a dict {"regular": population in regular housing,
+                        "transitory": population in transitory housing
+                        }
+
+        """
+
+        population_regular = population_transitory = 0
+
+        units = self.units
+        for unit_id, population in self.unit_population.items():
+            if not unit_id:
+                # No assigned housing counts as transitory housing
+                population_transitory += population
+            else:
+                unit = units.get(unit_id)
+                if unit.transitory:
+                    population_transitory += population
+                else:
+                    population_regular += population
+
+        return {"regular": population_regular,
+                "transitory": population_transitory,
+                }
+
+    # -------------------------------------------------------------------------
+    def families(self):
+        """
+            Returns the number of families (=case groups) with more than
+            one member currently registered at the shelter
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        rtable = s3db.cr_shelter_registration
+        gtable = s3db.pr_group
+        mtable = s3db.pr_group_membership
+
+        # Subquery for registered people
+        query = (rtable.shelter_id == self.shelter_id) & \
+                (rtable.registration_status == 2) & \
+                (rtable.deleted == False)
+        checked_in_persons = db(query)._select(rtable.person_id)
+
+        num_checked_in_members = mtable.person_id.count()
+
+        join = gtable.on((gtable.id == mtable.group_id) &
+                         (gtable.group_type == 7))
+        query = mtable.person_id.belongs(checked_in_persons)
+        rows = db(query).select(mtable.group_id,
+                                join = join,
+                                groupby = mtable.group_id,
+                                having = (num_checked_in_members>1),
+                                )
+        return len(rows)
+
+    # -------------------------------------------------------------------------
+    def children(self, max_age=18):
+        """
+            Returns the number of children currently checked-in at the shelter
+
+            Args:
+                max_age: the maximum age of the children
+            Returns:
+                integer
+        """
+
+        s3db = current.s3db
+        rtable = s3db.cr_shelter_registration
+        ptable = s3db.pr_person
+
+        now = datetime.datetime.utcnow()
+        earliest = now - relativedelta(years=max_age)
+
+        join = ptable.on((ptable.id == rtable.person_id) & \
+                         (ptable.date_of_birth > earliest.date()))
+        query = (rtable.shelter_id == self.shelter_id) & \
+                (rtable.registration_status == 2) & \
+                (rtable.deleted == False)
+        num_children = rtable.person_id.count()
+        row = current.db(query).select(num_children, join=join).first()
+
+        return row[num_children]
+
+    # -------------------------------------------------------------------------
+    def arrivals(self, days=7):
+        """
+            Returns the number of people currently checked-in with a
+            check-in date within the last n days
+
+            Args:
+                days: the number of days
+            Returns:
+                integer
+        """
+
+        today = datetime.datetime.utcnow().date()
+        earliest = today - relativedelta(days=days)
+
+        rtable = current.s3db.cr_shelter_registration
+        query = (rtable.shelter_id == self.shelter_id) & \
+                (rtable.registration_status == 2) & \
+                (rtable.check_in_date >= earliest) & \
+                (rtable.deleted == False)
+        num_persons = rtable.person_id.count(distinct=True)
+        row = current.db(query).select(num_persons).first()
+
+        return row[num_persons]
+
+    # -------------------------------------------------------------------------
+    def leavings(self, days=7):
+        """
+            Returns the number of persons checked-out from the shelter
+            within the past n days
+
+            Args:
+                days: the number of days
+            Returns:
+                integer
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        today = datetime.datetime.utcnow().date()
+        earliest = today - relativedelta(days=days)
+
+        # Subquery to exclude all currently checked-in people
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.shelter_id == self.shelter_id) & \
+                (rtable.registration_status == 2) & \
+                (rtable.deleted == False)
+        checked_in = db(query)._select(rtable.person_id)
+
+        htable = s3db.cr_shelter_registration_history
+        query = (htable.shelter_id == self.shelter_id) & \
+                (~(htable.person_id.belongs(checked_in))) & \
+                (htable.status == 3) & \
+                (htable.previous_status == 2) & \
+                (htable.date >= earliest) & \
+                (htable.deleted == False)
+        num_persons = htable.person_id.count(distinct=True)
+        row = db(query).select(num_persons).first()
+
+        return row[num_persons]
+
+    # -------------------------------------------------------------------------
+    def planned(self, days=7):
+        """
+            Returns the number of planned check-ins for the shelter
+
+            Args:
+                days: the planning horizon (latest planned check-in date)
+            Returns:
+                integer
+        """
+
+        today = datetime.datetime.utcnow().date()
+        latest = today + relativedelta(days=days)
+
+        rtable = current.s3db.cr_shelter_registration
+        query = (rtable.shelter_id == self.shelter_id) & \
+                (rtable.registration_status == 1) & \
+                (rtable.check_in_date <= latest) & \
+                (rtable.deleted == False)
+        num_persons = rtable.person_id.count()
+        row = current.db(query).select(num_persons).first()
+
+        return row[num_persons]
 
 # END =========================================================================

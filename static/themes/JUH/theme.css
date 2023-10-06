@@ -4924,122 +4924,175 @@ body.rtl .event-type-header {
   background-color: rgba(200, 0, 0, 0.6);
 }
 
-/* line 324, ../scss/theme/_misc.scss */
-.residents-overview .residents-list {
-  /* table */
+/* line 323, ../scss/theme/_misc.scss */
+.shelter-overview-stats {
+  font-size: 0.8rem;
+  background-color: #eaeaea;
+  padding: 0.2rem;
+  border: 1px solid #e0e0e0;
 }
-/* line 325, ../scss/theme/_misc.scss */
-.residents-overview .residents-list tr {
+/* line 328, ../scss/theme/_misc.scss */
+.shelter-overview-stats .spacer {
+  background-color: #eaeaea;
+}
+/* line 331, ../scss/theme/_misc.scss */
+.shelter-overview-stats h5 {
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+}
+/* line 336, ../scss/theme/_misc.scss */
+.shelter-overview-stats table {
+  width: 100%;
+  border: 0;
+  border-collapse: collapse;
+}
+/* line 340, ../scss/theme/_misc.scss */
+.shelter-overview-stats table th {
+  font-weight: normal;
+}
+/* line 343, ../scss/theme/_misc.scss */
+.shelter-overview-stats table td {
+  font-weight: bold;
+}
+/* line 346, ../scss/theme/_misc.scss */
+.shelter-overview-stats table .stats-excess {
+  background-color: #ffced5;
+}
+/* line 349, ../scss/theme/_misc.scss */
+.shelter-overview-stats table .stats-total {
+  font-size: 1.0rem;
+}
+/* line 351, ../scss/theme/_misc.scss */
+.shelter-overview-stats table .stats-total th {
+  font-weight: bold;
+}
+
+/* line 358, ../scss/theme/_misc.scss */
+.shelter-overview-residents h4 {
+  border-top: 1px solid #ccc;
+  padding: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+/* line 366, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list {
+  /* table */
+  min-width: 71%;
+}
+/* line 370, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list tr {
   border-left: 2px solid #AAA;
   border-right: 2px solid #AAA;
 }
-/* line 328, ../scss/theme/_misc.scss */
-.residents-overview .residents-list tr.residents-list-spacer {
+/* line 373, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list tr.residents-list-spacer {
   border: none;
   border-top: 3px solid #AAA;
 }
-/* line 331, ../scss/theme/_misc.scss */
-.residents-overview .residents-list tr.residents-list-spacer td {
+/* line 376, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list tr.residents-list-spacer td {
   border: none;
   min-height: 0.5rem;
 }
-/* line 337, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-unit {
+/* line 382, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-unit {
   /* tr unit header */
   padding: 0;
   background-color: #DDD;
   border-top: 3px solid #AAA;
   border-collapse: separate;
 }
-/* line 342, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-unit .residents-unit-header {
+/* line 387, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-unit .residents-unit-header {
   /* div */
   padding: 0.3rem 0.1rem;
   font-size: 1.1rem;
   font-weight: bold;
 }
-/* line 348, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-unit .residents-unit-link i.fa {
+/* line 393, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa {
   margin-right: 1.2rem;
 }
-/* line 350, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-unit .residents-unit-link i.fa.fa-ban {
-  color: red;
+/* line 395, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa.fa-ban {
+  color: #d71919;
 }
-/* line 353, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-unit .residents-unit-link i.fa.fa-check {
+/* line 398, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa.fa-check {
   color: #070;
 }
-/* line 359, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-status {
+/* line 404, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-status {
   /* subheader tr */
   border-top: 2px solid #AAA;
 }
-/* line 361, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-status .residents-status-header.residents-planned {
+/* line 406, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-status .residents-status-header.residents-planned {
   /* div */
   font-size: 0.7rem;
   padding: 0.2rem;
   color: #666;
 }
-/* line 368, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .residents-header th {
+/* line 413, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .residents-header th {
   font-size: 0.9rem;
   color: #777;
   padding: 0.2rem 0.5rem;
 }
-/* line 374, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data {
+/* line 419, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data {
   /* tr */
 }
-/* line 375, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data td {
+/* line 420, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
   color: #333;
 }
-/* line 379, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data td.resident-name {
+/* line 424, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data td.resident-name {
   font-weight: bold;
 }
-/* line 382, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data td.resident-presence {
+/* line 427, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data td.resident-presence {
   text-align: center;
 }
-/* line 390, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data.resident-planned td {
+/* line 435, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data.resident-planned td {
   font-style: italic;
   color: #888;
 }
-/* line 393, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data.resident-planned td a {
+/* line 438, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data.resident-planned td a {
   color: #888;
 }
-/* line 398, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data.group-even {
+/* line 443, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data.group-even {
   background-color: #fdfdfd;
 }
-/* line 401, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .resident-data.group-odd {
+/* line 446, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .resident-data.group-odd {
   background-color: #f9f9f9;
 }
-/* line 405, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .capacity-free {
+/* line 450, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .capacity-free {
   /* tr */
   background-color: #b9ffb9;
 }
-/* line 406, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .capacity-free td {
+/* line 451, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .capacity-free td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
 }
-/* line 412, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .capacity-blocked {
+/* line 457, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .capacity-blocked {
   /* tr */
   background-color: #ffced5;
 }
-/* line 413, ../scss/theme/_misc.scss */
-.residents-overview .residents-list .capacity-blocked td {
+/* line 458, ../scss/theme/_misc.scss */
+.shelter-overview-residents .residents-list .capacity-blocked td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
 }

@@ -1,0 +1,42 @@
+{{extend "layout.html"}}
+<div class='row'>
+ <div class='small-12 columns'>
+  {{try:}}{{=H2(title)}}{{except:}}{{pass}}
+ </div>
+</div>
+<div id='rheader' class='row'>
+ <div class='small-12 columns'>
+  {{try:}}{{=XML(rheader)}}
+ </div>
+</div>
+<div id='component' class='row'>
+{{except:}}
+ </div>
+</div>
+<div class='row'>
+{{pass}}
+ <div class="small-12 columns">
+  {{try:}}{{if registration:}}
+  <div class="row">
+   <div class="small-12 columns">
+   {{=registration}}
+   </div>
+  </div>{{pass}}{{except:}}{{pass}}
+  <div class="row shelter-stats">
+   <div class="medium-4 small-12 columns">
+    {{try:}}{{=occupancy}}{{except:}}{{pass}}
+   </div>
+   <div class="medium-4 small-12 columns">
+    {{try:}}{{=capacity}}{{except:}}{{pass}}
+   </div>
+   <div class="medium-4 small-12 columns">
+    {{try:}}{{=change}}{{except:}}{{pass}}
+   </div>
+  </div>
+  <div class="row">
+   <div class="small-12 columns">
+    {{try:}}{{=residents}}{{except:}}{{pass}}
+   </div>
+  </div>
+ </div>
+</div>

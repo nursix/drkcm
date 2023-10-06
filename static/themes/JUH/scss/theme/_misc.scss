@@ -320,8 +320,53 @@ body.rtl {
 }
 
 // Residents list
-.residents-overview {
+.shelter-overview-stats {
+    font-size: 0.8rem;
+    background-color: #eaeaea;
+    padding: 0.2rem;
+    border: 1px solid #e0e0e0;
+    .spacer {
+        background-color: #eaeaea;
+    }
+    h5 {
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-align: center;
+    }
+    table {
+        width: 100%;
+        border: 0;
+        border-collapse: collapse;
+        th {
+            font-weight: normal;
+        }
+        td {
+            font-weight: bold;
+        }
+        .stats-excess {
+            background-color: #ffced5;
+        }
+        .stats-total {
+            font-size: 1.0rem;
+            th {
+                font-weight: bold;
+            }
+        }
+    }
+}
+.shelter-overview-residents {
+    h4 {
+        //text-align: center;
+        border-top: 1px solid #ccc;
+        padding: 0.5rem;
+        margin-top: 0.75rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
     .residents-list { /* table */
+        //margin-left: auto;
+        //margin-right: auto;
+        min-width: 71%;
         tr {
             border-left: 2px solid #AAA;
             border-right: 2px solid #AAA;
@@ -348,7 +393,7 @@ body.rtl {
                 i.fa {
                     margin-right: 1.2rem;
                     &.fa-ban {
-                        color: red;
+                        color: #d71919;
                     }
                     &.fa-check {
                         color: #070;
