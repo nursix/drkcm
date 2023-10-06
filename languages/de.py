@@ -5579,6 +5579,7 @@
 'Shelter Inspection': 'Unterkunftsinspektion',
 'Shelter Inspections': 'Unterkunftsinspektionen',
 'Shelter Name': 'Name der Unterkunft',
+'Shelter Overview': 'Unterkunftsübersicht',
 'Shelter Registration Status': 'Registrierungsstatus',
 'Shelter Registry': 'Unterkunft Register',
 'Shelter Service Details': 'Details zur Unterkunftsleistung',
