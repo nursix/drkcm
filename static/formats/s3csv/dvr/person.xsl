@@ -123,6 +123,9 @@
     <xsl:key name="family" match="row"
              use="col[@field='Family']"/>
 
+    <xsl:key name="shelter" match="row"
+             use="col[@field='Shelter']"/>
+
     <xsl:key name="shelter_unit" match="row"
              use="col[@field='Shelter Unit']"/>
 
@@ -157,6 +160,12 @@
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('family',
                                                                    col[@field='Family'])[1])]">
                 <xsl:call-template name="Family"/>
+            </xsl:for-each>
+
+            <!-- Shelters -->
+            <xsl:for-each select="//row[generate-id(.)=generate-id(key('shelter',
+                                                                   col[@field='Shelter'])[1])]">
+                <xsl:call-template name="Shelter"/>
             </xsl:for-each>
 
             <!-- Shelter Units -->
@@ -330,11 +339,18 @@
             </xsl:if>
 
             <!-- Shelter Registration -->
-            <xsl:if test="col[@field='Shelter Unit']/text()!=''">
+            <xsl:variable name="ShelterName" select="col[@field='Shelter']/text()"/>
+            <xsl:variable name="ShelterUnit" select="col[@field='Shelter Unit']/text()"/>
+            <xsl:if test="$ShelterName!='' and $ShelterUnit!=''">
                 <resource name="cr_shelter_registration">
+                    <reference field="shelter_id" resource="cr_shelter">
+                        <xsl:attribute name="tuid">
+                            <xsl:value-of select="concat('Shelter:',$ShelterName)"/>
+                        </xsl:attribute>
+                    </reference>
                     <reference field="shelter_unit_id" resource="cr_shelter_unit">
                         <xsl:attribute name="tuid">
-                            <xsl:value-of select="concat('ShelterUnit:',col[@field='Shelter Unit'])"/>
+                            <xsl:value-of select="concat('ShelterUnit:',$ShelterUnit)"/>
                         </xsl:attribute>
                     </reference>
                 </resource>
@@ -360,8 +376,7 @@
                                     <xsl:text>5</xsl:text>
                                 </xsl:when>
                                 <xsl:otherwise>
-                                    <!-- Unknown
-                                    <xsl:value-of select="$MaritalStatus"/>-->
+                                    <xsl:value-of select="$MaritalStatus"/>
                                 </xsl:otherwise>
                             </xsl:choose>
                     </data>
@@ -1104,15 +1119,39 @@
     </xsl:template>
 
     <!-- ****************************************************************** -->
+    <xsl:template name="Shelter">
+        <xsl:variable name="ShelterName" select="col[@field='Shelter']/text()"/>
+
+        <xsl:if test="$ShelterName!=''">
+            <resource name="cr_shelter">
+                <xsl:attribute name="tuid">
+                    <xsl:value-of select="concat('Shelter:',$ShelterName)"/>
+                </xsl:attribute>
+                <reference field="organisation_id" resource="org_organisation">
+                    <xsl:attribute name="tuid">
+                        <xsl:call-template name="OrganisationID"/>
+                    </xsl:attribute>
+                </reference>
+                <data field="name"><xsl:value-of select="$ShelterName"/></data>
+            </resource>
+        </xsl:if>
+    </xsl:template>
+
+    <!-- ****************************************************************** -->
     <xsl:template name="ShelterUnit">
+        <xsl:variable name="ShelterName" select="col[@field='Shelter']/text()"/>
         <xsl:variable name="ShelterUnit" select="col[@field='Shelter Unit']/text()"/>
 
-        <xsl:if test="$ShelterUnit!=''">
+        <xsl:if test="$ShelterUnit!='' and $ShelterName!=''">
             <resource name="cr_shelter_unit">
                 <xsl:attribute name="tuid">
                     <xsl:value-of select="concat('ShelterUnit:',$ShelterUnit)"/>
                 </xsl:attribute>
-                <!-- @ToDo: Add Shelter Name to aid uniqueness -->
+                <reference field="shelter_id" resource="cr_shelter">
+                    <xsl:attribute name="tuid">
+                        <xsl:value-of select="concat('Shelter:',$ShelterName)"/>
+                    </xsl:attribute>
+                </reference>
                 <data field="name"><xsl:value-of select="$ShelterUnit"/></data>
             </resource>
         </xsl:if>
