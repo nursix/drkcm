@@ -573,7 +573,7 @@ class LocationSelector(FormWidget):
             options["minBBOX"] = self.min_bbox
         if self.open_map_on_load:
             options["openMapOnLoad"] = True
-        script = '''$('#%s').locationselector(%s)''' % \
+        script = '''$('#%s').selectLocation(%s)''' % \
                  (fieldname, json.dumps(options, separators=JSONSEPARATORS))
 
         show_map = self.show_map
@@ -2253,7 +2253,7 @@ class PersonSelector(FormWidget):
         - can check for possible duplicates during data entry
         - fully encapsulated, works with regular validators (IS_ONE_OF)
 
-        => Uses client-side script s3.ui.addperson.js (injected)
+        => Uses client-side script s3.ui.personselector.js (injected)
     """
 
     def __init__(self,
@@ -2929,10 +2929,10 @@ class PersonSelector(FormWidget):
 
         # Static script
         if s3.debug:
-            script = "/%s/static/scripts/S3/s3.ui.addperson.js" % \
+            script = "/%s/static/scripts/S3/s3.ui.personselector.js" % \
                      current.request.application
         else:
-            script = "/%s/static/scripts/S3/s3.ui.addperson.min.js" % \
+            script = "/%s/static/scripts/S3/s3.ui.personselector.min.js" % \
                      current.request.application
         scripts = s3.scripts
         if script not in scripts:
@@ -2945,7 +2945,7 @@ class PersonSelector(FormWidget):
             opts.update(options)
 
         # Widget instantiation
-        script = '''$('#%(widget_id)s').addPerson(%(options)s)''' % \
+        script = '''$('#%(widget_id)s').selectPerson(%(options)s)''' % \
                  {"widget_id": widget_id,
                   "options": json.dumps(opts, separators=JSONSEPARATORS),
                   }

@@ -87,7 +87,7 @@
 
     // ========================================================================
     /**
-     * A promise that resolves when addPersonWidget is ready, allows earlier
+     * A promise that resolves when personSelector is ready, allows earlier
      * functions to attach callbacks (e.g. lookupContact)
      *
      * @param {string} fieldID - the ID of the person_id input
@@ -96,12 +96,12 @@
      *                      is loaded and ready
      *
      * @example
-     *  $.when(S3.addPersonWidgetReady(fieldname))
+     *  $.when(S3.personSelectorReady(fieldname))
      *   .then(function(widget) {
-     *      widget.addPerson('lookupContact', siteID);
+     *      widget.selectPerson('lookupContact', siteID);
      *  });
      */
-    S3.addPersonWidgetReady = function(fieldID) {
+    S3.personSelectorReady = function(fieldID) {
 
         var deferred = new jQuery.Deferred(),
             input = $('#' + fieldID);
@@ -110,8 +110,8 @@
             // Already loaded
             deferred.resolve(input);
         } else {
-            // Wait for addPersonReady event
-            input.on('addPersonReady', function() {
+            // Wait for personSelectorReady event
+            input.on('personSelectorReady', function() {
                 deferred.resolve(input);
             });
         }
@@ -120,12 +120,12 @@
 
     // ========================================================================
 
-    var addPersonID = 0;
+    var selectPersonID = 0;
 
     /**
-     * addPerson UI Widget
+     * selectPerson UI Widget
      */
-    $.widget('s3.addPerson', {
+    $.widget('s3.selectPerson', {
 
         // --------------------------------------------------------------------
         /**
@@ -181,10 +181,10 @@
 
             //var el = $(this.element);
 
-            this.id = addPersonID;
-            addPersonID += 1;
+            this.id = selectPersonID;
+            selectPersonID += 1;
 
-            this.eventNamespace = '.addPerson';
+            this.eventNamespace = '.selectPerson';
         },
 
         // --------------------------------------------------------------------
@@ -349,7 +349,7 @@
 
             this._bindEvents();
 
-            el.trigger('addPersonReady');
+            el.trigger('personSelectorReady');
         },
 
         // --------------------------------------------------------------------

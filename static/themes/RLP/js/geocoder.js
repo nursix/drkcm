@@ -35,13 +35,13 @@ $(function(){
                 success: function(result) {
 
                     if (result.L1) {
-                        var selectedL1 = field.locationselector('lxSelect', 1, result.L1);
+                        var selectedL1 = field.selectLocation('lxSelect', 1, result.L1);
                         selectedL1.then(function() {
                             if (result.L2) {
-                                var selectedL2 = field.locationselector('lxSelect', 2, result.L2);
+                                var selectedL2 = field.selectLocation('lxSelect', 2, result.L2);
                                 selectedL2.then(function() {
                                     if (result.L3) {
-                                        field.locationselector('lxSelect', 3, result.L3);
+                                        field.selectLocation('lxSelect', 3, result.L3);
                                     }
                                 });
                             }
