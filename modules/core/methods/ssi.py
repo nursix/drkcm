@@ -164,8 +164,9 @@ class SpreadsheetImporter(CRUDMethod):
                 args["mode"] = mode
 
             # Import
+            m, e = ("rb", None) if fmt=="xlsx" else ("r", "utf-8")
             try:
-                with open(fpath, "r", encoding="utf-8") as source:
+                with open(fpath, m, encoding=e) as source:
                     job_id = self.import_from_source(resource,
                                                      source,
                                                      fmt = fmt,

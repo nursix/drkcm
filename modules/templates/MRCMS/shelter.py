@@ -221,7 +221,11 @@ class ShelterOverview(CRUDMethod):
 
         # Split up residents by housing unit
         all_residents = {}
+        seen = set()
         for row in rows:
+            if row.pr_person.id in seen:
+                continue
+            seen.add(row.pr_person.id)
             registration = row.cr_shelter_registration
             unit_id = registration.shelter_unit_id
             if unit_id in all_residents:

@@ -543,6 +543,9 @@ class DVRCaseModel(DataModel):
 
         # Table configuration
         configure(tablename,
+                  deduplicate = S3Duplicate(primary=("person_id",),
+                                            secondary=("organisation_id",),
+                                            ),
                   #report_options = report_options,
                   onvalidation = self.case_onvalidation,
                   create_onaccept = self.case_create_onaccept,
