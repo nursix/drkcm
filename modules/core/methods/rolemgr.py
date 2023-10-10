@@ -1125,7 +1125,7 @@ class S3RoleManager(CRUDMethod):
 
         users = {}
 
-        pe_ids = auth.permitted_realms("auth_user", "update")
+        pe_ids = auth.permission.permitted_realms("auth_user", "update")
         if pe_ids or pe_ids is None:
             utable = auth_settings.table_user
             query = (utable.deleted == False)
