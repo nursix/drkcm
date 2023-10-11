@@ -123,10 +123,25 @@ class ShelterOverview(CRUDMethod):
         else:
             registration = ""
 
+        # 6) Presence List
+        # TODO Move styles into theme
+        if current.auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
+            presence = A(I(_class="fa fa-table", _style="margin-right:0.3rem;"),
+                         T("Presence List"),
+                         data = {"url": URL(c="cr", f="shelter",
+                                            args = [r.id, "presence_list.xlsx"],
+                                            ),
+                                 },
+                         _class = "action-lnk s3-download-button",
+                         )
+        else:
+            presence = ""
+
         output = {"title": T("Shelter Overview"),
                   "occupancy": occupancy,
                   "capacity": capacity,
                   "change": change,
+                  "presence": presence,
                   "residents": residents,
                   "registration": registration,
                   }

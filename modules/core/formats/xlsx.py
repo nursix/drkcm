@@ -139,7 +139,7 @@ class XLSXWriter(FormatWriter):
         # Add the work sheets
 
         # Characters /\?*[] not allowed in sheet names
-        sheet_name = " ".join(re.sub(r"[\\\/\?\*\[\]]", " ", s3_str(title)).split())
+        sheet_name = " ".join(re.sub(r"[\\\/\?\*\[\]:]", " ", s3_str(title)).split())
 
         batch, remaining = rows[:batch_size], rows[batch_size:]
         sheet_number = 0

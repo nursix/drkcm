@@ -1515,6 +1515,7 @@
 'Date Delivered': 'Geliefert am',
 'Date Due': 'Fällig am',
 'Date Effected': 'Ausgeführt am',
+'Date Exported': 'Exportiert am',
 'Date Joined': 'Eintrittsdatum',
 'Date Modified': 'Geändert am',
 'Date Needed By': 'Benötigt ab',
@@ -5096,6 +5097,7 @@
 'Residents Report updated': 'Bewohnerliste aktualisiert',
 'Residents Report': 'Bewohnerliste',
 'Residents Reports': 'Bewohnerlisten',
+'Resident': 'Bewohner',
 'Residents': 'Bewohner',
 'Resigned': 'Zurückgetreten',
 'Resolve Conflict': 'Konflikt lösen',
@@ -6962,4 +6964,6 @@
 'xlwt module not available within the running Python - this needs installing for XLS output!': 'xlwt Modul nicht verfügbar im Rahmen der laufenden Python Umgebung - das muss installiert werden für XLS Ausgabe!',
 'yes': 'ja',
 'Åland Islands': 'Ålandinseln',
+'Presence List': 'Anwesenheitsliste',
+'Reported present since': 'Anwesend gemeldet seit',
 }

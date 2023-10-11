@@ -16,12 +16,14 @@
 <div class='row'>
 {{pass}}
  <div class="small-12 columns">
-  {{try:}}{{if registration:}}
   <div class="row">
-   <div class="small-12 columns">
-   {{=registration}}
+   <div class="small-6 columns">
+    {{try:}}{{if registration:}}{{=registration}}{{pass}}{{except:}}{{pass}}
    </div>
-  </div>{{pass}}{{except:}}{{pass}}
+   <div class="small-6 columns text-right">
+   {{try:}}{{if presence:}}{{=presence}}{{pass}}{{except:}}{{pass}}
+   </div>
+  </div>
   <div class="row shelter-stats">
    <div class="medium-4 small-12 columns">
     {{try:}}{{=occupancy}}{{except:}}{{pass}}
