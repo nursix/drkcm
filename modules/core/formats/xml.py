@@ -2419,8 +2419,8 @@ class S3XML:
                             t = types[cidx]
                             v = values[cidx]
                         except IndexError:
-                            pass
-                        else:
+                            continue
+                        if name:
                             add_col(orow, name, t, v, hashtags=hashtags)
                     check_headers = False
 
@@ -2703,8 +2703,8 @@ class S3XML:
                     try:
                         v = values[cidx]
                     except IndexError:
-                        pass
-                    else:
+                        continue
+                    if name:
                         add_col(orow, name, v, hashtags=hashtags)
                 check_headers = False
 
