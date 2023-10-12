@@ -1,5 +1,5 @@
 """
-    Presence List
+    MRCMS Presence List
 
     License: MIT
 """
@@ -22,7 +22,13 @@ class PresenceList(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
-        # TODO docstring
+        """
+            Entry point for the CRUDController
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         if r.http == "GET":
             output = self.presence_list(r, **attr)
@@ -33,7 +39,13 @@ class PresenceList(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def presence_list(self, r, **attr):
-        # TODO docstring
+        """
+            Generate the presence list
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         record = r.record
         if not record or "site_id" not in record:
@@ -43,19 +55,68 @@ class PresenceList(CRUDMethod):
         data = self.lookup(record.site_id)
 
         fmt = r.representation
-        if fmt == "html":
-            output = self.html(shelter_name, data)
-        elif fmt == "xlsx":
+        if fmt == "xlsx":
             output = self.xlsx(shelter_name, data)
+        # TODO support other formats?
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
 
         return output
 
     # -------------------------------------------------------------------------
+    @classmethod
+    def xlsx(cls, shelter_name, data):
+        """
+            Serialize the presence data as Excel file
+
+            Args:
+                shelter_name: the shelter name
+                data: the presence data as extracted with lookup()
+            Returns:
+                the Excel file as byte stream
+        """
+
+        # Prepare the input for XLSXWriter
+        table_data = {"columns": [],
+                      "headers": {},
+                      "types": {},
+                      "rows": data,
+                      }
+        for fname, label, ftype in cls.columns():
+            table_data["columns"].append(fname)
+            table_data["headers"][fname] = label
+            table_data["types"][fname] = ftype
+
+        # Use a title row (also includes exported-date)
+        current.deployment_settings.base.xls_title_row = True
+        title = current.T("Presence List")
+        if shelter_name:
+            title = "%s - %s" % (shelter_name, title)
+
+        # Generate XLSX byte stream
+        output = XLSXWriter.encode(table_data, title=title, as_stream=True)
+
+        # Set response headers
+        disposition = "attachment; filename=\"presence_list.xlsx\""
+        response = current.response
+        response.headers["Content-Type"] = contenttype(".xlsx")
+        response.headers["Content-disposition"] = disposition
+
+        # Return stream response
+        return response.stream(output,
+                               chunk_size = DEFAULT_CHUNK_SIZE,
+                               request = current.request
+                               )
+
+    # -------------------------------------------------------------------------
     @staticmethod
     def columns():
-        # TODO docstring
+        """
+            The columns of the presence list, in order of appearance
+
+            Returns:
+                tuple of tuples ((fieldname, label, datatype), ...)
+        """
 
         T = current.T
 
@@ -71,61 +132,23 @@ class PresenceList(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def html(cls, shelter_name, data):
-        # TODO docstring
-
-        # TODO implement
-        formatted = None
-
-        return formatted
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def xlsx(cls, shelter_name, data):
-        # TODO docstring
-
-        table_data = {"columns": [],
-                      "headers": {},
-                      "types": {},
-                      "rows": data,
-                      }
-        for fname, label, ftype in cls.columns():
-            table_data["columns"].append(fname)
-            table_data["headers"][fname] = label
-            table_data["types"][fname] = ftype
-
-        current.deployment_settings.base.xls_title_row = True
-        title = current.T("Presence List")
-        if shelter_name:
-            title = "%s - %s" % (shelter_name, title)
-        output = XLSXWriter.encode(table_data,
-                                   title = title,
-                                   as_stream = True,
-                                   )
-
-        disposition = "attachment; filename=\"presence_list.xlsx\""
-        response = current.response
-        response.headers["Content-Type"] = contenttype(".xlsx")
-        response.headers["Content-disposition"] = disposition
-
-        return response.stream(output,
-                               chunk_size = DEFAULT_CHUNK_SIZE,
-                               request = current.request
-                               )
-
-    # -------------------------------------------------------------------------
-    @classmethod
     def lookup(cls, shelter):
         """
-            Looks up people currently reported present at site
+            Looks up people currently reported present at the shelter
 
             Args:
                 shelter: the cr_shelter Row
             Returns:
-                # TODO
+                the entries for the presence list as a list of dicts,
+                dict structure see columns()
+
+            Note:
+                entries pre-ordered by name (last name, then first name)
         """
 
         T = current.T
+        STAFF = T("Staff")
+        RESIDENT = T("Resident")
 
         db = current.db
         s3db = current.s3db
@@ -170,27 +193,34 @@ class PresenceList(CRUDMethod):
                                 rtable.shelter_unit_id,
                                 left = left,
                                 join = join,
-                                orderby = (htable.id,
-                                           ptable.last_name,
+                                orderby = (ptable.last_name,
+                                           ptable.first_name,
                                            ),
                                 )
+        staff, residents = [], []
         units = {}
-        data = []
         seen = set()
         for row in rows:
             person = row.pr_person
             if person.id in seen:
+                # Duplicate (e.g. multiple case records):
+                # - this is a serious DB inconsistency, but an emergency
+                #   tool is the wrong place to raise the issue, so we just
+                #   skip it
                 continue
             seen.add(person.id)
 
             details = {}
 
-            # Differentiate staff/resident
-            if row.hrm_human_resource.id:
-                details["type"] = T("Staff")
-            elif row.dvr_case.id:
-                details["type"] = T("Resident")
+            # Differentiate staff/residents
+            if row.dvr_case.id:
+                items = residents
+                details["type"] = RESIDENT
+            elif row.hrm_human_resource.id:
+                items = staff
+                details["type"] = STAFF
             else:
+                items = staff
                 details["type"] = "-"
 
             # Basic person data
@@ -220,7 +250,7 @@ class PresenceList(CRUDMethod):
             since = sptable.date.represent(presence.date)
             details["since"] = since
 
-            data.append(details)
+            items.append(details)
 
         # Look up housing unit names
         if units:
@@ -232,6 +262,6 @@ class PresenceList(CRUDMethod):
                 for details in persons:
                     details["unit"] = row.name
 
-        return data
+        return staff + residents
 
 # END =========================================================================

@@ -1,5 +1,5 @@
 """
-    Shelter overview
+    MRCMS Shelter overview
 
     License: MIT
 """
@@ -11,7 +11,8 @@ from dateutil.relativedelta import relativedelta
 from gluon import current, URL, \
                   A, DIV, H4, H5, I, TABLE, TD, TR, TH
 
-from core import CustomController, CRUDMethod, PresenceRegistration, s3_format_fullname
+from core import BooleanRepresent, CRUDMethod, CustomController, \
+                 PresenceRegistration, s3_format_fullname
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -20,13 +21,23 @@ class ShelterOverview(CRUDMethod):
     """
 
     def apply_method(self, r, **attr):
-        # TODO docstring
+        """
+            Entry point for the CRUDController
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         if not r.record:
             r.error(405, current.ERROR.BAD_METHOD)
 
-        if r.http == "GET" and r.representation == "html":
-            output = self.overview(r, **attr)
+        if r.http == "GET":
+            if r.representation == "html":
+                output = self.overview(r, **attr)
+            # TODO add XLSX export
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
         else:
             r.error(405, current.ERROR.BAD_METHOD)
 
@@ -34,7 +45,13 @@ class ShelterOverview(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def overview(self, r, **attr):
-        # TODO docstring
+        """
+            Renders the shelter overview
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         T = current.T
 
@@ -43,7 +60,8 @@ class ShelterOverview(CRUDMethod):
 
         status = ShelterStatus(shelter_id)
 
-        # 1) Capacity
+        # 1) Capacity -------------------------------------
+
         total_capacity = status.capacity()
 
         cap_regular = total_capacity.get("regular", 0)
@@ -64,7 +82,8 @@ class ShelterOverview(CRUDMethod):
                        _class="shelter-overview-stats",
                        )
 
-        # 2) Current Occupancy
+        # 2) Current Occupancy ----------------------------
+
         population = status.population()
 
         regular = population.get("regular", 0)
@@ -90,7 +109,8 @@ class ShelterOverview(CRUDMethod):
                         _class="shelter-overview-stats",
                         )
 
-        # 3) Change
+        # 3) Change ---------------------------------------
+
         days = 7
         ins = status.arrivals(days=days)
         outs = status.leavings(days=days)
@@ -110,10 +130,12 @@ class ShelterOverview(CRUDMethod):
                      _class="shelter-overview-stats",
                      )
 
-        # 4) Residents Overview
+        # 4) Residents Overview ---------------------------
+
         residents = self.residents_overview(record)
 
-        # 5) Presence Registration
+        # 5) Presence Registration ------------------------
+
         if PresenceRegistration.permitted("cr_shelter", record.site_id):
             # Action button for presence registration
             registration = A(T("Presence Registration"),
@@ -123,7 +145,8 @@ class ShelterOverview(CRUDMethod):
         else:
             registration = ""
 
-        # 6) Presence List
+        # 6) Presence List --------------------------------
+
         # TODO Move styles into theme
         if current.auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
             presence = A(I(_class="fa fa-table", _style="margin-right:0.3rem;"),
@@ -137,6 +160,7 @@ class ShelterOverview(CRUDMethod):
         else:
             presence = ""
 
+        # Combined output and view template
         output = {"title": T("Shelter Overview"),
                   "occupancy": occupancy,
                   "capacity": capacity,
@@ -146,6 +170,7 @@ class ShelterOverview(CRUDMethod):
                   "registration": registration,
                   }
         CustomController._view("MRCMS", "shelter_overview.html")
+
         return output
 
     # -------------------------------------------------------------------------
@@ -270,7 +295,20 @@ class ShelterOverview(CRUDMethod):
     # -------------------------------------------------------------------------
     @classmethod
     def add_residents(cls, overview, unit, residents, show_links=False):
-        # TODO docstring
+        """
+            Adds the residents rows to a housing unit section in the
+            residents table
+
+            Args:
+                overview: the residents table
+                unit: the housing unit, cr_shelter_unit Row
+                residents: the residents, joined Rows
+                show_links: whether to show residents names as links to
+                            their case files
+
+            Returns:
+                the extended residents table (TODO why?)
+        """
 
         unit_header = cls.unit_header(unit)
         overview.append(unit_header)
@@ -283,6 +321,9 @@ class ShelterOverview(CRUDMethod):
                     c.append(row)
                 else:
                     p.append(row)
+
+        # Representation method for presence status
+        presence_repr = BooleanRepresent(labels=False, icons=True, colors=True)
 
         for i, persons in enumerate((c, p)):
 
@@ -308,6 +349,7 @@ class ShelterOverview(CRUDMethod):
                 overview.append(cls.resident(person,
                                              css = "resident-data %s %s" % (css, even),
                                              show_link = show_links,
+                                             presence_repr = presence_repr,
                                              ))
 
             # Render placeholder rows for unoccupied capacity
@@ -378,7 +420,17 @@ class ShelterOverview(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def unit_subheader(status, number, css=None):
-        # TODO docstring
+        """
+            Generates a table row (TR) with a registration status summary
+
+            Args:
+                status: the status value
+                number: the number of items with that status
+
+            Returns:
+                a TR element
+        """
+        # TODO move this back inline
 
         s3db = current.s3db
         rtable = s3db.cr_shelter_registration
@@ -392,14 +444,19 @@ class ShelterOverview(CRUDMethod):
         header = DIV("%s: %s" % (status_label, number),
                      _class = css_class,
                      )
-        return TR(TD(header, _colspan=7),
-                  _class="residents-status"
-                  )
+
+        return TR(TD(header, _colspan=7), _class="residents-status")
 
     # -------------------------------------------------------------------------
     @staticmethod
     def resident_header():
-        # TODO docstring
+        """
+            Generates a table row (TR) with column headers for resident
+            details
+
+            Returns:
+                a TR element
+        """
 
         T = current.T
 
@@ -415,8 +472,19 @@ class ShelterOverview(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def resident(row, css=None, show_link=False):
-        # TODO docstring
+    def resident(row, css=None, show_link=False, presence_repr=None):
+        """
+            Generates a table row (TR) with resident details
+
+            Args:
+                row: the (joined) Row with resident data
+                css: the CSS-class for the table row
+                show_link: render the resident name as link to their case file
+                presence_repr: representation method for the presence status
+
+            Returns:
+                a TR element
+        """
 
         #T = current.T
         s3db = current.s3db
@@ -450,11 +518,9 @@ class ShelterOverview(CRUDMethod):
         nationality = dtable.nationality.represent(details.nationality)
 
         # Presence
-        # TODO use workflow options
-        if presence.status == "IN":
-            p = I(_class="fa fa-check")
-        elif presence.status == "OUT":
-            p = I(_class="fa fa-times")
+        status = presence.status
+        if status in ("IN", "OUT"):
+            p = presence_repr(status == "IN") if presence_repr else status
         else:
             p = "-"
 
@@ -465,7 +531,7 @@ class ShelterOverview(CRUDMethod):
         else:
             icon = "fa fa-suitcase"
 
-        trow = TR(TD(I(_class=icon)),
+        return TR(TD(I(_class=icon)),
                   TD(label),
                   TD(name, _class="resident-name"),
                   TD(gender),
@@ -474,7 +540,6 @@ class ShelterOverview(CRUDMethod):
                   TD(p, _class="resident-presence"),
                   _class = css,
                   )
-        return trow
 
 # =============================================================================
 class ShelterStatus:
