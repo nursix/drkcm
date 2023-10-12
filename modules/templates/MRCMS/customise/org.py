@@ -274,7 +274,7 @@ def site_presence_validate_id(label):
 
     if person_id:
         if not verified:
-            signature = IDCard.get_id_fingerprint(pe_label)
+            signature = IDCard.get_id_signature(pe_label)
             if signature:
                 advice = T("Verify signature: %(signature)s") % {"signature": signature}
             else:

@@ -464,4 +464,19 @@ body.rtl {
     }
 }
 
+.id-card-data {
+    border: 1px solid #ccc;
+    padding: 1rem;
+    .button i.fa {
+        margin-right: 0.5rem;
+    }
+}
+.id-card-warning {
+    border: 1px solid red;
+    padding: 0.5rem;
+    margin: 1rem;
+    background: #fff1df;
+    font-size: 1rem;
+}
+
 // END ========================================================================

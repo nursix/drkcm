@@ -27,6 +27,9 @@ def realm_entity(table, row):
 
         organisation_id = None
 
+        # NOTE these rules are only effective upon explicit realm
+        #      update onaccept of the case/staff record - because
+        #      the person record is, necessarily, written first!
         if not organisation_id:
             # Client records are owned by the case organisation
             ctable = s3db.dvr_case
@@ -100,6 +103,7 @@ def realm_entity(table, row):
                        "dvr_residence_status",
                        "dvr_response_action",
                        "pr_group_membership",
+                       "pr_identity",
                        "pr_person_details",
                        "pr_person_tag",
                        "cr_shelter_registration",

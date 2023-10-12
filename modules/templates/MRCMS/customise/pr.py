@@ -202,6 +202,7 @@ def pr_person_resource(r, tablename):
                                        "residence_status",
                                        "response_action",
                                        "group_membership",
+                                       "identity",
                                        "person_details",
                                        "person_tag",
                                        "shelter_registration",

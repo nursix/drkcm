@@ -5178,10 +5178,11 @@ class PRIdentityModel(DataModel):
                     3:  T("Driving License"),
                     #4: T("Credit Card"),
                     5:  T("Residence Permit"),
+                    98: T("Registration Card (system-generated)"),
                     99: T("other"),
-                    999: T("System-generated"),
+                    999: T("Registration Card (system-generated)"), # TODO deprecate
                     }
-        selectable_opts = {k:v for k, v in id_types.items() if k != 999}
+        selectable_opts = {k:v for k, v in id_types.items() if k not in (98, 999)}
 
         tablename = "pr_identity"
         self.define_table(tablename,

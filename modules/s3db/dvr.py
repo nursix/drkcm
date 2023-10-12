@@ -832,6 +832,15 @@ class DVRCaseModel(DataModel):
             return
         case = row.dvr_case
 
+        # Update the realm entity for the person
+        # NOTE this is required because necessarily, the person record
+        #      is written before the case record; so it cannot inherit
+        #      the case realm unless we explicitly force an update here:
+        current.auth.set_realm_entity(s3db.pr_person,
+                                      case.person_id,
+                                      force_update = True,
+                                      )
+
         # Update closed_on date when status is closed
         if row.dvr_case_status.is_closed:
             if not case.closed_on:

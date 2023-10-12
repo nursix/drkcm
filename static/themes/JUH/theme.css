@@ -5096,3 +5096,22 @@ body.rtl .event-type-header {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
 }
+
+/* line 467, ../scss/theme/_misc.scss */
+.id-card-data {
+  border: 1px solid #ccc;
+  padding: 1rem;
+}
+/* line 470, ../scss/theme/_misc.scss */
+.id-card-data .button i.fa {
+  margin-right: 0.5rem;
+}
+
+/* line 474, ../scss/theme/_misc.scss */
+.id-card-warning {
+  border: 1px solid red;
+  padding: 0.5rem;
+  margin: 1rem;
+  background: #fff1df;
+  font-size: 1rem;
+}

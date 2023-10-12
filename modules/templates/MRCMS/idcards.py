@@ -9,16 +9,20 @@ import os
 import secrets
 import uuid
 
+from dateutil.relativedelta import relativedelta
+
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import Color, HexColor
 from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
-from gluon import current
+from gluon import current, A, BUTTON, DIV, H5, SQLFORM
 from gluon.contenttype import contenttype
 
-from core import CRUDMethod, PDFCardLayout, s3_format_fullname, s3_str
+from s3dal import Field
+from core import CRUDMethod, DateField, ICON, PDFCardLayout, \
+                 s3_format_fullname, s3_mark_required, s3_str
 
 # Fonts we use in this layout
 NORMAL = "Helvetica"
@@ -26,10 +30,18 @@ BOLD = "Helvetica-Bold"
 
 # =============================================================================
 class GenerateIDCard(CRUDMethod):
+    """
+        Method to generate registration cards for residents/staff
+    """
 
-    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
-        # TODO docstring
+        """
+            Entry point for the CRUDController
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         # Must be person+identity
         resource, component = r.resource, r.component
@@ -60,7 +72,13 @@ class GenerateIDCard(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def generate(self, r, **attr):
-        # TODO docstring
+        """
+            Dialog to create a new registration card
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         # User must have permission to create identity records
         if not current.auth.s3_has_permission("create", "pr_identity"):
@@ -74,38 +92,79 @@ class GenerateIDCard(CRUDMethod):
         record = r.record
         person_id = record.id
 
-        # TODO Proper form with info, confirmation + cancel-option
-        #      - include warning about existing IDs (if any)
-        #      - require explicit confirmation to invalidate them (mandatory)
-        #      - allow user to select an expiry date?
-        from gluon import FORM, BUTTON, DIV, P
-        form = FORM(DIV(P("Alle bisherigen IDs werden durch die Aktion ungültig!"),
-                        ),
-                    BUTTON(T("Generate ID"),
-                           _type="submit",
-                           _class="small primary button",
-                           ),
-                    )
+        request = current.request
+        response = current.response
+        s3 = response.s3
 
-        # TODO include person_id in form name
-        formname = "generate_id_cards"
+        # Form fields
+        now = request.utcnow.date()
+        formfields = [DateField("valid_until",
+                                label = T("Valid Until"),
+                                default = now + relativedelta(months=1, day=31),
+                                month_selector = True,
+                                past = 0,
+                                #empty = False,
+                                ),
+                      Field("confirm", "boolean",
+                            requires = lambda v: (v, None) if v else (v, T("You must confirm the action")),
+                            default = False,
+                            label = T("Yes, generate a new registration card"),
+                            ),
+                      ]
+
+        # Generate labels (and mark required fields in the process)
+        labels, has_required = s3_mark_required(formfields)
+        s3.has_required = has_required
+
+        # Form buttons
+        REGISTER = T("Generate registration card")
+        buttons = [BUTTON(REGISTER,
+                          _type = "submit",
+                          _class = "small primary button",
+                          ),
+                   A(T("Cancel"),
+                     _href = r.url(method=""),
+                     _class = "cancel-form-btn action-lnk",
+                     ),
+                   ]
+
+        # Construct the form
+        settings = current.deployment_settings
+        auth = current.auth
+        response.form_label_separator = ""
+        form = SQLFORM.factory(table_name = "generate_id",
+                               record = None,
+                               hidden = {"_next": request.vars._next},
+                               labels = labels,
+                               separator = "",
+                               showid = False,
+                               submit_button = REGISTER,
+                               delete_label = auth.messages.delete_label,
+                               formstyle = settings.get_ui_formstyle(),
+                               buttons = buttons,
+                               *formfields)
 
         if form.accepts(r.post_vars,
                         current.session,
-                        formname = formname,
-                        #onvalidation = onvalidation, # TODO validate what?
+                        formname = "generate_id_card[%s]" % person_id,
                         keepvalues = False,
                         hideerror = False
                         ):
 
-            idcard = IDCard(person_id)
+            # Read form vars
+            valid_until = form.vars.valid_until
+
+            # Choose layout depending on controller
+            # TODO allow format selection (A4, Credit Card)
+            idcard = IDCard(person_id,
+                            valid_until = valid_until if valid_until else None,
+                            )
             if r.controller == "hrm":
                 layout = StaffIDCardLayout
             else:
                 layout = IDCardLayout
 
             # Generate PDF document (with registration callback)
-            # TODO choose alternative IDCardLayout depending on controller (dvr/hrm - default dvr)
             resource.configure(id_card_callback = idcard.register)
             from core import DataExporter
             document = DataExporter.pdfcard(resource,
@@ -129,21 +188,23 @@ class GenerateIDCard(CRUDMethod):
             if entry_id:
                 IDCard.invalidate_ids(person_id, keep=idcard.identity_id)
 
-            # TODO Diplay details of the newly generated ID
-            #      - including name, ID number and signature (fingerprint), possibly picture or QR code
-            # TODO Include button to go back to ID list / person details
-            from gluon import A
-            form = A(T("Download PDF"), # TODO Include PDF-Icon
-                     data = {"url": r.url(component_id = idcard.identity_id,
-                                          method = "generate",
-                                          representation = "pdf",
-                                          ),
-                             },
-                     _class = "action-btn s3-download-button",
-                     )
+            current.response.confirmation = T("New registration card registered")
+            form = self.card_details(r, idcard)
+        else:
+            itable = s3db.pr_image
+            query = (itable.pe_id == record.pe_id) & \
+                    (itable.profile == True) & \
+                    (itable.deleted == False)
+            rows = current.db(query).select(itable.id, limitby=(0, 1)).first()
+            if not rows:
+                current.response.warning = T("No profile picture available for this person")
+
+            warning = T("All previous registration cards for this person will become invalid by this action!")
+            form = DIV(DIV(warning, _class="id-card-warning"), form)
 
         output = {"form": form,
-                  "title": T("Generate ID card"),
+                  "title": T("Registration Cards"),
+                  "subtitle": T("Generate registration card"),
                   }
         current.response.view = self._view(r, "update.html")
 
@@ -151,8 +212,61 @@ class GenerateIDCard(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def card_details(r, idcard):
+        """
+            Displays the details of the new registration card, and offers
+            a button to download the PDF
+
+            Args:
+                r: the CRUDRequest
+                idcard: the IDCard
+
+            Returns:
+                a DIV with contents
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        # Look up the identity record
+        itable = s3db.pr_identity
+        identity_id = idcard.identity_id
+        identity = db(itable.id == identity_id).select(itable.value,
+                                                       limitby = (0, 1),
+                                                       ).first()
+
+        # Download button
+        download = A(ICON("file-pdf"), T("Download PDF"),
+                     data = {"url": r.url(component_id = idcard.identity_id,
+                                          method = "generate",
+                                          representation = "pdf",
+                                          ),
+                             },
+                     _class = "small primary button s3-download-button",
+                     )
+
+        # Link to list
+        to_list = A(T("List Identity Documents"),
+                    _href = r.url(method=""),
+                    _class = "action-lnk",
+                    )
+
+        return DIV(DIV(H5(identity.value), download, _class="id-card-data"),
+                   DIV(to_list),
+                   )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def download(r, **attr):
-        # TODO docstring
+        """
+            Download the PDF for an ID card
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
 
         # Request must specify a particular identity record
         component_id = r.component_id
@@ -200,21 +314,34 @@ class GenerateIDCard(CRUDMethod):
 class IDCard:
     """ Toolkit for registered, system-generated ID cards """
 
-    def __init__(self, person_id):
+    def __init__(self, person_id, valid_until=None):
 
         self.person_id = person_id
         self.identity_id = None
+        self.valid_until = valid_until
 
     # -------------------------------------------------------------------------
     def register(self, item):
         """
             Registers a system-generated ID card; as draw-callback for
             IDCardLayout (i.e. called per ID)
+
+            Args:
+                item: the data item (a dict containing the person details)
+
+            Returns:
+                the item updated with an additional attribute "_req":
+                a dict {"token": the document verification token,
+                        "vhash": the record verification hash,
+                        "vcode": a human-readable verification signature of the hash,
+                        }
+                - these data are to be embedded in the PDF (e.g. the QRCode)
         """
-        # TODO complete docstring
 
         db = current.db
+
         s3db = current.s3db
+        auth = current.auth
 
         # Check for existing registration details
         registration = item.get("_reg")
@@ -251,35 +378,46 @@ class IDCard:
         # Get the pe_label
         pe_label = person.pe_label
 
-        # Produce the ID card token
+        # Produce the ID card token to uniquely identify the PDF
+        # - will be embedded in the PDF, but not stored anywhere else
         token = secrets.token_hex(16).upper()
 
         # Produce the verification hash for the ID record
-        # - from pe_label, ID token and person UID
-        record_vhash = self.get_vhash(pe_label, person_uuid, token)
+        # - from pe_label, ID card token and person UID
+        # - matches only the PDF with the correct label and token
+        record_vhash = self.generate_vhash(pe_label, person_uuid, token)
 
         # Produce the UID for the ID record
         record_uid = uuid.uuid4()
 
         # Generate the verification hash for the ID card
-        card_vhash = self.get_chash(pe_label, record_uid.hex.upper(), record_vhash)
+        # - from pe_label, identity record UUID, and record verification hash
+        # - matches only this particular identity record
+        card_vhash = self.generate_chash(pe_label, record_uid.hex.upper(), record_vhash)
 
-        # Generate the card hash fingerprint
-        check = self._fingerprint(card_vhash)
+        # Generate the card hash signature
+        # - a human-readable signature for reverse verification
+        # - useful in situations where the QR-code cannot be scanned
+        check = self._signature(card_vhash)
 
         # Generate or update ID record (=register the ID card)
         itable = s3db.pr_identity
         id_data = {"uuid": record_uid.urn,
                    "person_id": person.id,
                    "value": "%s-%s" % (pe_label, check),
-                   "type": 999,
+                   "type": 98,
                    "system": True,
                    "invalid": False,
                    "valid_from": current.request.utcnow.date(),
+                   "valid_until": self.valid_until,
                    "vhash": record_vhash,
                    }
-        # TODO postprocess create?
-        self.identity_id = itable.insert(**id_data)
+        self.identity_id = id_data["id"] = itable.insert(**id_data)
+
+        # Postprocess create
+        s3db.update_super(itable, id_data)
+        auth.s3_set_record_owner(itable, id_data)
+        s3db.onaccept(itable, id_data, method="create")
 
         # Update and return the item
         item["_reg"] = {"token": token,
@@ -327,26 +465,56 @@ class IDCard:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_vhash(label, uid, token):
-        # TODO docstring
-        # TODO rename as generate_*
+    def generate_vhash(label, uid, token):
+        """
+            Generate the server-side verification hash for the ID Card; to
+            be stored in the identity record
+
+            Args:
+                label: the PE label
+                uid: the UUID (hex) of the person record
+                token: a random token embedded in the PDF (and only there)
+
+            Returns:
+                the hash as uppercase hexadecimal
+        """
 
         s = "##".join((label, token, uid))
         return hashlib.sha512(s.encode("ascii")).hexdigest().upper()
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_chash(label, uid, vhash):
-        # TODO docstring
-        # TODO rename as generate_*
+    def generate_chash(label, uid, vhash):
+        """
+            Generate the document-side verification hash for the ID Card; to
+            be embedded in the PDF
+
+            Args:
+                label: the PE label
+                uid: the UUID (hex) of the identity record
+                vhash: the server-side verification hash
+
+            Returns:
+                the hash as uppercase hexadecimal
+        """
 
         s = "##".join((label, uid, vhash))
         return hashlib.sha256(s.encode("ascii")).hexdigest().upper()
 
     # -------------------------------------------------------------------------
     @classmethod
-    def get_id_fingerprint(cls, pe_label):
-        # TODO docstring
+    def get_id_signature(cls, pe_label):
+        """
+            Produces a human-readable signature for the card hash of the
+            currently valid registration card of a person; for reverse
+            verification in situations where the QR code cannot be scanned
+
+            Args:
+                pe_label: the ID label of the person
+
+            Returns:
+                the signature (hex code)
+        """
 
         db = current.db
         s3db = current.s3db
@@ -364,6 +532,7 @@ class IDCard:
                 ((itable.valid_until == None) | (itable.valid_until >= today)) & \
                 (itable.vhash != None)
         row = db(query).select(ptable.pe_label,
+                               itable.type,
                                itable.uuid,
                                itable.vhash,
                                join = join,
@@ -372,6 +541,7 @@ class IDCard:
 
         # Compute the card hash
         card_hash = None
+        pick = False
         if row:
             pe_label = row.pr_person.pe_label
             record = row.pr_identity
@@ -380,20 +550,34 @@ class IDCard:
             except ValueError:
                 pass
             else:
-                card_hash = cls.get_chash(pe_label, uid, record.vhash)
+                card_hash = cls.generate_chash(pe_label, uid, record.vhash)
+            if record.type == 999:
+                pick = True
 
-        return cls._fingerprint(card_hash) if card_hash else None
+        return cls._signature(card_hash, pick=pick) if card_hash else None
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def _fingerprint(vhash):
-        # TODO docstring
-        # TODO rename as signature?
+    def _signature(vhash, pick=False):
+        """
+            Generates a signature for a verification hash
 
-        d = len(vhash) // 8
-        marks = [vhash[d*i:d*i+2] for i in range(d)]
+            Args:
+                vhash: the verification hash (hex)
+                pick: pick pairs from the original hash (recoverable)
 
-        return "".join(vhash[int(m, 16) % len(vhash)] for m in marks)
+            Returns:
+                the signature (hex code)
+        """
+
+        if pick:
+            # Pick pairs from the original hash
+            d = len(vhash) // 8
+            marks = [vhash[d*i:d*i+2] for i in range(d)]
+            return "".join(vhash[int(m, 16) % len(vhash)] for m in marks)
+
+        # Use MD5 hash of the verification hash as fingerprint
+        return hashlib.md5(vhash.encode("utf-8")).hexdigest().upper()[:8]
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -447,7 +631,7 @@ class IDCard:
             uid = uuid.UUID(person.uuid).hex.upper()
         except ValueError:
             uid = person.uuid
-        vhash = cls.get_vhash(person.pe_label, uid, token)
+        vhash = cls.generate_vhash(person.pe_label, uid, token)
 
         # Find a valid system ID record for this person that matches the vhash
         today = current.request.utcnow.date()
@@ -473,7 +657,7 @@ class IDCard:
         except ValueError:
             # Malformed ID record UID (invalid ID record)
             raise ValueError("Invalid ID record")
-        chash_v = cls.get_chash(person.pe_label, uid, vhash)
+        chash_v = cls.generate_chash(person.pe_label, uid, vhash)
 
         if chash_v != chash:
             # ID card verification hash does not match the ID record
