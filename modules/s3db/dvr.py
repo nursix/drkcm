@@ -345,7 +345,7 @@ class DVRCaseModel(DataModel):
                            ),
 
                      # Case priority and status
-                     status_id(),
+                     status_id(empty=False),
                      Field("priority", "integer",
                            default = 2,
                            label = T("Priority"),

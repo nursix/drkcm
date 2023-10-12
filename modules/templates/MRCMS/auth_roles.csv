@@ -1,4 +1,4 @@
-uid,role,description,hidden,controller,function,table,uacl,oacl,entity,Notes
+uid,role,description,hidden,controller,function,table,uacl,oacl,entity,notes
 AUTHENTICATED,Authenticated User,,,gis,location,,CREATE|READ,READ|UPDATE|DELETE,,
 AUTHENTICATED,Authenticated User,,,gis,,,READ,READ|UPDATE|DELETE,,
 AUTHENTICATED,Authenticated User,,,hrm,index,,NONE,,,
@@ -40,58 +40,50 @@ AUTHENTICATED,Authenticated User,,,,,pr_image,CREATE,READ|UPDATE|DELETE,,
 AUTHENTICATED,Authenticated User,,,,,pr_person,,READ|UPDATE,,
 AUTHENTICATED,Authenticated User,,,,,pr_person_details,,READ|UPDATE,,
 AUTHENTICATED,Authenticated User,,,,,security_seized_item_type,READ,,,
-CASE_ADMIN,Case Administrator,,,cr,shelter,,READ,,,Case Admin has read access to shelter information
-CASE_ADMIN,Case Administrator,,,cr,,,READ,,,Case Admin has read access to shelter information
-CASE_ADMIN,Case Administrator,,,dvr,case_activity,,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case activities
-CASE_ADMIN,Case Administrator,,,dvr,case_appointment,,READ|UPDATE,,,Case Admin can manage appointments
-CASE_ADMIN,Case Administrator,,,dvr,case_event,,CREATE|READ,,,Case Admin can register case events
-CASE_ADMIN,Case Administrator,,,dvr,due_followups,,READ|UPDATE,,,Case Admin can manage case activities
-CASE_ADMIN,Case Administrator,,,dvr,group_membership,,CREATE|READ|UPDATE|DELETE,,,Case Admin can create and update cases
-CASE_ADMIN,Case Administrator,,,dvr,person,,CREATE|READ|UPDATE|DELETE,,,Case Admin can create and update cases
+CASE_ADMIN,Case Administrator,,,dvr,case_activity,,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,dvr,case_appointment,,READ|UPDATE,,,
+CASE_ADMIN,Case Administrator,,,dvr,case_event,,CREATE|READ,,,
+CASE_ADMIN,Case Administrator,,,dvr,due_followups,,READ|UPDATE,,,
+CASE_ADMIN,Case Administrator,,,dvr,group_membership,,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,dvr,person,,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,dvr,,,READ,,,
-CASE_ADMIN,Case Administrator,,,org,group,,NONE,,,No access to organisation groups
-CASE_ADMIN,Case Administrator,,,org,organisation,,READ,,,Access to organisation data (read-only)
-CASE_ADMIN,Case Administrator,,,org,,,READ,,,Access to organisation data (read-only)
-CASE_ADMIN,Case Administrator,,,pr,contact,CREATE|READ|UPDATE|DELETE,,,,
+CASE_ADMIN,Case Administrator,,,org,group,,NONE,,,
+CASE_ADMIN,Case Administrator,,,org,organisation,,READ,,,
+CASE_ADMIN,Case Administrator,,,org,,,READ,,,
+CASE_ADMIN,Case Administrator,,,pr,contact,,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,security,,,NONE,,,
-CASE_ADMIN,Case Administrator,,,,,cr_shelter,READ,,,Case Admin can read shelter information
-CASE_ADMIN,Case Administrator,,,,,cr_shelter_registration,READ,,,Case Admin can read shelter information
-CASE_ADMIN,Case Administrator,,,,,cr_shelter_registration_history,READ,,,Case Admin can read shelter information
-CASE_ADMIN,Case Administrator,,,,,cr_shelter_unit,READ,,,Case Admin can read shelter information
-CASE_ADMIN,Case Administrator,,,,,doc_document,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,doc_image,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_case,CREATE|READ|UPDATE,,,Case Admin can create and update cases
-CASE_ADMIN,Case Administrator,,,,,dvr_case_activity,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_case_appointment,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
+CASE_ADMIN,Case Administrator,,,,,doc_document,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,doc_image,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_case,CREATE|READ|UPDATE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_case_activity,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_case_appointment,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,,,dvr_case_appointment_type,READ,,,
-CASE_ADMIN,Case Administrator,,,,,dvr_case_event,CREATE|READ|UPDATE,,,Case Admin can manage case information
+CASE_ADMIN,Case Administrator,,,,,dvr_case_event,CREATE|READ|UPDATE,,,
 CASE_ADMIN,Case Administrator,,,,,dvr_case_event_type,READ,,,
 CASE_ADMIN,Case Administrator,,,,,dvr_case_flag,READ,,,
-CASE_ADMIN,Case Administrator,,,,,dvr_case_flag_case,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_case_language,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_note,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_response_action,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_response_action_theme,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,dvr_response_type_case_activity,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,hrm_human_resource,READ,,,Case Admin can access organisation data
-CASE_ADMIN,Case Administrator,,,,,org_organisation,READ,,,Case Admin can access organisation data
-CASE_ADMIN,Case Administrator,,,,,org_sector_organisation,READ,,,Case Admin can access organisation data
-CASE_ADMIN,Case Administrator,,,,,pr_address,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_contact,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_group_membership,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_identity,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_image,CREATE|READ|UPDATE|DELETE,,,Case Admin can manage case information
-CASE_ADMIN,Case Administrator,,,,,pr_person,CREATE|READ|UPDATE,,,Case Admin can create and update cases
-CASE_ADMIN,Case Administrator,,,,,pr_person_details,CREATE|READ|UPDATE,,,Case Admin can create and update cases
-CASE_ADMIN,Case Administrator,,,,,pr_person_tag,CREATE|READ|UPDATE|DELETE,,,Case Admin can create and update cases
-CASE_ADMIN,Case Administrator,,,,,security_seized_item,READ,,,Case Admin can read seized items information per case
-CASE_ADMIN,Case Administrator,,,,,security_seized_item_depository,READ,,,Case Admin can read seized items information per case
+CASE_ADMIN,Case Administrator,,,,,dvr_case_flag_case,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_case_language,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_note,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_response_action,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_response_action_theme,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,dvr_response_type_case_activity,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,hrm_human_resource,READ,,,
+CASE_ADMIN,Case Administrator,,,,,org_organisation,READ,,,
+CASE_ADMIN,Case Administrator,,,,,org_sector_organisation,READ,,,
+CASE_ADMIN,Case Administrator,,,,,pr_address,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_contact,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_group_membership,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_identity,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_image,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_person,CREATE|READ|UPDATE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_person_details,CREATE|READ|UPDATE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_person_tag,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,security_seized_item,READ,,,
+CASE_ADMIN,Case Administrator,,,,,security_seized_item_depository,READ,,,
 CASE_ASSISTANT,Case Assistant / Carer,,,dvr,person,,READ,,,
 CASE_ASSISTANT,Case Assistant / Carer,,,dvr,,,READ,,,
-CASE_ASSISTANT,Case Assistant / Carer,,,,,pr_person,READ,,,Case Assistant can read case data
-CASE_MANAGER,Case Manager / Counselor,,,cr,shelter,,READ,,,
-CASE_MANAGER,Case Manager / Counselor,,,cr,,,READ,,,
+CASE_ASSISTANT,Case Assistant / Carer,,,,,pr_person,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,dvr,case_activity,,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,dvr,case_appointment,,READ|UPDATE,,,
 CASE_MANAGER,Case Manager / Counselor,,,dvr,case_event,,CREATE|READ,,,
@@ -102,11 +94,7 @@ CASE_MANAGER,Case Manager / Counselor,,,dvr,,,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,org,group,,NONE,,,
 CASE_MANAGER,Case Manager / Counselor,,,org,organisation,,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,org,,,READ,,,
-CASE_MANAGER,Case Manager / Counselor,,,pr,contact,CREATE|READ|UPDATE|DELETE,,,,
-CASE_MANAGER,Case Manager / Counselor,,,,,cr_shelter,READ,,,
-CASE_MANAGER,Case Manager / Counselor,,,,,cr_shelter_registration,READ,,,
-CASE_MANAGER,Case Manager / Counselor,,,,,cr_shelter_registration_history,READ,,,
-CASE_MANAGER,Case Manager / Counselor,,,,,cr_shelter_unit,READ,,,
+CASE_MANAGER,Case Manager / Counselor,,,pr,contact,,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,doc_document,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,doc_image,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,dvr_case,READ,,,
@@ -132,7 +120,7 @@ CASE_MANAGER,Case Manager / Counselor,,,,,pr_contact_emergency,CREATE|READ|UPDAT
 CASE_MANAGER,Case Manager / Counselor,,,,,pr_group_membership,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,pr_identity,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,pr_image,CREATE|READ|UPDATE|DELETE,,,
-CASE_MANAGER,Case Manager / Counselor,,,,,pr_person,READ|UPDATE,,,Case Manager can update cases
+CASE_MANAGER,Case Manager / Counselor,,,,,pr_person,READ|UPDATE,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,pr_person_details,CREATE|READ|UPDATE,,,
 CASE_MANAGER,Case Manager / Counselor,,,,,pr_person_tag,CREATE|READ|UPDATE|DELETE,,,
 CATERING,Catering,,,dvr,,,READ,,,
@@ -161,7 +149,7 @@ ORG_ADMIN,Organisation Administrator,,,hrm,staff,,CREATE|READ|UPDATE|DELETE,,,
 ORG_ADMIN,Organisation Administrator,,,org,group,,NONE,,,
 ORG_ADMIN,Organisation Administrator,,,org,organisation,,CREATE|READ|UPDATE|DELETE,,,
 ORG_ADMIN,Organisation Administrator,,,org,,,READ,,,
-ORG_ADMIN,Organisation Administrator,,,pr,contact,CREATE|READ|UPDATE|DELETE,,,,
+ORG_ADMIN,Organisation Administrator,,,pr,contact,,CREATE|READ|UPDATE|DELETE,,,
 ORG_ADMIN,Organisation Administrator,,,pr,person,,CREATE|READ|UPDATE|DELETE,,,
 ORG_ADMIN,Organisation Administrator,,,security,seized_item,,CREATE|READ|UPDATE|DELETE,,,
 ORG_ADMIN,Organisation Administrator,,,security,seized_item_depository,,CREATE|READ|UPDATE|DELETE,,,
@@ -203,7 +191,7 @@ ORG_GROUP_ADMIN,Organisation Group Administrator,,,hrm,staff,,READ,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,org,group,,READ|UPDATE,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,org,organisation,,CREATE|READ|UPDATE|DELETE,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,org,,,READ,,,
-ORG_GROUP_ADMIN,Organisation Group Administrator,,,pr,contact,CREATE|READ|UPDATE|DELETE,,,,
+ORG_GROUP_ADMIN,Organisation Group Administrator,,,pr,contact,,CREATE|READ|UPDATE|DELETE,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,pr,person,,CREATE|READ|UPDATE|DELETE,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,security,,,NONE,,,
 ORG_GROUP_ADMIN,Organisation Group Administrator,,,,,cr_shelter,READ,,,
@@ -337,10 +325,7 @@ SHELTER_MANAGER,Shelter Manager,,,,,pr_person,READ,,,
 SHELTER_MANAGER,Shelter Manager,,,,,pr_person_details,READ,,,
 SHELTER_MANAGER,Shelter Manager,,,,,security_seized_item,CREATE|READ|UPDATE,,,
 SHELTER_MANAGER,Shelter Manager,,,,,security_seized_item_depository,READ,,,
-STAFF,Staff Member,,,cr,shelter,,READ,,,
 STAFF,Staff Member,,,org,organisation,,READ,,,
-STAFF,Staff Member,,,,,cr_shelter,READ,,,
-STAFF,Staff Member,,,,,cr_shelter_unit,READ,,,
 STAFF,Staff Member,,,,,doc_document,READ,,,
 STAFF,Staff Member,,,,,doc_image,READ,,,
 STAFF,Staff Member,,,,,dvr_case_appointment_type,READ,,,

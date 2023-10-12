@@ -389,7 +389,15 @@ class ShelterOverview(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def unit_header(unit):
-        # TODO docstring
+        """
+            Generates a table row (TR) with housing unit details
+
+            Args:
+                unit - the cr_shelter_unit Row
+
+            Returns:
+                a TR element
+        """
 
         T = current.T
 
@@ -410,9 +418,8 @@ class ShelterOverview(CRUDMethod):
                       _class = "residents-unit-link",
                       )
 
-        header = DIV(label,
-                     _class = "residents-unit-header",
-                     )
+        header = DIV(label, _class="residents-unit-header")
+
         return TR(TD(header, _colspan=7),
                   _class = "residents-unit",
                   )
@@ -430,8 +437,8 @@ class ShelterOverview(CRUDMethod):
             Returns:
                 a TR element
         """
-        # TODO move this back inline
 
+        # TODO Lookup status label inline
         s3db = current.s3db
         rtable = s3db.cr_shelter_registration
 
