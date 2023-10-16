@@ -127,7 +127,7 @@
              use="col[@field='Shelter']"/>
 
     <xsl:key name="shelter_unit" match="row"
-             use="col[@field='Shelter Unit']"/>
+             use="concat(col[@field='Shelter'],'+',col[@field='Shelter Unit'])"/>
 
     <xsl:key name="status" match="row"
              use="col[@field='CaseStatus']"/>
@@ -170,7 +170,7 @@
 
             <!-- Shelter Units -->
             <xsl:for-each select="//row[generate-id(.)=generate-id(key('shelter_unit',
-                                                                   col[@field='Shelter Unit'])[1])]">
+                                                                   concat(col[@field='Shelter'],'+',col[@field='Shelter Unit']))[1])]">
                 <xsl:call-template name="ShelterUnit"/>
             </xsl:for-each>
 
@@ -350,7 +350,7 @@
                     </reference>
                     <reference field="shelter_unit_id" resource="cr_shelter_unit">
                         <xsl:attribute name="tuid">
-                            <xsl:value-of select="concat('ShelterUnit:',$ShelterUnit)"/>
+                            <xsl:value-of select="concat('ShelterUnit:',$ShelterName,'+',$ShelterUnit)"/>
                         </xsl:attribute>
                     </reference>
                 </resource>
@@ -1145,7 +1145,7 @@
         <xsl:if test="$ShelterUnit!='' and $ShelterName!=''">
             <resource name="cr_shelter_unit">
                 <xsl:attribute name="tuid">
-                    <xsl:value-of select="concat('ShelterUnit:',$ShelterUnit)"/>
+                    <xsl:value-of select="concat('ShelterUnit:',$ShelterName,'+',$ShelterUnit)"/>
                 </xsl:attribute>
                 <reference field="shelter_id" resource="cr_shelter">
                     <xsl:attribute name="tuid">

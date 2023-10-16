@@ -9,10 +9,12 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 from gluon import current, URL, \
-                  A, DIV, H4, H5, I, TABLE, TD, TR, TH
+                  A, DIV, H4, H5, I, IMG, TABLE, TD, TR, TH
+from gluon.contenttype import contenttype
+from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from core import BooleanRepresent, CRUDMethod, CustomController, \
-                 PresenceRegistration, s3_format_fullname
+from core import BooleanRepresent, CRUDMethod, CustomController, XLSXWriter, \
+                 PresenceRegistration, s3_format_fullname, s3_str
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -35,7 +37,8 @@ class ShelterOverview(CRUDMethod):
         if r.http == "GET":
             if r.representation == "html":
                 output = self.overview(r, **attr)
-            # TODO add XLSX export
+            elif r.representation == "xlsx":
+                output = ResidentsList(r.record).xlsx()
             else:
                 r.error(415, current.ERROR.BAD_FORMAT)
         else:
@@ -44,7 +47,8 @@ class ShelterOverview(CRUDMethod):
         return output
 
     # -------------------------------------------------------------------------
-    def overview(self, r, **attr):
+    @staticmethod
+    def overview(r, **attr):
         """
             Renders the shelter overview
 
@@ -132,7 +136,21 @@ class ShelterOverview(CRUDMethod):
 
         # 4) Residents Overview ---------------------------
 
-        residents = self.residents_overview(record)
+        xlsx_btn = A(IMG(_src = "/%s/static/img/icon-xls.png" % r.application,
+                         _style = "margin-left:1rem;vertical-align:text-top;",
+                         ),
+                     data = {"url": URL(c="cr", f="shelter",
+                                        args = [r.id, "overview.xlsx"],
+                                        ),
+                             },
+                     _title = T("Export in %(format)s format") % {"format": "XLSX"},
+                     _class = "action-lnk s3-download-button",
+                     )
+
+        residents = DIV(H4(T("Residents Overview"), xlsx_btn),
+                        ResidentsList(record, status=status).html(),
+                        _class = "shelter-overview-residents",
+                        )
 
         # 5) Presence Registration ------------------------
 
@@ -173,124 +191,158 @@ class ShelterOverview(CRUDMethod):
 
         return output
 
-    # -------------------------------------------------------------------------
-    def residents_overview(self, shelter):
-        """
-            Generates a HTML representation of residents per housing unit
+# =============================================================================
+class ResidentsList:
+    """
+        A list of current residents at a shelter
+    """
 
+    def __init__(self, shelter, status=None):
+        """
             Args:
-                shelter: the cr_shelter Row
-            Returns:
-                DIV
+                shelter: the shelter Row (including id, site_id and
+                         organisation_id)
         """
 
-        T = current.T
-        db = current.db
-        s3db = current.s3db
+        self.shelter = shelter
+        self.status = status
 
-        shelter_id = shelter.id
-        site_id = shelter.site_id
+        self.shelter_id = shelter.id
+        self.site_id = shelter.site_id
+        self.organisation_id = shelter.organisation_id
 
-        overview = DIV(H4(T("Residents Overview")),
-                       _class = "shelter-overview-residents",
-                       )
+        self._residents = None
 
-        # Get all housing units for this shelter
-        utable = s3db.cr_shelter_unit
-        query = (utable.shelter_id == shelter_id) & \
-                (utable.deleted == False)
-        units = db(query).select(utable.id,
-                                 utable.shelter_id,
-                                 utable.name,
-                                 utable.status,
-                                 utable.capacity,
-                                 utable.blocked_capacity,
-                                 utable.transitory,
-                                 orderby = utable.name,
-                                 )
+    # -------------------------------------------------------------------------
+    @property
+    def units(self):
+        """
+            The housing units of the shelter
 
-        # Get all active shelter registrations for this shelter
-        rtable = s3db.cr_shelter_registration
-        ptable = s3db.pr_person
-        dtable = s3db.pr_person_details
-        ctable = s3db.dvr_case
-        mtable = s3db.pr_group_membership
-        sptable = s3db.org_site_presence
+            Returns:
+                Rows (cr_shelter_unit)
+        """
 
-        left = [dtable.on((dtable.person_id == ptable.id) & \
-                          (dtable.deleted == False)),
-                mtable.on((mtable.person_id == ptable.id) & \
-                          (mtable.deleted == False)),
-                sptable.on((sptable.person_id == ptable.id) & \
-                           (sptable.site_id == site_id) & \
-                           (sptable.deleted == False)),
-                ]
-        join = [rtable.on((rtable.person_id == ptable.id) & \
-                          (rtable.shelter_id == shelter_id) & \
-                          (rtable.registration_status != 3) & \
-                          (rtable.deleted == False)),
-                ctable.on((ctable.person_id == ptable.id) & \
-                          (ctable.organisation_id == shelter.organisation_id) & \
-                          (ctable.deleted == False)),
-                ]
-        query = (ptable.deleted == False)
-        rows = db(query).select(ptable.id,
-                                ptable.pe_label,
-                                ptable.last_name,
-                                ptable.first_name,
-                                ptable.gender,
-                                ptable.date_of_birth,
-                                dtable.nationality,
-                                sptable.status,
-                                mtable.id,
-                                mtable.group_id,
-                                rtable.shelter_unit_id,
-                                rtable.registration_status,
-                                rtable.check_in_date,
-                                join = join,
-                                left = left,
-                                orderby = (rtable.shelter_unit_id,
-                                           mtable.group_id,
-                                           ptable.last_name,
-                                           ptable.date_of_birth,
-                                           ~ctable.id,
-                                           ~mtable.id,
-                                           ~dtable.id,
-                                           ),
-                                )
+        status = self.status
+        if not status:
+            status = self.status = ShelterStatus(self.shelter_id)
 
-        # Split up residents by housing unit
-        all_residents = {}
-        seen = set()
-        for row in rows:
-            if row.pr_person.id in seen:
-                continue
-            seen.add(row.pr_person.id)
-            registration = row.cr_shelter_registration
-            unit_id = registration.shelter_unit_id
-            if unit_id in all_residents:
-                residents = all_residents[unit_id]
-            else:
-                residents = all_residents[unit_id] = []
-            residents.append(row)
+        return status.units
 
-        # Generate residents list
+    # -------------------------------------------------------------------------
+    @property
+    def residents(self):
+        """
+            The residents of the shelter (lazy property)
+
+            Returns:
+                a dict {shelter_unit_id: [Row, ...]}
+        """
+
+        residents = self._residents
+        if residents is None:
+
+            db = current.db
+            s3db = current.s3db
+
+            rtable = s3db.cr_shelter_registration
+            ptable = s3db.pr_person
+            dtable = s3db.pr_person_details
+            ctable = s3db.dvr_case
+            mtable = s3db.pr_group_membership
+            sptable = s3db.org_site_presence
+
+            left = [dtable.on((dtable.person_id == ptable.id) & \
+                            (dtable.deleted == False)),
+                    mtable.on((mtable.person_id == ptable.id) & \
+                            (mtable.deleted == False)),
+                    sptable.on((sptable.person_id == ptable.id) & \
+                            (sptable.site_id == self.site_id) & \
+                            (sptable.deleted == False)),
+                    ]
+            join = [rtable.on((rtable.person_id == ptable.id) & \
+                            (rtable.shelter_id == self.shelter_id) & \
+                            (rtable.registration_status != 3) & \
+                            (rtable.deleted == False)),
+                    ctable.on((ctable.person_id == ptable.id) & \
+                            (ctable.organisation_id == self.organisation_id) & \
+                            (ctable.deleted == False)),
+                    ]
+            query = (ptable.deleted == False)
+            rows = db(query).select(ptable.id,
+                                    ptable.pe_label,
+                                    ptable.last_name,
+                                    ptable.first_name,
+                                    ptable.gender,
+                                    ptable.date_of_birth,
+                                    dtable.nationality,
+                                    ctable.household_size,
+                                    sptable.status,
+                                    mtable.id,
+                                    mtable.group_id,
+                                    rtable.shelter_unit_id,
+                                    rtable.registration_status,
+                                    rtable.check_in_date,
+                                    join = join,
+                                    left = left,
+                                    orderby = (rtable.shelter_unit_id,
+                                               mtable.group_id,
+                                               ptable.last_name,
+                                               ptable.date_of_birth,
+                                               ~ctable.id,
+                                               ~mtable.id,
+                                               ~dtable.id,
+                                               ),
+                                    )
+
+            # Split up residents by housing unit
+            residents = {}
+            seen = set()
+            for row in rows:
+                if row.pr_person.id in seen:
+                    continue
+                seen.add(row.pr_person.id)
+                registration = row.cr_shelter_registration
+                unit_id = registration.shelter_unit_id
+                if unit_id in residents:
+                    unit_residents = residents[unit_id]
+                else:
+                    unit_residents = residents[unit_id] = []
+                unit_residents.append(row)
+
+            self._residents = residents
+
+        return residents
+
+    # -------------------------------------------------------------------------
+    def html(self):
+        """
+            Returns the residents list as HTML
+
+            Returns:
+                TABLE.residents-list
+        """
+
         # TODO verify user is permitted to read cases of the shelter org
         # TODO if not permitted to read cases, show anonymous
         # TODO show_links always true if permitted
         show_links = current.auth.s3_has_permission("read", "pr_person", c="dvr", f="person")
-        occupancy_data = TABLE(_class="residents-list")
-        for unit in units:
-            unit_id = unit.id
-            residents = all_residents.get(unit_id)
-            self.add_residents(occupancy_data, unit, residents, show_links=show_links)
-        # Append residents not assigned to any housing unit
-        unassigned = all_residents.get(None)
-        if unassigned:
-            self.add_residents(occupancy_data, None, unassigned, show_links=show_links)
 
-        overview.append(occupancy_data)
-        return overview
+        # Generate residents list
+        residents_list = TABLE(_class="residents-list")
+
+        residents = self.residents
+        units = self.units
+        for unit in units:
+            unit_residents = residents.get(unit.id)
+            self.add_residents(residents_list, unit, unit_residents, show_links=show_links)
+
+        # Append residents not assigned to any housing unit
+        unassigned = residents.get(None)
+        if unassigned:
+            self.add_residents(residents_list, None, unassigned, show_links=show_links)
+
+        return residents_list
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -548,6 +600,151 @@ class ShelterOverview(CRUDMethod):
                   _class = css,
                   )
 
+    # -------------------------------------------------------------------------
+    def xlsx(self):
+        """
+            Serializes the residents list as XLSX
+
+            Returns:
+                a bytes stream
+        """
+
+        # Prepare the input for XLSXWriter
+        table_data = {"columns": [],
+                      "headers": {},
+                      "types": {},
+                      "rows": self.data_rows(),
+                      }
+        for fname, label, ftype in self.columns:
+            table_data["columns"].append(fname)
+            table_data["headers"][fname] = label
+            table_data["types"][fname] = ftype
+
+        # Use a title row (also includes exported-date)
+        current.deployment_settings.base.xls_title_row = True
+        title = current.T("Residents Overview")
+        shelter_name = self.shelter.name
+        if shelter_name:
+            title = "%s - %s" % (shelter_name, title)
+
+        # Generate XLSX byte stream
+        output = XLSXWriter.encode(table_data, title=title, as_stream=True)
+
+        # Set response headers
+        disposition = "attachment; filename=\"residents_list.xlsx\""
+        response = current.response
+        response.headers["Content-Type"] = contenttype(".xlsx")
+        response.headers["Content-disposition"] = disposition
+
+        # Return stream response
+        return response.stream(output,
+                               chunk_size = DEFAULT_CHUNK_SIZE,
+                               request = current.request
+                               )
+
+    # -------------------------------------------------------------------------
+    @property
+    def columns(self):
+        """
+            The columns for XLSX export
+
+            Returns:
+                a tuple of tuples ((fieldname, label, type))
+        """
+
+        T = current.T
+
+        return (("unit", T("Housing Unit"), "string"),
+                ("status", T("Status"), "string"),
+                ("check_in_date", T("Check-in date"), "date"),
+                ("pe_label", T("ID"), "string"),
+                ("last_name", T("Last Name"), "string"),
+                ("first_name", T("First Name"), "string"),
+                ("gender", T("Gender"), "string"),
+                ("dob", T("Date of Birth"), "date"),
+                ("age", T("Age"), "string"),
+                ("nationality", T("Nationality"), "string"),
+                ("household_size", T("Size of Family"), "integer"),
+                )
+
+    # -------------------------------------------------------------------------
+    def data_rows(self):
+        """
+            Builds the data rows for XLSX export
+
+            Returns:
+                an ordered list of dicts [{field: value, ...}, ...]
+        """
+
+        T = current.T
+
+        data_rows = []
+
+        now = datetime.datetime.utcnow().date()
+
+        s3db = current.s3db
+        ptable = s3db.pr_person
+        dtable = s3db.pr_person_details
+        rtable = s3db.cr_shelter_registration
+
+        residents = self.residents
+
+        units = [row for row in self.units] + [None]
+        for unit in units:
+            if unit:
+                unit_name = unit.name
+                unit_residents = residents.get(unit.id)
+            else:
+                unit_name = T("Not assigned")
+                unit_residents = residents.get(None)
+
+            if not unit_residents:
+                continue
+
+            checked_in, planned = [], []
+            for row in unit_residents:
+
+                reg = row.cr_shelter_registration
+
+                data = {"unit": unit_name,
+                        }
+                status = reg.registration_status
+                if status == 2:
+                    checked_in.append(data)
+                else:
+                    planned.append(data)
+
+                # Registration details
+                data["status"] = rtable.registration_status.represent(status)
+                data["check_in_date"] = rtable.check_in_date.represent(reg.check_in_date)
+
+                # Person data
+                person = row.pr_person
+                for fn in ("pe_label", "first_name", "last_name", "gender"):
+                    represent = ptable[fn].represent
+                    if not represent:
+                        represent = lambda v: s3_str(v) if v else "-"
+                    data[fn] = represent(person[fn])
+
+                # Date of Birth / Age
+                dob = person.date_of_birth
+                data["dob"] = ptable.date_of_birth.represent(dob)
+                data["age"] = str(relativedelta(now, dob).years) if dob else "-"
+
+                # Nationality
+                details = row.pr_person_details
+                data["nationality"] = dtable.nationality.represent(details.nationality)
+
+                # Household size
+                case = row.dvr_case
+                household_size = case.household_size
+                data["household_size"] = household_size if household_size else "-"
+
+            data_rows.extend(checked_in)
+            data_rows.extend(planned)
+
+        return data_rows
+
 # =============================================================================
 class ShelterStatus:
     """ The current capacity/occupation status of a shelter """
@@ -562,6 +759,8 @@ class ShelterStatus:
 
         # Initialize
         self._units = None
+        self._units_by_id = None
+
         self._capacity = None
         self._population = None
 
@@ -572,22 +771,41 @@ class ShelterStatus:
             The housing units of the shelter (lazy property)
 
             Returns:
-                a dict {unit_id: Row(cr_shelter_unit)}
+                Housing units as Rows, ordered by name
         """
 
         units = self._units
-        if not units:
+        if units is None:
 
-            table = current.s3db.cr_shelter_unit
-            query = (table.shelter_id == self.shelter_id) & \
-                    (table.deleted == False)
-            rows = current.db(query).select(table.id,
-                                            table.transitory,
-                                            table.status,
-                                            table.capacity,
-                                            table.blocked_capacity,
-                                            )
-            units = self._units = {row.id: row for row in rows}
+            utable = current.s3db.cr_shelter_unit
+            query = (utable.shelter_id == self.shelter_id) & \
+                    (utable.deleted == False)
+            units = current.db(query).select(utable.id,
+                                             utable.shelter_id,
+                                             utable.name,
+                                             utable.status,
+                                             utable.capacity,
+                                             utable.blocked_capacity,
+                                             utable.transitory,
+                                             orderby = utable.name,
+                                             )
+            self._units = units
+
+        return units
+
+    # -------------------------------------------------------------------------
+    @property
+    def units_by_id(self):
+        """
+            The housing units of the shelter
+
+            Returns:
+                a dict {unit_id: Row(cr_shelter_unit)}
+        """
+
+        units = self._units_by_id
+        if not units:
+            units = self._units_by_id = {row.id: row for row in self.units}
 
         return units
 
@@ -612,8 +830,8 @@ class ShelterStatus:
             self._capacity = capacity = {}
 
             population = self.unit_population
-            for unit_id, unit in self.units.items():
-
+            for unit in self.units:
+                unit_id = unit.id
                 total_capacity = unit.capacity if unit.status == 1 else 0
 
                 occupied = population.get(unit_id, 0)
@@ -646,7 +864,7 @@ class ShelterStatus:
         population = self._population
         if not population:
             # Initialize
-            population = {u: 0 for u in self.units}
+            population = {u.id: 0 for u in self.units}
             population[None] = 0
 
             # Look up registrations
@@ -684,7 +902,7 @@ class ShelterStatus:
                         }
         """
 
-        units = self.units
+        units = self.units_by_id
         unit_capacity = self.unit_capacity
 
         capacity_regular = 0
@@ -743,7 +961,7 @@ class ShelterStatus:
 
         population_regular = population_transitory = 0
 
-        units = self.units
+        units = self.units_by_id
         for unit_id, population in self.unit_population.items():
             if not unit_id:
                 # No assigned housing counts as transitory housing
@@ -779,7 +997,7 @@ class ShelterStatus:
                 (rtable.deleted == False)
         checked_in_persons = db(query)._select(rtable.person_id)
 
-        num_checked_in_members = mtable.person_id.count()
+        num_checked_in_members = mtable.person_id.count(distinct=True)
 
         join = gtable.on((gtable.id == mtable.group_id) &
                          (gtable.group_type == 7))
@@ -814,7 +1032,7 @@ class ShelterStatus:
         query = (rtable.shelter_id == self.shelter_id) & \
                 (rtable.registration_status == 2) & \
                 (rtable.deleted == False)
-        num_children = rtable.person_id.count()
+        num_children = rtable.person_id.count(distinct=True)
         row = current.db(query).select(num_children, join=join).first()
 
         return row[num_children]
@@ -900,7 +1118,7 @@ class ShelterStatus:
                 (rtable.registration_status == 1) & \
                 (rtable.check_in_date <= latest) & \
                 (rtable.deleted == False)
-        num_persons = rtable.person_id.count()
+        num_persons = rtable.person_id.count(distinct=True)
         row = current.db(query).select(num_persons).first()
 
         return row[num_persons]

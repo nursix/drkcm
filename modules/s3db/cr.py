@@ -845,10 +845,9 @@ class CRShelterUnitModel(DataModel):
                        ]
 
         self.configure(tablename,
-                       # @ToDo: Allow multiple shelters to have the same
-                       # name of unit (Requires that Shelter is in dvr/person.xsl/csv)
-                       #deduplicate = S3Duplicate(primary=("shelter_id", "name")),
-                       deduplicate = S3Duplicate(),
+                       deduplicate = S3Duplicate(primary = ("name",),
+                                                 secondary = ("shelter_id",),
+                                                 ),
                        list_fields = list_fields,
                        # Extra fields for shelter_unit_status:
                        extra_fields = ["status",
@@ -1788,11 +1787,7 @@ class CRShelterRegistrationModel(DataModel):
                      )
 
         configure(tablename,
-                  deduplicate = S3Duplicate(primary = ("person_id",
-                                                       "shelter_id",
-                                                       "shelter_unit_id",
-                                                       ),
-                                            ),
+                  deduplicate = S3Duplicate(primary = ("person_id",)),
                   onaccept = self.shelter_registration_onaccept,
                   ondelete = self.shelter_registration_ondelete,
                   )
@@ -2314,7 +2309,7 @@ class Shelter:
             query = (rtable.shelter_id == shelter_id) & \
                     (rtable.registration_status != 3) & \
                     (rtable.deleted == False)
-            cnt = rtable.id.count()
+            cnt = rtable.person_id.count(distinct=True)
             row = db(query).select(cnt).first()
             update["population"] = row[cnt] if row else 0
 
@@ -2496,7 +2491,7 @@ class HousingUnit:
             query = (rtable.shelter_unit_id == unit_id) & \
                     (rtable.registration_status != 3) & \
                     (rtable.deleted == False)
-            cnt = rtable.id.count()
+            cnt = rtable.person_id.count(distinct=True)
             row = db(query).select(cnt).first()
             population = row[cnt] if row else 0
         else:
