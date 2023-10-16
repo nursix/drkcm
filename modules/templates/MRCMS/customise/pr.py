@@ -552,6 +552,7 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
                         "first_name",
                         "last_name",
                         "dvr_case.comments",
+                        "shelter_registration.shelter_unit_id$name",
                         ],
                        label = T("Search"),
                        comment = T("You can search by name, ID or comments"),
