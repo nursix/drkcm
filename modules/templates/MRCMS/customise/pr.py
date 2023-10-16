@@ -528,73 +528,82 @@ def configure_case_form(resource,
                        )
 
 # -------------------------------------------------------------------------
-def configure_case_filters(resource, privileged=False):
-    # TODO review + refactor
+def configure_case_filters(resource, organisation_id=None, privileged=False):
 
     T = current.T
-    #s3db = current.s3db
 
-    # TODO Reconfigure from scratch rather than extending/removing
-    filter_widgets = resource.get_config("filter_widgets")
-    if filter_widgets:
-        from core import DateFilter, \
-                         TextFilter
+    s3db = current.s3db
 
-        extend_text_filter = True
-        for fw in filter_widgets:
-            # No filter default for case status
-            if fw.field == "dvr_case.status_id":
-                fw.opts.default = None
-            if fw.field == "case_flag_case.flag_id":
-                fw.opts.size = None
-            # Text filter includes EasyOpt Number and Case Comments
-            if extend_text_filter and isinstance(fw, TextFilter):
-                fw.field.extend(("dvr_case.comments",
-                                 ))
-                fw.opts.comment = T("You can search by name, ID or comments")
-                extend_text_filter = False
+    from core import AgeFilter, DateFilter, OptionsFilter, TextFilter, get_filter_options
 
-        # Add filter for date of birth
-        # TODO Replace by AgeFilter
-        dob_filter = DateFilter("date_of_birth")
-        #dob_filter.operator = ["eq"]
-        filter_widgets.insert(1, dob_filter)
+    closed = current.request.get_vars.get("closed")
+    get_status_opts = s3db.dvr_case_status_filter_opts
+    if closed == "only":
+        status_opts = lambda: get_status_opts(closed=True)
+    elif closed == "1" or closed == "include":
+        status_opts = get_status_opts
+    else:
+        status_opts = lambda: get_status_opts(closed=False)
 
-        # TODO Add organisation filter if no default case org
+    default_status = s3db.dvr_case_default_status()
 
-        # Additional filters for privileged roles
-        if privileged:
-            # Add filter for registration date
-            reg_filter = DateFilter("dvr_case.date",
-                                    hidden = True,
-                                    )
-            filter_widgets.append(reg_filter)
+    filter_widgets = [
+            TextFilter(["pe_label",
+                        "first_name",
+                        "last_name",
+                        "dvr_case.comments",
+                        ],
+                       label = T("Search"),
+                       comment = T("You can search by name, ID or comments"),
+                       ),
+            OptionsFilter("dvr_case.status_id",
+                          cols = 3,
+                          default = default_status,
+                          label = T("Case Status"),
+                          options = status_opts,
+                          sort = False,
+                          ),
+            AgeFilter("date_of_birth",
+                      label = T("Age"),
+                      hidden = True,
+                      ),
+            OptionsFilter("person_details.nationality",
+                          hidden = True,
+                          ),
+            OptionsFilter("case_flag_case.flag_id",
+                          label = T("Flags"),
+                          options = get_filter_options("dvr_case_flag",
+                                                       translate = True,
+                                                       ),
+                          cols = 3,
+                          hidden = True,
+                          ),
+            ]
 
-            # Add filter for registration status
-            # TODO replace by shelter/shelter unit filter
-            #reg_filter = OptionsFilter("shelter_registration.registration_status",
-            #                           label = T("Presence"),
-            #                           options = s3db.cr_shelter_registration_status_opts,
-            #                           hidden = True,
-            #                           cols = 3,
-            #                           )
-            #filter_widgets.append(reg_filter)
+    if not organisation_id:
+        filter_widgets.append(
+                OptionsFilter("dvr_case.organisation_id",
+                              hidden = True,
+                              ))
 
-            # Add filter for BAMF Registration Number
-            bamf_filter = TextFilter(["bamf.value"],
-                                     label = T("BAMF Ref.No."),
-                                     hidden = True,
-                                     )
-            filter_widgets.append(bamf_filter)
+    if privileged:
+        filter_widgets.extend([
+                DateFilter("dvr_case.date",
+                           hidden = True,
+                           ),
+                TextFilter(["bamf.value"],
+                           label = T("BAMF Ref.No."),
+                           hidden = True,
+                           ),
+                TextFilter(["pe_label"],
+                           label = T("IDs"),
+                           match_any = True,
+                           hidden = True,
+                           comment = T("Search for multiple IDs (separated by blanks)"),
+                           ),
+                ])
 
-        # Add filter for IDs
-        id_filter = TextFilter(["pe_label"],
-                               label = T("IDs"),
-                               match_any = True,
-                               hidden = True,
-                               comment = T("Search for multiple IDs (separated by blanks)"),
-                               )
-        filter_widgets.append(id_filter)
+    resource.configure(filter_widgets=filter_widgets)
 
 # -------------------------------------------------------------------------
 def configure_case_list_fields(resource,
@@ -829,6 +838,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
             # Configure case filters
             configure_case_filters(resource,
+                                   organisation_id = case_organisation,
                                    privileged = privileged,
                                    )
 
