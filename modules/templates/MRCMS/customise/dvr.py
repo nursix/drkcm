@@ -107,6 +107,10 @@ def dvr_case_resource(r, tablename):
     s3db = current.s3db
     ctable = s3db.dvr_case
 
+    # Allow direct transfer of cases between organisations
+    # TODO replace this by a formal takeover-procedure
+    s3db.configure("dvr_case", update_realm=True)
+
     # Custom onaccept to propagate status changes
     s3db.add_custom_callback(tablename, "onaccept", dvr_case_onaccept)
 

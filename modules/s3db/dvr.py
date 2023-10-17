@@ -4798,8 +4798,6 @@ class DVRCaseEventModel(DataModel):
 class DVRVulnerabilityModel(DataModel):
     """ Specific vulnerabilities of a client """
 
-    # TODO label translations
-
     names = ("dvr_vulnerability_type",
              "dvr_vulnerability",
              )
@@ -4807,6 +4805,10 @@ class DVRVulnerabilityModel(DataModel):
     def model(self):
 
         T = current.T
+        db = current.db
+
+        s3 = current.response.s3
+        crud_strings = s3.crud_strings
 
         define_table = self.define_table
 
@@ -4821,10 +4823,14 @@ class DVRVulnerabilityModel(DataModel):
                            ),
                      Field("code", length=64,
                            label = T("Code"),
-                           requires = IS_EMPTY_OR(IS_LENGTH(64)),
+                           represent = lambda v, row=None: v if v else "",
+                           requires = IS_EMPTY_OR([
+                                            IS_LENGTH(64),
+                                            IS_NOT_ONE_OF(db, "dvr_vulnerability_type.code"),
+                                            ]),
                            ),
+                     # TODO replace by m2m link:
                      self.org_sector_id(),
-                     #self.org_organisation_id(),
                      Field("obsolete", "boolean",
                            label = T("obsolete"),
                            default = False,
@@ -4832,11 +4838,28 @@ class DVRVulnerabilityModel(DataModel):
                      CommentsField(),
                      )
 
-        # TODO controller (if standalone)
-        # TODO make component of organisation
+        self.configure(tablename,
+                       # TODO import template
+                       deduplicate = S3Duplicate(primary = ("name",),
+                                                 secondary = ("code",),
+                                                 ),
+                       )
 
-        # TODO CRUD strings
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Vulnerability Type"),
+            title_display = T("Vulnerability Type Details"),
+            title_list = T("Vulnerability Types"),
+            title_update = T("Edit Vulnerability Type"),
+            label_list_button = T("List Vulnerability Types"),
+            label_delete_button = T("Delete Vulnerability Type"),
+            msg_record_created = T("Vulnerability Type created"),
+            msg_record_modified = T("Vulnerability Type updated"),
+            msg_record_deleted = T("Vulnerability Type deleted"),
+            msg_list_empty = T("No Vulnerability Types currently defined"),
+        )
 
+        # Field template
         represent = S3Represent(lookup=tablename, translate=True)
         vulnerability_type_id = FieldTemplate("vulnerability_type_id",
                                               "reference %s" % tablename,
@@ -4858,18 +4881,20 @@ class DVRVulnerabilityModel(DataModel):
         define_table(tablename,
                      # Person affected
                      self.pr_person_id(),
-                     vulnerability_type_id(),
+                     vulnerability_type_id(empty = False,
+                                           ),
+                     Field("description", "text",
+                           label = T("Details"),
+                           ),
                      DateField(default = "now",
+                               empty = False,
                                label = T("Established on"),
+                               set_min = "#dvr_vulnerability_end_date",
                                ),
                      DateField("end_date",
                                label = T("Relevant until"),
-                               writable = False,
+                               set_max = "#dvr_vulnerability_date",
                                ),
-                     Field("closed", "boolean",
-                           default = False,
-                           label = T("No longer relevant"),
-                           ),
                      # Enable in template as-required:
                      self.hrm_human_resource_id(
                          label = T("Established by"),
@@ -4879,10 +4904,33 @@ class DVRVulnerabilityModel(DataModel):
                      CommentsField(),
                      )
 
-        # TODO make component of person
-        # TODO FieldTemplate
-        # TODO onaccept to set end date from closed-flag
+        # List fields
+        list_fields = ["person_id",
+                       "vulnerability_type_id",
+                       "date",
+                       "end_date",
+                       ]
 
+        # Table configuration
+        self.configure(tablename,
+                       list_fields = list_fields,
+                       )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Add Vulnerability"),
+            title_display = T("Vulnerability Details"),
+            title_list = T("Vulnerabilities"),
+            title_update = T("Edit Vulnerability"),
+            label_list_button = T("List Vulnerabilities"),
+            label_delete_button = T("Delete Vulnerability"),
+            msg_record_created = T("Vulnerability added"),
+            msg_record_modified = T("Vulnerability updated"),
+            msg_record_deleted = T("Vulnerability deleted"),
+            msg_list_empty = T("No Vulnerabilities currently registered"),
+        )
+
+        # Field template
         # TODO representation method: [date] type
         represent = S3Represent(lookup=tablename, fields=["date"])
         vulnerability_id = FieldTemplate("vulnerability_id", "reference %s" % tablename,
@@ -4896,8 +4944,6 @@ class DVRVulnerabilityModel(DataModel):
                                                                   )),
                                          sortby = "date",
                                          )
-
-        # TODO CRUD strings
 
         # ---------------------------------------------------------------------
         # Link vulnerability<=>case activity

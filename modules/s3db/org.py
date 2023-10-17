@@ -2077,7 +2077,6 @@ class OrgOrganisationSectorModel(DataModel):
 
     names = ("org_sector",
              "org_sector_id",
-             #"org_subsector",
              "org_sector_organisation",
              )
 
@@ -2103,7 +2102,6 @@ class OrgOrganisationSectorModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Sector
-        # (Cluster in UN-style terminology)
         #
         tablename = "org_sector"
         define_table(tablename,
@@ -2119,73 +2117,8 @@ class OrgOrganisationSectorModel(DataModel):
                            label = T("Abbreviation"),
                            requires = IS_LENGTH(64),
                            ),
-                     self.gis_location_id(
-                        requires = IS_EMPTY_OR(IS_LOCATION()),
-                        widget = S3LocationAutocompleteWidget(),
-                     ),
                      CommentsField(),
                      )
-
-        # CRUD strings
-        if current.deployment_settings.get_ui_label_cluster():
-            SECTOR = T("Cluster")
-            ADD_SECTOR = T("Create Cluster")
-            tooltip = T("If you don't see the Cluster in the list, you can add a new one by clicking link 'Add New Cluster'.")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SECTOR,
-                title_display = T("Cluster Details"),
-                title_list = T("Clusters"),
-                title_update = T("Edit Cluster"),
-                label_list_button = T("List Clusters"),
-                label_delete_button = T("Delete Cluster"),
-                msg_record_created = T("Cluster added"),
-                msg_record_modified = T("Cluster updated"),
-                msg_record_deleted = T("Cluster deleted"),
-                msg_list_empty = T("No Clusters currently registered"))
-        else:
-            SECTOR = T("Sector")
-            ADD_SECTOR = T("Create Sector")
-            tooltip = T("If you don't see the Sector in the list, you can add a new one by clicking link 'Create Sector'.")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SECTOR,
-                title_display = T("Sector Details"),
-                title_list = T("Sectors"),
-                title_update = T("Edit Sector"),
-                label_list_button = T("List Sectors"),
-                label_delete_button = T("Delete Sector"),
-                msg_record_created = T("Sector added"),
-                msg_record_modified = T("Sector updated"),
-                msg_record_deleted = T("Sector deleted"),
-                msg_list_empty = T("No Sectors currently registered"))
-
-        configure("org_sector",
-                  deduplicate = self.org_sector_duplicate,
-                  onaccept = self.org_sector_onaccept,
-                  )
-
-        sector_comment = lambda child: S3PopupLink(c = "org",
-                                                   f = "sector",
-                                                   vars = {"child": child},
-                                                   label = ADD_SECTOR,
-                                                   title = SECTOR,
-                                                   tooltip = tooltip,
-                                                   )
-
-        represent = S3Represent(lookup=tablename, translate=True)
-        sector_id = FieldTemplate("sector_id", "reference %s" % tablename,
-                                  label = SECTOR,
-                                  ondelete = "SET NULL",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "org_sector.id",
-                                                          represent,
-                                                          sort=True,
-                                                          filterby=filterby,
-                                                          filter_opts=filter_opts,
-                                                          )),
-                                  sortby = "abrv",
-                                  comment = sector_comment("sector_id"),
-                                  )
 
         # Components
         add_components(tablename,
@@ -2201,80 +2134,41 @@ class OrgOrganisationSectorModel(DataModel):
                                           "key": "project_id",
                                           "actuate": "hide",
                                           },
-                       #project_activity_type = {"link": "project_activity_type_sector",
-                       #                         "joinby": "sector_id",
-                       #                         "key": "activity_type_id",
-                       #                         "actuate": "hide",
-                       #                         },
-                       #project_theme = {"link": "project_theme_sector",
-                       #                 "joinby": "sector_id",
-                       #                 "key": "theme_id",
-                       #                 "actuate": "hide",
-                       #                 },
-                       #org_subsector = "sector_id",
                        )
 
-        # =====================================================================
-        # (Cluster) Subsector
-        #
-        # tablename = "org_subsector"
-        # define_table(tablename,
-        #              sector_id(),
-        #              Field("name", length=128,
-        #                    label = T("Name"),
-        #                    requires = IS_LENGTH(128),
-        #                    ),
-        #              Field("abrv", length=64,
-        #                    notnull=True, unique=True,
-        #                    label = T("Abbreviation"),
-        #                    requires = IS_LENGTH(64),
-        #                    ),
-        #              )
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Sector"),
+            title_display = T("Sector Details"),
+            title_list = T("Sectors"),
+            title_update = T("Edit Sector"),
+            label_list_button = T("List Sectors"),
+            label_delete_button = T("Delete Sector"),
+            msg_record_created = T("Sector added"),
+            msg_record_modified = T("Sector updated"),
+            msg_record_deleted = T("Sector deleted"),
+            msg_list_empty = T("No Sectors currently registered"))
 
-        ##CRUD strings
-        # if settings.get_ui_label_cluster():
-            # SUBSECTOR = T("Cluster Subsector")
-            # crud_strings[tablename] = Storage(
-                # label_create = T("Create Cluster Subsector"),
-                # title_display = T("Cluster Subsector Details"),
-                # title_list = T("Cluster Subsectors"),
-                # title_update = T("Edit Cluster Subsector"),
-                # label_list_button = T("List Cluster Subsectors"),
-                # label_delete_button = T("Delete Cluster Subsector"),
-                # msg_record_created = T("Cluster Subsector added"),
-                # msg_record_modified = T("Cluster Subsector updated"),
-                # msg_record_deleted = T("Cluster Subsector deleted"),
-                # msg_list_empty = T("No Cluster Subsectors currently registered"))
-        # else:
-            # SUBSECTOR = T("Subsector")
-            # crud_strings[tablename] = Storage(
-                # label_create = T("Add Subsector"),
-                # title_display = T("Subsector Details"),
-                # title_list = T("Subsectors"),
-                # title_update = T("Edit Subsector"),
-                # label_list_button = T("List Subsectors"),
-                # label_delete_button = T("Delete Subsector"),
-                # msg_record_created = T("Subsector added"),
-                # msg_record_modified = T("Subsector updated"),
-                # msg_record_deleted = T("Subsector deleted"),
-                # msg_list_empty = T("No Subsectors currently registered"))
+        # Table configuration
+        configure("org_sector",
+                  deduplicate = self.org_sector_duplicate,
+                  onaccept = self.org_sector_onaccept,
+                  )
 
-        # subsector_id = FieldTemplate("subsector_id", "reference %s" % tablename,
-        #                              label = SUBSECTOR,
-        #                              ondelete = "SET NULL",
-        #                              represent = self.org_subsector_represent,
-        #                              requires = IS_EMPTY_OR(
-        #                                            IS_ONE_OF(db, "org_subsector.id",
-        #                                                      self.org_subsector_represent,
-        #                                                      sort = True,
-        #                                                      )),
-        #                              sortby = "abrv",
-        #                              #comment = Script to filter the sector_subsector drop down
-        #                              )
-
-        # configure("org_subsector",
-        #           deduplicate = self.org_sector_duplicate,
-        #           )
+        represent = S3Represent(lookup=tablename, translate=True)
+        sector_id = FieldTemplate("sector_id", "reference %s" % tablename,
+                                  label = T("Sector"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "org_sector.id",
+                                                          represent,
+                                                          sort=True,
+                                                          filterby=filterby,
+                                                          filter_opts=filter_opts,
+                                                          )),
+                                  sortby = "abrv",
+                                  )
 
         # ---------------------------------------------------------------------
         # Organizations <> Sectors Link Table
@@ -7024,11 +6918,7 @@ def org_rheader(r, tabs=None):
                     (ltable.deleted == False)
             rows = db(query).select(ltable.sector_id)
             if rows:
-                if settings.get_ui_label_cluster():
-                    label = T("Clusters")
-                else:
-                    label = T("Sectors")
-                record_data.append(TR(TH("%s: " % label),
+                record_data.append(TR(TH("%s: " % T("Sectors")),
                                       ltable.sector_id.represent.multiple([row.sector_id for row in rows])))
 
         if settings.get_org_country() and record.country:

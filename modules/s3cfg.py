@@ -2314,10 +2314,6 @@ class S3Config(Storage):
         """
         return current.T(self.ui.get("label_attachments", "Attachments"))
 
-    def get_ui_label_cluster(self):
-        """ UN-style deployment? """
-        return self.ui.get("cluster", False)
-
     def get_ui_label_locationselector_map_point_add(self):
         """
             Label for the Location Selector button to add a Point to the Map

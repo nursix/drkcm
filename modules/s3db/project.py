@@ -5282,54 +5282,40 @@ def project_project_filters(org_label):
     append_filter = filter_widgets.append
 
     if settings.get_project_sectors():
-        if settings.get_ui_label_cluster():
-            sector = T("Cluster")
-        else:
-            sector = T("Sector")
-        append_filter(
-            OptionsFilter("sector_project.sector_id",
-                          label = sector,
-                          location_filter = True,
-                          none = True,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("sector_project.sector_id",
+                                    label = T("Sector"),
+                                    location_filter = True,
+                                    none = True,
+                                    hidden = True,
+                                    ))
 
     mode_drr = settings.get_project_mode_drr()
     if mode_drr and settings.get_project_hazards():
-        append_filter(
-            OptionsFilter("hazard_project.hazard_id",
-                          label = T("Hazard"),
-                          help_field = project_hazard_help_fields,
-                          cols = 4,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("hazard_project.hazard_id",
+                                    label = T("Hazard"),
+                                    help_field = project_hazard_help_fields,
+                                    cols = 4,
+                                    hidden = True,
+                                    ))
 
     if settings.get_project_mode_3w() and \
        settings.get_project_themes():
-        append_filter(
-            OptionsFilter("theme_project.theme_id",
-                          label = T("Theme"),
-                          help_field = project_theme_help_fields,
-                          cols = 4,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("theme_project.theme_id",
+                                    label = T("Theme"),
+                                    help_field = project_theme_help_fields,
+                                    cols = 4,
+                                    hidden = True,
+                                    ))
 
     if settings.get_project_multiple_organisations():
-        append_filter(
-            OptionsFilter("partner.organisation_id",
-                          label = T("Partners"),
-                          hidden = True,
-                          )
-        )
-        append_filter(
-            OptionsFilter("donor.organisation_id",
-                          label = T("Donors"),
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("partner.organisation_id",
+                                    label = T("Partners"),
+                                    hidden = True,
+                                    ))
+        append_filter(OptionsFilter("donor.organisation_id",
+                                    label = T("Donors"),
+                                    hidden = True,
+                                    ))
 
     return filter_widgets
 

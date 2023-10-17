@@ -1148,6 +1148,14 @@ def need():
     return crud_controller()
 
 # =============================================================================
+# Vulnerability
+#
+def vulnerability_type():
+    """ Vulnerability Types: CRUD Controller """
+
+    return crud_controller()
+
+# =============================================================================
 # Notes
 #
 def note():
