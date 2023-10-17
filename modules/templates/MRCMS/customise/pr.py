@@ -552,6 +552,7 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
                         "first_name",
                         "last_name",
                         "dvr_case.comments",
+                        # TODO only SHELTER* roles:
                         "shelter_registration.shelter_unit_id$name",
                         ],
                        label = T("Search"),
@@ -581,6 +582,7 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
                           ),
             ]
 
+    # TODO only ADMIN and ORG_GROUP_ADMIN:
     if not organisation_id:
         filter_widgets.append(
                 OptionsFilter("dvr_case.organisation_id",
