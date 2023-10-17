@@ -37,14 +37,14 @@ __all__ = ("DVRCaseModel",
            "DVRNotesModel",
            "DVRReferralModel",
            "DVRResponseModel",
+           "DVRVulnerabilityModel",
+           "DVRDiagnosisModel",
            "DVRServiceContactModel",
            "DVRSiteActivityModel",
-           "DVRDiagnosisModel",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
            "dvr_ResponseThemeRepresent",
-           "dvr_AssignMethod",
            "dvr_case_default_status",
            "dvr_case_activity_default_status",
            "dvr_case_status_filter_opts",
@@ -1493,6 +1493,7 @@ class DVRResponseModel(DataModel):
     """ Model representing responses to case needs """
 
     names = ("dvr_response_action",
+             "dvr_response_action_id",
              "dvr_response_action_theme",
              "dvr_response_status",
              "dvr_response_theme",
@@ -1825,6 +1826,11 @@ class DVRResponseModel(DataModel):
                                    ),
                      )
 
+        # Components
+        self.add_components(tablename,
+                            dvr_response_action_theme = "action_id",
+                            )
+
         # List_fields
         list_fields = ["case_activity_id",
                        "response_type_id" if use_response_types else None,
@@ -1944,10 +1950,14 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Actions currently registered"),
         )
 
-        # Components
-        self.add_components(tablename,
-                            dvr_response_action_theme = "action_id",
-                            )
+        action_represent = dvr_ResponseActionRepresent()
+        response_action_id = FieldTemplate("action_id", "reference dvr_response_action",
+                                           label = T("Action"),
+                                           represent = action_represent,
+                                           requires = IS_ONE_OF(db, "dvr_response_action.id",
+                                                                action_represent,
+                                                                ),
+                                           )
 
         # ---------------------------------------------------------------------
         # Response Action <=> Theme link table
@@ -1957,17 +1967,9 @@ class DVRResponseModel(DataModel):
         theme_represent = S3Represent(lookup = "dvr_response_theme",
                                       translate = True,
                                       )
-        action_represent = dvr_ResponseActionRepresent()
         tablename = "dvr_response_action_theme"
         define_table(tablename,
-                     Field("action_id", "reference dvr_response_action",
-                           label = T("Action"),
-                           ondelete = "CASCADE",
-                           represent = action_represent,
-                           requires = IS_ONE_OF(db, "dvr_response_action.id",
-                                                action_represent,
-                                                ),
-                           ),
+                     response_action_id(ondelete = "CASCADE"),
                      Field("theme_id", "reference dvr_response_theme",
                            ondelete = "RESTRICT",
                            label = T("Theme"),
@@ -2018,14 +2020,18 @@ class DVRResponseModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return None
+        return {"dvr_response_action_id": response_action_id,
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
     def defaults():
         """ Safe defaults for names in case the module is disabled """
 
-        return None
+        dummy = FieldTemplate.dummy
+
+        return {"dvr_response_action_id": dummy("action_id"),
+                }
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4789,6 +4795,141 @@ class DVRCaseEventModel(DataModel):
                 dvr_update_last_seen(person_id)
 
 # =============================================================================
+class DVRVulnerabilityModel(DataModel):
+    """ Specific vulnerabilities of a client """
+
+    # TODO label translations
+
+    names = ("dvr_vulnerability_type",
+             "dvr_vulnerability",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        define_table = self.define_table
+
+        # ---------------------------------------------------------------------
+        # Vulnerability Types
+        #
+        tablename = "dvr_vulnerability_type"
+        define_table(tablename,
+                     Field("name",
+                           label = T("Vulnerability Type"),
+                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
+                           ),
+                     Field("code", length=64,
+                           label = T("Code"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(64)),
+                           ),
+                     self.org_sector_id(),
+                     #self.org_organisation_id(),
+                     Field("obsolete", "boolean",
+                           label = T("obsolete"),
+                           default = False,
+                           ),
+                     CommentsField(),
+                     )
+
+        # TODO controller (if standalone)
+        # TODO make component of organisation
+
+        # TODO CRUD strings
+
+        represent = S3Represent(lookup=tablename, translate=True)
+        vulnerability_type_id = FieldTemplate("vulnerability_type_id",
+                                              "reference %s" % tablename,
+                                              label = T("Vulnerability Type"),
+                                              ondelete = "RESTRICT",
+                                              represent = represent,
+                                              requires = IS_EMPTY_OR(
+                                                            IS_ONE_OF(db, "dvr_vulnerability_type.id",
+                                                                      represent,
+                                                                      sort=True,
+                                                                      )),
+                                              sortby = "name",
+                                              )
+
+        # ---------------------------------------------------------------------
+        # Vulnerabilities
+        #
+        tablename = "dvr_vulnerability"
+        define_table(tablename,
+                     # Person affected
+                     self.pr_person_id(),
+                     vulnerability_type_id(),
+                     DateField(default = "now",
+                               label = T("Established on"),
+                               ),
+                     DateField("end_date",
+                               label = T("Relevant until"),
+                               writable = False,
+                               ),
+                     Field("closed", "boolean",
+                           default = False,
+                           label = T("No longer relevant"),
+                           ),
+                     # Enable in template as-required:
+                     self.hrm_human_resource_id(
+                         label = T("Established by"),
+                         readable = False,
+                         writable = False,
+                         ),
+                     CommentsField(),
+                     )
+
+        # TODO make component of person
+        # TODO FieldTemplate
+        # TODO onaccept to set end date from closed-flag
+
+        # TODO representation method: [date] type
+        represent = S3Represent(lookup=tablename, fields=["date"])
+        vulnerability_id = FieldTemplate("vulnerability_id", "reference %s" % tablename,
+                                         label = T("Vulnerability"),
+                                         ondelete = "RESTRICT",
+                                         represent = represent,
+                                         requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "dvr_vulnerability.id",
+                                                                  represent,
+                                                                  sort=True,
+                                                                  )),
+                                         sortby = "date",
+                                         )
+
+        # TODO CRUD strings
+
+        # ---------------------------------------------------------------------
+        # Link vulnerability<=>case activity
+        #
+        tablename = "dvr_vulnerability_need"
+        define_table(tablename,
+                     vulnerability_id(),
+                     self.dvr_case_activity_id(),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Link vulnerability<=>response_action
+        #
+        tablename = "dvr_vulnerability_measure"
+        define_table(tablename,
+                     vulnerability_id(),
+                     self.dvr_response_action_id(),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def defaults():
+        """ Safe defaults for names in case the module is disabled """
+
+        return None
+
+# =============================================================================
 class DVRDiagnosisModel(DataModel):
     """ Diagnoses, e.g. in Psychosocial Support """
 
@@ -5568,10 +5709,9 @@ class dvr_ResponseActionRepresent(S3Represent):
                 show_hr: include the staff member name
         """
 
-        super(dvr_ResponseActionRepresent, self).__init__(
-                                    lookup = "dvr_response_action",
-                                    show_link = show_link,
-                                    )
+        super().__init__(lookup = "dvr_response_action",
+                         show_link = show_link,
+                         )
 
         self.show_hr = show_hr
 
@@ -5667,9 +5807,7 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
                 details: include details in paragraph
         """
 
-        super(dvr_ResponseActionThemeRepresent, self).__init__(
-                                    lookup = "dvr_response_action_theme",
-                                    )
+        super().__init__(lookup="dvr_response_action_theme")
 
         self.paragraph = paragraph
         self.details = details
@@ -5749,8 +5887,7 @@ class dvr_ResponseActionThemeRepresent(S3Represent):
                                for v in value
                                ])
         else:
-            reprstr = super(dvr_ResponseActionThemeRepresent, self) \
-                        .render_list(value, labels, show_link=show_link)
+            reprstr = super().render_list(value, labels, show_link=show_link)
         return reprstr
 
 # =============================================================================
@@ -5759,11 +5896,10 @@ class dvr_ResponseThemeRepresent(S3Represent):
 
     def __init__(self, multiple=False, translate=True, show_need=False):
 
-        super(dvr_ResponseThemeRepresent, self).__init__(
-                                                lookup = "dvr_response_theme",
-                                                multiple = multiple,
-                                                translate = translate,
-                                                )
+        super().__init__(lookup = "dvr_response_theme",
+                         multiple = multiple,
+                         translate = translate,
+                         )
         self.show_need = show_need
 
     # -------------------------------------------------------------------------
@@ -5864,11 +6000,10 @@ class dvr_CaseActivityRepresent(S3Represent):
                 linkto: URL template for links
         """
 
-        super(dvr_CaseActivityRepresent, self).__init__(
-                                                lookup = "dvr_case_activity",
-                                                show_link = show_link,
-                                                linkto = linkto,
-                                                )
+        super().__init__(lookup = "dvr_case_activity",
+                         show_link = show_link,
+                         linkto = linkto,
+                         )
 
         if show_as is None:
             self.show_as = "beneficiary"
@@ -6029,9 +6164,9 @@ class dvr_DocEntityRepresent(S3Represent):
                 show_link: show representation as clickable link
         """
 
-        super(dvr_DocEntityRepresent, self).__init__(lookup = "doc_entity",
-                                                     show_link = show_link,
-                                                     )
+        super().__init__(lookup = "doc_entity",
+                         show_link = show_link,
+                         )
 
         T = current.T
 
@@ -8556,276 +8691,6 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
             output = current.T("No pending payments")
 
         return output
-
-# =============================================================================
-class dvr_AssignMethod(CRUDMethod):
-    """
-        Custom Method to allow beneficiaries (cases) to be assigned to something
-        e.g. Project, Activity, Distribution
-    """
-
-    def __init__(self, component, next_tab="case", types=None):
-        """
-            Args:
-                component: the Component in which to create records
-                types: a list of types to pick from: Staff, Volunteers, Deployables
-                next_tab: the component/method to redirect to after assigning
-        """
-
-        super(dvr_AssignMethod, self).__init__()
-
-        self.component = component
-        self.next_tab = next_tab
-        self.types = types
-
-    # -------------------------------------------------------------------------
-    def apply_method(self, r, **attr):
-        """
-            Applies the method (controller entry point).
-
-            Args:
-                r: the CRUDRequest
-                attr: controller options for this request
-        """
-
-        try:
-            component = r.resource.components[self.component]
-        except KeyError:
-            current.log.error("Invalid Component!")
-            raise
-
-        if component.link:
-            component = component.link
-
-        tablename = component.tablename
-
-        # Requires permission to create component
-        authorised = current.auth.s3_has_permission("create", tablename)
-        if not authorised:
-            r.unauthorised()
-
-        T = current.T
-        db = current.db
-        s3db = current.s3db
-        #settings = current.deployment_settings
-
-        table = s3db[tablename]
-        fkey = component.fkey
-        record = r.record
-        if fkey in record:
-            # SuperKey
-            record_id = record[fkey]
-        else:
-            record_id = r.id
-
-        get_vars = r.get_vars
-        response = current.response
-
-        if r.http == "POST":
-            added = 0
-            post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
-
-                selected = post_vars.selected
-                if selected:
-                    selected = selected.split(",")
-                else:
-                    selected = []
-
-                # Handle exclusion filter
-                if post_vars.mode == "Exclusive":
-                    if "filterURL" in post_vars:
-                        filters = S3URLQuery.parse_url(post_vars.filterURL)
-                    else:
-                        filters = None
-                    query = ~(FS("id").belongs(selected))
-                    dresource = s3db.resource("dvr_case",
-                                              alias = self.component,
-                                              filter=query, vars=filters)
-                    rows = dresource.select(["id"], as_rows=True)
-                    selected = [str(row.id) for row in rows]
-
-                # Prevent multiple entries in the link table
-                query = (table.case_id.belongs(selected)) & \
-                        (table[fkey] == record_id) & \
-                        (table.deleted != True)
-                rows = db(query).select(table.id)
-                rows = dict((row.id, row) for row in rows)
-                onaccept = component.get_config("create_onaccept",
-                                                component.get_config("onaccept", None))
-                for case_id in selected:
-                    try:
-                        cid = int(case_id.strip())
-                    except ValueError:
-                        continue
-                    if cid not in rows:
-                        link = Storage(case_id = case_id)
-                        link[fkey] = record_id
-                        _id = table.insert(**link)
-                        if onaccept:
-                            link["id"] = _id
-                            form = Storage(vars=link)
-                            onaccept(form)
-                        added += 1
-            current.session.confirmation = T("%(number)s assigned") % \
-                                           dict(number=added)
-            if added > 0:
-                redirect(URL(args=[r.id, self.next_tab], vars={}))
-            else:
-                redirect(URL(args=r.args, vars={}))
-
-        elif r.http == "GET":
-
-            # Filter widgets
-            filter_widgets = s3db.get_config("dvr_case", "filter_widgets")
-
-            # List fields
-            list_fields = ["id",
-                           "person_id",
-                           ]
-
-            # Data table
-            resource = s3db.resource("dvr_case",
-                                     alias=r.component.alias if r.component else None,
-                                     vars=get_vars)
-            totalrows = resource.count()
-            if "pageLength" in get_vars:
-                display_length = get_vars["pageLength"]
-                if display_length == "None":
-                    display_length = None
-                else:
-                    display_length = int(display_length)
-            else:
-                display_length = 25
-            if display_length:
-                limit = 4 * display_length
-            else:
-                limit = None
-            dtfilter, orderby, left = resource.datatable_filter(list_fields,
-                                                                get_vars,
-                                                                )
-            resource.add_filter(dtfilter)
-
-            # Hide people already in the link table
-            query = (table[fkey] == record_id) & \
-                    (table.deleted != True)
-            rows = db(query).select(table.case_id)
-            already = [row.case_id for row in rows]
-            resource.add_filter((~db.dvr_case.id.belongs(already)))
-
-            # Bulk actions
-            dt_bulk_actions = [(T("Assign"), "assign")]
-
-            if r.representation == "html":
-                # Page load
-                resource.configure(deletable = False)
-
-                profile_url = URL(c = "dvr",
-                                  f = "case",
-                                  args = ["[id]", "profile"])
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url)
-                response.s3.no_formats = True
-
-                # Filter form
-                if filter_widgets:
-
-                    # Where to retrieve filtered data from:
-                    _vars = CRUDMethod._remove_filters(r.get_vars)
-                    filter_submit_url = r.url(vars=_vars)
-
-                    # Default Filters (before selecting data!)
-                    resource.configure(filter_widgets=filter_widgets)
-                    FilterForm.apply_filter_defaults(r, resource)
-
-                    # Where to retrieve updated filter options from:
-                    filter_ajax_url = URL(f="case",
-                                          args=["filter.options"],
-                                          vars={})
-
-                    get_config = resource.get_config
-                    filter_clear = get_config("filter_clear", True)
-                    filter_formstyle = get_config("filter_formstyle", None)
-                    filter_submit = get_config("filter_submit", True)
-                    filter_form = FilterForm(filter_widgets,
-                                             clear=filter_clear,
-                                             formstyle=filter_formstyle,
-                                             submit=filter_submit,
-                                             ajax=True,
-                                             url=filter_submit_url,
-                                             ajaxurl=filter_ajax_url,
-                                             _class="filter-form",
-                                             _id="datatable-filter-form",
-                                             )
-                    fresource = current.s3db.resource(resource.tablename)
-                    alias = r.component.alias if r.component else None
-                    ff = filter_form.html(fresource,
-                                          r.get_vars,
-                                          target="datatable",
-                                          alias=alias)
-                else:
-                    ff = ""
-
-                # Data table (items)
-                data = resource.select(list_fields,
-                                       start=0,
-                                       limit=limit,
-                                       orderby=orderby,
-                                       left=left,
-                                       count=True,
-                                       represent=True)
-                filteredrows = data["numrows"]
-                dt = DataTable(data["rfields"], data["rows"], "datatable")
-
-                items = dt.html(totalrows,
-                                filteredrows,
-                                dt_ajax_url=r.url(representation="aadata"),
-                                dt_bulk_actions=dt_bulk_actions,
-                                dt_pageLength=display_length,
-                                dt_pagination=True,
-                                dt_searching=False,
-                                )
-
-                # @ToDO: dvr_case_label()
-                #CASE = settings.get_dvr_case_label()
-                CASE = T("Beneficiaries")
-                output = dict(items = items,
-                              title = T("Assign %(case)s") % dict(case=CASE),
-                              list_filter_form = ff)
-
-                response.view = "list_filter.html"
-                return output
-
-            elif r.representation == "aadata":
-                # Ajax refresh
-                if "draw" in get_vars:
-                    echo = int(get_vars.draw)
-                else:
-                    echo = None
-
-                data = resource.select(list_fields,
-                                       start=0,
-                                       limit=limit,
-                                       orderby=orderby,
-                                       left=left,
-                                       count=True,
-                                       represent=True)
-                filteredrows = data["numrows"]
-                dt = DataTable(data["rfields"], data["rows"], "datatable")
-
-                items = dt.json(totalrows,
-                                filteredrows,
-                                echo,
-                                dt_bulk_actions=dt_bulk_actions)
-                response.headers["Content-Type"] = "application/json"
-                return items
-
-            else:
-                r.error(415, current.ERROR.BAD_FORMAT)
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
 
 # =============================================================================
 def dvr_get_flag_instructions(person_id, action=None):
