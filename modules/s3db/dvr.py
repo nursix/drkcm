@@ -4829,16 +4829,49 @@ class DVRVulnerabilityModel(DataModel):
                                             IS_NOT_ONE_OF(db, "dvr_vulnerability_type.code"),
                                             ]),
                            ),
-                     # TODO replace by m2m link:
-                     self.org_sector_id(),
                      Field("obsolete", "boolean",
                            label = T("obsolete"),
                            default = False,
+                           represent = BooleanRepresent(labels = False,
+                                                        # Reverse icons semantics
+                                                        icons = (BooleanRepresent.NEG,
+                                                                 BooleanRepresent.POS,
+                                                                 ),
+                                                        flag = True,
+                                                        ),
                            ),
                      CommentsField(),
                      )
 
+        # Components
+        self.add_components(tablename,
+                            org_sector = {"link": "dvr_vulnerability_type_sector",
+                                          "joinby": "vulnerability_type_id",
+                                          "key": "sector_id",
+                                          },
+                            )
+
+        # CRUD form with embedded sector link
+        crud_form = S3SQLCustomForm("name",
+                                    "code",
+                                    S3SQLInlineLink("sector",
+                                                    field = "sector_id",
+                                                    label = T("Sectors"),
+                                                    ),
+                                    "obsolete",
+                                    "comments",
+                                    )
+
+        # List fields to include sectors
+        list_fields = ["name",
+                       "code",
+                       "vulnerability_type_sector.sector_id",
+                       "obsolete",
+                       ]
+
         self.configure(tablename,
+                       crud_form = crud_form,
+                       list_fields = list_fields,
                        # TODO import template
                        deduplicate = S3Duplicate(primary = ("name",),
                                                  secondary = ("code",),
@@ -4870,9 +4903,20 @@ class DVRVulnerabilityModel(DataModel):
                                                             IS_ONE_OF(db, "dvr_vulnerability_type.id",
                                                                       represent,
                                                                       sort=True,
+                                                                      not_filterby = "obsolete",
+                                                                      not_filter_opts = (True,),
                                                                       )),
                                               sortby = "name",
                                               )
+
+        # ---------------------------------------------------------------------
+        # Link vulnerability type<=>sector
+        #
+        tablename = "dvr_vulnerability_type_sector"
+        define_table(tablename,
+                     vulnerability_type_id(),
+                     self.org_sector_id(comment=None),
+                     )
 
         # ---------------------------------------------------------------------
         # Vulnerabilities
@@ -4885,6 +4929,7 @@ class DVRVulnerabilityModel(DataModel):
                                            ),
                      Field("description", "text",
                            label = T("Details"),
+                           represent = s3_text_represent,
                            ),
                      DateField(default = "now",
                                empty = False,

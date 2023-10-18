@@ -325,14 +325,12 @@ def config(settings):
     from .customise.org import org_organisation_controller, \
                                org_site_check, \
                                org_facility_resource, \
-                               org_facility_controller, \
-                               org_sector_resource
+                               org_facility_controller
 
     settings.customise_org_organisation_controller = org_organisation_controller
     settings.org.site_check = org_site_check
     settings.customise_org_facility_resource = org_facility_resource
     settings.customise_org_facility_controller = org_facility_controller
-    settings.customise_org_sector_resource = org_sector_resource
 
     # -------------------------------------------------------------------------
     # Persons Module Settings

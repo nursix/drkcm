@@ -98,6 +98,8 @@ def drk_dvr_rheader(r, tabs=None):
                         ]
 
                 # Optional Case Documentation
+                if ui_opts_get("case_use_vulnerabilities"):
+                    tabs.insert(-1, (T("Vulnerabilities"), "vulnerability"))
                 if ui_opts_get("case_use_response_tab"):
                     tabs.append((T("Actions"), "response_action"))
                 if ui_opts_get("case_use_tasks"):

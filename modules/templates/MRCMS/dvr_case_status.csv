@@ -4,3 +4,4 @@ Position,Code,Status,Default,Closed,Not Transferable,Comments
 3,DISAPPEARED,Untergetaucht,false,true,false,"Confirmed disappeared, no longer entitled to benefits, case closed"
 4,DEPORTED,Ausgewiesen,false,true,false,"Deported to safe country / country of origin, case closed"
 5,RETURNED,Freiwillig ausgereist,false,true,false,"Returned voluntarily to country of origin, case closed"
+6,DECEASED,Verstorben,false,true,true,"Deceased, case closed"

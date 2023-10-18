@@ -146,12 +146,4 @@ def org_facility_controller(**attr):
 
     return attr
 
-# -------------------------------------------------------------------------
-def org_sector_resource(r, tablename):
-
-    table = current.s3db.org_sector
-
-    field = table.location_id
-    field.readable = field.writable = False
-
 # END =========================================================================
