@@ -253,20 +253,20 @@ class ResidentsList:
             sptable = s3db.org_site_presence
 
             left = [dtable.on((dtable.person_id == ptable.id) & \
-                            (dtable.deleted == False)),
+                              (dtable.deleted == False)),
                     mtable.on((mtable.person_id == ptable.id) & \
-                            (mtable.deleted == False)),
+                              (mtable.deleted == False)),
                     sptable.on((sptable.person_id == ptable.id) & \
-                            (sptable.site_id == self.site_id) & \
-                            (sptable.deleted == False)),
+                               (sptable.site_id == self.site_id) & \
+                               (sptable.deleted == False)),
                     ]
             join = [rtable.on((rtable.person_id == ptable.id) & \
-                            (rtable.shelter_id == self.shelter_id) & \
-                            (rtable.registration_status != 3) & \
-                            (rtable.deleted == False)),
+                              (rtable.shelter_id == self.shelter_id) & \
+                              (rtable.registration_status != 3) & \
+                              (rtable.deleted == False)),
                     ctable.on((ctable.person_id == ptable.id) & \
-                            (ctable.organisation_id == self.organisation_id) & \
-                            (ctable.deleted == False)),
+                              (ctable.organisation_id == self.organisation_id) & \
+                              (ctable.deleted == False)),
                     ]
             query = (ptable.deleted == False)
             rows = db(query).select(ptable.id,
@@ -277,6 +277,7 @@ class ResidentsList:
                                     ptable.date_of_birth,
                                     dtable.nationality,
                                     ctable.household_size,
+                                    ctable.last_seen_on,
                                     sptable.status,
                                     mtable.id,
                                     mtable.group_id,
@@ -665,6 +666,7 @@ class ResidentsList:
                 ("age", T("Age"), "string"),
                 ("nationality", T("Nationality"), "string"),
                 ("household_size", T("Size of Family"), "integer"),
+                ("last_seen_on", T("Last seen on"), "date"),
                 )
 
     # -------------------------------------------------------------------------
@@ -685,6 +687,7 @@ class ResidentsList:
         s3db = current.s3db
         ptable = s3db.pr_person
         dtable = s3db.pr_person_details
+        ctable = s3db.dvr_case
         rtable = s3db.cr_shelter_registration
 
         residents = self.residents
@@ -739,6 +742,7 @@ class ResidentsList:
                 case = row.dvr_case
                 household_size = case.household_size
                 data["household_size"] = household_size if household_size else "-"
+                data["last_seen_on"] = ctable.last_seen_on.represent(case.last_seen_on)
 
             data_rows.extend(checked_in)
             data_rows.extend(planned)
