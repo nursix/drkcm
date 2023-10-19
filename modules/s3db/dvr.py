@@ -4761,7 +4761,6 @@ class DVRVulnerabilityModel(DataModel):
         self.configure(tablename,
                        crud_form = crud_form,
                        list_fields = list_fields,
-                       # TODO import template
                        deduplicate = S3Duplicate(primary = ("name",),
                                                  secondary = ("code",),
                                                  ),
@@ -4803,8 +4802,10 @@ class DVRVulnerabilityModel(DataModel):
         #
         tablename = "dvr_vulnerability_type_sector"
         define_table(tablename,
-                     vulnerability_type_id(),
-                     self.org_sector_id(comment=None),
+                     vulnerability_type_id(ondelete="CASCADE"),
+                     self.org_sector_id(ondelete = "CASCADE",
+                                        comment = None,
+                                        ),
                      )
 
         # ---------------------------------------------------------------------
@@ -4884,8 +4885,8 @@ class DVRVulnerabilityModel(DataModel):
         #
         tablename = "dvr_vulnerability_need"
         define_table(tablename,
-                     vulnerability_id(),
-                     self.dvr_case_activity_id(),
+                     vulnerability_id(ondelete="CASCADE"),
+                     self.dvr_case_activity_id(ondelete="CASCADE"),
                      )
 
         # ---------------------------------------------------------------------
@@ -4893,8 +4894,8 @@ class DVRVulnerabilityModel(DataModel):
         #
         tablename = "dvr_vulnerability_measure"
         define_table(tablename,
-                     vulnerability_id(),
-                     self.dvr_response_action_id(),
+                     vulnerability_id(ondelete="CASCADE"),
+                     self.dvr_response_action_id(ondelete="CASCADE"),
                      )
 
         # ---------------------------------------------------------------------
