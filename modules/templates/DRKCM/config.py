@@ -210,10 +210,6 @@ def config(settings):
 
     # Group/Case activities per sector
     settings.dvr.case_activity_sectors = True
-    # Case activities use status field
-    settings.dvr.case_activity_use_status = True
-    # Case activities cover multiple needs
-    settings.dvr.case_activity_needs_multiple = True
     # Case activities use follow-up fields
     settings.dvr.case_activity_follow_up = get_ui_option("activity_follow_up")
     # Beneficiary documents-tab includes case activity attachments

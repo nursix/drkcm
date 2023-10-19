@@ -3615,18 +3615,16 @@ class S3Config(Storage):
         """
         return self.dvr.get("label", None)
 
-    # Case Flags ------------------------------------------
-    def get_dvr_case_flags(self):
+    # Case Details ----------------------------------------
+    def get_dvr_household_size(self):
         """
-            Enable features to manage case flags
-        """
-        return self.dvr.get("case_flags", False)
+            Register number of persons per household (family)
 
-    def get_dvr_case_flags_org_specific(self):
+            False = off
+            True = manual
+            "auto" = count family members automatically
         """
-            Use organisation-specific case flags
-        """
-        return self.dvr.get("case_flags_org_specific", False)
+        return self.dvr.get("household_size", False)
 
     def get_dvr_track_transfer_sites(self):
         """
@@ -3650,15 +3648,31 @@ class S3Config(Storage):
         """
         return self.dvr.get("manage_transferability", False)
 
-    def get_dvr_household_size(self):
+    # Case Documents --------------------------------------
+    def get_dvr_case_include_activity_docs(self):
         """
-            Register number of persons per household (family)
+            Documents-tab of beneficiaries includes case activity attachments
+        """
+        return self.dvr.get("case_include_activity_docs", False)
 
-            False = off
-            True = manual
-            "auto" = count family members automatically
+    def get_dvr_case_include_group_docs(self):
         """
-        return self.dvr.get("household_size", False)
+            Documents-tab of beneficiaries includes case group attachments
+        """
+        return self.dvr.get("case_include_group_docs", False)
+
+    # Case Flags ------------------------------------------
+    def get_dvr_case_flags(self):
+        """
+            Enable features to manage case flags
+        """
+        return self.dvr.get("case_flags", False)
+
+    def get_dvr_case_flags_org_specific(self):
+        """
+            Use organisation-specific case flags
+        """
+        return self.dvr.get("case_flags_org_specific", False)
 
     # Appointments ----------------------------------------
     def get_dvr_appointment_types_org_specific(self):
@@ -3752,12 +3766,6 @@ class S3Config(Storage):
         return self.dvr.get("id_code_pattern", None)
 
     # Case Activities -------------------------------------
-    def get_dvr_case_activity_use_status(self):
-        """
-            Use configurable statuses in case activities
-            instead of simple completed-flag
-        """
-        return self.dvr.get("case_activity_use_status", False)
 
     def get_dvr_case_activity_sectors(self):
         """
@@ -3771,44 +3779,11 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_activity_use_service_type", False)
 
-    def get_dvr_case_activity_needs_multiple(self):
-        """
-            Whether Case Activities link to Multiple Needs
-            - e.g. DRK: False
-            - e.g. STL: True
-        """
-        return self.dvr.get("case_activity_needs_multiple", False)
-
     def get_dvr_case_activity_follow_up(self):
         """
             Enable/disable fields to schedule case activities for follow-up
         """
         return self.__lazy("dvr", "case_activity_follow_up", default=True)
-
-    def get_dvr_case_include_activity_docs(self):
-        """
-            Documents-tab of beneficiaries includes case activity attachments
-        """
-        return self.dvr.get("case_include_activity_docs", False)
-
-    def get_dvr_case_include_group_docs(self):
-        """
-            Documents-tab of beneficiaries includes case group attachments
-        """
-        return self.dvr.get("case_include_group_docs", False)
-
-    # Needs -----------------------------------------------
-    def get_dvr_needs_use_service_type(self):
-        """
-            Use service type in needs
-        """
-        return self.dvr.get("needs_use_service_type", False)
-
-    def get_dvr_needs_hierarchical(self):
-        """
-            Need types are hierarchical
-        """
-        return self.dvr.get("needs_hierarchical", False)
 
     # Response Actions ------------------------------------
     def get_dvr_manage_response_actions(self):

@@ -1159,16 +1159,10 @@ class DVRNeedsModel(DataModel):
         T = current.T
         db = current.db
 
-        settings = current.deployment_settings
         crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
         configure = self.configure
-
-        service_type = settings.get_dvr_needs_use_service_type()
-        service_id = self.org_service_id
-
-        hierarchical_needs = settings.get_dvr_needs_hierarchical()
 
         # ---------------------------------------------------------------------
         # Needs
@@ -1179,18 +1173,6 @@ class DVRNeedsModel(DataModel):
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     # This form of hierarchy may not work on all Databases:
-                     Field("parent", "reference dvr_need",
-                           label = T("Subtype of"),
-                           ondelete = "RESTRICT",
-                           readable = hierarchical_needs,
-                           writable = hierarchical_needs,
-                           ),
-                     service_id(label = T("Service Type"),
-                                ondelete = "SET NULL",
-                                readable = service_type,
-                                writable = service_type,
-                                ),
                      # Activate in template as needed:
                      self.org_organisation_id(readable = False,
                                               writable = False,
@@ -1205,15 +1187,8 @@ class DVRNeedsModel(DataModel):
                      CommentsField(),
                      )
 
-        # Hierarchy
-        if hierarchical_needs:
-            hierarchy = "parent"
-            widget = S3HierarchyWidget(multiple = False,
-                                       leafonly = False,
-                                       )
-        else:
-            hierarchy = None
-            widget = None
+        hierarchy = None
+        widget = None
 
         # Table configuration
         configure(tablename,
@@ -2532,7 +2507,6 @@ class DVRCaseActivityModel(DataModel):
 
     names = ("dvr_case_activity",
              "dvr_case_activity_id",
-             "dvr_case_activity_need",
              "dvr_case_activity_status",
              "dvr_case_activity_update",
              "dvr_case_activity_update_type",
@@ -2719,8 +2693,6 @@ class DVRCaseActivityModel(DataModel):
         #
         twoweeks = current.request.utcnow + datetime.timedelta(days=14)
 
-        multiple_needs = settings.get_dvr_case_activity_needs_multiple()
-        use_status = settings.get_dvr_case_activity_use_status()
         follow_up = settings.get_dvr_case_activity_follow_up()
 
         # Priority options
@@ -2768,10 +2740,8 @@ class DVRCaseActivityModel(DataModel):
                            widget = s3_comments_widget,
                            ),
 
-                     # Need type (if single)
-                     self.dvr_need_id(readable = not multiple_needs,
-                                      writable = not multiple_needs,
-                                      ),
+                     # Need type
+                     self.dvr_need_id(),
 
                      # Dates
                      DateField("start_date",
@@ -2802,10 +2772,6 @@ class DVRCaseActivityModel(DataModel):
                            ),
 
                      # Responsibilities (activate in template as needed)
-                     organisation_id(label = T("Referral Agency"),
-                                     readable = False,
-                                     writable = False,
-                                     ),
                      human_resource_id(label = T("Assigned to"),
                                        readable = False,
                                        writable = False,
@@ -2825,16 +2791,12 @@ class DVRCaseActivityModel(DataModel):
                                 writable = False,
                                 ),
 
+                     # Free-text alternative for response actions:
                      Field("activity_details", "text",
                            label = T("Support provided"),
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
                            ),
-                     provider_type_id(label = T("Referred to"),
-                                      ondelete = "RESTRICT",
-                                      readable = False,
-                                      writable = False,
-                                      ),
 
                      # Support received by the beneficiary independently
                      # of the managed activity:
@@ -2846,15 +2808,16 @@ class DVRCaseActivityModel(DataModel):
                            writable = False,
                            ),
 
-                     # Details about referrals made under this activity
-                     # @deprecate: should use activity_details instead
-                     # @todo: remove once templates have been migrated?
-                     Field("referral_details", "text",
-                           label = T("Support provided"),
-                           represent = s3_text_represent,
-                           readable = False,
-                           writable = False,
-                           ),
+                     # Referrals (incoming/outgoing)
+                     organisation_id(label = T("Referral Agency"),
+                                     readable = False,
+                                     writable = False,
+                                     ),
+                     provider_type_id(label = T("Referred to"),
+                                      ondelete = "RESTRICT",
+                                      readable = False,
+                                      writable = False,
+                                      ),
 
                      # Follow-up
                      Field("followup", "boolean",
@@ -2872,16 +2835,7 @@ class DVRCaseActivityModel(DataModel):
                                ),
 
                      # Status, type of exit
-                     Field("completed", "boolean",
-                           default = False,
-                           label = T("Completed"),
-                           represent = s3_yes_no_represent,
-                           readable = not use_status,
-                           writable = not use_status,
-                           ),
-                     activity_status_id(readable = use_status,
-                                        writable = use_status,
-                                        ),
+                     activity_status_id(),
                      termination_type_id(ondelete = "RESTRICT",
                                          readable = False,
                                          writable = False,
@@ -2900,13 +2854,11 @@ class DVRCaseActivityModel(DataModel):
                                                            T("What change in the severity of the problem has so far been achieved by this activity?"),
                                                            ),
                                          ),
-                           represent = S3Represent(
-                                            options=dict(achievement_opts),
-                                            ),
+                           represent = S3Represent(options=dict(achievement_opts)),
                            requires = IS_EMPTY_OR(
-                                        IS_IN_SET(achievement_opts,
-                                                  sort = False,
-                                                  )),
+                                            IS_IN_SET(achievement_opts,
+                                                      sort = False,
+                                                      )),
                            readable = False,
                            writable = False,
                            ),
@@ -2915,17 +2867,7 @@ class DVRCaseActivityModel(DataModel):
 
         # Components
         self.add_components(tablename,
-                            dvr_activity_funding = {
-                                "joinby": "case_activity_id",
-                                "multiple": False,
-                                },
                             dvr_case_effort = "case_activity_id",
-                            dvr_case_activity_need = "case_activity_id",
-                            dvr_need = {
-                                "link": "dvr_case_activity_need",
-                                "joinby": "case_activity_id",
-                                "key": "need_id",
-                                },
                             dvr_response_action = "case_activity_id",
                             dvr_response_action_theme = "case_activity_id",
                             dvr_response_type = {
@@ -2954,13 +2896,8 @@ class DVRCaseActivityModel(DataModel):
                             )
 
         # List fields
-        if multiple_needs:
-            need_field = "case_activity_need.need_id"
-        else:
-            need_field = "need_id"
-
         list_fields = ["start_date",
-                       need_field,
+                       "need_id",
                        "need_details",
                        "emergency",
                        "activity_details",
@@ -2985,7 +2922,7 @@ class DVRCaseActivityModel(DataModel):
                                                    },
                                         cols = 2,
                                         ),
-                          OptionsFilter(need_field,
+                          OptionsFilter("need_id",
                                         options = lambda: get_filter_options("dvr_need",
                                                                              translate = True,
                                                                              ),
@@ -3017,7 +2954,7 @@ class DVRCaseActivityModel(DataModel):
             filter_widgets.insert(3, OptionsFilter("service_id"))
 
         # Report options
-        axes = [need_field,
+        axes = ["need_id",
                 (T("Case Status"), "case_id$status_id"),
                 "emergency",
                 "completed",
@@ -3033,7 +2970,7 @@ class DVRCaseActivityModel(DataModel):
         report_options = {"rows": axes,
                           "cols": axes,
                           "fact": facts,
-                          "defaults": {"rows": need_field,
+                          "defaults": {"rows": "need_id",
                                        "cols": "completed",
                                        "fact": facts[0],
                                        "totals": True,
@@ -3077,35 +3014,6 @@ class DVRCaseActivityModel(DataModel):
                                                                   represent,
                                                                   )),
                                          )
-
-        # ---------------------------------------------------------------------
-        # Case Activity <=> Needs
-        #
-        # - use this when there is a need to link Case Activities to
-        #   multiple Needs (e.g. STL, DRKCM)
-        #
-
-        tablename = "dvr_case_activity_need"
-        define_table(tablename,
-                     case_activity_id(empty = False,
-                                      # default
-                                      #ondelete = "CASCADE",
-                                      ),
-                     DateField(label = T("Established on"),
-                               default = "now",
-                               ),
-                     human_resource_id(
-                         label = T("Established by"),
-                         ),
-                     self.dvr_need_id(empty = False,
-                                      ),
-                     CommentsField(),
-                     )
-
-        # Table configuration
-        configure(tablename,
-                  orderby = "%s.date" % tablename,
-                  )
 
         # ---------------------------------------------------------------------
         # Case Activity Update Types
@@ -3298,40 +3206,21 @@ class DVRCaseActivityModel(DataModel):
 
         # Get current status and end_date of the record
         atable = s3db.dvr_case_activity
+        stable = s3db.dvr_case_activity_status
+
+        left = stable.on(atable.status_id == stable.id)
         query = (atable.id == record_id)
-
-        activity = None
-        is_closed = False
-
-        if settings.get_dvr_case_activity_use_status():
-            # Use status_id
-            stable = s3db.dvr_case_activity_status
-            left = stable.on(atable.status_id == stable.id)
-            row = db(query).select(atable.id,
-                                   atable.end_date,
-                                   stable.is_closed,
-                                   left = left,
-                                   limitby = (0, 1),
-                                   ).first()
-            if row:
-                activity = row.dvr_case_activity
-                is_closed = row.dvr_case_activity_status.is_closed
-
-        else:
-            # Use completed-flag
-            row = db(query).select(atable.id,
-                                   atable.end_date,
-                                   atable.completed,
-                                   limitby = (0, 1),
-                                   ).first()
-            if row:
-                activity = row
-                is_closed = row.completed
-
-        if not activity:
+        row = db(query).select(atable.id,
+                                atable.end_date,
+                                stable.is_closed,
+                                left = left,
+                                limitby = (0, 1),
+                                ).first()
+        if not row:
             return
+        activity = row.dvr_case_activity
 
-        if is_closed:
+        if row.dvr_case_activity_status.is_closed:
 
             # Cancel follow-ups for closed activities
             data = {"followup": False,
@@ -5771,16 +5660,10 @@ def dvr_due_followups(human_resource_id=None):
     r.customise_resource()
     resource = r.resource
 
-    # Filter to exclude closed case activities
-    if current.deployment_settings.get_dvr_case_activity_use_status():
-        status_filter = (FS("status_id$is_closed") == False)
-    else:
-        status_filter = (FS("completed") == False)
-
     # Filter for due follow-ups
     query = (FS("followup") == True) & \
             (FS("followup_date") <= datetime.datetime.utcnow().date()) & \
-            status_filter & \
+            (FS("status_id$is_closed") == False) & \
             (FS("person_id$dvr_case.archived") == False)
 
     if human_resource_id:

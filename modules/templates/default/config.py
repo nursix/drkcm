@@ -687,8 +687,6 @@ def config(settings):
     #settings.dvr.activity_types = True
     # Uncomment this to use hierarchical case activity types
     #settings.dvr.activity_types_hierarchical = True
-    # Uncomment this to use status field in case activities
-    #settings.dvr.case_activity_use_status = True
     # Uncomment this to disable follow-up fields in case activities
     #settings.dvr.case_activity_follow_up = False
 
@@ -696,13 +694,6 @@ def config(settings):
     #settings.dvr.case_include_activity_docs = True
     # Uncomment this to include case group docs on beneficiary documents-tab
     #settings.dvr.case_include_group_docs = True
-
-    # Uncomment this if Case activities use multiple Needs
-    #settings.dvr.case_activity_needs_multiple = True
-    # Uncomment this to use service types for needs
-    #settings.dvr_needs_use_service_type = True
-    # Uncomment this to use hierarchical need types
-    #settings.dvr.needs_hierarchical = True
 
     # Uncomment this to manage individual response actions in case activities
     #settings.dvr.manage_response_actions = True

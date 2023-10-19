@@ -287,8 +287,7 @@ def person():
             elif component.tablename == "dvr_case_activity":
 
                 # Set default status
-                if settings.get_dvr_case_activity_use_status():
-                    s3db.dvr_case_activity_default_status()
+                s3db.dvr_case_activity_default_status()
 
                 # Set defaults for inline responses
                 if settings.get_dvr_manage_response_actions():
@@ -639,12 +638,8 @@ def case_activity():
 
         resource = r.resource
 
-        # Set default statuses, determine status-field
-        if settings.get_dvr_case_activity_use_status():
-            s3db.dvr_case_activity_default_status()
-            status_field = "status_id"
-        else:
-            status_field = "completed"
+        # Set default statuses
+        s3db.dvr_case_activity_default_status()
 
         # Set defaults for inline responses
         if settings.get_dvr_manage_response_actions():
@@ -693,7 +688,7 @@ def case_activity():
                        "activity_details",
                        "followup",
                        "followup_date",
-                       status_field,
+                       "status_id",
                        ]
         resource.configure(list_fields = list_fields,
                            insertable = False,
@@ -713,11 +708,8 @@ def due_followups():
         resource = r.resource
 
         # Set default statuses, determine status-field
-        if settings.get_dvr_case_activity_use_status():
-            s3db.dvr_case_activity_default_status()
-            status_field = "status_id"
-        else:
-            status_field = "completed"
+        s3db.dvr_case_activity_default_status()
+        status_field = "status_id"
 
         # Set defaults for inline responses
         if settings.get_dvr_manage_response_actions():
@@ -727,17 +719,10 @@ def due_followups():
         s3.crud_strings["dvr_case_activity"]["title_list"] = T("Activities to follow up")
 
         if not r.record:
-
-            # Filter to exclude closed case activities
-            if current.deployment_settings.get_dvr_case_activity_use_status():
-                status_filter = (FS("status_id$is_closed") == False)
-            else:
-                status_filter = (FS("completed") == False)
-
             # Filters for due followups
             query = (FS("followup") == True) & \
                     (FS("followup_date") <= datetime.datetime.utcnow().date()) & \
-                    status_filter & \
+                    (FS("status_id$is_closed") == False) & \
                     ((FS("person_id$dvr_case.archived") == None) | \
                     (FS("person_id$dvr_case.archived") == False))
             resource.add_filter(query)
@@ -765,7 +750,7 @@ def due_followups():
                        "emergency",
                        "activity_details",
                        "followup_date",
-                       status_field,
+                       "status_id",
                        ]
 
         resource.configure(list_fields = list_fields,
@@ -1125,25 +1110,7 @@ def case_event_type():
 # Needs
 #
 def need():
-    """ Needs: RESTful CRUD Controller """
-
-    if settings.get_dvr_needs_hierarchical():
-
-        tablename = "dvr_need"
-
-        from core import S3Represent
-        represent = S3Represent(lookup = tablename,
-                                hierarchy = True,
-                                translate = True,
-                                )
-
-        table = s3db[tablename]
-        field = table.parent
-        field.represent = represent
-        field.requires = IS_EMPTY_OR(IS_ONE_OF(db, "%s.id" % tablename,
-                                               represent,
-                                               orderby="%s.name" % tablename,
-                                               ))
+    """ Needs: CRUD Controller """
 
     return crud_controller()
 
