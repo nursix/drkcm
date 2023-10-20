@@ -15,7 +15,6 @@
          Facility.......................optional.....Facility name
          Facility Type..................optional.....Office, Facility, Hospital, Shelter, Warehouse
          Case...........................optional.....dvr_case.reference
-         Case Type......................optional.....dvr_case.case_type_id$name @ToDo
          Registration Date..............optional.....dvr_case.date
          CaseStatus.....................optional.....dvr_case.status_id$code
          Appointment:XX.................optional.....Appointment,Status (Type = XX in column name, Status = cell in row. Multiple allowed. Options: done, Date)

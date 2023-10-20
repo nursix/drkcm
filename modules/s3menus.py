@@ -705,9 +705,6 @@ class S3OptionsMenu:
                     #    M("All Activities"),
                     #    M("Report", m="report"),
                     #),
-                    M("Case Types", f="case_type")(
-                       M("Create", m="create"),
-                    ),
                     M("Need Types", f="need")(
                       M("Create", m="create"),
                     ),

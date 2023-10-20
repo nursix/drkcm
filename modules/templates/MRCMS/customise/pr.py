@@ -390,8 +390,11 @@ def configure_case_form(resource,
     component = resource.components.get("dvr_case")
     if not administration:
         field = component.table.archived
-        field.readable = False
-        field.writable = False
+        field.readable = field.writable = False
+    field = component.table.reference
+    field.label = T("Principal Ref.No.")
+    field.comment = T("Reference number to use in communication with the principal client, e.g. %(examples)s") % \
+                    {"examples": "ZAB-Nr."}
 
     # Filter flags for case organisation
     if organisation_id:
@@ -440,6 +443,7 @@ def configure_case_form(resource,
                         multiple = False,
                         name = "bamf",
                         ),
+                "dvr_case.reference",
 
                 S3SQLInlineComponent(
                         "residence_status",
@@ -485,7 +489,6 @@ def configure_case_form(resource,
                 "dvr_case.comments",
 
                 # Archived-flag ---------------------------
-                # TODO make this available only to case admins and org admins
                 (T("Invalid"), "dvr_case.archived"),
                 )
 
@@ -551,6 +554,7 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
             TextFilter(["pe_label",
                         "first_name",
                         "last_name",
+                        "dvr_case.reference",
                         "dvr_case.comments",
                         # TODO only SHELTER* roles:
                         "shelter_registration.shelter_unit_id$name",

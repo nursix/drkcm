@@ -88,7 +88,6 @@ class DVRCaseModel(DataModel):
              "dvr_case_details",
              "dvr_case_status",
              "dvr_case_status_id",
-             "dvr_case_type",
              )
 
     def model(self):
@@ -106,43 +105,6 @@ class DVRCaseModel(DataModel):
 
         beneficiary = settings.get_dvr_label() # If we add more options in future then == "Beneficiary"
         manage_transferability = settings.get_dvr_manage_transferability()
-
-        # ---------------------------------------------------------------------
-        # Case Types
-        #
-        tablename = "dvr_case_type"
-        define_table(tablename,
-                     Field("name",
-                           label = T("Type"),
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           ),
-                     # Enable in template if/when org-specific
-                     # case types are required:
-                     self.org_organisation_id(readable = False,
-                                              writable = False,
-                                              ),
-                     CommentsField(),
-                     )
-
-        # CRUD Strings
-        ADD_CASE_TYPE = T("Create Case Type")
-        crud_strings[tablename] = Storage(
-            label_create = ADD_CASE_TYPE,
-            title_display = T("Case Type"),
-            title_list = T("Case Types"),
-            title_update = T("Edit Case Type"),
-            label_list_button = T("List Case Types"),
-            label_delete_button = T("Delete Case Type"),
-            msg_record_created = T("Case Type added"),
-            msg_record_modified = T("Case Type updated"),
-            msg_record_deleted = T("Case Type deleted"),
-            msg_list_empty = T("No Case Types currently registered")
-            )
-
-        # Represent for reference
-        case_type_represent = S3Represent(lookup = "dvr_case_type",
-                                          translate = True,
-                                          )
 
         # ---------------------------------------------------------------------
         # Case Statuses
@@ -318,30 +280,12 @@ class DVRCaseModel(DataModel):
                                empty = False,
                                ),
 
-                     # Case type and reference number
-                     Field("case_type_id", "reference dvr_case_type",
-                           label = T("Case Type"),
-                           represent = case_type_represent,
-                           requires = IS_EMPTY_OR(IS_ONE_OF(
-                                                db, "dvr_case_type.id",
-                                                case_type_represent,
-                                                )),
-                           sortby = "name",
-                           comment = S3PopupLink(c = "dvr",
-                                                 f = "case_type",
-                                                 title = ADD_CASE_TYPE,
-                                                 tooltip = T("Choose the case type from the drop-down, or click the link to create a new type"),
-                                                 # Always look up options from dvr/case
-                                                 # (required if inline in person form):
-                                                 vars = {"parent": "case",
-                                                         },
-                                                 ),
-                           ),
-                     # @todo: rename into "code"?
-                     # @ToDo: Option to autogenerate these, like Waybills, et al
-                     # @ToDo: Deprecate: We use pe_label as primary ID and Tags for any additional IDs to cross-reference to 3rd-party systems
+                     # Case reference number
+                     # - for use in communication with authorities
+                     # - if required in addition to primary person ID label
                      Field("reference",
                            label = T("Case Number"),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
 
                      # Case priority and status
@@ -8892,21 +8836,18 @@ def dvr_rheader(r, tabs=None):
                         ]
 
             case = resource.select(["dvr_case.reference",
-                                    "dvr_case.case_type_id",
                                     ],
                                     represent = True,
                                     ).rows
             if case:
                 case = case[0]
                 case_number = lambda row: case["dvr_case.reference"]
-                case_type = lambda row: case["dvr_case.case_type_id"]
                 name = s3_fullname
             else:
                 # Target record exists, but doesn't match filters
                 return None
 
             rheader_fields = [[(T("Case Number"), case_number)],
-                              [(T("Case Type"), case_type)],
                               [(T("Name"), name)],
                               ["date_of_birth"],
                               ]

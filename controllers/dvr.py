@@ -622,12 +622,6 @@ def case_status():
 
     return crud_controller()
 
-# -----------------------------------------------------------------------------
-def case_type():
-    """ Case Types: RESTful CRUD Controller """
-
-    return crud_controller()
-
 # =============================================================================
 # Case Activities
 #

@@ -276,6 +276,7 @@ class ResidentsList:
                                     ptable.gender,
                                     ptable.date_of_birth,
                                     dtable.nationality,
+                                    ctable.reference,
                                     ctable.household_size,
                                     ctable.last_seen_on,
                                     sptable.status,
@@ -656,9 +657,8 @@ class ResidentsList:
         T = current.T
 
         return (("unit", T("Housing Unit"), "string"),
-                ("status", T("Status"), "string"),
-                ("check_in_date", T("Check-in date"), "date"),
                 ("pe_label", T("ID"), "string"),
+                ("refno", T("Principal Ref.No."), "string"),
                 ("last_name", T("Last Name"), "string"),
                 ("first_name", T("First Name"), "string"),
                 ("gender", T("Gender"), "string"),
@@ -666,6 +666,8 @@ class ResidentsList:
                 ("age", T("Age"), "string"),
                 ("nationality", T("Nationality"), "string"),
                 ("household_size", T("Size of Family"), "integer"),
+                ("status", T("Status"), "string"),
+                ("check_in_date", T("Check-in date"), "date"),
                 ("last_seen_on", T("Last seen on"), "date"),
                 )
 
@@ -740,6 +742,7 @@ class ResidentsList:
 
                 # Household size
                 case = row.dvr_case
+                data["refno"] = ctable.reference.represent(case.reference)
                 household_size = case.household_size
                 data["household_size"] = household_size if household_size else "-"
                 data["last_seen_on"] = ctable.last_seen_on.represent(case.last_seen_on)
