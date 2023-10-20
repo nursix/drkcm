@@ -76,8 +76,8 @@ class ShelterOverview(CRUDMethod):
         allocable = total_capacity.get("allocable", 0)
 
         capacity = DIV(H5(T("Capacity")),
-                       TABLE(TR(TH(T("Housing Units")), TD(cap_regular)),
-                             TR(TH(T("Staging Area")), TD(cap_transitory)),
+                       TABLE(TR(TH(T("in Housing Units")), TD(cap_regular)),
+                             TR(TH(T("in Staging Area")), TD(cap_transitory)),
                              TR(TD(_class="spacer", _colspan=2)),
                              TR(TH(T("Free places")), TD(unallocated)),
                              TR(TH(T("Non-allocable##shelter")), TD(blocked)),
@@ -103,8 +103,8 @@ class ShelterOverview(CRUDMethod):
         total_css = "stats_excess" if total > cap_total else ""
 
         occupancy = DIV(H5(T("Current Population##shelter")),
-                        TABLE(TR(TH(T("Housing Units")), TD(regular), _class=regular_css),
-                              TR(TH(T("Staging Area")), TD(transitory), _class=transit_css),
+                        TABLE(TR(TH(T("in Housing Units")), TD(regular), _class=regular_css),
+                              TR(TH(T("in Staging Area")), TD(transitory), _class=transit_css),
                               TR(TH(T("Total##set")), TD(total), _class="stats-total %s" % total_css),
                               TR(TD(_class="spacer", _colspan=2)),
                               TR(TH(T("Families")), TD(families)),

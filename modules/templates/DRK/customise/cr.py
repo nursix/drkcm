@@ -487,11 +487,11 @@ def profile_header(r):
                TD(total),
                _class="dbstats-total",
                )
-    TRANSITORY = TR(TD(T("in staging area (PX)")),
+    TRANSITORY = TR(TD(T("in Staging Area")),
                     TD(transitory),
                     _class="dbstats-sub",
                     )
-    REGULAR = TR(TD(T("in housing units")),
+    REGULAR = TR(TD(T("in Housing Units")),
                  TD(regular),
                  _class="dbstats-sub",
                  )
