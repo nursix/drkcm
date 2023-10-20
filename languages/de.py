@@ -6180,6 +6180,7 @@
 'This shipment will be confirmed as received.': 'Der Empfang dieser Lieferung wurde bestätigt.',
 'This status applies for new cases unless specified otherwise': 'Dieser Status gilt für neue Fälle wenn nicht anders angegeben',
 'This unit is for transitory accommodation upon arrival.': 'Diese Einheit dient zur kurzfristigen Unterbringung bei Ankunft.',
+'This vulnerability is already registered for this person': 'Diese Vulnerabilität ist für diese Person bereits registriert',
 'Thu##weekday': 'Do',
 'Thunderstorm': 'Gewitter',
 'Thursday': 'Donnerstag',

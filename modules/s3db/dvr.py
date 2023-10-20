@@ -45,6 +45,7 @@ __all__ = ("DVRCaseModel",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
            "dvr_ResponseThemeRepresent",
+           "dvr_VulnerabilityRepresent",
            "dvr_case_default_status",
            "dvr_case_activity_default_status",
            "dvr_case_status_filter_opts",
@@ -4633,6 +4634,8 @@ class DVRVulnerabilityModel(DataModel):
 
     names = ("dvr_vulnerability_type",
              "dvr_vulnerability",
+             "dvr_vulnerability_measure",
+             "dvr_vulnerability_need",
              )
 
     def model(self):
@@ -4768,6 +4771,7 @@ class DVRVulnerabilityModel(DataModel):
                      DateField(default = "now",
                                empty = False,
                                label = T("Established on"),
+                               future = 0,
                                set_min = "#dvr_vulnerability_end_date",
                                ),
                      DateField("end_date",
@@ -4793,6 +4797,7 @@ class DVRVulnerabilityModel(DataModel):
         # Table configuration
         self.configure(tablename,
                        list_fields = list_fields,
+                       onvalidation = self.vulnerability_onvalidation,
                        )
 
         # CRUD strings
@@ -4810,8 +4815,7 @@ class DVRVulnerabilityModel(DataModel):
         )
 
         # Field template
-        # TODO representation method: [date] type
-        represent = S3Represent(lookup=tablename, fields=["date"])
+        represent = dvr_VulnerabilityRepresent()
         vulnerability_id = FieldTemplate("vulnerability_id", "reference %s" % tablename,
                                          label = T("Vulnerability"),
                                          ondelete = "RESTRICT",
@@ -4853,6 +4857,54 @@ class DVRVulnerabilityModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def vulnerability_onvalidation(form):
+        """
+            Vulnerability form validation
+                - prevent duplicate vulnerability registration
+
+            Args:
+                form: the FORM
+        """
+
+        T = current.T
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        table = current.s3db.dvr_vulnerability
+
+        # Look up form record data to validate
+        fields = ("person_id", "vulnerability_type_id", "date", "end_date")
+        form_data = get_form_record_data(form, table, fields)
+        if not all(fn in form_data for fn in fields):
+            return
+
+        person_id = form_data["person_id"]
+        type_id = form_data["vulnerability_type_id"]
+        start = form_data["date"]
+        end = form_data["end_date"]
+
+        if person_id and type_id:
+            # Check for duplicate
+            query = (table.person_id == person_id) & \
+                    (table.vulnerability_type_id == type_id)
+            if start:
+                query &= (table.end_date == None) | (table.end_date >= start)
+            else:
+                query &= (table.end_date == None)
+            if end:
+                query &= (table.date == None) | (table.date <= end)
+            query &= (table.deleted == False)
+            if record_id:
+                query = (table.id != record_id) & query
+            duplicate = current.db(query).select(table.id, limitby=(0, 1)).first()
+            if duplicate:
+                error = T("This vulnerability is already registered for this person")
+                form.errors.vulnerability_type_id = error
 
 # =============================================================================
 class DVRDiagnosisModel(DataModel):
@@ -6312,6 +6364,79 @@ class dvr_DocEntityRepresent(S3Represent):
                     link = A(v, _href=url)
 
         return link
+
+# =============================================================================
+class dvr_VulnerabilityRepresent(S3Represent):
+    """ Representation of vulnerabilities """
+
+    def __init__(self):
+
+        super().__init__(lookup="dvr_vulnerability")
+
+        self.vulnerability_types = {}
+
+    # -------------------------------------------------------------------------
+    def lookup_rows(self, key, values, fields=None):
+        """
+            Custom rows lookup
+
+            Args:
+                key: the key Field
+                values: the values
+                fields: unused (retained for API compatibility)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        table = self.table
+
+        count = len(values)
+        if count == 1:
+            query = (key == values[0])
+        else:
+            query = key.belongs(values)
+
+        rows = db(query).select(table.id,
+                                table.date,
+                                table.vulnerability_type_id,
+                                limitby = (0, count),
+                                )
+        self.queries += 1
+
+        # Determine unknown type IDs
+        type_ids = {row.vulnerability_type_id for row in rows}
+        type_ids -= set(self.vulnerability_types.keys())
+        type_ids.discard(None)
+
+        if type_ids:
+            # Look up the names for unknown type IDs
+            ttable = s3db.dvr_vulnerability_type
+            query = (ttable.id.belongs(type_ids))
+            types = db(query).select(ttable.id, ttable.name)
+            self.queries += 1
+
+            # Store the type names
+            self.vulnerability_types.update({t.id: t.name for t in types})
+
+        return rows
+
+    # -------------------------------------------------------------------------
+    def represent_row(self, row):
+        """
+            Represent a row
+
+            Args:
+                row: the Row
+        """
+
+        try:
+            type_id = row.vulnerability_type_id
+        except AttributeError:
+            type_id = None
+        type_name = self.vulnerability_types.get(type_id, self.none)
+
+        return "[%s] %s" % (self.table.date.represent(row.date), type_name)
 
 # =============================================================================
 class DVRManageAppointments(CRUDMethod):

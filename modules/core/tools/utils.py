@@ -34,6 +34,7 @@ __all__ = ("JSONSEPARATORS",
            "URL2",
            "get_crud_string",
            "get_form_record_id",
+           "get_form_record_data",
            "accessible_pe_query",
            "set_last_record_id",
            "get_last_record_id",
@@ -109,7 +110,7 @@ def get_crud_string(tablename, key):
 # =============================================================================
 def get_form_record_id(form):
     """
-        Get the record ID from a FORM
+        Returns the record ID from a FORM
 
         Args:
             form: the FORM
@@ -127,6 +128,48 @@ def get_form_record_id(form):
         record_id = None
 
     return record_id
+
+# =============================================================================
+def get_form_record_data(form, table, fields):
+    """
+        Returns prospective record values for validation; looks up existing
+        record values and table defaults if some fields are missing from the
+        form.
+
+        Args:
+            form: the FORM
+            table: the Table
+            fields: list of field names
+
+        Returns:
+            a dict {fieldname: value}
+    """
+
+    form_vars = form.vars
+    form_data = {}
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return form_data
+
+    lookup = []
+    for fn in fields:
+        if fn in form_vars:
+            form_data[fn] = form_vars[fn]
+        elif record_id:
+            lookup.append(fn)
+        else:
+            form_data[fn] = table[fn].default
+
+    if lookup:
+        fields = [table[fn] for fn in lookup]
+        row = current.db(table.id == record_id).select(*fields,
+                                                       limitby = (0, 1),
+                                                       ).first()
+        for fn in lookup:
+            form_data[fn] = row[fn]
+
+    return form_data
 
 # =============================================================================
 def accessible_pe_query(table = None,
