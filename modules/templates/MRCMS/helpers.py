@@ -6,7 +6,7 @@
 
 from gluon import current, URL, A
 
-from core import FS, S3DateTime, WorkflowOptions, s3_str
+from core import FS, S3DateTime, WorkflowOptions, s3_fullname, s3_str
 
 # =============================================================================
 def get_role_realms(role):

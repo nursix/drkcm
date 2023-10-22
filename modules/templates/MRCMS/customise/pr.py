@@ -879,8 +879,8 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
         # Make appointments tab read-only even if the user is permitted
         # to create or update appointments (via event registration), except
-        # for ORG_ADMIN/CASE_ADMIN:
-        if not administration:
+        # for CASE_ADMIN/CASE_MANAGER:
+        if not privileged:
             component.configure(insertable = False,
                                 editable = False,
                                 deletable = False,
@@ -1182,7 +1182,11 @@ def pr_person_controller(**attr):
             r.vars["closed"] = r.get_vars["closed"] = "0"
 
         # Call standard prep
-        result = standard_prep(r) if callable(standard_prep) else True
+        if r.controller in ("dvr", "counsel"):
+            from .dvr import dvr_person_prep
+            result = dvr_person_prep(r)
+        else:
+            result = standard_prep(r) if callable(standard_prep) else True
 
         get_vars = r.get_vars
 
@@ -1193,7 +1197,7 @@ def pr_person_controller(**attr):
             crud_strings["title_list"] = T("Invalid Cases")
 
         controller = r.controller
-        if controller == "dvr":
+        if controller in ("dvr", "counsel"):
             configure_dvr_person_controller(r,
                                             privileged = privileged,
                                             administration = administration,
@@ -1290,7 +1294,7 @@ def pr_person_controller(**attr):
 
     # Custom rheader tabs
     from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
-    if current.request.controller == "dvr":
+    if current.request.controller in ("dvr", "counsel"):
         attr["rheader"] = dvr_rheader
     elif current.request.controller == "hrm":
         attr["rheader"] = hrm_rheader
@@ -1312,16 +1316,19 @@ def pr_group_membership_controller(**attr):
     standard_prep = s3.prep
     def prep(r):
 
-        # Call standard prep
-        if callable(standard_prep):
+        c = r.controller
+
+        # Custom prep for DVR views
+        if c in ("counsel", "dvr"):
+            from .dvr import dvr_group_membership_prep
+            result = dvr_group_membership_prep(r)
+        elif callable(standard_prep):
             result = standard_prep(r)
         else:
             result = True
 
-        ROLE = T("Role")
-
         resource = r.resource
-        if r.controller == "dvr":
+        if c in ("counsel", "dvr"):
 
             viewing = r.viewing
             if viewing and viewing[0] == "pr_person":
@@ -1346,6 +1353,8 @@ def pr_group_membership_controller(**attr):
             rtable.shelter_id.default = shelter_id
             rtable.shelter_unit_id.default = unit_id
 
+            ROLE = T("Role")
+
             if r.interactive:
                 table = resource.table
 
@@ -1354,7 +1363,14 @@ def pr_group_membership_controller(**attr):
                 s3db.pr_person.pe_label.label = T("ID")
 
                 field = table.person_id
-                field.represent = s3db.pr_PersonRepresent(show_link=True)
+                case_url = URL(c = r.controller,
+                               f = "person",
+                               args = ["[id]"],
+                               extension = "",
+                               )
+                field.represent = s3db.pr_PersonRepresent(show_link = True,
+                                                          linkto = case_url,
+                                                          )
                 field.widget = PersonSelector(controller = "dvr",
                                               pe_label = True,
                                               nationality = True,

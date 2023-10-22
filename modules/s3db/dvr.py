@@ -1146,9 +1146,8 @@ class DVRNeedsModel(DataModel):
                   )
 
         # CRUD Strings
-        ADD_NEED = T("Create Need Type")
         crud_strings[tablename] = Storage(
-            label_create = ADD_NEED,
+            label_create = T("Create Need Type"),
             title_display = T("Need Type Details"),
             title_list = T("Need Types"),
             title_update = T("Edit Need Type"),
@@ -1170,11 +1169,6 @@ class DVRNeedsModel(DataModel):
                                                 IS_ONE_OF(db, "dvr_need.id",
                                                           represent,
                                                           )),
-                                comment = S3PopupLink(c = "dvr",
-                                                      f = "need",
-                                                      title = ADD_NEED,
-                                                      tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
-                                                      ),
                                 widget = widget
                                 )
 
@@ -1419,6 +1413,7 @@ class DVRResponseModel(DataModel):
              "dvr_response_theme",
              "dvr_response_type",
              "dvr_response_type_case_activity",
+             "dvr_inline_responses",
              )
 
     def model(self):
@@ -1664,7 +1659,10 @@ class DVRResponseModel(DataModel):
                                 )
 
         # ---------------------------------------------------------------------
-        # Responses
+        # Response action
+        # - is a specific measure taken to address a particular need
+        # - usually linked to a case activity that documents the need
+        # - counseling will typically refer to this as a counseling session
         #
         case_label = settings.get_dvr_label()
         if case_label: # If we add more options in future then == "Beneficiary"
@@ -1685,7 +1683,7 @@ class DVRResponseModel(DataModel):
 
         tablename = "dvr_response_action"
         define_table(tablename,
-                     # Beneficiary
+                     # Beneficiary and Case Activity
                      self.pr_person_id(
                          label = CASE,
                          widget = S3PersonAutocompleteWidget(controller="dvr"),
@@ -1697,11 +1695,8 @@ class DVRResponseModel(DataModel):
                          ondelete = "CASCADE",
                          writable = False,
                          ),
-                     response_theme_ids(
-                         ondelete = "RESTRICT",
-                         readable = use_response_themes,
-                         writable = use_response_themes,
-                         ),
+
+                     # Response action type and themes
                      response_type_id(
                          empty = not use_response_types,
                          label = T("Action Type"),
@@ -1709,6 +1704,13 @@ class DVRResponseModel(DataModel):
                          readable = use_response_types,
                          writable = use_response_types,
                          ),
+                     response_theme_ids(
+                         ondelete = "RESTRICT",
+                         readable = use_response_themes,
+                         writable = use_response_themes,
+                         ),
+
+                     # Date/Time
                      DateField("date_due",
                                label = T("Date Due"),
                                readable = use_due_date,
@@ -1731,8 +1733,19 @@ class DVRResponseModel(DataModel):
                                    readable = False,
                                    writable = False,
                                    ),
-                     self.hrm_human_resource_id(),
+
+                     # Responsibility
+                     self.hrm_human_resource_id(
+                         widget = None,
+                         comment = None,
+                         ),
+
+                     # Status
                      response_status_id(),
+
+                     # Efforts in hours
+                     # - read-only and computed onaccept when reporting efforts
+                     #   per theme
                      Field("hours", "double",
                            label = T("Effort (Hours)"),
                            requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
@@ -1818,8 +1831,13 @@ class DVRResponseModel(DataModel):
 
         postprocess = None
         if use_response_themes:
-            if response_themes_details:
-                fields = ["theme_id", "comments"]
+            if response_themes_details or response_themes_efforts:
+                fields = ["theme_id"]
+                if response_themes_details:
+                    fields.append("comments")
+                    details_field = None
+                else:
+                    details_field = "comments"
                 if response_themes_efforts:
                     fields.append("hours")
                     postprocess = self.response_action_postprocess
@@ -1827,7 +1845,6 @@ class DVRResponseModel(DataModel):
                                                    fields = fields,
                                                    label = T("Themes"),
                                                    )
-                details_field = None
             else:
                 theme_field = "response_theme_ids"
         else:
@@ -1838,9 +1855,14 @@ class DVRResponseModel(DataModel):
         crud_form = S3SQLCustomForm("person_id",
                                     "case_activity_id",
                                     type_field,
-                                    theme_field,
+                                    theme_field, # TODO rename as themes(_field)
                                     details_field,
-                                    "human_resource_id",
+                                    # TODO
+                                    # dvr.response_action_vulnerabilities
+                                    # inline-vulnerabilities if setting
+                                    "human_resource_id", # TODO filter to case org + current value, default to current user
+                                    # TODO investigate if anything uses due_date
+                                    #      => make custom-only otherwise
                                     due_field,
                                     "start_date",
                                     "status_id",
@@ -1882,7 +1904,10 @@ class DVRResponseModel(DataModel):
         # ---------------------------------------------------------------------
         # Response Action <=> Theme link table
         #   - for filtering/reporting by extended theme attributes
-        #   - not exposed directly, populated onaccept from response_theme_ids
+        #   - exposed directly as sub-form of response actions when recording
+        #     details/efforts per theme (most commonly in counseling)
+        #   - if not exposed directly, links will be established onaccept
+        #     from dvr_response_action.response_theme_ids
         #
         theme_represent = S3Represent(lookup = "dvr_response_theme",
                                       translate = True,
@@ -1924,6 +1949,7 @@ class DVRResponseModel(DataModel):
         # ---------------------------------------------------------------------
         # Response Types <=> Case Activities link table
         # @todo: drop/replace by dvr_response_action? (currently still used in STL)
+        # TODO deprecate if nothing uses this
         #
         tablename = "dvr_response_type_case_activity"
         define_table(tablename,
@@ -1941,6 +1967,7 @@ class DVRResponseModel(DataModel):
         # Pass names back to global scope (s3.*)
         #
         return {"dvr_response_action_id": response_action_id,
+                "dvr_inline_responses": self.inline_responses,
                 }
 
     # -------------------------------------------------------------------------
@@ -2104,6 +2131,94 @@ class DVRResponseModel(DataModel):
             activity_id = None
 
         return activity_id
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inline_responses(r):
+        """
+            Configure sub-form for inline response actions (in case activity)
+
+            Args:
+                r: the CRUDRequest
+            Returns:
+                S3SQLInlineComponent
+        """
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+        settings = current.deployment_settings
+
+        rtable = s3db.dvr_response_action
+
+        resource = r.resource
+        record = r.record
+
+        # Get person_id
+        person_id = None
+        if record:
+            if resource.tablename == "pr_person":
+                person_id = record.id
+            elif "person_id" in record:
+                person_id = record.person_id
+        else:
+            person_id = None
+        if not person_id:
+            # Cannot embed responses without a person_id
+            return None
+
+        use_theme = settings.get_dvr_response_themes()
+        if use_theme and settings.get_dvr_response_themes_details():
+            # Filter action_id in inline response_themes to same beneficiary
+            ltable = s3db.dvr_response_action_theme
+            field = ltable.action_id
+            dbset = db(rtable.person_id == person_id) if person_id else db
+            field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_response_action.id",
+                                                   field.represent,
+                                                   orderby = ~rtable.start_date,
+                                                   sort = False,
+                                                   ))
+
+            # Expose response_action_theme inline
+            inline_responses = S3SQLInlineComponent(
+                                    "response_action_theme",
+                                    fields = ["action_id",
+                                              "theme_id",
+                                              "comments",
+                                              ],
+                                    label = T("Counseling"),
+                                    orderby = "action_id",
+                                    readonly = settings.get_dvr_response_themes_efforts(),
+                                    )
+        else:
+            # Set the person_id for inline responses (does not not happen
+            # automatically since using case_activity_id as component key)
+            if person_id:
+                field = rtable.person_id
+                field.default = person_id
+
+            # Expose response_action inline
+            response_theme_ids = "response_theme_ids" if use_theme else None
+            response_action_fields = ["start_date",
+                                      response_theme_ids,
+                                      "comments",
+                                      "human_resource_id",
+                                      "status_id",
+                                      "hours",
+                                      ]
+            if settings.get_dvr_response_due_date():
+                response_action_fields.insert(-2, "date_due")
+            if settings.get_dvr_response_types():
+                response_action_fields.insert(1, "response_type_id")
+
+            inline_responses = S3SQLInlineComponent(
+                                    "response_action",
+                                    fields = response_action_fields,
+                                    label = T("Actions"),
+                                    layout = S3SQLVerticalSubFormLayout,
+                                    explicit_add = T("Add Action"),
+                                    )
+        return inline_responses
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -2452,6 +2567,7 @@ class DVRCaseActivityModel(DataModel):
 
     names = ("dvr_case_activity",
              "dvr_case_activity_id",
+             "dvr_case_activity_form",
              "dvr_case_activity_status",
              "dvr_case_activity_update",
              "dvr_case_activity_update_type",
@@ -2634,9 +2750,24 @@ class DVRCaseActivityModel(DataModel):
                                            )
 
         # ---------------------------------------------------------------------
-        # Case Activity (case-specific)
+        # Case Activity
+        # - is a container to record a concrete need situation of the case,
+        #   any measures taken to address it, and the outcome
         #
         twoweeks = current.request.utcnow + datetime.timedelta(days=14)
+
+        subject_type = settings.get_dvr_case_activity_subject_type()
+        use_subject = subject_type in ("subject", "both")
+        use_need = subject_type in ("need", "both")
+
+        need_details = settings.get_dvr_case_activity_need_details()
+        response_details = settings.get_dvr_case_activity_response_details()
+
+        use_emergency = settings.get_dvr_case_activity_emergency()
+
+        use_status = settings.get_dvr_case_activity_status()
+        use_outcome = settings.get_dvr_case_activity_outcome()
+        use_achievement = settings.get_dvr_case_activity_achievement()
 
         follow_up = settings.get_dvr_case_activity_follow_up()
 
@@ -2663,30 +2794,30 @@ class DVRCaseActivityModel(DataModel):
                                       ondelete = "CASCADE",
                                       writable = False,
                                       ),
-
-                     # Beneficiary (component link)
-                     # @todo: populate from case and hide in case perspective
+                     # Beneficiary
                      self.pr_person_id(comment = None,
                                        empty = False,
                                        ondelete = "CASCADE",
                                        writable = False,
                                        ),
 
-                     # Subject and Details
+                     # Type of need, subject and details
+                     self.dvr_need_id(readable = use_need,
+                                      writable = use_need,
+                                      ),
                      Field("subject",
                            label = T("Subject / Occasion"),
-                           readable = False,
-                           writable = False,
+                           readable = use_subject,
+                           writable = use_subject,
                            represent = s3_text_represent,
                            ),
                      Field("need_details", "text",
                            label = T("Need Details"),
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
+                           readable = need_details,
+                           writable = need_details,
                            ),
-
-                     # Need type
-                     self.dvr_need_id(),
 
                      # Dates
                      DateField("start_date",
@@ -2696,17 +2827,24 @@ class DVRCaseActivityModel(DataModel):
                                ),
                      DateField("end_date",
                                label = T("Completed on"),
-                               readable = False,
-                               writable = False,
+                               readable = use_status,
+                               writable = False, # set onaccept
                                set_max = "#dvr_case_activity_start_date",
                                ),
 
                      # Priority
+                     # - normally, a simple distinction between emergencies
+                     #   and non-emergency needs is all that can be expected:
                      Field("emergency", "boolean",
                            default = False,
                            label = T("Emergency"),
                            represent = s3_yes_no_represent,
+                           readable = use_emergency,
+                           writable = use_emergency,
                            ),
+                     # - a more differential prioritisation is often desired,
+                     #   but hard to define and thus not very practical, so
+                     #   this is optional:
                      Field("priority", "integer",
                            label = T("Priority"),
                            represent = represent_option(dict(priority_opts)),
@@ -2741,6 +2879,8 @@ class DVRCaseActivityModel(DataModel):
                            label = T("Support provided"),
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
+                           readable = response_details,
+                           writable = response_details,
                            ),
 
                      # Support received by the beneficiary independently
@@ -2779,18 +2919,22 @@ class DVRCaseActivityModel(DataModel):
                                writable = follow_up,
                                ),
 
-                     # Status, type of exit
-                     activity_status_id(),
+                     # Status
+                     activity_status_id(readable = use_status,
+                                        writable = use_status,
+                                        ),
+
+                     # Termination and Outcomes
                      termination_type_id(ondelete = "RESTRICT",
                                          readable = False,
                                          writable = False,
                                          ),
-
-                     # Outcomes
                      Field("outcome", "text",
                            label = T("Outcome"),
                            represent = s3_text_represent,
                            widget = s3_comments_widget,
+                           readable = use_outcome,
+                           writable = use_outcome,
                            ),
                      Field("achievement",
                            label = T("Change achieved"),
@@ -2799,13 +2943,13 @@ class DVRCaseActivityModel(DataModel):
                                                            T("What change in the severity of the problem has so far been achieved by this activity?"),
                                                            ),
                                          ),
-                           represent = S3Represent(options=dict(achievement_opts)),
+                           represent = represent_option(dict(achievement_opts)),
                            requires = IS_EMPTY_OR(
                                             IS_IN_SET(achievement_opts,
                                                       sort = False,
                                                       )),
-                           readable = False,
-                           writable = False,
+                           readable = use_achievement,
+                           writable = use_achievement,
                            ),
                      CommentsField(),
                      )
@@ -2833,6 +2977,10 @@ class DVRCaseActivityModel(DataModel):
                                      "key": "diagnosis_id",
                                      },
                                     ),
+                            dvr_vulnerability = {"link": "dvr_vulnerability_case_activity",
+                                                 "joinby": "case_activity_id",
+                                                 "key": "vulnerability_id",
+                                                 },
                             supply_distribution = {
                                 "link": "supply_distribution_case_activity",
                                 "joinby": "case_activity_id",
@@ -2841,12 +2989,13 @@ class DVRCaseActivityModel(DataModel):
                             )
 
         # List fields
+        # TODO adjust after settings
         list_fields = ["start_date",
                        "need_id",
                        "need_details",
                        "emergency",
                        "activity_details",
-                       "completed",
+                       "status_id",
                        ]
         if follow_up:
             list_fields[-1:-1] = ["followup", "followup_date"]
@@ -2861,24 +3010,27 @@ class DVRCaseActivityModel(DataModel):
                                       ],
                                      label = T("Search"),
                                      ),
+                          # TODO make optional by setting
                           OptionsFilter("emergency",
                                         options = {True: T("Yes"),
                                                    False: T("No"),
                                                    },
                                         cols = 2,
                                         ),
+                          # TODO make optional by setting
                           OptionsFilter("need_id",
                                         options = lambda: get_filter_options("dvr_need",
                                                                              translate = True,
                                                                              ),
                                         ),
-                          OptionsFilter("completed",
-                                        default = False,
-                                        options = {True: T("Yes"),
-                                                   False: T("No"),
-                                                   },
-                                        cols = 2,
-                                        ),
+                          # TODO replace by status filter
+                          #OptionsFilter("completed",
+                          #              default = False,
+                          #              options = {True: T("Yes"),
+                          #                         False: T("No"),
+                          #                         },
+                          #              cols = 2,
+                          #              ),
                           ]
         if follow_up:
             filter_widgets.extend([OptionsFilter("followup",
@@ -2899,6 +3051,7 @@ class DVRCaseActivityModel(DataModel):
             filter_widgets.insert(3, OptionsFilter("service_id"))
 
         # Report options
+        # TODO adjust after settings
         axes = ["need_id",
                 (T("Case Status"), "case_id$status_id"),
                 "emergency",
@@ -2935,6 +3088,7 @@ class DVRCaseActivityModel(DataModel):
                   )
 
         # CRUD Strings
+        # TODO re-label as needs if managing response actions
         crud_strings[tablename] = Storage(
             label_create = T("Create Activity"),
             title_display = T("Activity Details"),
@@ -3013,8 +3167,11 @@ class DVRCaseActivityModel(DataModel):
                      DateField(default = "now",
                                ),
                      update_type_id(),
-                     human_resource_id(),
-                     CommentsField(),
+                     human_resource_id(comment = None,
+                                       widget = None,
+                                       ),
+                     CommentsField(label = T("Details"),
+                                   ),
                      )
 
         # Table configuration
@@ -3026,6 +3183,7 @@ class DVRCaseActivityModel(DataModel):
         # Pass names back to global scope (s3.*)
         #
         return {"dvr_case_activity_id": case_activity_id,
+                "dvr_case_activity_form": self.case_activity_form,
                 }
 
     # -------------------------------------------------------------------------
@@ -3037,6 +3195,114 @@ class DVRCaseActivityModel(DataModel):
 
         return {"dvr_case_activity_id": dummy("case_activity_id"),
                 }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def case_activity_form(r):
+        """
+            Configure the case activity form, applying all settings
+
+            Args:
+                r: the CRUDRequest
+
+            Returns:
+                S3SQLCustomForm
+        """
+        # TODO call this from case activity controller
+        # TODO call this from case activity tab of person
+
+        T = current.T
+        s3db = current.s3db
+
+        settings = current.deployment_settings
+
+        crud_fields = ["person_id"]
+
+        # Need details
+        need = ["need_id",
+                "subject",
+                "emergency",
+                "need_details",
+                ]
+        if settings.get_dvr_case_activity_vulnerabilities():
+            need.append(S3SQLInlineLink("vulnerability",
+                                        field = "vulnerability_id",
+                                        header = False,
+                                        label = T("Vulnerabilities"),
+                                        comment = T("Vulnerabilities relevant for this need"),
+                                        ))
+        need.append("start_date")
+
+        # Action details
+        actions = ["human_resource_id"]
+        if settings.get_dvr_manage_response_actions():
+            actions.append(s3db.dvr_inline_responses(r))
+        actions.append("activity_details")
+        if settings.get_dvr_case_activity_updates():
+            actions.append(S3SQLInlineComponent("case_activity_update",
+                                                label = T("Progress"),
+                                                fields = ["date",
+                                                          (T("Occasion"), "update_type_id"),
+                                                          "human_resource_id",
+                                                          "comments",
+                                                          ],
+                                                layout = S3SQLVerticalSubFormLayout,
+                                                explicit_add = T("Add Entry"),
+                                                ))
+
+        # Follow-up
+        followup = ["followup", "followup_date"]
+
+        # Categories
+        # TODO investigate if anything uses this, make custom-only otherwise
+        categories = ["sector_id",
+                      "service_id",
+                      ]
+
+        status = ["status_id",
+                  "end_date",
+                  "outcome",
+                  "achievement",
+                  ]
+
+        # Inline documents
+        if settings.get_dvr_case_activity_documents():
+            documents = [S3SQLInlineComponent("document",
+                                              name = "file",
+                                              label = T("Attachments"),
+                                              fields = ["file", "comments"],
+                                              filterby = {"field": "file",
+                                                          "options": "",
+                                                          "invert": True,
+                                                          },
+                                              ),
+                         ]
+        else:
+            documents = []
+
+        crud_fields += need  + actions + followup + categories+ status + documents
+        return S3SQLCustomForm(*crud_fields)
+
+        #configure person_id depending on perspective:
+            #- readonly on update with label+name in standalone perspective
+            #- selector of persons with active cases on create in standalone perspective
+            #- hidden on component tab of person
+
+        #return self.dvr.get("case_activity_sectors", False)
+        #=> already applied, expose sector field
+
+        #return self.dvr.get("case_activity_use_service_type", False)
+        #=> already applied, expose service type field
+
+        #return self.__lazy("dvr", "case_activity_follow_up", default=True)
+        #=> already applied
+        #=> expose follow-up flag and date
+
+        #return self.dvr.get("manage_response_actions", False)
+        #=> hide details
+        #=> show response_actions or response_action_theme inline
+        #=>
+
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4634,8 +4900,8 @@ class DVRVulnerabilityModel(DataModel):
 
     names = ("dvr_vulnerability_type",
              "dvr_vulnerability",
-             "dvr_vulnerability_measure",
-             "dvr_vulnerability_need",
+             "dvr_vulnerability_response_action",
+             "dvr_vulnerability_case_activity",
              )
 
     def model(self):
@@ -4756,7 +5022,10 @@ class DVRVulnerabilityModel(DataModel):
                      )
 
         # ---------------------------------------------------------------------
-        # Vulnerabilities
+        # Vulnerability
+        # - a situation or attribute of the beneficiary that makes certain
+        #   risks more likely or more severe, and can trigger or moderate
+        #   specific needs (e.g. protection) or rights
         #
         tablename = "dvr_vulnerability"
         define_table(tablename,
@@ -4831,7 +5100,7 @@ class DVRVulnerabilityModel(DataModel):
         # ---------------------------------------------------------------------
         # Link vulnerability<=>case activity
         #
-        tablename = "dvr_vulnerability_need"
+        tablename = "dvr_vulnerability_case_activity"
         define_table(tablename,
                      vulnerability_id(ondelete="CASCADE"),
                      self.dvr_case_activity_id(ondelete="CASCADE"),
@@ -4840,7 +5109,7 @@ class DVRVulnerabilityModel(DataModel):
         # ---------------------------------------------------------------------
         # Link vulnerability<=>response_action
         #
-        tablename = "dvr_vulnerability_measure"
+        tablename = "dvr_vulnerability_response_action"
         define_table(tablename,
                      vulnerability_id(ondelete="CASCADE"),
                      self.dvr_response_action_id(ondelete="CASCADE"),

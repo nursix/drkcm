@@ -76,6 +76,7 @@ class S3MainMenu(default.S3MainMenu):
         return [
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             shelter_menu,
+            MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
             org_menu,
             MM("Security", c="security", f="seized_item"),
             ]
@@ -183,6 +184,14 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def counsel(cls):
+
+        return M(c="counsel")(
+                    M("Current Cases", c=("counsel", "pr"), f="person")
+                    )
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def cms(cls):
 
         if not current.auth.s3_has_role("ADMIN"):
@@ -261,11 +270,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Create", m="create", t="pr_person", p="create"),
                     M("All Cases", vars = {"closed": "include"}),
                     ),
-                M("Current Needs", f="case_activity")(
-                    M("Emergencies", vars={"~.emergency": "True"}),
-                    M(follow_up_label, f="due_followups"),
-                    M("Report", m="report"),
-                    ),
+                #M("Current Needs", f="case_activity")(
+                #    M("Emergencies", vars={"~.emergency": "True"}),
+                #    M(follow_up_label, f="due_followups"),
+                #    M("Report", m="report"),
+                #    ),
                 M("Appointments", f="case_appointment")(
                     M("Overview"),
                     #M("Import Updates", m="import", p="create",

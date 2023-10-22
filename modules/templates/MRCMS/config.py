@@ -28,6 +28,10 @@ def config(settings):
     settings.base.theme_config = "MRCMS"
     settings.base.theme_layouts = "MRCMS"
 
+    settings.base.rest_controllers = {("counsel", "person"): ("pr", "person"),
+                                      ("counsel", "group_membership"): ("pr", "group_membership"),
+                                      }
+
     # Authentication settings
     # Should users be allowed to register themselves?
     settings.security.self_registration = False
@@ -228,12 +232,58 @@ def config(settings):
     # Appointments update case status when completed
     settings.dvr.appointments_update_case_status = True
 
+    # Which subject type to use for case activities (subject|need|both)
+    settings.dvr.case_activity_subject_type = "need"
+
+    # Allow marking case activities as emergencies
+    settings.dvr.case_activity_emergency = True
+    # Disable recording of free-text need details
+    #settings.dvr.case_activity_need_details = False
+    # Enable/disable linking of case activities to relevant vulnerabilities
+    settings.dvr.case_activity_vulnerabilities = False
+    # Enable/disable free-text response details
+    #settings.dvr.case_activity_response_details = True
+    # Disable case activity inline updates
+    #settings.dvr.case_activity_updates = False
+    # Enable/disable recording of free-text case activity outcome
+    #settings.dvr.case_activity_outcome = True
+    # Enable/disable recording of improvement level in case activities
+    settings.dvr.case_activity_achievement = False
+
+    # Disable follow-up fields in case activities
+    settings.dvr.case_activity_follow_up = False
+    # Allow uploading of documents in individual case activities
+    #settings.dvr.case_activity_documents = True
+
+    # Manage individual response actions in case activities
+    settings.dvr.manage_response_actions = True
+    # Responses use date+time
+    settings.dvr.response_use_time = True
+    # Response planning uses separate due-date
+    settings.dvr.response_due_date = False
+    # Use response themes
+    settings.dvr.response_themes = True
+    # Document response details per theme
+    settings.dvr.response_themes_details = True
+    # Document response efforts per theme
+    settings.dvr.response_themes_efforts = True
+    # Response themes are org-specific
+    settings.dvr.response_themes_org_specific = False
+    # Use response types
+    settings.dvr.response_types = True
+    # Response types hierarchical
+    settings.dvr.response_types_hierarchical = True
+    # Response themes organized by sectors
+    settings.dvr.response_themes_sectors = True
+    # Response themes linked to needs
+    settings.dvr.response_themes_needs = True
+    # Auto-link responses to case activities
+    settings.dvr.response_activity_autolink = True
+
     # Uncomment this to enable tracking of transfer origin/destination sites
     #settings.dvr.track_transfer_sites = True
     # Uncomment this to enable features to manage transferability of cases
     #settings.dvr.manage_transferability = True
-    # Case activities use single Needs
-    #settings.dvr.case_activity_needs_multiple = True
     # Uncomment this to have allowance payments update last_seen_on
     #settings.dvr.payments_update_last_seen_on = True
 
@@ -534,8 +584,12 @@ def config(settings):
             module_type = 10
         )),
         ("dvr", Storage(
-          name_nice = T("Residents"),
-          #description = "Allow affected individuals & households to register to receive compensation and distributions",
+          name_nice = T("Clients"),
+          restricted = True,
+          module_type = 10,
+        )),
+        ("counsel", Storage(
+          name_nice = T("Counseling"),
           restricted = True,
           module_type = 10,
         )),

@@ -8,7 +8,7 @@ import datetime
 
 from dateutil import tz
 
-from gluon import current, URL, A, INPUT, IS_EMPTY_OR, SQLFORM, TAG
+from gluon import current, URL, A, INPUT, SQLFORM, TAG
 from gluon.storage import Storage
 
 from s3dal import Field
@@ -16,7 +16,7 @@ from core import CRUDMethod, CRUDRequest, CustomController, FS, IS_ONE_OF, \
                  S3PermissionError, S3DateTime, S3SQLCustomForm, \
                  DateFilter, OptionsFilter, TextFilter, \
                  get_form_record_id, s3_fieldmethod, s3_redirect_default, \
-                 set_default_filter, set_last_record_id, s3_str
+                 set_default_filter, set_last_record_id, s3_fullname, s3_str
 
 from .pr import configure_person_tags
 
@@ -188,34 +188,8 @@ def dvr_note_resource(r, tablename):
 # -------------------------------------------------------------------------
 def dvr_case_activity_resource(r, tablename):
 
-    if not current.auth.s3_has_role("MEDICAL"):
-
-        s3db = current.s3db
-
-        HEALTH = "Health"
-
-        # Remove "Health" need type from need_id options widget
-        ntable = s3db.dvr_need
-        dbset = current.db(ntable.name != HEALTH)
-
-        table = s3db.dvr_case_activity
-        field = table.need_id
-        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_need.id",
-                                               field.represent,
-                                               ))
-
-        # Hide activities for need type "Health"
-        query = (FS("need_id$name") != HEALTH)
-
-        if r.tablename == "dvr_case_activity":
-            r.resource.add_filter(query)
-
-            # @todo: remove "Health" need type from need_id filter widget
-
-        elif r.component and r.component.tablename == "dvr_case_activity":
-            r.component.add_filter(query)
-
     # CRUD Strings
+    # TODO this should happen by default when managing responses
     T = current.T
     current.response.s3.crud_strings["dvr_case_activity"] = Storage(
         label_create = T("Add Need"),
@@ -249,11 +223,12 @@ def dvr_case_activity_controller(**attr):
 
         resource = r.resource
 
-        # Filter to active cases
+        # Filter to valid cases
         if not r.record:
             query = (FS("person_id$dvr_case.archived") == False) | \
                     (FS("person_id$dvr_case.archived") == None)
             resource.add_filter(query)
+            # TODO filter to open cases
 
         if not r.component:
 
@@ -270,32 +245,13 @@ def dvr_case_activity_controller(**attr):
                                                           show_link = True,
                                                           )
 
-                # Custom form (excluding case reference)
-                crud_form = S3SQLCustomForm("person_id",
-                                            "start_date",
-                                            "need_id",
-                                            "need_details",
-                                            "emergency",
-                                            "activity_details",
-                                            "followup",
-                                            "followup_date",
-                                            "outcome",
-                                            "completed",
-                                            "comments",
-                                            )
-                resource.configure(crud_form=crud_form)
-
             # Custom list fields
             list_fields = [(T("ID"), "person_id$pe_label"),
                            "person_id$first_name",
                            "person_id$last_name",
                            "need_id",
-                           "need_details",
                            "emergency",
-                           "activity_details",
-                           "followup",
-                           "followup_date",
-                           "completed",
+                           "status_id",
                            ]
             resource.configure(list_fields=list_fields)
 
@@ -812,6 +768,221 @@ def dvr_site_activity_resource(r, tablename):
         msg_record_deleted = T("Residents Report deleted"),
         msg_list_empty = T("No Residents Reports found"),
         )
+
+# =============================================================================
+def dvr_person_prep(r):
+    # TODO docstring
+    # TODO integrate in pr_person_controller?
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    s3 = current.response.s3
+    settings = current.deployment_settings
+
+    # Set the default case status
+    s3db.dvr_case_default_status()
+
+    # Filter to persons who have a case registered
+    resource = r.resource
+    resource.add_filter(FS("dvr_case.id") != None)
+
+    get_vars = r.get_vars
+
+    CASES = T("Cases")
+    CURRENT = T("Current Cases")
+    CLOSED = T("Closed Cases")
+
+    # Filters to split case list
+    if not r.record:
+
+        # Filter to active/archived cases
+        archived = get_vars.get("archived")
+        if archived == "1":
+            archived = True
+            CASES = T("Archived Cases")
+            query = FS("dvr_case.archived") == True
+        else:
+            archived = False
+            query = (FS("dvr_case.archived") == False) | \
+                    (FS("dvr_case.archived") == None)
+
+        # Filter to open/closed cases
+        closed = get_vars.get("closed")
+        if closed == "only":
+            # Show only closed cases
+            CASES = CLOSED
+            query &= FS("dvr_case.status_id$is_closed") == True
+        elif closed != "1" and closed != "include":
+            # Show only open cases (default)
+            CASES = CURRENT
+            query &= (FS("dvr_case.status_id$is_closed") == False) | \
+                     (FS("dvr_case.status_id$is_closed") == None)
+
+        resource.add_filter(query)
+    else:
+        archived = False
+
+    # Should not be able to delete records in this view
+    resource.configure(deletable = False)
+
+    if r.component and r.id:
+        ctable = r.component.table
+        if "case_id" in ctable.fields and \
+           str(ctable.case_id.type)[:18] == "reference dvr_case":
+
+            # Find the Case ID
+            dvr_case = s3db.dvr_case
+            query = (dvr_case.person_id == r.id) & \
+                    (dvr_case.deleted != True)
+            cases = db(query).select(dvr_case.id, limitby=(0, 2))
+
+            case_id = ctable.case_id
+            if cases:
+                # Set default
+                case_id.default = cases.first().id
+            if len(cases) == 1:
+                # Only one case => hide case selector
+                case_id.readable = case_id.writable = False
+            else:
+                # Configure case selector
+                case_id.requires = IS_ONE_OF(db(query), "dvr_case.id",
+                                             case_id.represent,
+                                             )
+
+    if r.interactive:
+        s3.crud_strings["pr_person"] = Storage(
+            label_create = T("Create Case"),
+            title_display = T("Case Details"),
+            title_list = CASES,
+            title_update = T("Edit Case Details"),
+            label_list_button = T("List Cases"),
+            label_delete_button = T("Delete Case"),
+            msg_record_created = T("Case added"),
+            msg_record_modified = T("Case details updated"),
+            msg_record_deleted = T("Case deleted"),
+            msg_list_empty = T("No Cases currently registered")
+            )
+
+        component = r.component
+        if not component:
+            # Expose the "archived"-flag? (update forms only)
+            if r.record and r.method != "read":
+                ctable = s3db.dvr_case
+                field = ctable.archived
+                field.readable = field.writable = True
+
+        elif component.tablename == "dvr_case_activity":
+
+            # Set default status
+            s3db.dvr_case_activity_default_status()
+
+            # Set defaults for inline responses
+            if settings.get_dvr_manage_response_actions():
+                s3db.dvr_set_response_action_defaults()
+
+            # Configure CRUD form
+            component.configure(crud_form=s3db.dvr_case_activity_form(r))
+
+        elif component.tablename == "dvr_response_action":
+
+            # Set defaults
+            s3db.dvr_set_response_action_defaults()
+
+    return True
+
+# =============================================================================
+def dvr_group_membership_prep(r):
+    # TODO docstring
+    # TODO integrate in pr_group_membership_controller?
+
+    db = current.db
+    s3db = current.s3db
+
+    table = r.table
+    resource = r.resource
+
+    # Hide unwanted fields from PersonSelector
+    settings = current.deployment_settings
+    settings.pr.request_email = False
+    settings.pr.request_home_phone = False
+    settings.hrm.email_required = False
+
+    get_vars = r.get_vars
+    if "viewing" in get_vars:
+
+        try:
+            vtablename, record_id = get_vars["viewing"].split(".")
+        except ValueError:
+            return False
+
+        if vtablename == "pr_person":
+
+            # Get all group_ids with this person_id
+            gtable = s3db.pr_group
+            join = gtable.on(gtable.id == table.group_id)
+            query = (table.person_id == record_id) & \
+                    (gtable.group_type == 7) & \
+                    (table.deleted != True)
+            rows = db(query).select(table.group_id, join=join)
+            group_ids = set(row.group_id for row in rows)
+
+            # Hide the link for this person (to prevent changes/deletion)
+            if group_ids:
+                # Single group ID?
+                group_id = tuple(group_ids)[0] if len(group_ids) == 1 else None
+            elif r.http == "POST":
+                name = s3_fullname(record_id)
+                group_id = gtable.insert(name=name, group_type=7)
+                s3db.update_super(gtable, {"id": group_id})
+                table.insert(group_id = group_id,
+                             person_id = record_id,
+                             group_head = True,
+                             )
+                group_ids = {group_id}
+            resource.add_filter(FS("person_id") != record_id)
+
+        else:
+            group_ids = set()
+
+        # Show only links for relevant cases
+        # NB Filter also prevents showing all links if case_ids is empty
+        if not r.id:
+            if len(group_ids) == 1:
+                r.resource.add_filter(FS("group_id") == group_id)
+            else:
+                r.resource.add_filter(FS("group_id").belongs(group_ids))
+
+        list_fields = ["person_id",
+                       "person_id$gender",
+                       "person_id$date_of_birth",
+                       ]
+
+        if len(group_ids) == 0:
+            # No case group exists, will be auto-generated on POST,
+            # hide the field in the form:
+            field = table.group_id
+            field.readable = field.writable = False
+        elif len(group_ids) == 1:
+            field = table.group_id
+            field.default = group_id
+            # If we have only one relevant case, then hide the group ID:
+            field.readable = field.writable = False
+        elif len(group_ids) > 1:
+            # Show the case ID in list fields if there is more than one
+            # relevant case
+            list_fields.insert(0, "group_id")
+        r.resource.configure(list_fields = list_fields)
+
+    # Do not allow update of person_id
+    if r.id:
+        field = table.person_id
+        field.writable = False
+        field.comment = None
+
+    return True
 
 # =============================================================================
 class MRCMSCaseEventDateAxes:

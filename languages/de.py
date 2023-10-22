@@ -1175,6 +1175,7 @@
 'Consultant in charge': 'Zuständiger Berater',
 'Consultant': 'Berater',
 'Consultation': 'Beratung',
+'Counseling': 'Beratung',
 'Consumable': 'Verbrauchsartikel',
 'Contact Data': 'Kontaktdaten',
 'Contact Description': 'Kontaktbeschreibung',

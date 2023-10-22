@@ -703,9 +703,11 @@ class S3NavigationItem:
         if not c and self.parent is None:
             return 1
 
+        # Additional preference score
+        preference = 0
+
         rvars = request.get_vars
-        controller = request.controller
-        function = request.function
+        rcontroller = controller = request.controller
 
         # Handle "viewing" (foreign controller in a tab)
         # NOTE: this tries to match the item against the resource name
@@ -723,6 +725,10 @@ class S3NavigationItem:
         # Controller
         if controller == c or controller in mc:
             level = 1
+        if rcontroller == c and controller in mc:
+            # Add preference score if both match
+            # e.g. custom rest controller with viewing-tab
+            preference += 1
 
         # Function
         if level == 1:
@@ -776,7 +782,7 @@ class S3NavigationItem:
                 level = 5
             level += extra
 
-        return level
+        return level + preference
 
     # -------------------------------------------------------------------------
     def branch(self, request=None):

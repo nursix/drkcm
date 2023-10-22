@@ -292,12 +292,32 @@ def person():
                 # Set defaults for inline responses
                 if settings.get_dvr_manage_response_actions():
                     s3db.dvr_set_response_action_defaults()
+                    # TODO filter response themes to org (if using inline responses)
+                    #      - either case-org-specific or case-org-sector-specific
+                    #      - if response themes are org-specific or sector-specific
+                    #      - if sector-specific check if orgs use sectors
+                    # TODO filter vulnerabilities to case
+                    #      - if linking response actions to vulnerabilities
+                    #      - maybe do not expose vulnerabilities in inline-responses?
+                    #        => too complex for a subform, maybe
+                    #      - or make inline responses read-only if using vulnerabilities
+
+                # Configure CRUD form
+                component.configure(crud_form=s3db.dvr_case_activity_form(r))
+
+                # TODO filter vulnerabilities to case
+                #      - if linking case activities to vulnerabilities
 
             elif component.tablename == "dvr_response_action":
 
                 # Set defaults
-                if settings.get_dvr_manage_response_actions():
-                    s3db.dvr_set_response_action_defaults()
+                s3db.dvr_set_response_action_defaults()
+
+                # TODO filter response themes to org
+                #      - either case-org-specific or case-org-sector-specific
+                #      - if response themes are org-specific or sector-specific
+                #      - if sector-specific check if orgs use sectors
+                # TODO filter vulnerabilities to case
 
             elif r.component_name == "allowance" and \
                  r.method in (None, "update"):
@@ -639,6 +659,9 @@ def case_activity():
         if settings.get_dvr_manage_response_actions():
             s3db.dvr_set_response_action_defaults()
 
+        # Configure form
+        resource.configure(crud_form=s3db.dvr_case_activity_form(r))
+
         # Set default person_id when creating from popup
         if r.method == "create" and \
            r.representation == "popup" and "person_id" not in r.post_vars:
@@ -658,6 +681,9 @@ def case_activity():
             query = (FS("person_id$dvr_case.archived") == False)
             resource.add_filter(query)
 
+            # TODO
+            # filter out case activities of closed cases
+
             # Mine-filter
             mine = r.get_vars.get("mine")
             if mine == "1":
@@ -673,7 +699,8 @@ def case_activity():
                     query = (FS("human_resource_id").belongs(set()))
                 resource.add_filter(query)
 
-        list_fields = ["case_id$reference",
+        # TODO only prepend person data to default list fields
+        list_fields = ["case_id$reference", # TODO use pe_label rather than case ref.no.
                        "person_id$first_name",
                        "person_id$last_name",
                        "need_id",
