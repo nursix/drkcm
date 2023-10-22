@@ -708,6 +708,7 @@ class S3NavigationItem:
 
         rvars = request.get_vars
         rcontroller = controller = request.controller
+        function = request.function
 
         # Handle "viewing" (foreign controller in a tab)
         # NOTE: this tries to match the item against the resource name
