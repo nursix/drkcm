@@ -198,8 +198,8 @@ class DVRCaseModel(DataModel):
 
         # Table configuration
         configure(tablename,
-                  # Allow imports to change the status code:
-                  deduplicate = S3Duplicate(primary = ("name",),
+                  deduplicate = S3Duplicate(primary = ("code",),
+                                            nomatch_require = ("name",),
                                             ignore_deleted = True,
                                             ),
                   onaccept = self.case_status_onaccept,
@@ -5596,7 +5596,9 @@ def dvr_case_status_filter_opts(closed=None):
         return {}
 
     T = current.T
-    return OrderedDict((row.id, T(row.name)) for row in rows)
+    t_ = lambda v: T(v) if isinstance(v, str) else "-"
+
+    return OrderedDict((row.id, t_(row.name)) for row in rows)
 
 # =============================================================================
 def dvr_case_activity_default_status():

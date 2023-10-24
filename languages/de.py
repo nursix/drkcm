@@ -200,7 +200,7 @@
 'Activity deleted': 'Aktivität gelöscht',
 'Activity updated': 'Aktivität aktualisiert',
 'Activity': 'Aktivität',
-'Actual allocable capacity is lower than the calculated allocable capacity!': 'Aktuelle belegbare Kapazität untersteigt die berechnete belegbare Kapazität!',
+'Actual allocable capacity is lower than the calculated allocable capacity!': 'Aktuelle belegbare Kapazität ist geringer als die berechnete belegbare Kapazität!',
 'Add Action': 'Maßnahme hinzufügen',
 'Add Activity Type': 'Aktivitätstyp hinzufügen',
 'Add Address': 'Adresse hinzufügen',

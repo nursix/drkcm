@@ -1051,7 +1051,8 @@ def get_filter_options(tablename,
 
         if translate:
             T = current.T
-            opts = odict((row[key], T(row[fieldname])) for row in rows)
+            t_ = lambda v: T(v) if isinstance(v, str) else "-"
+            opts = odict((row[key], t_(row[fieldname])) for row in rows)
         else:
             opts = odict((row[key], row[fieldname]) for row in rows)
         if none:

@@ -2735,6 +2735,7 @@ class S3Duplicate:
                  ignore_case = True,
                  ignore_deleted = False,
                  noupdate = False,
+                 nomatch_require = None,
                  ):
         """
             Args:
@@ -2747,6 +2748,10 @@ class S3Duplicate:
                 ignore_case: ignore case for string/text fields
                 ignore_deleted: do not match deleted records
                 noupdate: match, but do not update
+                nomatch_require: fields required for creation of new records,
+                                 i.e. items without these fields must match
+                                 an existing record, otherwise they will be
+                                 skipped
         """
 
         if not primary:
@@ -2761,6 +2766,8 @@ class S3Duplicate:
         self.ignore_case = ignore_case
         self.ignore_deleted = ignore_deleted
         self.noupdate = noupdate
+
+        self.nomatch_require = nomatch_require
 
     # -------------------------------------------------------------------------
     def __call__(self, item):
@@ -2825,6 +2832,15 @@ class S3Duplicate:
                 item.method = item.METHOD.UPDATE
             if self.noupdate:
                 item.skip = True
+
+        elif self.nomatch_require:
+            # No match found, sufficient data to create new record?
+            if any(k not in data for k in self.nomatch_require):
+                error = "Invalid reference"
+                item.accepted = False
+                item.error = error
+                if item.element is not None:
+                    item.element.set(current.xml.ATTRIBUTE["error"], error)
 
         # For uses outside of imports:
         return duplicate

@@ -192,7 +192,11 @@ class S3Represent:
 
         labels = self.labels
 
+        none = self.none
+
         translated = False
+        T = current.T
+        t_ = lambda v: none if v is None else v if type(v) is lazyT else T(v)
 
         if self.slabels:
             # String Template or lazyT
@@ -203,7 +207,6 @@ class S3Represent:
                 row_dict = row
 
             # Represent None as self.none
-            none = self.none
             for k, v in list(row_dict.items()):
                 if v is None:
                     row_dict[k] = none
@@ -222,18 +225,17 @@ class S3Represent:
                 # Multiple values => concatenate with separator
                 if self.translate:
                     # Translate items individually before concatenating
-                    T = current.T
-                    values = [T(v) if not type(v) is lazyT else v for v in values]
+                    values = [t_(v) for v in values]
                     translated = True
                 sep = self.field_sep
                 v = sep.join(s3_str(value) for value in values)
             elif values:
                 v = s3_str(values[0])
             else:
-                v = self.none
+                v = none
 
-        if not translated and self.translate and not type(v) is lazyT:
-            output = current.T(v)
+        if not translated and self.translate:
+            output = t_(v)
         else:
             output = v
 
