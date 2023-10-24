@@ -218,6 +218,7 @@ def config(settings):
                               cr_shelter_population_resource, \
                               cr_shelter_population_controller, \
                               cr_shelter_status_resource, \
+                              cr_reception_center_resource, \
                               cr_reception_center_controller, \
                               cr_reception_center_type_controller
 
@@ -227,6 +228,7 @@ def config(settings):
     settings.customise_cr_shelter_population_controller = cr_shelter_population_controller
     settings.customise_cr_shelter_status_resource = cr_shelter_status_resource
 
+    settings.customise_cr_reception_center_resource = cr_reception_center_resource
     settings.customise_cr_reception_center_controller = cr_reception_center_controller
     settings.customise_cr_reception_center_type_controller = cr_reception_center_type_controller
 

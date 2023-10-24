@@ -48,7 +48,7 @@ from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
                  s3_str, get_filter_options, \
                  LocationFilter, OptionsFilter, TextFilter
 
-COMPUTE_ALLOCABLE_CAPACITY = True
+COMPUTE_ALLOCABLE_CAPACITY = False
 
 # =============================================================================
 class CRReceptionCenterModel(DataModel):
@@ -74,6 +74,7 @@ class CRReceptionCenterModel(DataModel):
         population = FieldTemplate("population", "integer",
                                    default = 0,
                                    requires = IS_INT_IN_RANGE(0),
+                                   represent = lambda v, row=None: v if v != None else "-",
                                    )
 
         # ---------------------------------------------------------------------
@@ -173,8 +174,15 @@ class CRReceptionCenterModel(DataModel):
 
                      # Capacity
                      population("capacity",
-                                label = T("Maximum Capacity"),
+                                label = T("Capacity"),
                                 comment = T("The maximum (total) capacity as number of people"),
+                                ),
+                     population("allocable_capacity_estimate",
+                                # This is not a free estimate, but rather calculated
+                                # by quota - hence the label should say "calculated"
+                                # rather than "estimated":
+                                label = T("Calculated Allocable Capacity"),
+                                comment = T("Calculated total number of allocable places (by quota)"),
                                 ),
                      population("allocable_capacity",
                                 label = T("Allocable Capacity"),
@@ -299,6 +307,7 @@ class CRReceptionCenterModel(DataModel):
                                     "location_id",
                                     # ---- Capacity & Population ----
                                     "capacity",
+                                    "allocable_capacity_estimate",
                                     allocable_capacity,
                                     "population_registered",
                                     "population_unregistered",
@@ -407,8 +416,12 @@ class CRReceptionCenterModel(DataModel):
                      status(),
 
                      population("capacity",
-                                label = T("Maximum Capacity"),
+                                label = T("Capacity"),
                                 comment = T("The maximum (total) capacity as number of people"),
+                                ),
+                     population("allocable_capacity_estimate",
+                                label = T("Calculated Allocable Capacity"),
+                                comment = T("Calculated total number of allocable places (by quota)"),
                                 ),
                      population("allocable_capacity",
                                 label = T("Allocable Capacity"),
@@ -552,6 +565,7 @@ class CRReceptionCenterModel(DataModel):
                                           table.population_registered,
                                           table.population_unregistered,
                                           table.capacity,
+                                          table.allocable_capacity_estimate,
                                           table.allocable_capacity,
                                           table.free_capacity,
                                           table.free_allocable_capacity,
@@ -568,6 +582,10 @@ class CRReceptionCenterModel(DataModel):
         capacity = record.capacity
         free_capacity = max(0, capacity - total) if capacity else 0
         update["free_capacity"] = free_capacity
+
+        # Sanitize allocable_capacity_estimate
+        estimate = record.allocable_capacity_estimate
+        estimate = update["allocable_capacity_estimate"] = max(0, min(capacity, estimate))
 
         # Compute allocable capacity
         if COMPUTE_ALLOCABLE_CAPACITY:
@@ -588,6 +606,18 @@ class CRReceptionCenterModel(DataModel):
                 allocable_capacity = 0
             # Compute free allocable capacity
             free_allocable_capacity = max(0, allocable_capacity - total)
+
+        # Warn if actual allocable capacity is below estimate:
+        # => this means that the policy makers work with an unrealistic
+        #    estimate (i.e., too high), so the coordinating authority may
+        #    need to report and/or correct this discrepancy (small, transient
+        #    differences do not necessarily require action, however)
+        # => correcting actions could involve:
+        #    - optimizing capacity utilization (re-allocating places)
+        #    - correcting the (maximum) capacity to actual numbers
+        #    - adjusting the quota for estimate calculation
+        if allocable_capacity < estimate:
+            current.response.warning = current.T("Actual allocable capacity is lower than the calculated allocable capacity!")
 
         update["allocable_capacity"] = allocable_capacity
         update["free_allocable_capacity"] = free_allocable_capacity
@@ -629,6 +659,7 @@ class CRReceptionCenterModel(DataModel):
 
         status_fields = ("status",
                          "capacity",
+                         "allocable_capacity_estimate",
                          "allocable_capacity",
                          "population",
                          "population_registered",
@@ -771,6 +802,7 @@ class CapacityOverview(CRUDMethod):
         """
 
         T = current.T
+        auth = current.auth
 
         resource = self.resource
 
@@ -778,19 +810,33 @@ class CapacityOverview(CRUDMethod):
         resource.add_filter(FS("status").belongs(("OP", "SB")))
 
         # Fields to show (in order)
-        list_fields = [(T("Place"), "location_id$L3"),
-                       (T("Facility"), "name"),
-                       "status",
-                       "capacity",
-                       "allocable_capacity",
-                       "population",
-                       "population_unregistered",
-                       "free_capacity",
-                       "free_allocable_capacity",
-                       "comments",
-                       "occupancy_rate",
-                       "utilization_rate"
-                       ]
+        if auth.s3_has_roles(("AFA_COORDINATOR", "AFA_MANAGER")):
+            list_fields = [(T("Place"), "location_id$L3"),
+                           (T("Facility"), "name"),
+                           "status",
+                           "capacity",
+                           #"allocable_capacity_estimate",
+                           "allocable_capacity",
+                           "population",
+                           "population_unregistered",
+                           "free_capacity",
+                           "comments",
+                           "occupancy_rate",
+                           "utilization_rate",
+                           ]
+            if auth.s3_has_role("AFA_COORDINATOR"):
+                list_fields.insert(4, "allocable_capacity_estimate")
+        else:
+            list_fields = [(T("Place"), "location_id$L3"),
+                           (T("Facility"), "name"),
+                           "status",
+                           (T("Capacity"), "allocable_capacity_estimate"),
+                           "population",
+                           "population_unregistered",
+                           (T("Free Capacity"), "free_capacity_estimate"), # Custom
+                           "comments",
+                           (T("Occupancy %"), "occupancy_rate_estimate"), # Custom
+                           ]
 
         # Extract the data (least occupied facilities first)
         data = resource.select(list_fields + ["id", "location_id$L4"],
@@ -806,7 +852,7 @@ class CapacityOverview(CRUDMethod):
         rfields = data.rfields
 
         # Display columns
-        exclude = ("gis_location.L4",)
+        exclude = ("gis_location.L4")
         columns = [(rfield.colname, rfield.label)
                    for rfield in rfields
                    if rfield.show and rfield.ftype != "id" and rfield.colname not in exclude
@@ -817,9 +863,11 @@ class CapacityOverview(CRUDMethod):
 
         # Data rows
         capacity_fields = ["capacity",
+                           "allocable_capacity_estimate",
                            "allocable_capacity",
                            "population",
                            "population_unregistered",
+                           "free_capacity_estimate",
                            "free_capacity",
                            "free_allocable_capacity",
                            ]
@@ -850,23 +898,20 @@ class CapacityOverview(CRUDMethod):
                 display = [col[0] for col in columns]
             append(TR([TD(row[colname]) for colname in display]))
 
-        # Compute total utilization_rate/occupancy_rate
+        # Compute total utilization/occupancy rates
         population = totals["population"]
-        capacity = totals["capacity"]
-        if capacity > 0:
-            utilization_rate = population * 100 // capacity
-        else:
-            utilization_rate = 100
-        field = self.resource.table.utilization_rate
-        totals["utilization_rate"] = field.represent(utilization_rate)
-
-        allocable_capacity = totals["allocable_capacity"]
-        if allocable_capacity > 0:
-            occupancy_rate = population * 100 // allocable_capacity
-        else:
-            occupancy_rate = 100
-        field = self.resource.table.occupancy_rate
-        totals["occupancy_rate"] = field.represent(occupancy_rate)
+        rates = {"capacity": "utilization_rate",
+                 "allocable_capacity": "occupancy_rate",
+                 "allocable_capacity_estimate": "occupancy_rate_estimate",
+                 }
+        represent = CRReceptionCenterModel.occupancy_represent
+        for fname, rname in rates.items():
+            capacity = totals[fname]
+            if capacity > 0:
+                rate = population * 100 // capacity
+            else:
+                rate = 100
+            totals[rname] = represent(rate)
 
         # Footer with totals
         tr = TR()
@@ -875,7 +920,7 @@ class CapacityOverview(CRUDMethod):
             # Skip hidden and excluded fields
             if not rfield.show or rfield.ftype == "id" or rfield.colname in exclude:
                 continue
-            fn = rfield.field.name if rfield.field else None
+            fn = rfield.fname
             if fn in totals:
                 append(TD(totals[fn]))
             elif fn == "L3":
