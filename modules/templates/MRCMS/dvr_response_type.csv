@@ -5,3 +5,6 @@ Persönliches Gespräch,Folgegespräch,true,true,Follow-up Consultation
 Persönliches Gespräch,Folgegespräch mit Dolmetscher,false,true,Follow-up Consultation with Interpreter
 Sonstiger Kontakt,Sonstiger Kontakt mit Klient,false,false,Other Contact with Client
 Sonstiger Kontakt,Sonstiger Kontakt mit Umfeld,false,false,Other Contact
+Vulnerabilitäten,Meldebogen BAMF,false,false,Vulnerabilities reported to BAMF
+Vulnerabilitäten,Meldung an Aufnahmeeinrichtung,false,false,Vulnerabilities reported to reception facility
+Vulnerabilitäten,Weiterleitung an Beratungsstelle,false,false,Client referred to counsel

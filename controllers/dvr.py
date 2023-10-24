@@ -286,38 +286,52 @@ def person():
 
             elif component.tablename == "dvr_case_activity":
 
+                person_id = r.record.id
+                organisation_id = s3db.dvr_case_organisation(person_id)
+
                 # Set default status
                 s3db.dvr_case_activity_default_status()
 
-                # Set defaults for inline responses
+                if settings.get_dvr_vulnerabilities():
+                    # Limit selectable vulnerabilities to case
+                    s3db.dvr_configure_case_vulnerabilities(person_id)
+
                 if settings.get_dvr_manage_response_actions():
+
+                    # Set defaults for inline responses
                     s3db.dvr_set_response_action_defaults()
-                    # TODO filter response themes to org (if using inline responses)
-                    #      - either case-org-specific or case-org-sector-specific
-                    #      - if response themes are org-specific or sector-specific
-                    #      - if sector-specific check if orgs use sectors
-                    # TODO filter vulnerabilities to case
-                    #      - if linking response actions to vulnerabilities
-                    #      - maybe do not expose vulnerabilities in inline-responses?
-                    #        => too complex for a subform, maybe
-                    #      - or make inline responses read-only if using vulnerabilities
+
+                    # Limit selectable response themes to case organisation
+                    if settings.get_dvr_response_themes():
+                        s3db.dvr_configure_case_responses(organisation_id)
 
                 # Configure CRUD form
                 component.configure(crud_form=s3db.dvr_case_activity_form(r))
 
-                # TODO filter vulnerabilities to case
-                #      - if linking case activities to vulnerabilities
 
             elif component.tablename == "dvr_response_action":
+
+                person_id = r.record.id
+                organisation_id = s3db.dvr_case_organisation(person_id)
 
                 # Set defaults
                 s3db.dvr_set_response_action_defaults()
 
-                # TODO filter response themes to org
-                #      - either case-org-specific or case-org-sector-specific
-                #      - if response themes are org-specific or sector-specific
-                #      - if sector-specific check if orgs use sectors
-                # TODO filter vulnerabilities to case
+                if settings.get_dvr_vulnerabilities():
+                    # Limit selectable vulnerabilities to case
+                    s3db.dvr_configure_case_vulnerabilities(person_id)
+
+                # Limit selectable response themes to case organisation
+                if settings.get_dvr_response_themes():
+                    s3db.dvr_configure_case_responses(organisation_id)
+
+            elif component.tablename == "dvr_vulnerability":
+
+                person_id = r.record.id
+                organisation_id = s3db.dvr_case_organisation(person_id)
+
+                # Limit vulnerabilities by case organisation sectors
+                s3db.dvr_configure_vulnerability_types(organisation_id)
 
             elif r.component_name == "allowance" and \
                  r.method in (None, "update"):
@@ -681,8 +695,9 @@ def case_activity():
             query = (FS("person_id$dvr_case.archived") == False)
             resource.add_filter(query)
 
-            # TODO
-            # filter out case activities of closed cases
+            # Filter out case activities of closed cases
+            query = (FS("person_id$dvr_case.status_id$is_closed") == False)
+            resource.add_filter(query)
 
             # Mine-filter
             mine = r.get_vars.get("mine")
@@ -699,18 +714,12 @@ def case_activity():
                     query = (FS("human_resource_id").belongs(set()))
                 resource.add_filter(query)
 
-        # TODO only prepend person data to default list fields
-        list_fields = ["case_id$reference", # TODO use pe_label rather than case ref.no.
+        # Prepend person data to default list fields
+        list_fields = ["person_id$pe_label",
                        "person_id$first_name",
                        "person_id$last_name",
-                       "need_id",
-                       "need_details",
-                       "emergency",
-                       "activity_details",
-                       "followup",
-                       "followup_date",
-                       "status_id",
-                       ]
+                       ] + resource.get_config("list_fields", [])
+
         resource.configure(list_fields = list_fields,
                            insertable = False,
                            deletable = False,
@@ -728,13 +737,15 @@ def due_followups():
 
         resource = r.resource
 
-        # Set default statuses, determine status-field
+        # Set default statuses
         s3db.dvr_case_activity_default_status()
-        status_field = "status_id"
 
         # Set defaults for inline responses
         if settings.get_dvr_manage_response_actions():
             s3db.dvr_set_response_action_defaults()
+
+        # Configure form
+        resource.configure(crud_form=s3db.dvr_case_activity_form(r))
 
         # Adapt CRUD strings to perspective
         s3.crud_strings["dvr_case_activity"]["title_list"] = T("Activities to follow up")
@@ -746,6 +757,14 @@ def due_followups():
                     (FS("status_id$is_closed") == False) & \
                     ((FS("person_id$dvr_case.archived") == None) | \
                     (FS("person_id$dvr_case.archived") == False))
+            resource.add_filter(query)
+
+            # Filter out case activities of archived cases
+            query = (FS("person_id$dvr_case.archived") == False)
+            resource.add_filter(query)
+
+            # Filter out case activities of closed cases
+            query = (FS("person_id$dvr_case.status_id$is_closed") == False)
             resource.add_filter(query)
 
             # Mine-filter
@@ -766,13 +785,7 @@ def due_followups():
         list_fields = ["case_id$reference",
                        "person_id$first_name",
                        "person_id$last_name",
-                       "need_id",
-                       "need_details",
-                       "emergency",
-                       "activity_details",
-                       "followup_date",
-                       "status_id",
-                       ]
+                       ] + resource.get_config("list_fields", [])
 
         resource.configure(list_fields = list_fields,
                            insertable = False,

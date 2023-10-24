@@ -3677,6 +3677,13 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_flags_org_specific", False)
 
+    # Needs -----------------------------------------------
+    def get_dvr_need_types_org_specific(self):
+        """
+            Use org-specific need types
+        """
+        return self.__lazy("dvr", "need_types_org_specific", False)
+
     # Appointments ----------------------------------------
 
     def get_dvr_appointment_types_org_specific(self):
@@ -3911,6 +3918,13 @@ class S3Config(Storage):
             Use themes for response actions
         """
         return self.__lazy("dvr", "response_themes", default=False)
+
+    def get_dvr_response_vulnerabilities(self):
+        """
+            Link response actions to vulnerabilities addressed
+        """
+        default = self.get_dvr_vulnerabilities()
+        return self.__lazy("dvr", "response_vulnerabilities", default)
 
     def get_dvr_response_themes_org_specific(self):
         """

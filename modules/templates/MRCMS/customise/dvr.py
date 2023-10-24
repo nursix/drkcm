@@ -771,7 +771,11 @@ def dvr_site_activity_resource(r, tablename):
 
 # =============================================================================
 def dvr_person_prep(r):
-    # TODO docstring
+    """
+        Prep-function for dvr/counsel person controller, replaces
+        standard dvr/person prep so that it can be called from both
+        dvr and counsel controllers
+    """
     # TODO integrate in pr_person_controller?
 
     T = current.T
@@ -876,20 +880,51 @@ def dvr_person_prep(r):
 
         elif component.tablename == "dvr_case_activity":
 
+            person_id = r.record.id
+            organisation_id = s3db.dvr_case_organisation(person_id)
+
             # Set default status
             s3db.dvr_case_activity_default_status()
 
-            # Set defaults for inline responses
+            if settings.get_dvr_vulnerabilities():
+                # Limit selectable vulnerabilities to case
+                s3db.dvr_configure_case_vulnerabilities(person_id)
+
             if settings.get_dvr_manage_response_actions():
+
+                # Set defaults for inline responses
                 s3db.dvr_set_response_action_defaults()
+
+                # Limit selectable response themes to case organisation
+                if settings.get_dvr_response_themes():
+                    s3db.dvr_configure_case_responses(organisation_id)
 
             # Configure CRUD form
             component.configure(crud_form=s3db.dvr_case_activity_form(r))
 
         elif component.tablename == "dvr_response_action":
 
+            person_id = r.record.id
+            organisation_id = s3db.dvr_case_organisation(person_id)
+
             # Set defaults
             s3db.dvr_set_response_action_defaults()
+
+            if settings.get_dvr_vulnerabilities():
+                # Limit selectable vulnerabilities to case
+                s3db.dvr_configure_case_vulnerabilities(person_id)
+
+            # Limit selectable response themes to case organisation
+            if settings.get_dvr_response_themes():
+                s3db.dvr_configure_case_responses(organisation_id)
+
+        elif component.tablename == "dvr_vulnerability":
+
+            person_id = r.record.id
+            organisation_id = s3db.dvr_case_organisation(person_id)
+
+            # Limit vulnerabilities by case organisation sectors
+            s3db.dvr_configure_vulnerability_types(organisation_id)
 
     return True
 

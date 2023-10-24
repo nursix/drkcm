@@ -28,7 +28,8 @@ def config(settings):
     settings.base.theme_config = "MRCMS"
     settings.base.theme_layouts = "MRCMS"
 
-    settings.base.rest_controllers = {("counsel", "person"): ("pr", "person"),
+    settings.base.rest_controllers = {("counsel", "index"): None,
+                                      ("counsel", "person"): ("pr", "person"),
                                       ("counsel", "group_membership"): ("pr", "group_membership"),
                                       }
 
@@ -168,6 +169,17 @@ def config(settings):
     settings.customise_cms_post_controller = cms_post_controller
 
     # -------------------------------------------------------------------------
+    def counsel_home():
+
+        for item in ("error", "warning", "confirmation"):
+            current.session[item] = current.response.get(item)
+
+        from gluon import redirect, URL
+        redirect(URL(c="counsel", f="person"))
+
+    settings.customise_counsel_home = counsel_home
+
+    # -------------------------------------------------------------------------
     # CR Settings
     #
     settings.cr.shelter_population_dynamic = True
@@ -232,9 +244,11 @@ def config(settings):
     # Appointments update case status when completed
     settings.dvr.appointments_update_case_status = True
 
+    # Register vulnerabilities in case files
+    settings.dvr.vulnerabilities = True
+
     # Which subject type to use for case activities (subject|need|both)
     settings.dvr.case_activity_subject_type = "need"
-
     # Allow marking case activities as emergencies
     settings.dvr.case_activity_emergency = True
     # Disable recording of free-text need details
@@ -249,7 +263,6 @@ def config(settings):
     #settings.dvr.case_activity_outcome = True
     # Enable/disable recording of improvement level in case activities
     settings.dvr.case_activity_achievement = False
-
     # Disable follow-up fields in case activities
     settings.dvr.case_activity_follow_up = False
     # Allow uploading of documents in individual case activities
@@ -271,6 +284,8 @@ def config(settings):
     settings.dvr.response_themes_org_specific = False
     # Use response types
     settings.dvr.response_types = True
+    # Link response actions to vulnerabilities addressed
+    #settings.dvr.response_vulnerabilities = True
     # Response types hierarchical
     settings.dvr.response_types_hierarchical = True
     # Response themes organized by sectors
@@ -340,16 +355,10 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Organisations Module Settings
     #
-    # TODO default organisation is the user organisation
-    #      - if org group admin, then all orgs the user can update
-    #      - if org admin, then all orgs the user can update
-    #      - the organisation the user has the staff role for
-    #settings.org.default_organisation = "Johanniter-Unfall-Hilfe"
-    #settings.org.default_site = "Erstaufnahme Mannheim"
-
     from .customise.org import site_presence_validate_id
 
     settings.org.branches = False
+    settings.org.sector = True
     settings.org.site_presence_site_types = ("cr_shelter",)
     settings.org.site_presence_qrcode = (r"(?<code>[A-Z]{3}\d+)##.*##.*", None) #,"code")
     settings.org.site_presence_validate_id = site_presence_validate_id

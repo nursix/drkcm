@@ -4634,8 +4634,9 @@ Please go to %(url)s to approve this user."""
                 pass
             else:
                 row = current.db(query).select(htable.id,
-                                               orderby = ~htable.modified_on,
+                                               cache = s3db.cache,
                                                limitby = (0, 1),
+                                               orderby = ~htable.modified_on,
                                                ).first()
 
         return row.id if row else None
