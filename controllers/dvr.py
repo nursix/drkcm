@@ -333,6 +333,10 @@ def person():
                 # Limit vulnerabilities by case organisation sectors
                 s3db.dvr_configure_vulnerability_types(organisation_id)
 
+                # Set default human_resource_id
+                field = component.table.human_resource_id
+                field.default = current.auth.s3_logged_in_human_resource()
+
             elif r.component_name == "allowance" and \
                  r.method in (None, "update"):
 

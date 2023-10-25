@@ -65,7 +65,7 @@ from functools import reduce
 from io import BytesIO
 from uuid import uuid4
 
-from gluon import current, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, IS_IN_SET, \
+from gluon import current, DIV, IS_FLOAT_IN_RANGE, IS_INT_IN_RANGE, IS_IN_SET, \
                   IS_MATCH, IS_NOT_IN_DB
 from gluon.storage import Storage
 from gluon.validators import Validator, ValidationError
@@ -644,6 +644,27 @@ class IS_HTML_COLOUR(IS_MATCH):
         IS_MATCH.__init__(self, "^[0-9a-fA-F]{6}$",
                           error_message = error_message,
                           )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def represent(value, row=None):
+        """
+            Represent a HTML color
+
+            Args:
+                value: the color value as 6-digit hex code, or None
+                row: unused, for compatibility
+            Returns:
+                DIV
+        """
+
+        if value:
+            value = DIV(str(value),
+                        _class = "color-represent",
+                        # TODO move padding into theme
+                        _style = "background-color:#%s;padding:0 5px;" % value,
+                        )
+        return value
 
 # =============================================================================
 REGEX1 = re.compile(r"[\w_]+\.[\w_]+")

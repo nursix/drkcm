@@ -14,6 +14,10 @@ from .helpers import hr_details
 def dvr_rheader(r, tabs=None):
     """ Custom resource headers for DVR module """
 
+    auth = current.auth
+    has_permission = auth.s3_has_permission
+    accessible_url = auth.permission.accessible_url
+
     if r.representation != "html":
         # Resource headers only used in interactive views
         return None
@@ -98,6 +102,8 @@ def dvr_rheader(r, tabs=None):
                                         "dvr_case.last_seen_on",
                                         "first_name",
                                         "last_name",
+                                        "person_details.nationality",
+                                        "shelter_registration.shelter_id",
                                         "shelter_registration.shelter_unit_id",
                                         #"absence",
                                         ],
@@ -108,13 +114,31 @@ def dvr_rheader(r, tabs=None):
                 if case:
                     # Extract case data
                     case = case[0]
-                    archived = case["_row"]["dvr_case.archived"]
+                    raw = case["_row"]
+
+                    nationality_label = case["pr_person_details.nationality"]
+                    nationality = lambda row: SPAN(raw["pr_person_details.nationality"],
+                                                   _title = nationality_label,
+                                                   _style = "cursor:pointer",
+                                                   )
+
                     case_status = lambda row: case["dvr_case.status_id"]
                     household_size = lambda row: case["dvr_case.household_size"]
+
+                    # Represent shelter as link to shelter overview, if permitted
+                    shelter_id = raw["cr_shelter_registration.shelter_id"]
+                    shelter_url = accessible_url(c="cr", f="shelter", args=[shelter_id, "overview"])
+                    shelter_name = case["cr_shelter_registration.shelter_id"]
+                    if shelter_url:
+                        shelter = lambda row: A(shelter_name, _href=shelter_url)
+                    else:
+                        shelter = lambda row: shelter_name
+
+                    unit = lambda row: case["cr_shelter_registration.shelter_unit_id"]
                     last_seen_on = lambda row: case["dvr_case.last_seen_on"]
-                    shelter = lambda row: case["cr_shelter_registration.shelter_unit_id"]
+
+                    # TODO reinstate when fixed
                     #absence = lambda row: case["pr_person.absence"]
-                    #transferable = lambda row: case["dvr_case.transferable"]
                 else:
                     # Target record exists, but doesn't match filters
                     return None
@@ -126,18 +150,17 @@ def dvr_rheader(r, tabs=None):
                                    (T("Case Status"), case_status),
                                    (T("Shelter"), shelter),
                                    ],
-                                  #[("", None),
-                                  # ("", None),
-                                  # (T("Absent##presence"), absence),
-                                  # ],
                                   ["date_of_birth",
                                    (T("Size of Family"), household_size),
+                                   (T("Housing Unit"), unit),
+                                   ],
+                                  [(T("Nationality"), nationality),
+                                   ("", None), #(T("Absent##presence"), absence),
                                    (T("Last seen on"), last_seen_on),
                                    ],
                                   ]
 
-                has_permission = current.auth.s3_has_permission
-                if archived:
+                if raw["dvr_case.archived"]:
                     rheader_fields.insert(0, [(None, hint)])
 
                 # Link to switch case file perspective

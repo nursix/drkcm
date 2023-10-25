@@ -1612,17 +1612,26 @@ class DVRResponseModel(DataModel):
                      Field("is_default", "boolean",
                            default = False,
                            label = T("Default Initial Status"),
+                           represent = BooleanRepresent(),
                            ),
                      Field("is_closed", "boolean",
                            default = False,
                            label = T("Closes Response Action"),
+                           represent = BooleanRepresent(),
+                           ),
+                     Field("is_canceled", "boolean",
+                           default = False,
+                           label = T("Indicates Cancelation"),
+                           represent = BooleanRepresent(),
                            ),
                      Field("is_default_closure", "boolean",
                            default = False,
                            label = T("Default Closure Status"),
+                           represent = BooleanRepresent(),
                            ),
                      Field("color",
                            requires = IS_HTML_COLOUR(),
+                           represent = IS_HTML_COLOUR.represent,
                            widget = S3ColorPickerWidget(),
                            ),
                      CommentsField(),
@@ -1896,6 +1905,7 @@ class DVRResponseModel(DataModel):
                   filter_widgets = filter_widgets,
                   list_fields = list_fields,
                   onaccept = self.response_action_onaccept,
+                  ondelete = self.response_action_ondelete,
                   orderby = "%s.start_date desc" % tablename,
                   )
 
@@ -2046,6 +2056,10 @@ class DVRResponseModel(DataModel):
             query = (table.is_default_closure == True) & \
                     (table.id != record_id)
             db(query).update(is_default_closure = False)
+
+        # If this status means canceled, then enforce is_closed
+        if form_vars.get("is_canceled"):
+            db(table.id == record_id).update(is_closed = True)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2200,8 +2214,11 @@ class DVRResponseModel(DataModel):
     def response_action_onaccept(cls, form):
         """
             Onaccept routine for response actions
+                - inherit the person ID from case activity if created inline
+                - link to case activity if created on person tab and
+                  configured for autolink
                 - update theme links from inline response_theme_ids
-                - link to case activity if required
+                - update last-seen-on
         """
 
         form_vars = form.vars
@@ -2354,6 +2371,21 @@ class DVRResponseModel(DataModel):
 
         elif end_date:
             record.update_record(end_date = None)
+
+        # Update last-seen-on
+        dvr_update_last_seen(record.person_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def response_action_ondelete(row):
+        """
+            Ondelete of response action:
+                - update last-seen-on
+        """
+
+        person_id = row.person_id
+        if person_id:
+            dvr_update_last_seen(person_id)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -3022,19 +3054,34 @@ class DVRCaseActivityModel(DataModel):
                   )
 
         # CRUD Strings
-        # TODO re-label as needs if managing response actions
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Activity"),
-            title_display = T("Activity Details"),
-            title_list = T("Activities"),
-            title_update = T("Edit Activity"),
-            label_list_button = T("List Activities"),
-            label_delete_button = T("Delete Activity"),
-            msg_record_created = T("Activity added"),
-            msg_record_modified = T("Activity updated"),
-            msg_record_deleted = T("Activity deleted"),
-            msg_list_empty = T("No Activities currently registered"),
-            )
+        if settings.get_dvr_manage_response_actions():
+            # Case activities represent needs, responses are separate
+            crud_strings[tablename] = Storage(
+                label_create = T("Add Need"),
+                title_display = T("Need Details"),
+                title_list = T("Needs"),
+                title_update = T("Edit Need"),
+                label_list_button = T("List Needs"),
+                label_delete_button = T("Delete Need"),
+                msg_record_created = T("Need added"),
+                msg_record_modified = T("Need updated"),
+                msg_record_deleted = T("Need deleted"),
+                msg_list_empty = T("No Needs currently registered"),
+                )
+        else:
+            # Case activites represent both needs and responses
+            crud_strings[tablename] = Storage(
+                label_create = T("Create Activity"),
+                title_display = T("Activity Details"),
+                title_list = T("Activities"),
+                title_update = T("Edit Activity"),
+                label_list_button = T("List Activities"),
+                label_delete_button = T("Delete Activity"),
+                msg_record_created = T("Activity added"),
+                msg_record_modified = T("Activity updated"),
+                msg_record_deleted = T("Activity deleted"),
+                msg_list_empty = T("No Activities currently registered"),
+                )
 
         # Reusable field
         represent = dvr_CaseActivityRepresent(show_link=True)
@@ -5378,6 +5425,7 @@ def dvr_case_organisation(person_id):
     rows = db(query).select(ctable.id,
                             ctable.organisation_id,
                             stable.is_closed,
+                            left = left,
                             orderby = ~ctable.date,
                             )
     case = None
@@ -9255,6 +9303,7 @@ def dvr_update_last_seen(person_id):
 
     db = current.db
     s3db = current.s3db
+    settings = current.deployment_settings
 
     now = current.request.utcnow
     last_seen_on = None
@@ -9283,6 +9332,29 @@ def dvr_update_last_seen(person_id):
     if event:
         last_seen_on = event.date
 
+    if settings.get_dvr_response_types() and settings.get_dvr_response_use_time():
+        # Check consultations for newer entries
+        rtable = s3db.dvr_response_action
+        ttable = s3db.dvr_response_type
+        stable = s3db.dvr_response_status
+        join = [ttable.on((ttable.id == rtable.response_type_id) & \
+                          (ttable.is_consultation == True)),
+                stable.on((stable.id == rtable.status_id) & \
+                          (stable.is_closed == True) & \
+                          (stable.is_canceled == False))
+                ]
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        if last_seen_on is not None:
+            query &= rtable.start_date > last_seen_on
+        entry = db(query).select(rtable.start_date,
+                                 join = join,
+                                 limitby = (0, 1),
+                                 orderby = ~rtable.start_date,
+                                 ).first()
+        if entry:
+            last_seen_on = entry.start_date
+
     # Check site presence events for newer entries
     etable = s3db.org_site_presence_event
     query = (etable.person_id == person_id) & \
@@ -9297,8 +9369,6 @@ def dvr_update_last_seen(person_id):
                              ).first()
     if entry:
         last_seen_on = entry.date
-
-    settings = current.deployment_settings
 
     # Case appointments to update last_seen_on?
     if settings.get_dvr_appointments_update_last_seen_on():

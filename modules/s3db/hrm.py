@@ -6029,16 +6029,18 @@ class hrm_AssignMethod(CRUDMethod):
 class hrm_HumanResourceRepresent(S3Represent):
     """ Representation of human resource IDs """
 
-    def __init__(self, show_link=False):
+    def __init__(self, show_link=False, show_title=True):
         """
             Args:
                 show_link: whether to add a URL to representations
+                show_title: show job title if available
         """
 
         super(hrm_HumanResourceRepresent, self).__init__(
                                         lookup = "hrm_human_resource",
                                         show_link = show_link)
 
+        self.show_title = show_title
         self.job_title_represent = S3Represent(lookup = "hrm_job_title")
         self.types = {}
 
@@ -6100,10 +6102,11 @@ class hrm_HumanResourceRepresent(S3Represent):
             types[row["hrm_human_resource.id"]] = row["hrm_human_resource.type"]
 
         # Bulk-represent job_title_ids
-        job_title_id = str(htable.job_title_id)
-        job_title_ids = [row[job_title_id] for row in rows]
-        if job_title_ids:
-            self.job_title_represent.bulk(job_title_ids)
+        if self.show_title:
+            job_title_id = str(htable.job_title_id)
+            job_title_ids = [row[job_title_id] for row in rows]
+            if job_title_ids:
+                self.job_title_represent.bulk(job_title_ids)
 
         # Bulk-represent organisation_ids
         if current.deployment_settings.get_hrm_show_organisation():
@@ -6130,7 +6133,7 @@ class hrm_HumanResourceRepresent(S3Represent):
         hr = row.hrm_human_resource
 
         # Append the job title if present
-        if hr.job_title_id:
+        if self.show_title and hr.job_title_id:
             append(self.job_title_represent(hr.job_title_id, show_link=False))
 
         # Append the organisation if present (and configured)

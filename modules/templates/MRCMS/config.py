@@ -126,6 +126,7 @@ def config(settings):
     # General UI settings
     #
     settings.ui.calendar_clear_icon = True
+    settings.ui.auth_user_represent = "name"
 
     # -------------------------------------------------------------------------
     # AUTH Settings

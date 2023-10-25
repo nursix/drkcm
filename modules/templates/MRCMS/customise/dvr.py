@@ -188,21 +188,15 @@ def dvr_note_resource(r, tablename):
 # -------------------------------------------------------------------------
 def dvr_case_activity_resource(r, tablename):
 
-    # CRUD Strings
-    # TODO this should happen by default when managing responses
     T = current.T
-    current.response.s3.crud_strings["dvr_case_activity"] = Storage(
-        label_create = T("Add Need"),
-        title_display = T("Need Details"),
-        title_list = T("Needs"),
-        title_update = T("Edit Need"),
-        label_list_button = T("List Needs"),
-        label_delete_button = T("Delete Need"),
-        msg_record_created = T("Need added"),
-        msg_record_modified = T("Need updated"),
-        msg_record_deleted = T("Need deleted"),
-        msg_list_empty = T("No Needs currently registered"),
-        )
+
+    table = current.s3db.dvr_case_activity
+
+    # Set default human_resource_id, alter label
+    field = table.human_resource_id
+    field.default = current.auth.s3_logged_in_human_resource()
+    field.label = T("Registered by")
+    field.widget = None # use standard drop-down
 
 # -------------------------------------------------------------------------
 def dvr_case_activity_controller(**attr):
@@ -925,6 +919,10 @@ def dvr_person_prep(r):
 
             # Limit vulnerabilities by case organisation sectors
             s3db.dvr_configure_vulnerability_types(organisation_id)
+
+            # Set default human_resource_id
+            field = component.table.human_resource_id
+            field.default = current.auth.s3_logged_in_human_resource()
 
     return True
 

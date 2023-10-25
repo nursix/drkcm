@@ -788,7 +788,7 @@ class CRShelterUnitModel(DataModel):
                            represent = s3_yes_no_represent,
                            comment = DIV(_class="tooltip",
                                          _title="%s|%s" % (T("Transitory Accommodation"),
-                                                           T("This unit is for transitory accommodation upon arrival."),
+                                                           T("This unit is for transitory accommodation upon arrival, or buffer in case of capacity excess"),
                                                            ),
                                          ),
                            # Enable in template as required:
@@ -2299,6 +2299,8 @@ class Shelter:
             stable = s3db.cr_shelter
             db(stable.id == shelter_id).update(capacity = capacity,
                                                blocked_capacity = blocked_capacity,
+                                               modified_by = stable.modified_by,
+                                               modified_on = stable.modified_on,
                                                )
             self.update_available_capacity()
             self.update_status()
@@ -2393,6 +2395,8 @@ class Shelter:
             pass
 
         if update:
+            update["modified_by"] = table.modified_by
+            update["modified_on"] = table.modified_on
             db(table.id == shelter_id).update(**update)
 
         if update_status:
@@ -2459,6 +2463,8 @@ class Shelter:
             update["available_capacity"] = available_capacity
 
         if update:
+            update["modified_by"] = table.modified_by
+            update["modified_on"] = table.modified_on
             shelter.update_record(**update)
 
 # -----------------------------------------------------------------------------
@@ -2545,6 +2551,8 @@ class HousingUnit:
         if available_capacity != unit.available_capacity:
             update["available_capacity"] = available_capacity
         if update:
+            update["modified_by"] = table.modified_by
+            update["modified_on"] = table.modified_on
             unit.update_record(**update)
 
 # =============================================================================

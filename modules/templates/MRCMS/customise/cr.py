@@ -486,6 +486,7 @@ def cr_shelter_unit_resource(r, tablename):
     field.readable = field.writable = False
 
     field = table.transitory
+    field.label = T("Staging Area")
     field.readable = field.writable = True
 
     table.occupancy = s3_fieldmethod("occupancy",
@@ -495,6 +496,7 @@ def cr_shelter_unit_resource(r, tablename):
 
     list_fields = [(T("Name"), "name"),
                    "transitory",
+                   "status",
                    "capacity",
                    "population",
                    "blocked_capacity",
@@ -534,16 +536,25 @@ def shelter_unit_occupancy(row):
     if population is None:
         population = 0
 
-    # Blocked capacity
+    # Blocked capacity cannot exceed total capacity
     blocked_capacity = min(total_capacity, blocked_capacity)
 
     # Available capacity
     available = total_capacity - blocked_capacity
     if available < population:
+        # Population over available capacity:
+        # - ignore any blocked capacity that is actually occupied
         available = min(total_capacity, population)
 
-    import math
-    return math.ceil(population / available * 100)
+    if not available:
+        # A unit with no available capacity is full if, and only if,
+        # it is occupied - otherwise it is (in fact) empty
+        return 100 if population else 0
+    else:
+        # Compute occupancy rate, use floor-rounding so the rate is
+        # still indicative of even small free capacity (=show 100%
+        # only once it is actually reached, not by rounding)
+        return (population * 100 // available)
 
 # -------------------------------------------------------------------------
 def occupancy_represent(value):
