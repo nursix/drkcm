@@ -4747,7 +4747,7 @@ class DVRVulnerabilityModel(DataModel):
                            label = T("Vulnerability Type"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
-                     Field("code", length=64,
+                     Field("code", length=64, unique=True,
                            label = T("Code"),
                            represent = lambda v, row=None: v if v else "",
                            requires = IS_EMPTY_OR([
