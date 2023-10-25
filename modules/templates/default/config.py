@@ -1368,6 +1368,11 @@ def config(settings):
         #    #description = "Tracks the location, capacity and breakdown of victims in Shelters",
         #    module_type = 10
         #)),
+        #("dvr", Storage(
+        #    name_nice = T("Beneficiary Registry"),
+        #    #description = "Disaster Victim Registry",
+        #    module_type = 10
+        #)),
         #("hms", Storage(
         #    name_nice = T("Hospitals"),
         #    #description = "Helps to monitor status of hospitals",
@@ -1416,12 +1421,6 @@ def config(settings):
         #   name_nice = T("Security"),
         #   #description = "Security Management System",
         #   module_type = 10,
-        #)),
-        # Deprecated: Replaced by BR
-        #("dvr", Storage(
-        #    name_nice = T("Beneficiary Registry"),
-        #    #description = "Disaster Victim Registry",
-        #    module_type = 10
         #)),
         # Deprecated: Replaced by event
         #("irs", Storage(

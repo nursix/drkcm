@@ -708,12 +708,6 @@ class S3OptionsMenu:
                     M("Need Types", f="need")(
                       M("Create", m="create"),
                     ),
-                    M("Housing Types", f="housing_type")(
-                      M("Create", m="create"),
-                    ),
-                    M("Income Sources", f="income_source")(
-                      M("Create", m="create"),
-                    ),
                 )
 
     # -------------------------------------------------------------------------

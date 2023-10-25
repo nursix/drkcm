@@ -331,6 +331,7 @@ class DVRCaseModel(DataModel):
                      self.org_organisation_id(
                             default = default_organisation,
                             empty = False,
+                            comment = None,
                             readable = not default_organisation,
                             writable = not default_organisation,
                             ),
@@ -9386,24 +9387,12 @@ def dvr_rheader(r, tabs=None):
 
             if not tabs:
                 tabs = [(T("Basic Details"), None),
-                        (T("Activities"), "case_activity"),
                         (T("Identity"), "identity"),
+                        (T("Activities"), "case_activity"),
                         ]
 
-            case = resource.select(["dvr_case.reference",
-                                    ],
-                                    represent = True,
-                                    ).rows
-            if case:
-                case = case[0]
-                case_number = lambda row: case["dvr_case.reference"]
-                name = s3_fullname
-            else:
-                # Target record exists, but doesn't match filters
-                return None
-
-            rheader_fields = [[(T("Case Number"), case_number)],
-                              [(T("Name"), name)],
+            rheader_fields = [[(T("ID"), "pe_label")],
+                              [(T("Name"), s3_fullname)],
                               ["date_of_birth"],
                               ]
 

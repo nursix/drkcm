@@ -1,6 +1,6 @@
 uid,role,description,hidden,controller,function,table,uacl,oacl,entity
-AFA_COORDINATOR,Afa Coordinator,,,cr,reception_center,,READ|UPDATE,,any
-AFA_COORDINATOR,Afa Coordinator,,,,,cr_reception_center,READ|UPDATE,,any
+AFA_COORDINATOR,AfA Coordinator,,,cr,reception_center,,READ|UPDATE,,any
+AFA_COORDINATOR,AfA Coordinator,,,,,cr_reception_center,READ|UPDATE,,any
 AFA_MANAGER,AfA Shelter Manager,,,cr,reception_center,,CREATE|READ|UPDATE|DELETE,,
 AFA_MANAGER,AfA Shelter Manager,,,cr,reception_center_status,,READ,,
 AFA_MANAGER,AfA Shelter Manager,,,cr,,,READ,,
