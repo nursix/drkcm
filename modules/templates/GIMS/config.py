@@ -177,6 +177,9 @@ def config(settings):
                                       "SHELTER_MANAGER": "SHELTER_MANAGER",
                                       "SHELTER_READER": "SHELTER_READER",
                                       "NEWSLETTER_AUTHOR": "NEWSLETTER_AUTHOR",
+                                      "AFA_COORDINATOR": "AFA_COORDINATOR",
+                                      "AFA_MANAGER": "AFA_MANAGER",
+                                      "AFA_READER": "AFA_READER",
                                       }
 
     from .customise.auth import realm_entity, \
