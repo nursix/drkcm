@@ -560,7 +560,7 @@ class HRModel(DataModel):
                                   filterby="type",
                                   filter_opts=(1,)
                                   ))
-            widget = S3HumanResourceAutocompleteWidget(group="staff")
+            #widget = S3HumanResourceAutocompleteWidget(group="staff")
         elif group == "volunteer":
             label = T("Volunteer")
             crud_strings[tablename] = crud_strings["hrm_volunteer"]
@@ -571,7 +571,7 @@ class HRModel(DataModel):
                                   filterby = "type",
                                   filter_opts = (2,)
                                   ))
-            widget = S3HumanResourceAutocompleteWidget(group="volunteer")
+            #widget = S3HumanResourceAutocompleteWidget(group="volunteer")
         else:
             label = T("Human Resource")
             requires = IS_EMPTY_OR(
@@ -579,7 +579,7 @@ class HRModel(DataModel):
                                   hrm_human_resource_represent,
                                   sort = True
                                   ))
-            widget = S3HumanResourceAutocompleteWidget()
+            #widget = S3HumanResourceAutocompleteWidget()
             if contacts:
                 crud_strings[tablename] = crud_strings["hrm_staff"]
             else:
@@ -596,14 +596,14 @@ class HRModel(DataModel):
                     msg_record_deleted = T("Record deleted"),
                     msg_list_empty = T("No staff or volunteers currently registered"))
 
-        comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-                              f = group or "staff",
-                              vars = {"child": "human_resource_id"},
-                              label = crud_strings["hrm_%s" % group].label_create if group else \
-                                      crud_strings[tablename].label_create,
-                              title = label,
-                              tooltip = AUTOCOMPLETE_HELP,
-                              )
+        #comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
+        #                      f = group or "staff",
+        #                      vars = {"child": "human_resource_id"},
+        #                      label = crud_strings["hrm_%s" % group].label_create if group else \
+        #                              crud_strings[tablename].label_create,
+        #                      title = label,
+        #                      tooltip = AUTOCOMPLETE_HELP,
+        #                      )
 
         human_resource_id = FieldTemplate("human_resource_id", "reference %s" % tablename,
                                           label = label,
@@ -611,8 +611,8 @@ class HRModel(DataModel):
                                           represent = hrm_human_resource_represent,
                                           requires = requires,
                                           sortby = ["type", "status"],
-                                          widget = widget,
-                                          comment = comment,
+                                          #widget = widget,
+                                          #comment = comment,
                                           )
 
         # Custom Method for S3HumanResourceAutocompleteWidget and PersonSelector
@@ -1678,9 +1678,7 @@ class hrm_OrgSpecificTypeRepresent(S3Represent):
             raise SyntaxError("must specify a lookup table")
 
         fields = ("name", "organisation_id")
-        super(hrm_OrgSpecificTypeRepresent, self).__init__(lookup = lookup,
-                                                           fields = fields,
-                                                           )
+        super().__init__(lookup=lookup, fields=fields)
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -5651,7 +5649,7 @@ class hrm_AssignMethod(CRUDMethod):
                 rheader: an rheader to show
         """
 
-        super(hrm_AssignMethod, self).__init__()
+        super().__init__()
 
         self.component = component
         self.next_tab = next_tab
@@ -6029,16 +6027,16 @@ class hrm_AssignMethod(CRUDMethod):
 class hrm_HumanResourceRepresent(S3Represent):
     """ Representation of human resource IDs """
 
-    def __init__(self, show_link=False, show_title=True):
+    def __init__(self, show_link=False, show_title=False):
         """
             Args:
                 show_link: whether to add a URL to representations
                 show_title: show job title if available
         """
 
-        super(hrm_HumanResourceRepresent, self).__init__(
-                                        lookup = "hrm_human_resource",
-                                        show_link = show_link)
+        super().__init__(lookup = "hrm_human_resource",
+                         show_link = show_link,
+                         )
 
         self.show_title = show_title
         self.job_title_represent = S3Represent(lookup = "hrm_job_title")
@@ -6154,7 +6152,7 @@ class hrm_TrainingRepresent(S3Represent):
 
     def __init__(self):
 
-        super(hrm_TrainingRepresent, self).__init__(lookup = "hrm_training")
+        super().__init__(lookup = "hrm_training")
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -9217,7 +9215,7 @@ class hrm_CV(CRUDMethod):
                       or a callable to produce such a widget config
         """
 
-        super(hrm_CV, self).__init__()
+        super().__init__()
 
         self.form = form
 
@@ -9636,7 +9634,7 @@ class hrm_Record(CRUDMethod):
                                   be a dict with overrides for widget defaults
         """
 
-        super(hrm_Record, self).__init__()
+        super().__init__()
 
         self.salary = salary
         self.awards = awards

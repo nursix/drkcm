@@ -353,6 +353,8 @@ class DVRCaseModel(DataModel):
                             ),
                      self.hrm_human_resource_id(
                             label = T("Assigned to"),
+                            comment = None,
+                            widget = None,
                             readable = False,
                             writable = False,
                             ),
@@ -2829,6 +2831,8 @@ class DVRCaseActivityModel(DataModel):
 
                      # Responsibilities (activate in template as needed)
                      human_resource_id(label = T("Assigned to"),
+                                       comment = None,
+                                       widget = None,
                                        readable = False,
                                        writable = False,
                                        ),
@@ -3369,6 +3373,7 @@ class DVRCaseEffortModel(DataModel):
                            ),
                      self.hrm_human_resource_id(
                          comment = None,
+                         widget = None,
                          ),
                      Field("hours", "double",
                            represent = lambda v: \
@@ -3628,8 +3633,10 @@ class DVRCaseAppointmentModel(DataModel):
                      DateField(label = T("Planned on"),
                                ),
                      # Activate in template as needed:
-                     self.hrm_human_resource_id(readable=False,
-                                                writable=False,
+                     self.hrm_human_resource_id(comment = None,
+                                                widget = None,
+                                                readable = False,
+                                                writable = False,
                                                 ),
                      Field("status", "integer",
                            default = 1, # Planning
@@ -4929,6 +4936,8 @@ class DVRVulnerabilityModel(DataModel):
                      # Enable in template as-required:
                      self.hrm_human_resource_id(
                          label = T("Established by"),
+                         comment = None,
+                         widget = None,
                          readable = False,
                          writable = False,
                          ),
