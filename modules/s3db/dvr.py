@@ -1433,6 +1433,8 @@ class DVRResponseModel(DataModel):
         configure = self.configure
 
         hierarchical_response_types = settings.get_dvr_response_types_hierarchical()
+
+        themes_per_org = settings.get_dvr_response_themes_org_specific()
         themes_sectors = settings.get_dvr_response_themes_sectors()
         themes_needs = settings.get_dvr_response_themes_needs()
 
@@ -1445,7 +1447,10 @@ class DVRResponseModel(DataModel):
         #
         tablename = "dvr_response_theme"
         define_table(tablename,
-                     self.org_organisation_id(),
+                     self.org_organisation_id(readable = themes_per_org,
+                                              writable = themes_per_org,
+                                              comment = None,
+                                              ),
                      Field("name",
                            label = T("Theme"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
@@ -1951,6 +1956,8 @@ class DVRResponseModel(DataModel):
                            represent = theme_represent,
                            requires = IS_ONE_OF(db, "dvr_response_theme.id",
                                                 theme_represent,
+                                                not_filterby = "obsolete",
+                                                not_filter_opts = (True,),
                                                 ),
                            ),
                      Field("hours", "double",

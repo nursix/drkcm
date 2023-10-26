@@ -31,6 +31,10 @@ def config(settings):
     settings.base.rest_controllers = {("counsel", "index"): None,
                                       ("counsel", "person"): ("pr", "person"),
                                       ("counsel", "group_membership"): ("pr", "group_membership"),
+                                      ("counsel", "need"): ("dvr", "need"),
+                                      ("counsel", "response_type"): ("dvr", "response_type"),
+                                      ("counsel", "response_theme"): ("dvr", "response_theme"),
+                                      ("counsel", "vulnerability_type"): ("dvr", "vulnerability_type"),
                                       }
 
     # Authentication settings

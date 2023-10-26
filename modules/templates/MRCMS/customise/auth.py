@@ -62,6 +62,7 @@ def realm_entity(table, row):
 
     elif tablename == "dvr_case_flag_case":
 
+        # Owned by the organisation defining the flag
         table = s3db.table(tablename)
         ftable = s3db.dvr_case_flag
         query = (table._id == row.id) & (ftable.id == table.flag_id)
@@ -74,6 +75,7 @@ def realm_entity(table, row):
 
     elif tablename == "dvr_case_appointment":
 
+        # Owned by the organisation defining the appointment type
         table = s3db.table(tablename)
         ttable = s3db.dvr_case_appointment_type
         query = (table._id == row.id) & (ttable.id == table.type_id)
@@ -86,6 +88,7 @@ def realm_entity(table, row):
 
     elif tablename == "dvr_case_event":
 
+        # Owned by the organisation defining the event type
         table = s3db.table(tablename)
         ttable = s3db.dvr_case_event_type
         query = (table._id == row.id) & (ttable.id == table.type_id)
@@ -102,6 +105,7 @@ def realm_entity(table, row):
                        "dvr_note",
                        "dvr_residence_status",
                        "dvr_response_action",
+                       "dvr_vulnerability",
                        "pr_group_membership",
                        "pr_identity",
                        "pr_person_details",
@@ -122,18 +126,16 @@ def realm_entity(table, row):
         table = s3db.table(tablename)
         realm_entity = person_realm_entity(table, row, key="pe_id", default=realm_entity)
 
-    elif tablename in ("dvr_case_activity_need",
-                       "dvr_case_activity_update",
+    elif tablename == "dvr_case_activity_update":
+        realm_entity = inherit_realm(tablename, row, "dvr_case_activity", "case_activity_id")
+
+    elif tablename == "dvr_response_action_theme":
+        realm_entity = inherit_realm(tablename, row, "dvr_response_action", "action_id")
+
+    elif tablename in ("dvr_vulnerability_case_activity",
+                       "dvr_vulnerability_response_action",
                        ):
-        # Inherit from case activity
-        table = s3db.table(tablename)
-        atable = s3db.dvr_case_activity
-        query = (table._id == row.id) & (atable.id == table.case_activity_id)
-        activity = db(query).select(atable.realm_entity,
-                                    limitby = (0, 1),
-                                    ).first()
-        if activity:
-            realm_entity = activity.realm_entity
+        realm_entity = inherit_realm(tablename, row, "dvr_vulnerability", "vulnerability_id")
 
     elif tablename == "pr_group":
          # No realm-entity for case groups
@@ -155,15 +157,16 @@ def realm_entity(table, row):
     #    pass
 
     elif tablename == "cr_shelter_unit":
-        # Inherit from shelter via shelter_id
-        table = s3db.table(tablename)
-        stable = s3db.cr_shelter
-        query = (table._id == row.id) & (stable.id == table.shelter_id)
-        shelter = db(query).select(stable.realm_entity,
-                                   limitby = (0, 1),
-                                   ).first()
-        if shelter:
-            realm_entity = shelter.realm_entity
+        realm_entity = inherit_realm(tablename, row, "cr_shelter", "shelter_id")
+
+    elif tablename in ("dvr_case_activity_status",
+                       "dvr_need",
+                       "dvr_response_status",
+                       "dvr_response_theme",
+                       "dvr_response_type",
+                       "dvr_vulnerability_type",
+                       ):
+        realm_entity = None
 
     #elif tablename in ("org_group",
     #                   "org_organisation",
@@ -254,6 +257,33 @@ def person_realm_entity(table, row, key="person_id", default=0):
                                       limitby = (0, 1),
                                       ).first()
     return person.realm_entity if person else default
+
+# -------------------------------------------------------------------------
+def inherit_realm(tablename, row, lookup, key):
+    """
+        Looks up the realm entity from a context record
+
+        Args:
+            tablename: the table name of the current record
+            row: the current record (Row)
+            lookup: the table name of the context entity
+            key: the foreign key in the current record referencing
+                 the context record
+        Returns:
+            pe_id
+    """
+
+    s3db = current.s3db
+    table = s3db.table(tablename)
+    lookup_table = s3db.table(lookup)
+
+    query = (table._id == row.id) & \
+            (lookup_table.id == table[key])
+    row = current.db(query).select(lookup_table.realm_entity,
+                                   limitby = (0, 1),
+                                   ).first()
+
+    return row.realm_entity if row else 0
 
 # -------------------------------------------------------------------------
 def auth_user_resource(r, tablename):
