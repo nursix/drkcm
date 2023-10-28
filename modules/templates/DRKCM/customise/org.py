@@ -19,10 +19,7 @@ def org_organisation_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         # Disable creation of new root orgs unless user is ORG_GROUP_ADMIN
         if r.method != "hierarchy" and \

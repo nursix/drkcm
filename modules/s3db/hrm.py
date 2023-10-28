@@ -6195,8 +6195,7 @@ class hrm_TrainingEventRepresent(S3Represent):
 
     def __init__(self):
 
-        super(hrm_TrainingEventRepresent, self).__init__(
-                                                lookup = "hrm_training_event")
+        super().__init__(lookup="hrm_training_event")
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None, pe_id=False):

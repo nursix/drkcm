@@ -111,24 +111,8 @@ def dvr_case_onaccept(form):
 
         set_realm_entity = current.auth.set_realm_entity
 
-        # Configure components to inherit realm_entity
-        # from the person record
-        s3db.configure("pr_person",
-                       realm_components = ("case_activity",
-                                           "case_details",
-                                           "dvr_flag",
-                                           "case_language",
-                                           "case_note",
-                                           "residence_status",
-                                           "address",
-                                           "contact",
-                                           "contact_emergency",
-                                           "group_membership",
-                                           "image",
-                                           "person_details",
-                                           "person_tag",
-                                           ),
-                       )
+        from .pr import pr_person_set_realm_components
+        pr_person_set_realm_components()
 
         # Force-update the realm entity for the person
         set_realm_entity("pr_person", person_id, force_update=True)
@@ -138,7 +122,6 @@ def dvr_case_onaccept(form):
         s3db.configure("dvr_case_activity",
                        realm_components = ("case_activity_need",
                                            "case_activity_update",
-                                           "response_action",
                                            ),
                        )
 
@@ -1032,10 +1015,7 @@ def dvr_case_activity_controller(**attr):
         list_fields = resource.get_config("list_fields")
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         # Restore list_fields
         if list_fields:
@@ -1153,10 +1133,7 @@ def dvr_case_appointment_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         resource = r.resource
 
@@ -2205,6 +2182,16 @@ def dvr_service_contact_resource(r, tablename):
     field.readable = field.writable = False
 
     field = table.organisation
+    field.readable = field.writable = True
+
+# -------------------------------------------------------------------------
+def dvr_vulnerability_resource(r, tablename):
+
+    table = current.s3db.dvr_vulnerability
+
+    # Expose human_resource_id and set default
+    field = table.human_resource_id
+    field.default = current.auth.s3_logged_in_human_resource()
     field.readable = field.writable = True
 
 # END =========================================================================

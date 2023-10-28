@@ -208,6 +208,9 @@ def config(settings):
     # Enable household size in cases, "auto" for automatic counting
     settings.dvr.household_size = "auto"
 
+    # Manage vulnerabilities
+    settings.dvr.vulnerabilities = get_ui_option("case_use_vulnerabilities")
+
     # Group/Case activities per sector
     settings.dvr.case_activity_sectors = True
     # Case activities use follow-up fields
@@ -219,6 +222,10 @@ def config(settings):
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True
+    # Use response types
+    settings.dvr.response_types = get_ui_option("response_types")
+    # Response types hierarchical
+    settings.dvr.response_types_hierarchical = True
     # Planning response actions, or just documenting them?
     settings.dvr.response_planning = get_ui_option("response_planning")
     # Responses use date+time
@@ -227,20 +234,18 @@ def config(settings):
     settings.dvr.response_due_date = get_ui_option("response_due_date")
     # Use response themes
     settings.dvr.response_themes = get_ui_option("response_use_theme")
-    # Document response details per theme
-    settings.dvr.response_themes_details = get_ui_option("response_themes_details")
-    # Document response efforts per theme
-    settings.dvr.response_themes_efforts = get_ui_option("response_themes_efforts")
     # Response themes are org-specific
     settings.dvr.response_themes_org_specific = True
-    # Use response types
-    settings.dvr.response_types = get_ui_option("response_types")
-    # Response types hierarchical
-    settings.dvr.response_types_hierarchical = True
     # Response themes organized by sectors
     settings.dvr.response_themes_sectors = get_ui_option("response_themes_sectors")
     # Response themes linked to needs
     settings.dvr.response_themes_needs = get_ui_option("response_themes_needs")
+    # Document response details per theme
+    settings.dvr.response_themes_details = get_ui_option("response_themes_details")
+    # Document response efforts per theme
+    settings.dvr.response_themes_efforts = get_ui_option("response_themes_efforts")
+    # Link response actions to vulnerabilities
+    settings.dvr.response_vulnerabilities = get_ui_option("case_use_vulnerabilities")
     # Auto-link responses to case activities
     settings.dvr.response_activity_autolink = get_ui_option("response_activity_autolink")
 
@@ -265,6 +270,8 @@ def config(settings):
                                dvr_case_resource, \
                                dvr_note_resource, \
                                dvr_case_activity_resource, \
+                               dvr_case_activity_controller, \
+                               dvr_case_appointment_resource, \
                                dvr_case_appointment_controller, \
                                dvr_case_flag_resource, \
                                dvr_need_resource, \
@@ -272,22 +279,29 @@ def config(settings):
                                dvr_response_action_controller, \
                                dvr_response_theme_resource, \
                                dvr_service_contact_resource, \
-                               dvr_case_appointment_resource, \
-                               dvr_case_activity_controller
+                               dvr_vulnerability_resource
 
     settings.customise_dvr_home = dvr_home
-    settings.customise_dvr_case_resource = dvr_case_resource
-    settings.customise_dvr_note_resource = dvr_note_resource
-    settings.customise_dvr_case_activity_resource = dvr_case_activity_resource
-    settings.customise_dvr_case_appointment_controller = dvr_case_appointment_controller
-    settings.customise_dvr_case_flag_resource = dvr_case_flag_resource
     settings.customise_dvr_need_resource = dvr_need_resource
+
+    settings.customise_dvr_case_resource = dvr_case_resource
+    settings.customise_dvr_case_flag_resource = dvr_case_flag_resource
+
+    settings.customise_dvr_case_activity_resource = dvr_case_activity_resource
+    settings.customise_dvr_case_activity_controller = dvr_case_activity_controller
+
+    settings.customise_dvr_case_appointment_resource = dvr_case_appointment_resource
+    settings.customise_dvr_case_appointment_controller = dvr_case_appointment_controller
+
+    settings.customise_dvr_note_resource = dvr_note_resource
+
     settings.customise_dvr_response_action_resource = dvr_response_action_resource
     settings.customise_dvr_response_action_controller = dvr_response_action_controller
     settings.customise_dvr_response_theme_resource = dvr_response_theme_resource
+
     settings.customise_dvr_service_contact_resource = dvr_service_contact_resource
-    settings.customise_dvr_case_appointment_resource = dvr_case_appointment_resource
-    settings.customise_dvr_case_activity_controller = dvr_case_activity_controller
+
+    settings.customise_dvr_vulnerability_resource = dvr_vulnerability_resource
 
     # -------------------------------------------------------------------------
     # Human Resource Module Settings

@@ -139,8 +139,7 @@ class FinExpensesModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -1192,8 +1191,7 @@ class FinVoucherModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"fin_voucher_invoice_status": {},
@@ -1999,15 +1997,14 @@ class fin_VoucherInvoiceRepresent(S3Represent):
                              reason for rejection
         """
 
-        super(fin_VoucherInvoiceRepresent, self).__init__(
-                                                lookup = "fin_voucher_invoice",
-                                                fields = ["invoice_no",
-                                                          "date",
-                                                          "status",
-                                                          "reason",
-                                                          ],
-                                                show_link = show_link,
-                                                )
+        super().__init__(lookup = "fin_voucher_invoice",
+                         fields = ["invoice_no",
+                                   "date",
+                                   "status",
+                                   "reason",
+                                   ],
+                         show_link = show_link,
+                         )
 
         self.show_reason = show_reason
 

@@ -4833,11 +4833,9 @@ class OrgFacilityModel(DataModel):
             output = "grid(%s)" % output
         else:
             filename = "facility.geojson"
-        path = os.path.join(current.request.folder,
-                            "static", "cache",
-                            filename)
+        path = os.path.join(current.request.folder, "static", "cache", filename)
 
-        with open(path, "w") as outfile:
+        with open(path, "w", encoding="utf-8") as outfile:
             outfile.write(output)
 
 # -----------------------------------------------------------------------------
@@ -5680,13 +5678,13 @@ class org_OrganisationRepresent(S3Represent):
                       "acronym",
                       ]
 
-        super(org_OrganisationRepresent,
-              self).__init__(lookup = "org_organisation",
-                             fields = fields,
-                             show_link = show_link,
-                             linkto = linkto,
-                             translate = translate,
-                             multiple = multiple)
+        super().__init__(lookup = "org_organisation",
+                         fields = fields,
+                         show_link = show_link,
+                         linkto = linkto,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def custom_lookup_rows(self, key, values, fields=None):
@@ -5854,12 +5852,12 @@ class org_SiteRepresent(S3Represent):
         self.l10n = {}
         self.show_type = show_type
 
-        super(org_SiteRepresent, self).__init__(lookup = "org_site",
-                                                fields = ["name"],
-                                                show_link = show_link,
-                                                translate = translate,
-                                                multiple = multiple,
-                                                )
+        super().__init__(lookup = "org_site",
+                         fields = ["name"],
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def bulk(self, values, rows=None, list_type=False, show_link=True, include_blank=True):
@@ -8541,7 +8539,7 @@ class org_AssignMethod(CRUDMethod):
                 component: the Component in which to create records
         """
 
-        super(org_AssignMethod, self).__init__()
+        super().__init__()
 
         self.component = component
 

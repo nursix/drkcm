@@ -290,8 +290,7 @@ def file_represent(value, row=None):
             unit = u
             if fsize < 1024:
                 break
-            else:
-                fsize /= 1024
+            fsize /= 1024
         fsize = "%s %s" % (round(fsize), unit)
         output.append(SPAN(fsize, _class="file-size"))
 

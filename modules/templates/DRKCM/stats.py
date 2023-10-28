@@ -371,7 +371,7 @@ class PerformanceIndicatorExport(CRUDMethod):
                 pitype: the performance indicator set
         """
 
-        super(PerformanceIndicatorExport, self).__init__()
+        super().__init__()
 
         indicators = self.PISETS.get(pitype) if pitype else None
 
@@ -415,8 +415,8 @@ class PerformanceIndicatorExport(CRUDMethod):
 
         try:
             import xlwt
-        except ImportError:
-            raise HTTP(503, body="XLWT not installed")
+        except ImportError as e:
+            raise HTTP(503, body="XLWT not installed") from e
 
         T = current.T
         resource = self.resource

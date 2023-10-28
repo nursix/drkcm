@@ -6006,11 +6006,12 @@ class pr_RoleRepresent(S3Represent):
 
         self.fields = ["pe_id", "role"]
 
-        super(pr_RoleRepresent, self).__init__(lookup="pr_role",
-                                               fields=self.fields,
-                                               show_link=show_link,
-                                               translate=translate,
-                                               multiple=multiple)
+        super().__init__(lookup = "pr_role",
+                         fields = self.fields,
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # ---------------------------------------------------------------------
     def represent_row(self,row):
@@ -6039,7 +6040,7 @@ class pr_RoleRepresent(S3Represent):
             table = self.table
             fields = [table[f] for f in self.fields]
 
-        rows = super(pr_RoleRepresent, self).lookup_rows(key, values, fields=fields)
+        rows = super().lookup_rows(key, values, fields=fields)
 
         # Bulk represent the pe_ids: this stores the representations
         # in current.s3db.pr_pentity_represent, thereby preventing
@@ -6075,13 +6076,13 @@ class pr_PersonEntityRepresent(S3Represent):
         self.show_type = show_type
         self.training_event_represent = None
 
-        super(pr_PersonEntityRepresent, self).__init__(lookup = "pr_pentity",
-                                                       key = "pe_id",
-                                                       multiple = multiple,
-                                                       show_link = show_link,
-                                                       linkto = linkto,
-                                                       none = none,
-                                                       )
+        super().__init__(lookup = "pr_pentity",
+                         key = "pe_id",
+                         multiple = multiple,
+                         show_link = show_link,
+                         linkto = linkto,
+                         none = none,
+                         )
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -6290,17 +6291,18 @@ class pr_PersonRepresent(S3Represent):
         if not labels:
             labels = s3_fullname
 
-        super(pr_PersonRepresent, self).__init__(lookup,
-                                                 key,
-                                                 fields,
-                                                 labels,
-                                                 options,
-                                                 translate,
-                                                 linkto,
-                                                 show_link,
-                                                 multiple,
-                                                 default,
-                                                 none)
+        super().__init__(lookup = lookup,
+                         key = key,
+                         fields = fields,
+                         labels = labels,
+                         options = options,
+                         translate = translate,
+                         linkto = linkto,
+                         show_link = show_link,
+                         multiple = multiple,
+                         default = default,
+                         none = none,
+                         )
 
 # =============================================================================
 class pr_PersonRepresentContact(pr_PersonRepresent):
@@ -6336,12 +6338,11 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                 styleable: render as styleable HTML
         """
 
-        super(pr_PersonRepresentContact, self).__init__(
-                                                 lookup = "pr_person",
-                                                 labels = labels,
-                                                 linkto = linkto,
-                                                 show_link = show_link,
-                                                 )
+        super().__init__(lookup = "pr_person",
+                         labels = labels,
+                         linkto = linkto,
+                         show_link = show_link,
+                         )
 
         self.show_email = show_email
         self.show_phone = show_phone
@@ -6376,7 +6377,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                 row: the Row
         """
 
-        reprstr = super(pr_PersonRepresentContact, self).represent_row(row)
+        reprstr = super().represent_row(row)
 
         try:
             pe_id = row.pe_id
@@ -6532,9 +6533,7 @@ class pr_GroupRepresent(S3Represent):
 
     def __init__(self):
 
-        super(pr_GroupRepresent, self).__init__("pr_group",
-                                                fields = ["name"],
-                                                )
+        super().__init__(lookup="pr_group", fields=["name"])
 
         self.show_org_groups = current.deployment_settings \
                                       .get_org_group_team_represent()
@@ -6634,12 +6633,12 @@ class pr_ContactRepresent(S3Represent):
                 see super
         """
 
-        super(pr_ContactRepresent, self).__init__(lookup = "pr_contact",
-                                                  fields = ["contact_method",
-                                                            "value",
-                                                            ],
-                                                  show_link = show_link,
-                                                  )
+        super().__init__(lookup = "pr_contact",
+                         fields = ["contact_method",
+                                   "value",
+                                   ],
+                         show_link = show_link,
+                         )
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -6972,7 +6971,7 @@ class pr_AssignMethod(CRUDMethod):
                 title: an alternative page title
         """
 
-        super(pr_AssignMethod, self).__init__()
+        super().__init__()
 
         self.component = component
         if next_tab:

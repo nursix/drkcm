@@ -274,8 +274,7 @@ class DiseaseDataModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -685,8 +684,7 @@ class DiseaseMonitoringModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -744,7 +742,7 @@ class DiseaseMonitoringModel(DataModel):
         query = None
         for fn, v in context.items():
             if v:
-                q = (table[fn] == context[fn])
+                q = (table[fn] == v)
                 query = query & q if query else q
         if query:
             if record_id:
@@ -913,15 +911,6 @@ class DiseaseCertificateModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
-
-        #dummy = FieldTemplate.dummy
-
         return None
 
 # =============================================================================
@@ -1428,8 +1417,7 @@ class DiseaseCaseTrackingModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"disease_case_id": FieldTemplate.dummy("case_id"),
@@ -1648,7 +1636,7 @@ class disease_CaseRepresent(S3Represent):
 
     def __init__(self):
 
-        super(disease_CaseRepresent, self).__init__(lookup = "disease_case")
+        super().__init__(lookup = "disease_case")
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -1916,12 +1904,6 @@ class DiseaseContactTracingModel(DataModel):
             msg_list_empty = T("No Exposure Information currently registered"))
 
         # Pass names back to global scope (s3.*)
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-
         return None
 
     # -------------------------------------------------------------------------

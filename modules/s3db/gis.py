@@ -2459,8 +2459,7 @@ class gis_MarkerRepresent(S3Represent):
 
     def __init__(self):
 
-        super(gis_MarkerRepresent, self).__init__(lookup="gis_marker",
-                                                  fields=["image"])
+        super().__init__(lookup="gis_marker", fields=["image"])
 
     def represent_row(self, row):
         """
@@ -5182,11 +5181,11 @@ class gis_LocationRepresent(S3Represent):
         self.controller = controller
         self.func = func
 
-        super(gis_LocationRepresent,
-              self).__init__(lookup = "gis_location",
-                             show_link = show_link,
-                             translate = translate,
-                             multiple = multiple)
+        super().__init__(lookup = "gis_location",
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
