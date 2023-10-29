@@ -3873,6 +3873,12 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_activity_documents", False)
 
+    def get_dvr_case_activity_comments(self):
+        """
+            Case activities use a separate comments field
+        """
+        return self.dvr.get("case_activity_comments", False)
+
     # Response Actions ------------------------------------
 
     def get_dvr_manage_response_actions(self):

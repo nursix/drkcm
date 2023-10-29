@@ -204,6 +204,10 @@ def config(settings):
     #
     # Enable features to manage case flags
     settings.dvr.case_flags = True
+    # Beneficiary documents-tab includes case activity attachments
+    settings.dvr.case_include_activity_docs = True
+    # Beneficiary documents-tab includes case group attachments
+    settings.dvr.case_include_group_docs = True
 
     # Enable household size in cases, "auto" for automatic counting
     settings.dvr.household_size = "auto"
@@ -211,14 +215,22 @@ def config(settings):
     # Manage vulnerabilities
     settings.dvr.vulnerabilities = get_ui_option("case_use_vulnerabilities")
 
+    # Case activity subject type
+    settings.dvr.case_activity_subject_type = get_ui_option("activity_subject_type")
     # Group/Case activities per sector
     settings.dvr.case_activity_sectors = True
+    # Do not link case activities to individual vulnerabilities
+    settings.dvr.case_activity_vulnerabilities = False
     # Case activities use follow-up fields
     settings.dvr.case_activity_follow_up = get_ui_option("activity_follow_up")
-    # Beneficiary documents-tab includes case activity attachments
-    settings.dvr.case_include_activity_docs = True
-    # Beneficiary documents-tab includes case group attachments
-    settings.dvr.case_include_group_docs = True
+    # Case activities use status
+    settings.dvr.case_activity_status = get_ui_option("activity_closure")
+    # Do not documents achievement level per case activity
+    settings.dvr.case_activity_achievement = False
+    # Allow upload if documents to case activities
+    settings.dvr.case_activity_documents = True
+    # Use additional comments field in case activities
+    settings.dvr.case_activity_comments = get_ui_option("activity_comments")
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True

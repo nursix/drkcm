@@ -5658,7 +5658,13 @@ def dvr_case_activity_form(r):
     if settings.get_dvr_manage_response_actions():
         actions.append(s3db.dvr_configure_inline_responses(r))
     actions.append("activity_details")
+
+    # Inline Updates
     if settings.get_dvr_case_activity_updates():
+        # When using updates, need details describe initial situation
+        table = s3db.dvr_case_activity
+        field = table.need_details
+        field.label = T("Initial Situation Details")
 
         # Set default for human_resource_id
         utable = s3db.dvr_case_activity_update
@@ -5708,6 +5714,9 @@ def dvr_case_activity_form(r):
         documents = []
 
     crud_fields += need  + actions + followup + categories+ status + documents
+
+    if settings.get_dvr_case_activity_comments():
+        crud_fields.append("comments")
 
     return S3SQLCustomForm(*crud_fields)
 

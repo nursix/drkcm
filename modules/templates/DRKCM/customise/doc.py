@@ -124,7 +124,8 @@ def doc_document_controller(**attr):
 
             # Representation of doc entity
             ui_opts_get = get_ui_options().get
-            if ui_opts_get("activity_use_need"):
+            subject_type = ui_opts_get("activity_subject_type")
+            if subject_type in ("need", "both"):
                 use_need = True
                 activity_label = T("Counseling Reason")
             else:
@@ -134,7 +135,7 @@ def doc_document_controller(**attr):
                                     show_link = True,
                                     use_sector = ui_opts_get("activity_use_sector"),
                                     use_need = use_need,
-                                    use_subject = ui_opts_get("activity_use_subject"),
+                                    use_subject = subject_type in ("subject", "both"),
                                     case_group_label = T("Family"),
                                     activity_label = activity_label,
                                     )

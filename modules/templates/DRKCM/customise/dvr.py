@@ -535,7 +535,8 @@ def configure_case_activity_subject(r,
 
         # Expose need_id
         field = table.need_id
-        field.label = T("Counseling Reason")
+        if not use_subject:
+            field.label = T("Counseling Reason")
         field.readable = True
         field.writable = not activity_id or not autolink
 
@@ -718,9 +719,25 @@ def dvr_case_activity_resource(r, tablename):
         end_date = None
         outcome = None
 
+    # Deployment-specific terminology for case activities
+    crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
+    crud_strings.update({
+        "label_create": T("Add Counseling Reason"),
+        "title_display": T("Counseling Reason Details"),
+        "title_list": T("Counseling Reasons"),
+        "title_update": T("Edit Counseling Reason"),
+        "title_report": T("Activity Statistic"),
+        "label_list_button": T("List Counseling Reasons"),
+        "label_delete_button": T("Delete Counseling Reason"),
+        "msg_record_created": T("Counseling Reason added"),
+        "msg_record_modified": T("Counseling Reason updated"),
+        "msg_record_deleted": T("Counseling Reason deleted"),
+        })
+
     # Need type and subject
-    use_need = ui_options_get("activity_use_need")
-    use_subject = ui_options_get("activity_use_subject") or not use_need
+    subject_type = ui_options_get("activity_subject_type")
+    use_need = subject_type in ("need", "both")
+    use_subject = subject_type in ("subject", "both") or not use_need
 
     need_label = T("Counseling Reason") if not use_subject else T("Need Type")
 
@@ -982,8 +999,6 @@ def dvr_case_activity_resource(r, tablename):
                                         use_priority = use_priority,
                                         use_theme = use_theme,
                                         )
-        crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
-        crud_strings["title_report"] = T("Activity Statistic")
 
     # Configure components to inherit realm entity
     # from the case activity record
@@ -1599,7 +1614,7 @@ def configure_response_action_theme(ui_options,
         query = (ttable.organisation_id == case_root_org) & query
 
     themes_needs = settings.get_dvr_response_themes_needs()
-    if ui_options.get("activity_use_need") and themes_needs:
+    if ui_options.get("activity_subject_type") in ("need", "both") and themes_needs:
         # Limit themes to those matching the need of the activity
         if case_activity:
             need_id = case_activity.need_id
@@ -1731,8 +1746,9 @@ def configure_response_action_view(ui_options,
             field.readable = field.writable = False
         else:
             # Show activity_id (read-only)
-            use_need = ui_options_get("activity_use_need")
-            use_subject = ui_options_get("activity_use_subject")
+            subject_type = ui_options_get("activity_subject_type")
+            use_need = subject_type in ("need", "both")
+            use_subject = subject_type in ("subject", "both")
             field.label = T("Counseling Reason")
             field.represent = s3db.dvr_CaseActivityRepresent(
                                         show_as = "need" if use_need else "subject",
@@ -1817,13 +1833,15 @@ def configure_response_action_tab(person_id,
         field.readable = True
 
         # Adjust representation to perspective
-        if ui_options_get("activity_use_need"):
+        subject_type = ui_options_get("activity_subject_type")
+        use_need = subject_type in ("need", "both")
+        use_subject = subject_type in ("subject", "both")
+        if use_need:
             field.label = T("Counseling Reason")
             show_as = "need"
         else:
             field.label = T("Subject")
             show_as = "subject"
-        use_subject = ui_options_get("activity_use_subject")
 
         represent = s3db.dvr_CaseActivityRepresent(show_as = show_as,
                                                    show_link = True,

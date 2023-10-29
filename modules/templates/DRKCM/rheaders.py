@@ -358,7 +358,7 @@ def drk_org_rheader(r, tabs=None):
 
             if is_admin or \
                ui_options.get("response_themes_needs") or \
-               ui_options.get("activity_use_need"):
+               ui_options.get("activity_subject_type") in ("need", "both"):
                 # Ability to manage org-specific need types
                 # as they are used in themes:
                 tabs.append((T("Counseling Reasons"), "need"))
