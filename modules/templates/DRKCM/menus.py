@@ -65,7 +65,6 @@ class S3MainMenu(default.S3MainMenu):
                     MM("Organizations", c="org", f="organisation"),
                     MM("Facilities", c="org", f="facility"),
                     MM("Staff", c="hrm", f="staff"),
-                    MM("Volunteers", c="vol", f="volunteer"),
                     SEP(link=False),
                     MM("User Statistics", c="default", f="index",
                        args = ["userstats"],
@@ -397,28 +396,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         return M(c="hrm")(
                     M(settings.get_hrm_staff_label(), f="staff")(
-                        M("Create", m="create"),
-                        ),
-                    M(teams, f="group", check=use_teams)(
-                        M("Create", m="create"),
-                        ),
-                    M("Job Titles", f="job_title")(
-                        M("Create", m="create"),
-                        ),
-                    )
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def vol():
-        """ VOL / Volunteer Management """
-
-        settings = current.deployment_settings
-
-        teams = settings.get_hrm_teams()
-        use_teams = lambda i: teams
-
-        return M(c="vol")(
-                    M("Volunteers", f="volunteer")(
                         M("Create", m="create"),
                         ),
                     M(teams, f="group", check=use_teams)(

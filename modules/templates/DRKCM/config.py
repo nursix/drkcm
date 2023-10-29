@@ -469,12 +469,12 @@ def config(settings):
            restricted = True,
            module_type = 2,
         )),
-        ("vol", Storage(
-           name_nice = T("Volunteers"),
-           #description = "Human Resources Management",
-           restricted = True,
-           module_type = 2,
-        )),
+        #("vol", Storage(
+        #   name_nice = T("Volunteers"),
+        #   #description = "Human Resources Management",
+        #   restricted = True,
+        #   module_type = 2,
+        #)),
         ("cms", Storage(
          name_nice = T("Content Management"),
         #description = "Content Management System",
