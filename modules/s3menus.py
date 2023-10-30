@@ -705,16 +705,7 @@ class S3OptionsMenu:
                     #    M("All Activities"),
                     #    M("Report", m="report"),
                     #),
-                    M("Case Types", f="case_type")(
-                       M("Create", m="create"),
-                    ),
                     M("Need Types", f="need")(
-                      M("Create", m="create"),
-                    ),
-                    M("Housing Types", f="housing_type")(
-                      M("Create", m="create"),
-                    ),
-                    M("Income Sources", f="income_source")(
                       M("Create", m="create"),
                     ),
                 )
@@ -1309,8 +1300,7 @@ class S3OptionsMenu:
 
         settings = current.deployment_settings
         ADMIN = current.session.s3.system_roles.ADMIN
-        SECTORS = "Clusters" if settings.get_ui_label_cluster() \
-                             else "Sectors"
+
         use_sectors = lambda i: settings.get_org_sector()
         stats = lambda i: settings.has_module("stats")
 
@@ -1345,7 +1335,7 @@ class S3OptionsMenu:
                       restrict=[ADMIN])(
                         M("Create", m="create"),
                     ),
-                    M(SECTORS, f="sector", check=use_sectors,
+                    M("Sectors", f="sector", check=use_sectors,
                       restrict=[ADMIN])(
                         M("Create", m="create"),
                     ),

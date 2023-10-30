@@ -163,7 +163,7 @@ class userstats(CustomController):
 
     def __init__(self):
 
-        super(userstats, self).__init__()
+        super().__init__()
 
         self._root_orgs = None
         self._stats = None

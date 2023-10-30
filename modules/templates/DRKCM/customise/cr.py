@@ -170,10 +170,7 @@ def cr_shelter_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         if r.interactive:
 
@@ -189,10 +186,10 @@ def cr_shelter_controller(**attr):
                 for fw in filter_widgets:
                     if fw.field == "capacity":
                         continue
-                    elif fw.field == "location_id":
+                    if fw.field == "location_id":
                         fw.opts["levels"] = GIS_LEVELS
                     if not isinstance(fw, TextFilter) and \
-                        fw.field != "shelter_type_id":
+                       fw.field != "shelter_type_id":
                         fw.opts["hidden"] = True
                     custom_filters.append(fw)
 

@@ -139,7 +139,6 @@ def config(settings):
     #
     settings.cr.shelter_population_dynamic = True
     settings.cr.shelter_units = True
-    settings.cr.check_out_is_final = False
 
     # Generate tasks for shelter inspections
     settings.cr.shelter_inspection_tasks = True
@@ -164,8 +163,6 @@ def config(settings):
     settings.dvr.household_size = "auto"
     # Uncomment this to enable features to manage case flags
     settings.dvr.case_flags = True
-    # Case activities use single Needs
-    #settings.dvr.case_activity_needs_multiple = True
     # Uncomment this to expose flags to mark appointment types as mandatory
     settings.dvr.mandatory_appointments = True
     # Uncomment this to have appointments with personal presence update last_seen_on
@@ -224,7 +221,7 @@ def config(settings):
     settings.org.default_organisation = "Deutsches Rotes Kreuz"
     settings.org.default_site = "Erstaufnahme Mannheim"
 
-    settings.org.site_check_in_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
+    settings.org.site_presence_qrcode = (r"(?<code>\d+)##.*##.*##.*", "code")
 
     from .customise.org import org_facility_resource, \
                                org_facility_controller

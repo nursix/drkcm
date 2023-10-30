@@ -348,6 +348,8 @@ if len(pop_list) > 0:
     tablename = "pr_person"
     # Add extra indexes on search fields
     # Should work for our 3 supported databases: sqlite, MySQL & PostgreSQL
+    field = "pe_label"
+    db.executesql("CREATE INDEX %s__idx on %s(%s);" % (field, tablename, field))
     field = "first_name"
     db.executesql("CREATE INDEX %s__idx on %s(%s);" % (field, tablename, field))
     field = "middle_name"

@@ -1027,8 +1027,8 @@
                             input.multiselect('refresh');
                         } else if (input.hasClass('groupedopts-widget') && input.groupedopts('instance')) {
                             input.groupedopts('refresh');
-                        } else if (input.hasClass('location-selector') && input.locationselector('instance')) {
-                            input.locationselector('refresh');
+                        } else if (input.hasClass('location-selector') && input.selectLocation('instance')) {
+                            input.selectLocation('refresh');
                         } else if (input.hasClass('s3-hierarchy-input')) {
                             var parent = input.parent();
                             if (parent.hierarchicalopts('instance')) {
@@ -1164,8 +1164,8 @@
                         currentField.groupedopts('refresh');
 
                     } else if (currentField.hasClass('location-selector') &&
-                               currentField.locationselector('instance')) {
-                        currentField.locationselector('refresh');
+                               currentField.selectLocation('instance')) {
+                        currentField.selectLocation('refresh');
 
                     } else if (currentField.hasClass('s3-hierarchy-input')) {
 

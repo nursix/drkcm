@@ -1933,18 +1933,16 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                         args = [],
                         get_vars = {},
                         )
-        customise_resource = current.deployment_settings.customise_resource
         for tablename in (component.tablename, link.tablename):
-            customise = customise_resource(tablename)
-            if customise:
-                customise(r, tablename)
+            if tablename:
+                r.customise_resource(tablename)
 
         if record_id:
             rkey = component.rkey
             rows = link.select([rkey], as_rows=True)
             if rows:
                 rkey = str(link.table[rkey])
-                values = [row[rkey] for row in rows]
+                values = self.subset([row[rkey] for row in rows])
             else:
                 values = []
         else:
@@ -2174,10 +2172,9 @@ class S3SQLInlineLink(S3SQLInlineComponent):
                     delete = None
                     insert = values
 
-                # Delete links which are no longer used
-                # @todo: apply filterby to only delete within the subset?
+                # Delete links (of the valid subset) which are no longer used
                 if delete:
-                    query &= FS(component.rkey).belongs(delete)
+                    query &= FS(component.rkey).belongs(self.subset(delete))
                     lresource = s3db.resource(link.tablename, filter = query)
                     lresource.delete()
 
@@ -2258,6 +2255,32 @@ class S3SQLInlineLink(S3SQLInlineComponent):
             # (using TAG rather than join() to support HTML labels)
             return TAG[""](list(chain.from_iterable([[l, ", "]
                                                     for l in labels]))[:-1])
+
+    # -------------------------------------------------------------------------
+    def subset(self, values):
+        """
+            Reduces a list of values to the applicable subset of options,
+            to limit extraction and deletion of existing links as per
+            requires|filterby|match options.
+
+            Args:
+                values: list|tuple|set of values to filter
+            Returns:
+                list of filtered values
+        """
+
+        # Apply filterby/match
+        has_option = self.options.get
+        subset = None
+        validator = has_option("requires")
+        if validator and hasattr(validator, "options"):
+            subset = {str(o) for o, _ in validator.options()}
+        elif has_option("filterby") or has_option("match"):
+            subset = {str(o) for o in self.get_options()}
+        if subset:
+            values = list(filter(lambda key: str(key) in subset, values))
+
+        return values
 
     # -------------------------------------------------------------------------
     def get_options(self):

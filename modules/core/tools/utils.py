@@ -34,6 +34,7 @@ __all__ = ("JSONSEPARATORS",
            "URL2",
            "get_crud_string",
            "get_form_record_id",
+           "get_form_record_data",
            "accessible_pe_query",
            "set_last_record_id",
            "get_last_record_id",
@@ -41,6 +42,7 @@ __all__ = ("JSONSEPARATORS",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
+           "datahash",
            "s3_get_extension",
            "s3_get_extension_from_url",
            "s3_get_foreign_key",
@@ -108,7 +110,7 @@ def get_crud_string(tablename, key):
 # =============================================================================
 def get_form_record_id(form):
     """
-        Get the record ID from a FORM
+        Returns the record ID from a FORM
 
         Args:
             form: the FORM
@@ -126,6 +128,48 @@ def get_form_record_id(form):
         record_id = None
 
     return record_id
+
+# =============================================================================
+def get_form_record_data(form, table, fields):
+    """
+        Returns prospective record values for validation; looks up existing
+        record values and table defaults if some fields are missing from the
+        form.
+
+        Args:
+            form: the FORM
+            table: the Table
+            fields: list of field names
+
+        Returns:
+            a dict {fieldname: value}
+    """
+
+    form_vars = form.vars
+    form_data = {}
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return form_data
+
+    lookup = []
+    for fn in fields:
+        if fn in form_vars:
+            form_data[fn] = form_vars[fn]
+        elif record_id:
+            lookup.append(fn)
+        else:
+            form_data[fn] = table[fn].default
+
+    if lookup:
+        fields = [table[fn] for fn in lookup]
+        row = current.db(table.id == record_id).select(*fields,
+                                                       limitby = (0, 1),
+                                                       ).first()
+        for fn in lookup:
+            form_data[fn] = row[fn]
+
+    return form_data
 
 # =============================================================================
 def accessible_pe_query(table = None,
@@ -378,7 +422,7 @@ def s3_represent_value(field,
             text = s3_str(text)
     else:
         if val is None:
-            text = NONE
+            text = s3_str(NONE)
         elif fname == "comments" and not extended_comments:
             ur = s3_str(text)
             if len(ur) > 48:
@@ -727,6 +771,23 @@ def s3_flatlist(nested):
                 yield sub
         else:
             yield item
+
+# =============================================================================
+def datahash(*values):
+    """
+        Produce a data verification hash from the values
+
+        Args:
+            values: an (ordered) iterable of values
+
+        Returns:
+            the verification hash as string
+    """
+
+    import hashlib
+    dstr = "|%s|" % "|".join([str(v) for v in values])
+
+    return hashlib.sha512(dstr.encode("utf-8")).hexdigest().lower()
 
 # =============================================================================
 def s3_set_match_strings(matchDict, value):
@@ -1215,7 +1276,7 @@ class FormKey:
         keys = current.session.get(keyname, [])
         if not formkey or formkey not in keys:
             return False
-        else:
+        elif invalidate:
             keys.remove(formkey)
 
         return True

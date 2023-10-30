@@ -2152,23 +2152,22 @@ class S3XML:
         for element in elements:
             get = element.get
             if element.tag == "data":
+                msg = get("error")
                 resource = element.getparent()
+                if not msg:
+                    msg = resource.get("error", "data import failed")
                 value = get("value")
                 if not value:
                     value = element.text
-                error = "%s: '%s' (value='%s')" % (resource.get("name"),
-                                                   get("error"),
-                                                   value,
-                                                   )
+                error = "%s: '%s' (value='%s')" % (resource.get("name"), msg, value)
             elif element.tag == "reference":
+                msg = get("error")
                 resource = element.getparent()
-                error = "%s: '%s'" % (resource.get("name"),
-                                      get("error"),
-                                      )
+                if not msg:
+                    msg = resource.get("error", "reference import failed")
+                error = "%s: '%s'" % (resource.get("name"), msg)
             elif element.tag == "resource":
-                error = "%s: %s" % (get("name"),
-                                    get("error"),
-                                    )
+                error = "%s: %s" % (get("name"), get("error"))
             else:
                 error = "%s" % get("error", None)
             errors.append(error)
@@ -2419,8 +2418,8 @@ class S3XML:
                             t = types[cidx]
                             v = values[cidx]
                         except IndexError:
-                            pass
-                        else:
+                            continue
+                        if name:
                             add_col(orow, name, t, v, hashtags=hashtags)
                     check_headers = False
 
@@ -2703,8 +2702,8 @@ class S3XML:
                     try:
                         v = values[cidx]
                     except IndexError:
-                        pass
-                    else:
+                        continue
+                    if name:
                         add_col(orow, name, v, hashtags=hashtags)
                 check_headers = False
 

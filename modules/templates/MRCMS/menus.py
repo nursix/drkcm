@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, URL
+from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
 from s3layouts import MM, M, ML, MP, MA
 try:
@@ -12,6 +12,8 @@ try:
 except ImportError:
     pass
 import s3menus as default
+
+from .helpers import get_default_organisation, get_default_shelter
 
 # =============================================================================
 class S3MainMenu(default.S3MainMenu):
@@ -40,74 +42,43 @@ class S3MainMenu(default.S3MainMenu):
     def menu_modules(cls):
         """ Custom Modules Menu """
 
-        from .helpers import mrcms_default_shelter
-        shelter_id = mrcms_default_shelter()
+        auth = current.auth
 
-        has_role = current.auth.s3_has_role
-        not_admin = not has_role("ADMIN")
+        has_role = auth.s3_has_role
+        has_permission = auth.s3_has_permission
 
-        if not_admin and has_role("SECURITY"):
-            return [
-                MM("Clients", c="security", f="person"),
-                MM("Dashboard", c="cr", f="shelter",
-                   args = [shelter_id, "profile"],
-                   check = shelter_id is not None,
-                   ),
-                #MM("ToDo", c="project", f="task"),
-                MM("Check-In / Check-Out", c="cr", f="shelter",
-                   args = [shelter_id, "check-in"],
-                   check = shelter_id is not None,
-                   ),
-                MM("Confiscation", c="security", f="seized_item"),
-            ]
-
-        elif not_admin and has_role("QUARTIER"):
-            return [
-                MM("Clients", c=("dvr", "cr"), f=("person", "shelter_registration")),
-                MM("Confiscation", c="security", f="seized_item"),
-            ]
-
+        # Single or multiple organisations?
+        if has_permission("create", "org_organisation", c="org", f="organisation"):
+            organisation_id = None
         else:
-            if shelter_id:
-                shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id])
-            else:
-                shelter_menu = MM("Shelters", c="cr", f="shelter")
+            organisation_id = get_default_organisation()
 
-            return [
-                MM("Clients", c=("dvr", "pr")),
-                MM("Event Registration", c="dvr", f="case_event",
-                   m = "register",
-                   p = "create",
-                   # Show only if not authorized to see "Clients"
-                   check = lambda this: not this.preceding()[-1].check_permission(),
-                   ),
-                MM("Food Distribution", c="dvr", f="case_event",
-                   m = "register_food",
-                   p = "create",
-                   # Show only if not authorized to see "Clients"
-                   check = lambda this: not this.preceding()[-2].check_permission(),
-                   ),
-                MM("Food Distribution Statistics", c="dvr", f="case_event",
-                   m = "report",
-                   vars = {"code": "FOOD*"},
-                   restrict = ("FOOD_STATS",),
-                   # Show only if not authorized to see "Clients"
-                   check = lambda this: not this.preceding()[-3].check_permission(),
-                   ),
-                MM("Dashboard", c="cr", f="shelter",
-                   args = [shelter_id, "profile"],
-                   check = shelter_id is not None,
-                   ),
-                shelter_menu,
-                # @ToDO: Move to Dashboard Widget?
-                #MM("Housing Units", c="cr", f="shelter",
-                #   t = "cr_shelter_unit",
-                #   args = [shelter_id, "shelter_unit"],
-                #   check = shelter_id is not None,
-                #   ),
-                #homepage("cr"),
-                MM("Organizations", c="org", f="organisation"),
-                MM("Confiscation", c="security", f="seized_item"),
+        # Organisation menu
+        c = ("org", "hrm") if has_role("ADMIN") else ("org", "hrm", "cms")
+        f = ("organisation", "*")
+        if organisation_id:
+            org_menu = MM("Organization", c=c, f=f, args=[organisation_id], ignore_args=True)
+        else:
+            org_menu = MM("Organizations", c=c, f=f)
+
+        # Single or multiple shelters?
+        if has_permission("create", "cr_shelter", c="cr", f="shelter"):
+            shelter_id = None
+        else:
+            shelter_id = get_default_shelter()
+
+        # Shelter menu
+        if shelter_id:
+            shelter_menu = MM("Shelter", c="cr", f="shelter", args=[shelter_id], ignore_args=True)
+        else:
+            shelter_menu = MM("Shelters", c="cr", f="shelter")
+
+        return [
+            MM("Clients", c=("dvr", "pr"), f=("person", "*")),
+            shelter_menu,
+            MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
+            org_menu,
+            MM("Security", c="security", f="seized_item"),
             ]
 
     # -------------------------------------------------------------------------
@@ -131,7 +102,7 @@ class S3MainMenu(default.S3MainMenu):
             lang_name = represent_local(code)
             menu_lang(
                 ML(lang_name, translate=False, lang_code=code, lang_name=lang_name)
-            )
+                )
         return menu_lang
 
     # -------------------------------------------------------------------------
@@ -142,7 +113,8 @@ class S3MainMenu(default.S3MainMenu):
         auth = current.auth
         settings = current.deployment_settings
 
-        ADMIN = current.auth.get_system_roles().ADMIN
+        sr = current.auth.get_system_roles()
+        ADMIN = sr.ADMIN
 
         if not auth.is_logged_in():
             request = current.request
@@ -152,12 +124,12 @@ class S3MainMenu(default.S3MainMenu):
                "_next" in request.get_vars:
                 login_next = request.get_vars["_next"]
 
-            self_registration = settings.get_security_self_registration()
+            #self_registration = settings.get_security_self_registration()
             menu_personal = MP()(
-                        MP("Register", c="default", f="user",
-                           m = "register",
-                           check = self_registration,
-                           ),
+                        #MP("Register", c="default", f="user",
+                        #   m = "register",
+                        #   check = self_registration,
+                        #   ),
                         MP("Login", c="default", f="user",
                            m = "login",
                            vars = {"_next": login_next},
@@ -170,15 +142,16 @@ class S3MainMenu(default.S3MainMenu):
                               )
         else:
             s3_has_role = auth.s3_has_role
-            is_org_admin = lambda i: not s3_has_role(ADMIN) and \
-                                     s3_has_role("ORG_ADMIN")
+            is_user_admin = lambda i: \
+                            s3_has_role(sr.ORG_ADMIN, include_admin=False) or \
+                            s3_has_role(sr.ORG_GROUP_ADMIN, include_admin=False)
 
             menu_personal = MP()(
                         MP("Administration", c="admin", f="index",
                            restrict = ADMIN,
                            ),
                         MP("Administration", c="admin", f="user",
-                           check = is_org_admin,
+                           check = is_user_admin,
                            ),
                         MP("Profile", c="default", f="person"),
                         MP("Change Password", c="default", f="user",
@@ -187,7 +160,8 @@ class S3MainMenu(default.S3MainMenu):
                         MP("Logout", c="default", f="user",
                            m = "logout",
                            ),
-            )
+                        )
+
         return menu_personal
 
     # -------------------------------------------------------------------------
@@ -197,10 +171,11 @@ class S3MainMenu(default.S3MainMenu):
         ADMIN = current.auth.get_system_roles().ADMIN
 
         menu_about = MA(c="default")(
-            MA("Help", f="help"),
-            #MA("Contact", f="contact"),
-            MA("Version", f="about", restrict = ADMIN),
-        )
+                MA("Help", f="help"),
+                #MA("Contact", f="contact"),
+                MA("Version", f="about", restrict = ADMIN),
+                )
+
         return menu_about
 
 # =============================================================================
@@ -208,42 +183,68 @@ class S3OptionsMenu(default.S3OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------
+    @classmethod
+    def counsel(cls):
+
+        sr = current.auth.get_system_roles()
+        ADMIN = sr.ADMIN
+        ORG_GROUP_ADMIN = sr.ORG_GROUP_ADMIN
+
+        return M(c="counsel")(
+                    M("Current Cases", c=("counsel", "pr"), f="person"),
+                    M("Administration", link=False, restrict=(ADMIN, ORG_GROUP_ADMIN))(
+                        # Global types
+                        M("Need Types", f="need"),
+                        M("Action Types", f="response_type"),
+                        M("Response Themes", f="response_theme"),
+                        M("Vulnerability Types", f="vulnerability_type"),
+                        ),
+                    )
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def cms(cls):
+
+        if not current.auth.s3_has_role("ADMIN"):
+            return cls.org()
+
+        return super().cms()
+
+    # -------------------------------------------------------------------------
     @staticmethod
     def cr():
         """ CR / Shelter Registry """
 
-        from .helpers import mrcms_default_shelter
-        shelter_id = mrcms_default_shelter()
+        # Single or multiple shelters?
+        if current.auth.s3_has_permission("create", "cr_shelter", c="cr", f="shelter"):
+            shelter_id = None
+        else:
+            shelter_id = get_default_shelter()
 
         if not shelter_id:
             menu = M(c="cr")(
-                M("Shelters", f="shelter")(
-                    M("Create", m="create"),
-                    ),
-                )
+                        M("Shelters", f="shelter")(
+                            M("Create", m="create"),
+                            ),
+                        )
         else:
 
             #ADMIN = current.auth.get_system_roles().ADMIN
 
             menu = M(c="cr")(
-                        M("Shelter", f="shelter", args=[shelter_id])(
-                            M("Dashboard",
-                            args = [shelter_id, "profile"],
-                            ),
-                            M("Housing Units",
-                            t = "cr_shelter_unit",
-                            args = [shelter_id, "shelter_unit"],
-                            ),
+                        M("Shelter", f="shelter", args=[shelter_id], ignore_args=True)(
+                            M("Overview", m="overview", args=[shelter_id]),
+                            M("Housing Units", t="cr_shelter_unit", args=[shelter_id, "shelter_unit"]),
                         ),
                         #M("Room Inspection", f = "shelter", link=False)(
-                        #      M("Register",
-                        #        args = [shelter_id, "inspection"],
-                        #        t = "cr_shelter_inspection",
-                        #        p = "create",
-                        #        ),
-                        #      M("Overview", f = "shelter_inspection"),
-                        #      M("Defects", f = "shelter_inspection_flag"),
+                        #    M("Register",
+                        #      args = [shelter_id, "inspection"],
+                        #      t = "cr_shelter_inspection",
+                        #      p = "create",
                         #      ),
+                        #    M("Overview", f = "shelter_inspection"),
+                        #    M("Defects", f = "shelter_inspection_flag"),
+                        #    ),
                         #M("Administration",
                         #  link = False,
                         #  restrict = (ADMIN, "ADMIN_HEAD"),
@@ -266,103 +267,127 @@ class S3OptionsMenu(default.S3OptionsMenu):
     def dvr():
         """ DVR / Disaster Victim Registry """
 
-        due_followups = current.s3db.dvr_due_followups() or "0"
-        follow_up_label = "%s (%s)" % (current.T("Due Follow-ups"),
-                                       due_followups,
-                                       )
+        #due_followups = current.s3db.dvr_due_followups() or "0"
+        #follow_up_label = "%s (%s)" % (current.T("Due Follow-ups"),
+        #                               due_followups,
+        #                               )
 
-        ADMIN = current.auth.get_system_roles().ADMIN
+        sr = current.auth.get_system_roles()
+        ADMIN = sr.ADMIN
+        ORG_ADMIN = sr.ORG_ADMIN
 
         return M(c="dvr")(
-                    M("Current Cases", c=("dvr", "pr"), f="person",
-                      vars = {"closed": "0"})(
-                        M("Create", m="create", t="pr_person", p="create"),
-                        M("All Cases", vars = {}),
+                M("Current Cases", c=("dvr", "pr"), f="person")(
+                    M("Create", m="create", t="pr_person", p="create"),
+                    M("All Cases", vars = {"closed": "include"}),
+                    ),
+                #M("Current Needs", f="case_activity")(
+                #    M("Emergencies", vars={"~.emergency": "True"}),
+                #    M(follow_up_label, f="due_followups"),
+                #    M("Report", m="report"),
+                #    ),
+                M("Appointments", f="case_appointment")(
+                    M("Overview"),
+                    #M("Import Updates", m="import", p="create",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  ),
+                    #M("Bulk Status Update", m="manage", p="update",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  ),
+                    ),
+                #M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
+                #M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                M("Statistics", link=False)(
+                    M("Cases", c="dvr", f="person", m="report",
+                      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                      ),
+                    #M("Check-in overdue", c=("dvr", "pr"), f="person",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  vars = {"overdue": "check-in"},
+                    #  ),
+                    #M("Food Distribution overdue", c=("dvr", "pr"), f="person",
+                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                    #  vars = {"overdue": "FOOD*"},
+                    #  ),
+                    #M("Clients Reports", c="dvr", f="site_activity",
+                    #  ),
+                    #M("Food Distribution Statistics", c="dvr", f="case_event",
+                    #  m = "report",
+                    #  restrict = (ADMIN, ORG_ADMIN),
+                    #  vars = {"code": "FOOD*"},
+                    #  ),
+                    ),
+                M("Archive", link=False)(
+                    M("Closed Cases", f="person",
+                        restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                        vars={"closed": "only"},
                         ),
-                    #M("Reports", link=False)(
-                    #    M("Check-in overdue", c=("dvr", "pr"), f="person",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                    #      vars = {"closed": "0", "overdue": "check-in"},
-                    #      ),
-                    #    M("Food Distribution overdue", c=("dvr", "pr"), f="person",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                    #      vars = {"closed": "0", "overdue": "FOOD*"},
-                    #      ),
-                    #    M("Clients Reports", c="dvr", f="site_activity",
-                    #      ),
-                    #    M("Food Distribution Statistics", c="dvr", f="case_event",
-                    #      m = "report",
-                    #      restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD", "SECURITY_HEAD", "RP"),
-                    #      vars = {"code": "FOOD*"},
-                    #      ),
-                    #    ),
-                    M("Activities", f="case_activity")(
-                        M("Emergencies",
-                          vars = {"~.emergency": "True"},
-                          ),
-                        M(follow_up_label, f="due_followups"),
-                        M("All Activities"),
-                        M("Report", m="report"),
+                    M("Invalid Cases", f="person",
+                        vars={"archived": "1", "closed": "1"},
+                        restrict = (ADMIN, ORG_ADMIN),
                         ),
-                    M("Appointments", f="case_appointment")(
-                        M("Overview"),
-                        M("Import Updates", m="import", p="create",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          ),
-                        M("Bulk Status Update", m="manage", p="update",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          ),
-                        ),
-                    #M("Allowances", f="allowance")(
-                    #    M("Overview"),
-                    #    M("Payment Registration", m="register", p="update"),
-                    #    M("Status Update", m="manage", p="update"),
-                    #    M("Import", m="import", p="create"),
-                    #    ),
-                    M("Event Registration", c="dvr", f="case_event", m="register", p="create")(
-                        ),
-                    #M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create")(
-                    #    ),
-                    M("Archive", link=False)(
-                        M("Closed Cases", f="person",
-                          vars={"closed": "1"},
-                          ),
-                        M("Invalid Cases", f="person",
-                          restrict = (ADMIN, "ADMINISTRATION", "ADMIN_HEAD"),
-                          vars={"archived": "1"},
-                          ),
-                        ),
-                    M("Administration", restrict=(ADMIN, "ADMIN_HEAD"))(
-                        M("Flags", f="case_flag"),
-                        M("Case Status", f="case_status"),
-                        M("Need Types", f="need"),
-                        M("Appointment Types", f="case_appointment_type"),
-                        M("Event Types", f="case_event_type"),
-                        M("Check Transferability", c="default", f="index",
-                          args = ["transferability"],
-                          ),
-                        ),
-                    )
+                    ),
+                M("Administration", link=False, restrict=(ADMIN, ORG_ADMIN))(
+                    # Org-specific types
+                    M("Flags", f="case_flag"),
+                    M("Appointment Types", f="case_appointment_type"),
+                    #M("Event Types", f="case_event_type"),
+
+                    # Global types
+                    M("Case Status", f="case_status", restrict=ADMIN),
+                    M("Residence Status Types", f="residence_status_type", restrict=ADMIN),
+                    M("Residence Permit Types", f="residence_permit_type", restrict=ADMIN),
+                    ),
+                )
 
     # -------------------------------------------------------------------------
     @staticmethod
     def org():
         """ ORG / Organization Registry """
 
+        T = current.T
+        auth = current.auth
+
         ADMIN = current.session.s3.system_roles.ADMIN
 
+        # Single or multiple organisations?
+        if auth.s3_has_permission("create", "org_organisation", c="org", f="organisation"):
+            organisation_id = None
+        else:
+            organisation_id = get_default_organisation()
+        if organisation_id:
+            org_menu = M("Organization", c="org", f="organisation", args=[organisation_id], ignore_args=True)
+        else:
+            org_menu = M("Organizations", c="org", f="organisation")(
+                            M("Create", m="create"),
+                            )
+
+        # Newsletter menu
+        author = auth.s3_has_permission("create", "cms_newsletter", c="cms", f="newsletter")
+        inbox_label = T("Inbox") if author else T("Newsletters")
+        unread = current.s3db.cms_unread_newsletters()
+        if unread:
+            inbox_label = TAG[""](inbox_label, SPAN(unread, _class="num-pending"))
+        if author:
+            cms_menu = M("Newsletters", c="cms", f="read_newsletter")(
+                            M(inbox_label, f="read_newsletter", translate=False),
+                            M("Compose and Send", f="newsletter", p="create"),
+                            )
+        else:
+            cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
+
         return M(c=("org", "hrm"))(
-                    M("Organizations", f="organisation")(
-                        M("Create", m="create"),
-                    ),
+                    org_menu,
+                    cms_menu,
                     M("Organization Groups", f="group")(
                         M("Create", m="create"),
                         ),
                     M("Staff", c="hrm", f="staff"),
                     M("Administration", link=False, restrict=[ADMIN])(
-                        M("Organization Types", f="organisation_type"),
+                        M("Organization Types", c="org", f="organisation_type"),
+                        M("Job Titles", c="hrm", f="job_title"),
                         ),
-                 )
+                    )
 
     ## -------------------------------------------------------------------------
     #@staticmethod

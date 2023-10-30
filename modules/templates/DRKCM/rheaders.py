@@ -98,6 +98,8 @@ def drk_dvr_rheader(r, tabs=None):
                         ]
 
                 # Optional Case Documentation
+                if ui_opts_get("case_use_vulnerabilities"):
+                    tabs.insert(-1, (T("Vulnerabilities"), "vulnerability"))
                 if ui_opts_get("case_use_response_tab"):
                     tabs.append((T("Actions"), "response_action"))
                 if ui_opts_get("case_use_tasks"):
@@ -356,7 +358,7 @@ def drk_org_rheader(r, tabs=None):
 
             if is_admin or \
                ui_options.get("response_themes_needs") or \
-               ui_options.get("activity_use_need"):
+               ui_options.get("activity_subject_type") in ("need", "both"):
                 # Ability to manage org-specific need types
                 # as they are used in themes:
                 tabs.append((T("Counseling Reasons"), "need"))

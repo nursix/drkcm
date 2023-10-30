@@ -7,6 +7,10 @@
 
          CSV column..................Format..........Content
 
+         Organisation................string..........Organisation Name
+         Branch......................string..........Organisation Branch Name (optional)
+         ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
+
          Code........................string..........Type Code
          Name........................string..........Type Name
          Inactive....................string..........is currently not selectable
@@ -26,11 +30,21 @@
          Comments....................string..........Comments
 
     *********************************************************************** -->
+    <xsl:import href="../orgh.xsl"/>
+
     <xsl:output method="xml"/>
 
     <!-- ****************************************************************** -->
     <xsl:template match="/">
         <s3xml>
+            <!-- Import the organisation hierarchy -->
+            <xsl:for-each select="table/row[1]">
+                <xsl:call-template name="OrganisationHierarchy">
+                    <xsl:with-param name="level">Organisation</xsl:with-param>
+                    <xsl:with-param name="rows" select="//table/row"/>
+                </xsl:call-template>
+            </xsl:for-each>
+
             <xsl:apply-templates select="./table/row"/>
         </s3xml>
     </xsl:template>
@@ -42,10 +56,16 @@
         <xsl:variable name="Name" select="col[@field='Name']/text()"/>
 
         <resource name="dvr_case_event_type">
-
             <xsl:attribute name="tuid">
                 <xsl:value-of select="concat('TYPE:', $Code)"/>
             </xsl:attribute>
+
+            <!-- Link to Organisation -->
+            <reference field="organisation_id" resource="org_organisation">
+                <xsl:attribute name="tuid">
+                    <xsl:call-template name="OrganisationID"/>
+                </xsl:attribute>
+            </reference>
 
             <data field="code">
                 <xsl:value-of select="$Code"/>

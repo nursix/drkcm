@@ -1,5 +1,10 @@
 Abrv,Name,SubsectorOf
-UB,Unterkunftsbetreuung,
+CHILD,Kinder- und Jugendbetreuung,
+MED,Sanitätsdienst,
+SOCIAL,Soziale Betreuung,
+SHELTER,Unterkunftsbetrieb,
+FOOD,Verpflegung,
+ADM,Verwaltung,
 SB,Sozialberatung,
 VB,Verfahrensberatung,
-AB,Asylberatung,
+AVB,Asylverfahrensberatung,

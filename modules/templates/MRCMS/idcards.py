@@ -1,10 +1,15 @@
 """
-    Beneficiary ID Card Layouts for Village
+    ID Card Generator and Layout for MRCMS
 
     License: MIT
 """
 
+import hashlib
 import os
+import secrets
+import uuid
+
+from dateutil.relativedelta import relativedelta
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import Color, HexColor
@@ -12,13 +17,687 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
-from gluon import current
+from gluon import current, A, BUTTON, DIV, H5, SQLFORM
+from gluon.contenttype import contenttype
 
-from core import PDFCardLayout, s3_format_fullname, s3_str
+from s3dal import Field
+from core import CRUDMethod, DateField, ICON, PDFCardLayout, \
+                 s3_format_fullname, s3_mark_required, s3_str
 
 # Fonts we use in this layout
 NORMAL = "Helvetica"
 BOLD = "Helvetica-Bold"
+
+# =============================================================================
+class GenerateIDCard(CRUDMethod):
+    """
+        Method to generate registration cards for residents/staff
+    """
+
+    def apply_method(self, r, **attr):
+        """
+            Entry point for the CRUDController
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
+
+        # Must be person+identity
+        resource, component = r.resource, r.component
+        if resource.tablename != "pr_person" or \
+           not component or component.tablename != "pr_identity":
+            r.error(400, current.ERROR.BAD_METHOD)
+
+        # Context (person) record is required
+        if not r.record:
+            r.error(400, current.ERROR.BAD_METHOD)
+
+        if r.interactive:
+            # ID document generation
+            if r.http in ("GET", "POST"):
+                output = self.generate(r, **attr)
+            else:
+                r.error(405, current.ERROR.BAD_METHOD)
+        elif r.representation == "pdf":
+            # ID document download
+            if r.http == "GET":
+                output = self.download(r, **attr)
+            else:
+                r.error(405, current.ERROR.BAD_METHOD)
+        else:
+            r.error(415, current.ERROR.BAD_FORMAT)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def generate(self, r, **attr):
+        """
+            Dialog to create a new registration card
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
+
+        # User must have permission to create identity records
+        if not current.auth.s3_has_permission("create", "pr_identity"):
+            r.unauthorised()
+
+        T = current.T
+
+        s3db = current.s3db
+
+        resource = r.resource
+        record = r.record
+        person_id = record.id
+
+        request = current.request
+        response = current.response
+        s3 = response.s3
+
+        # Form fields
+        now = request.utcnow.date()
+        formfields = [DateField("valid_until",
+                                label = T("Valid Until"),
+                                default = now + relativedelta(months=1, day=31),
+                                month_selector = True,
+                                past = 0,
+                                #empty = False,
+                                ),
+                      Field("confirm", "boolean",
+                            requires = lambda v: (v, None) if v else (v, T("You must confirm the action")),
+                            default = False,
+                            label = T("Yes, generate a new registration card"),
+                            ),
+                      ]
+
+        # Generate labels (and mark required fields in the process)
+        labels, has_required = s3_mark_required(formfields)
+        s3.has_required = has_required
+
+        # Form buttons
+        REGISTER = T("Generate registration card")
+        buttons = [BUTTON(REGISTER,
+                          _type = "submit",
+                          _class = "small primary button",
+                          ),
+                   A(T("Cancel"),
+                     _href = r.url(method=""),
+                     _class = "cancel-form-btn action-lnk",
+                     ),
+                   ]
+
+        # Construct the form
+        settings = current.deployment_settings
+        auth = current.auth
+        response.form_label_separator = ""
+        form = SQLFORM.factory(table_name = "generate_id",
+                               record = None,
+                               hidden = {"_next": request.vars._next},
+                               labels = labels,
+                               separator = "",
+                               showid = False,
+                               submit_button = REGISTER,
+                               delete_label = auth.messages.delete_label,
+                               formstyle = settings.get_ui_formstyle(),
+                               buttons = buttons,
+                               *formfields)
+
+        if form.accepts(r.post_vars,
+                        current.session,
+                        formname = "generate_id_card[%s]" % person_id,
+                        keepvalues = False,
+                        hideerror = False
+                        ):
+
+            # Read form vars
+            valid_until = form.vars.valid_until
+
+            # Choose layout depending on controller
+            # TODO allow format selection (A4, Credit Card)
+            idcard = IDCard(person_id,
+                            valid_until = valid_until if valid_until else None,
+                            )
+            if r.controller == "hrm":
+                layout = StaffIDCardLayout
+            else:
+                layout = IDCardLayout
+
+            # Generate PDF document (with registration callback)
+            resource.configure(id_card_callback = idcard.register)
+            from core import DataExporter
+            document = DataExporter.pdfcard(resource,
+                                            layout = layout,
+                                            pagesize = "A4",
+                                            )
+            resource.clear_config("id_card_callback")
+
+            identity_id = idcard.identity_id
+            if not identity_id:
+                r.error(503, "ID Registration failed", next=r.url())
+
+            # Store the PDF document
+            dtable = s3db.pr_identity_document
+            entry = {"identity_id": idcard.identity_id,
+                     "file": dtable.file.store(document, filename="%s_card_%s.pdf" % (resource.name, person_id)),
+                     }
+            entry_id = dtable.insert(**entry) # TODO postprocess create?
+
+            # Invalidate previously generated IDs
+            if entry_id:
+                IDCard.invalidate_ids(person_id, keep=idcard.identity_id)
+
+            current.response.confirmation = T("New registration card registered")
+            form = self.card_details(r, idcard)
+        else:
+            itable = s3db.pr_image
+            query = (itable.pe_id == record.pe_id) & \
+                    (itable.profile == True) & \
+                    (itable.deleted == False)
+            rows = current.db(query).select(itable.id, limitby=(0, 1)).first()
+            if not rows:
+                current.response.warning = T("No profile picture available for this person")
+
+            warning = T("All previous registration cards for this person will become invalid by this action!")
+            form = DIV(DIV(warning, _class="id-card-warning"), form)
+
+        output = {"form": form,
+                  "title": T("Registration Cards"),
+                  "subtitle": T("Generate registration card"),
+                  }
+        current.response.view = self._view(r, "update.html")
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def card_details(r, idcard):
+        """
+            Displays the details of the new registration card, and offers
+            a button to download the PDF
+
+            Args:
+                r: the CRUDRequest
+                idcard: the IDCard
+
+            Returns:
+                a DIV with contents
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        # Look up the identity record
+        itable = s3db.pr_identity
+        identity_id = idcard.identity_id
+        identity = db(itable.id == identity_id).select(itable.value,
+                                                       limitby = (0, 1),
+                                                       ).first()
+
+        # Download button
+        download = A(ICON("file-pdf"), T("Download PDF"),
+                     data = {"url": r.url(component_id = idcard.identity_id,
+                                          method = "generate",
+                                          representation = "pdf",
+                                          ),
+                             },
+                     _class = "small primary button s3-download-button",
+                     )
+
+        # Link to list
+        to_list = A(T("List Identity Documents"),
+                    _href = r.url(method=""),
+                    _class = "action-lnk",
+                    )
+
+        return DIV(DIV(H5(identity.value), download, _class="id-card-data"),
+                   DIV(to_list),
+                   )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def download(r, **attr):
+        """
+            Download the PDF for an ID card
+
+            Args:
+                r: the CRUDRequest
+                attr: controller parameters
+        """
+
+        # Request must specify a particular identity record
+        component_id = r.component_id
+        if not component_id:
+            r.error(400, current.ERROR.BAD_METHOD)
+
+        # User must have permission to read this particular identity record
+        if not current.auth.s3_has_permission("read", "pr_identity", record_id=component_id):
+            r.unauthorised()
+
+        db = current.db
+        s3db = current.s3db
+
+        itable = s3db.pr_identity
+        dtable = s3db.pr_identity_document
+
+        join = itable.on((itable.id == dtable.identity_id) & \
+                         (itable.person_id == r.record.id) & \
+                         (itable.id == r.component_id) & \
+                         (itable.deleted == False))
+        query = (dtable.file != None) & (dtable.deleted == False)
+        row = db(query).select(dtable.id,
+                               dtable.file,
+                               join = join,
+                               limitby = (0, 1),
+                               orderby = ~dtable.id,
+                               ).first()
+
+        if row:
+            filename, stream = dtable.file.retrieve(row.file)
+
+            # Add file name and content headers
+            response = current.response
+            disposition = "attachment; filename=\"%s\"" % filename
+            response.headers["Content-Type"] = contenttype(".pdf")
+            response.headers["Content-disposition"] = disposition
+
+            output = stream
+        else:
+            r.error(404, current.ERROR.BAD_RECORD)
+
+        return output
+
+# =============================================================================
+class IDCard:
+    """ Toolkit for registered, system-generated ID cards """
+
+    def __init__(self, person_id, valid_until=None):
+
+        self.person_id = person_id
+        self.identity_id = None
+        self.valid_until = valid_until
+
+    # -------------------------------------------------------------------------
+    def register(self, item):
+        """
+            Registers a system-generated ID card; as draw-callback for
+            IDCardLayout (i.e. called per ID)
+
+            Args:
+                item: the data item (a dict containing the person details)
+
+            Returns:
+                the item updated with an additional attribute "_req":
+                a dict {"token": the document verification token,
+                        "vhash": the record verification hash,
+                        "vcode": a human-readable verification signature of the hash,
+                        }
+                - these data are to be embedded in the PDF (e.g. the QRCode)
+        """
+
+        db = current.db
+
+        s3db = current.s3db
+        auth = current.auth
+
+        # Check for existing registration details
+        registration = item.get("_reg")
+        if registration and \
+           all(registration.get(k) for k in ("token", "vhash", "vcode")):
+            # Already processed
+            return item
+
+        # Validate the person ID in the item
+        person_id = item["_row"]["pr_person.id"]
+        if person_id != self.person_id:
+            return item
+
+        # Look up the PE label and the person record UID
+        ptable = s3db.pr_person
+        query = (ptable.id == person_id)
+        person = db(query).select(ptable.id,
+                                  ptable.uuid,
+                                  ptable.pe_label,
+                                  ptable.pe_id,
+                                  limitby = (0, 1),
+                                  ).first()
+        if not person:
+            return item
+
+        # Get the hex representation of the person UID
+        person_uuid = person.uuid
+        try:
+            # Decode the person UID
+            person_uuid = uuid.UUID(person_uuid).hex.upper()
+        except ValueError:
+            pass
+
+        # Get the pe_label
+        pe_label = person.pe_label
+
+        # Produce the ID card token to uniquely identify the PDF
+        # - will be embedded in the PDF, but not stored anywhere else
+        token = secrets.token_hex(16).upper()
+
+        # Produce the verification hash for the ID record
+        # - from pe_label, ID card token and person UID
+        # - matches only the PDF with the correct label and token
+        record_vhash = self.generate_vhash(pe_label, person_uuid, token)
+
+        # Produce the UID for the ID record
+        record_uid = uuid.uuid4()
+
+        # Generate the verification hash for the ID card
+        # - from pe_label, identity record UUID, and record verification hash
+        # - matches only this particular identity record
+        card_vhash = self.generate_chash(pe_label, record_uid.hex.upper(), record_vhash)
+
+        # Generate the card hash signature
+        # - a human-readable signature for reverse verification
+        # - useful in situations where the QR-code cannot be scanned
+        check = self._signature(card_vhash)
+
+        # Generate or update ID record (=register the ID card)
+        itable = s3db.pr_identity
+        id_data = {"uuid": record_uid.urn,
+                   "person_id": person.id,
+                   "value": "%s-%s" % (pe_label, check),
+                   "type": 98,
+                   "system": True,
+                   "invalid": False,
+                   "valid_from": current.request.utcnow.date(),
+                   "valid_until": self.valid_until,
+                   "vhash": record_vhash,
+                   }
+        self.identity_id = id_data["id"] = itable.insert(**id_data)
+
+        # Postprocess create
+        s3db.update_super(itable, id_data)
+        auth.s3_set_record_owner(itable, id_data)
+        s3db.onaccept(itable, id_data, method="create")
+
+        # Update and return the item
+        item["_reg"] = {"token": token,
+                        "vhash": card_vhash,
+                        "vcode": check,
+                        }
+        return item
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def invalidate_ids(person_id, keep=None, expire_only=False):
+        """
+            Invalidate all system-generated IDs for a person
+
+            Args:
+                person_id: the person record ID
+                keep: the ID of one identity record to keep
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        itable = s3db.pr_identity
+        dtable = s3db.pr_identity_document
+
+        query = (itable.person_id == person_id)
+        if keep:
+            query &= (itable.id != keep)
+        query &= (itable.system == True) & \
+                 (itable.invalid == False) & \
+                 (itable.deleted == False)
+        rows = db(query).select(itable.id, itable.valid_until)
+        today = current.request.utcnow.date()
+        for row in rows:
+            # Remove all stored PDF documents for this identity
+            db(dtable.identity_id == row.id).update(file=None)
+
+            # Mark the identity record as invalid
+            update = {} if expire_only else {"invalid": True}
+            if not row.valid_until or row.valid_until > today:
+                update["valid_until"] = today
+            if update:
+                row.update_record(**update)
+                s3db.onaccept(itable, row, method="update")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def generate_vhash(label, uid, token):
+        """
+            Generate the server-side verification hash for the ID Card; to
+            be stored in the identity record
+
+            Args:
+                label: the PE label
+                uid: the UUID (hex) of the person record
+                token: a random token embedded in the PDF (and only there)
+
+            Returns:
+                the hash as uppercase hexadecimal
+        """
+
+        s = "##".join((label, token, uid))
+        return hashlib.sha512(s.encode("ascii")).hexdigest().upper()
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def generate_chash(label, uid, vhash):
+        """
+            Generate the document-side verification hash for the ID Card; to
+            be embedded in the PDF
+
+            Args:
+                label: the PE label
+                uid: the UUID (hex) of the identity record
+                vhash: the server-side verification hash
+
+            Returns:
+                the hash as uppercase hexadecimal
+        """
+
+        s = "##".join((label, uid, vhash))
+        return hashlib.sha256(s.encode("ascii")).hexdigest().upper()
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def get_id_signature(cls, pe_label):
+        """
+            Produces a human-readable signature for the card hash of the
+            currently valid registration card of a person; for reverse
+            verification in situations where the QR code cannot be scanned
+
+            Args:
+                pe_label: the ID label of the person
+
+            Returns:
+                the signature (hex code)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Find the relevant identity record
+        itable = s3db.pr_identity
+        ptable = s3db.pr_person
+
+        today = current.request.utcnow.date()
+        join = ptable.on((ptable.id == itable.person_id) & \
+                         (ptable.pe_label == pe_label) & \
+                         (ptable.deleted == False))
+        query = (itable.system == True) & \
+                (itable.invalid == False) & \
+                ((itable.valid_until == None) | (itable.valid_until >= today)) & \
+                (itable.vhash != None)
+        row = db(query).select(ptable.pe_label,
+                               itable.type,
+                               itable.uuid,
+                               itable.vhash,
+                               join = join,
+                               limitby = (0, 1),
+                               ).first()
+
+        # Compute the card hash
+        card_hash = None
+        pick = False
+        if row:
+            pe_label = row.pr_person.pe_label
+            record = row.pr_identity
+            try:
+                uid = uuid.UUID(record.uuid).hex.upper()
+            except ValueError:
+                pass
+            else:
+                card_hash = cls.generate_chash(pe_label, uid, record.vhash)
+            if record.type == 999:
+                pick = True
+
+        return cls._signature(card_hash, pick=pick) if card_hash else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def _signature(vhash, pick=False):
+        """
+            Generates a signature for a verification hash
+
+            Args:
+                vhash: the verification hash (hex)
+                pick: pick pairs from the original hash (recoverable)
+
+            Returns:
+                the signature (hex code)
+        """
+
+        if pick:
+            # Pick pairs from the original hash
+            d = len(vhash) // 8
+            marks = [vhash[d*i:d*i+2] for i in range(d)]
+            return "".join(vhash[int(m, 16) % len(vhash)] for m in marks)
+
+        # Use MD5 hash of the verification hash as fingerprint
+        return hashlib.md5(vhash.encode("utf-8")).hexdigest().upper()[:8]
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def identify(cls, label, verify=True):
+        # TODO docstring
+        # TODO cleanup
+
+        db = current.db
+        s3db = current.s3db
+
+        data = label.strip().split("##") if label else None
+        if not data:
+            raise SyntaxError("No data for identification")
+        elif len(data) == 3:
+            label, token, chash = data
+        else:
+            label, token, chash = data[0], None, None
+            verify = False
+
+        # Find the person record
+        ptable = s3db.pr_person
+        query = (ptable.pe_label == label) & (ptable.deleted == False)
+        person = db(query).select(ptable.id,
+                                  ptable.uuid,
+                                  ptable.pe_label,
+                                  limitby = (0, 1),
+                                  ).first()
+        if not person:
+            # Label does not match any registered person
+            return None, False
+
+        if verify:
+            cls._verify(person, token, chash)
+
+        return person.id, verify
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def _verify(cls, person, token, chash):
+        # TODO docstring
+        # TODO cleanup
+
+        db = current.db
+        s3db = current.s3db
+
+        if not token or not hash:
+            raise SyntaxError("Insufficient data for ID verification")
+
+        # Compute ID record verification hash
+        try:
+            uid = uuid.UUID(person.uuid).hex.upper()
+        except ValueError:
+            uid = person.uuid
+        vhash = cls.generate_vhash(person.pe_label, uid, token)
+
+        # Find a valid system ID record for this person that matches the vhash
+        today = current.request.utcnow.date()
+        itable = s3db.pr_identity
+        query = (itable.person_id == person.id) & \
+                (itable.vhash == vhash) & \
+                (itable.system == True) & \
+                (itable.invalid == False) & \
+                ((itable.valid_until == None) | (itable.valid_until >= today)) & \
+                (itable.deleted == False)
+        rows = db(query).select(itable.id,
+                                itable.uuid,
+                                itable.vhash,
+                                limitby = (0, 2),
+                                )
+        if len(rows) != 1:
+            raise ValueError("ID record not found")
+        record = rows.first()
+
+        # Compute the ID card verification hash
+        try:
+            uid = uuid.UUID(record.uuid).hex.upper()
+        except ValueError:
+            # Malformed ID record UID (invalid ID record)
+            raise ValueError("Invalid ID record")
+        chash_v = cls.generate_chash(person.pe_label, uid, vhash)
+
+        if chash_v != chash:
+            # ID card verification hash does not match the ID record
+            raise ValueError("Verification hash mismatch")
+
+        return person.id
+
+    # -------------------------------------------------------------------------
+    def auto_expire(self):
+        """
+            Auto-expire all ID cards unless holder is still registered
+            at a shelter, or an active staff member
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        person_id = self.person_id
+
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.shelter_id != None) & \
+                (rtable.registration_status != 3) & \
+                (rtable.deleted == False)
+        row = db(query).select(rtable.id, limitby=(0, 1)).first()
+        if row:
+            # ...still planned or checked-in to a shelter
+            return
+
+        htable = s3db.hrm_human_resource
+        query = (htable.person_id == person_id) & \
+                (htable.organisation_id != None) & \
+                (htable.status == 1) & \
+                (htable.deleted == False)
+        row = db(query).select(htable.id, limitby=(0, 1)).first()
+        if row:
+            # ...still an active staff member
+            return
+
+        self.invalidate_ids(person_id, expire_only=True)
 
 # =============================================================================
 class IDCardLayout(PDFCardLayout):
@@ -29,6 +708,8 @@ class IDCardLayout(PDFCardLayout):
     cardsize = A4
     orientation = "Portrait"
     doublesided = False
+
+    border_color = HexColor(0x6084bf) # HexColor(0x27548F)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -47,13 +728,17 @@ class IDCardLayout(PDFCardLayout):
                 "pe_id",
                 "pe_label",
                 "first_name",
-                "middle_name",
+                #"middle_name",
                 "last_name",
                 "date_of_birth",
-                "person_details.nationality",
                 "dvr_case.organisation_id$root_organisation",
                 "shelter_registration.shelter_id",
                 "shelter_registration.shelter_unit_id",
+                "shelter_registration.shelter_id$location_id$L2",
+                "shelter_registration.shelter_id$location_id$L3",
+                "shelter_registration.shelter_id$location_id$L4",
+                "shelter_registration.shelter_id$location_id$addr_postcode",
+                "shelter_registration.shelter_id$location_id$addr_street",
                 ]
 
     # -------------------------------------------------------------------------
@@ -134,18 +819,62 @@ class IDCardLayout(PDFCardLayout):
                card's frame, drawing must not overshoot self.width/self.height
         """
 
+        # Enforce current default language
         T = current.T
-
-        c = self.canv
-        w = self.width
-        h = self.height
-        common = self.common
-
-        blue = HexColor(0x27548F)
+        default_language = current.deployment_settings.get_L10n_default_language()
+        if default_language:
+            translate = lambda s: T(s, language=default_language)
+        else:
+            translate = T
 
         item = self.item
-        raw = item["_row"]
 
+        # Invoke draw callback
+        callback = self.resource.get_config("id_card_callback")
+        if callable(callback):
+            callback(item)
+
+        if not self.backside:
+
+            self.draw_base_layout(item, translate)
+            self.draw_organisation_details(item, translate)
+            self.draw_person_details(item, translate)
+            self.draw_registration_details(item, translate)
+
+        else:
+            # No backside
+            pass
+
+    # -------------------------------------------------------------------------
+    def draw_base_layout(self, item, t_):
+        # TODO docstring
+        # TODO i18n
+
+        w = self.width
+        h = self.height
+
+        # Document Title
+        title = "Registrierungskarte"
+        self.draw_string(20, h-165, title, width=w/2-40, height=20, size=14, bold=True, halign="center")
+
+        # Advice
+        advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
+        self.draw_vertical_string(h/2+20, 25, advice, width=h/2-50)
+
+        # Border
+        self.draw_border()
+
+    # -------------------------------------------------------------------------
+    def draw_organisation_details(self, item, t_):
+        # TODO docstring
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        # Get the root organisation ID
         root_org = raw["org_organisation.root_organisation"]
 
         # Get the localized root org name
@@ -153,79 +882,137 @@ class IDCardLayout(PDFCardLayout):
         if org_names:
             root_org_name = org_names.get(root_org)
 
+        # Get the organisation logo
+        logos = common.get("logos")
+        logo = logos.get(root_org) if logos else None
+        if not logo:
+            # TODO Make the default logo a setting
+            default_logo = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
+            logo = os.path.join(current.request.folder, default_logo)
+
+        # Logo
+        if logo:
+            self.draw_image(logo, w//4, h-80, width=80, height=80, halign="center", valign="middle")
+
+        # Organisation Name
+        if root_org_name:
+            self.draw_string(20, h-140, root_org_name, width=w/2-40, height=20, size=12, bold=True, halign="center")
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        # TODO docstring
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
         draw_string = self.draw_string
 
-        if not self.backside:
-            # -------- Top ---------
+        # ----- Left -----
 
-            # Organisation Logo
-            logos = common.get("logos")
-            logo = logos.get(root_org) if logos else None
-            if logo:
-                self.draw_image(logo, 80, h-80, width=80, height=80, halign="center", valign="middle")
+        # Draw box around person data
+        left = 30
+        bottom = h/2 + 95
+        self.draw_box(left, bottom, w/2-60, 150)
 
-            # Organisation Name
-            if root_org_name:
-                draw_string(140, h-60, root_org_name, width=200, height=20, size=12, bold=True)
+        x = left + 10
+        y = bottom + 120
+        wt = w/2-2*x # text width
 
+        # Shelter
+        shelter_id = raw["cr_shelter_registration.shelter_id"]
+        if shelter_id:
             # Shelter Name
             shelter = item["cr_shelter_registration.shelter_id"]
-            if shelter:
-                draw_string(140, h-75, shelter, width=200, height=20, size=10)
+            draw_string(x, y + 14, t_("Shelter"))
+            draw_string(x, y, shelter, width=wt, height=20, size=10)
 
-            # Document Title
-            draw_string(140, h-110, "Registrierungsausweis", width=200, height=20, size=14, bold=True)
+            # Shelter address
+            location = raw["gis_location.L4"] or raw["gis_location.L3"]
+            if location:
+                address = item["gis_location.addr_street"]
+                if address:
+                    draw_string(x, y-13, address, width=wt, height=20, size=9)
+                postcode = item["gis_location.addr_postcode"]
+                place = "%s %s" % (postcode, location) if postcode else location
+                if place:
+                    draw_string(x, y-26, place, width=wt, height=20, size=9)
 
-            # -------- Left ---------
+        y = bottom + 55
 
-            x = 60
+        # Names
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  #mname = raw["pr_person.middle_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y + 13, t_("Name"))
+        draw_string(x, y, name, width=wt, height=20, size=12)
 
-            # Names
-            y = h * 13/16 - 20
-            name = s3_format_fullname(fname = raw["pr_person.first_name"],
-                                      mname = raw["pr_person.middle_name"],
-                                      lname = raw["pr_person.last_name"],
-                                      truncate = False,
-                                      )
-            draw_string(x, y + 14, T("Name"))
-            draw_string(x, y, name, size=12, width=w/2)
-
-            # Date of birth
-            y = y - 30
+        # Date of birth
+        y = y - 26
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
             dob = item["pr_person.date_of_birth"]
-            draw_string(x, y + 14, T("Date of Birth"))
-            draw_string(x, y, dob, size=12, width=w/2)
+            draw_string(x, y + 13, t_("Date of Birth"))
+            draw_string(x, y, dob, size=12, width=wt)
 
-            # Nationality
-            y = y - 30
-            nationality = item["pr_person_details.nationality"]
-            draw_string(x, y + 14, T("Nationality"))
-            draw_string(x, y, nationality, size=12, width=w/2)
+        # Shelter Unit
+        # TODO not for staff
+        # TODO do not draw if transitory unit?
+        y = y - 26
+        unit = raw["cr_shelter_registration.shelter_unit_id"]
+        if unit:
+            unit = item["cr_shelter_registration.shelter_unit_id"]
+            draw_string(x, y + 13, t_("Housing Unit"))
+            draw_string(x, y, unit, size=12, width=wt)
 
-            # Lodging
-            y = y - 30
-            lodging = item["cr_shelter_registration.shelter_unit_id"]
-            draw_string(x, y + 14, T("Lodging"))
-            draw_string(x, y, lodging, size=12, width=w/2)
+        # ----- Right -----
 
-            # ID Number and barcode
-            y = y - 60
-            code = raw["pr_person.pe_label"]
-            if code:
-                draw_string(20, y, s3_str(code), size=28, bold=True, width=w/2-40, halign="center")
-                self.draw_barcode(s3_str(code), w / 4, y - 60, height=36, halign="center", maxwidth=w/2-40)
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60,
+                            halign = "center",
+                            valign = "middle",
+                            )
 
-            # -------- Right ---------
+    # -------------------------------------------------------------------------
+    def draw_registration_details(self, item, t_):
+        # TODO docstring
 
-            # Profile picture
-            pictures = common.get("pictures")
-            picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
-            if picture:
-                self.draw_image(picture, w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60, halign="center", valign="middle")
+        h = self.height
+        w = self.width
 
-            # QR-Code
-            signature = "##".join(map(s3_str, (code, name, dob, nationality)))
-            self.draw_qrcode(signature,
+        raw = item["_row"]
+
+        # ----- Left -----
+
+        # ID Number and barcode
+        y = h/2 + 60
+        code = raw["pr_person.pe_label"]
+        if code:
+            self.draw_string(30, y, s3_str(code), width=w/2-60, size=28, bold=True, halign="center")
+            self.draw_barcode(s3_str(code), w / 4, y - 40, height=28, halign="center", maxwidth=w/2-40)
+
+        # ----- Right -----
+
+        # QR-Code and Hash Signature
+        registration = item.get("_reg")
+        if not registration or \
+            not all(registration.get(d) for d in ("token", "vhash", "vcode")):
+            vcode = "%s##UNVERIFIED##UNREGISTERED" % code
+            signature = None
+        else:
+            vcode = "##".join(map(s3_str, (code, registration["token"], registration["vhash"])))
+            signature = registration["vcode"]
+
+        if vcode:
+            self.draw_qrcode(vcode,
                              w * 3/4,
                              h * 5/8,
                              size = w/2 - 120,
@@ -233,16 +1020,13 @@ class IDCardLayout(PDFCardLayout):
                              valign = "middle",
                              level = "M",
                              )
-
-            # Graphics
-            c.setFillColor(blue)
-            c.rect(0, h-12, w, 12, fill=1, stroke=0)
-            c.rect(0, h/2, 12, h/2, fill=1, stroke=0)
-            c.rect(0, h/2, w, 12, fill=1, stroke=0)
-
-        else:
-            # No backside
-            pass
+        if signature:
+            self.draw_string(w/2 + 20, h * 6/8 - 15, signature,
+                             size = 9,
+                             bold = False,
+                             width = w/2-40,
+                             halign = "center",
+                             )
 
     # -------------------------------------------------------------------------
     def draw_string(self, x, y, value, width=120, height=40, size=7, bold=False, halign=None, box=False):
@@ -274,6 +1058,28 @@ class IDCardLayout(PDFCardLayout):
                                halign = halign,
                                box = box,
                                )
+
+    # -------------------------------------------------------------------------
+    def draw_vertical_string(self, x, y, value, width=120, height=40, size=7, bold=False, halign=None, box=False):
+        # TODO docstring
+
+        c = self.canv
+        c.saveState()
+        c.rotate(90)
+
+        result = self.draw_value(x + width/2.0,
+                                 y - self.width,
+                                 value,
+                                 width = width,
+                                 height = height,
+                                 size = size,
+                                 bold = bold,
+                                 halign = halign,
+                                 box = box,
+                                 )
+
+        c.restoreState()
+        return result
 
     # -------------------------------------------------------------------------
     def draw_value(self, x, y, value, width=120, height=40, size=7, bold=True, valign=None, halign=None, box=False):
@@ -336,5 +1142,145 @@ class IDCardLayout(PDFCardLayout):
         para.drawOn(self.canv, x - para.width / 2, y - vshift)
 
         return ah
+
+    # -------------------------------------------------------------------------
+    def draw_border(self):
+        """
+            Draws a border around the contents
+        """
+
+        c = self.canv
+        c.saveState()
+
+        w = self.width
+        h = self.height
+
+        c.setFillColor(self.border_color)
+
+        # Horizontal bars
+        c.rect(18, h-22, w-36, 12, fill=1, stroke=0) # horizontal top
+        c.rect(18, h/2, w-36, 12, fill=1, stroke=0) # horizontal bottom
+
+        # Vertical bars
+        c.rect(18, h/2, 4, h/2-22, fill=1, stroke=0) # vertical left
+        c.rect(w-22, h/2, 4, h/2-22, fill=1, stroke=0) # vertical right
+
+        c.restoreState()
+
+    # -------------------------------------------------------------------------
+    def draw_box(self, x, y, width, height):
+        """
+            Draws a (gray) box
+
+            Args:
+                x - bottom left corner, x coordinate (in points)
+                y - bottom left corner, y coordinate (in points)
+                width - the width in points
+                height - the height in points
+        """
+
+        c = self.canv
+        c.saveState()
+
+        c.setLineWidth(1)
+        c.setFillGray(0.95)
+        c.setStrokeGray(0.9)
+
+        c.rect(x, y, width, height, stroke=1, fill=0)
+
+        c.restoreState()
+
+# =============================================================================
+class StaffIDCardLayout(IDCardLayout):
+    """
+        Variant of IDCardLayout for staff members
+    """
+
+    border_color = HexColor(0xeb003c)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def fields(cls, resource):
+        """
+            The layout-specific list of fields to look up from the resource
+
+            Args:
+                resource: the resource
+
+            Returns:
+                list of field selectors
+        """
+
+        return ["id",
+                "pe_id",
+                "pe_label",
+                "first_name",
+                #"middle_name",
+                "last_name",
+                "date_of_birth",
+                "human_resource.organisation_id$root_organisation",
+                "human_resource.job_title_id",
+                ]
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        # TODO docstring
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        # ----- Left -----
+
+        # Draw box around person data
+        left = 30
+        bottom = h/2 + 95
+        self.draw_box(left, bottom, w/2-60, 130)
+
+        x = left + 10
+        y = bottom + 105
+        wt = w/2-2*x # text width
+
+        # Staff Role
+        draw_string(x, y, t_("Staff"), width=wt, height=20, size=18, bold=True)
+        job_title_id = raw["hrm_human_resource.job_title_id"]
+        if job_title_id:
+            job_title = item["hrm_human_resource.job_title_id"]
+            draw_string(x, y-16, job_title, width=wt, height=20, size=12)
+
+        y = bottom + 55
+
+        # Names
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  #mname = raw["pr_person.middle_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y + 13, t_("Name"))
+        draw_string(x, y, name, width=wt, height=20, size=12)
+
+        # Date of birth
+        y = y - 26
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
+            dob = item["pr_person.date_of_birth"]
+            draw_string(x, y + 13, t_("Date of Birth"))
+            draw_string(x, y, dob, size=12, width=wt)
+
+        # ----- Right -----
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60,
+                            halign = "center",
+                            valign = "middle",
+                            )
 
 # END =========================================================================

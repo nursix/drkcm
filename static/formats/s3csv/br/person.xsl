@@ -14,7 +14,6 @@
 
          Facility.......................optional.....Facility name
          Facility Type..................optional.....Office, Facility, Hospital, Shelter, Warehouse
-         Case Type......................optional.....br_case.case_type_id$name @ToDo
          Registration Date..............optional.....br_case.date
          Status.........................optional.....br_case.status_id$code
          Comments.......................optional.....br_case.comments

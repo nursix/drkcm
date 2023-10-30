@@ -662,13 +662,6 @@ def person():
                 title_display = T("Personal Profile"),
                 title_update = T("Personal Profile"))
 
-            # Organisation-dependent Fields
-            #set_org_dependent_field = settings.set_org_dependent_field
-            #set_org_dependent_field("pr_person_details", "father_name")
-            #set_org_dependent_field("pr_person_details", "mother_name")
-            #set_org_dependent_field("pr_person_details", "affiliations")
-            #set_org_dependent_field("pr_person_details", "company")
-
             if r.component:
                 if r.component_name == "physical_description":
                     # Hide all but those details that we want
@@ -686,6 +679,11 @@ def person():
                     table.medical_conditions.readable = True
                     table.other_details.writable = True
                     table.other_details.readable = True
+
+                elif r.component_name == "human_resource":
+                    r.component.configure(insertable = False,
+                                          deletable = False,
+                                          )
 
                 elif r.component_name == "config":
                     ctable = s3db.gis_config
@@ -747,16 +745,23 @@ def person():
 
     # CRUD post-process
     def postp(r, output):
-        if r.interactive and r.component:
-            if r.component_name == "config":
-                update_url = URL(c="gis", f="config",
-                                 args="[id]")
+
+        if r.interactive:
+            if not r.component and r.record and isinstance(output, dict):
+                # Remove all CRUD buttons except Edit-button
+                buttons = output.get("buttons")
+                if isinstance(buttons, dict):
+                    output["buttons"] = {"edit_btn": buttons["edit_btn"]} \
+                                        if "edit_btn" in buttons else {}
+
+            elif r.component_name == "config":
+                update_url = URL(c="gis", f="config", args="[id]")
                 s3_action_buttons(r, update_url=update_url)
-                s3.actions.append(dict(url=URL(c="gis", f="index",
-                                               vars={"config":"[id]"}),
-                                       label=str(T("Show")),
-                                       _class="action-btn",
-                                       ))
+                s3.actions.append({"url": URL(c="gis", f="index", vars={"config":"[id]"}),
+                                   "label": str(T("Show")),
+                                   "_class": "action-btn",
+                                   })
+
             elif r.component_name == "asset":
                 # Provide a link to assign a new Asset
                 # @ToDo: Proper Widget to do this inline

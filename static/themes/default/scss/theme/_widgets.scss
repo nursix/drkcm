@@ -618,6 +618,35 @@ div.s3-groupedopts-widget {
 }
 
 // ----------------------------------------------------------------------------
+// Presence Registration
+//
+.presence-registration {
+    .controls {
+        width: 100%;
+    }
+    .status-label {
+        font-size: 0.9rem;
+    }
+    .status-message {
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .person-details {
+        font-size: 1rem;
+    }
+    .site-presence-in, .site-presence-out {
+        i.fa {
+            margin-right: 0.2rem;
+        }
+    }
+    .site-presence-in {
+        color: #080;
+    }
+    .site-presence-out {
+        color: #c00;
+    }
+}
+// ----------------------------------------------------------------------------
 // QR Input
 //
 .qrinput {
@@ -645,11 +674,14 @@ div.s3-groupedopts-widget {
         max-width: 14rem;
     }
 }
-.qrinput-success {
+.qrinput-success, .qrinput-invalid {
     text-align: center;
     font-size: 4rem;
     padding: 1rem;
     color: darkgreen;
+}
+.qrinput-invalid {
+    color: $alert-color;
 }
 
 // ----------------------------------------------------------------------------

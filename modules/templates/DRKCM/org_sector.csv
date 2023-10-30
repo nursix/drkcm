@@ -1,11 +1,17 @@
-Abrv,Name,SubsectorOf
-Authorities,Authorities,
-Asylum Process,Asylum Process,
-Education,Education,
-External Cooperation,External Cooperation,
-General Counsel,General Counsel,
-Health,Health,
-Labor Market Integration,Labor Market Integration,
-Legal Counsel,Legal Counsel,
-Protection,Protection,
-Psychosocial Care,Psychosocial Care,
+Abrv,Name
+AVB,Asylverfahren
+Authorities,Ämter/Behörden
+EDU,Bildung
+livelihood,Existenzsicherung
+External Cooperation,Externe Kooperation
+General Counsel,Allgemeine Beratung
+Health,Gesundheit
+Integration plan,Integrationsplan
+Labor Market Integration,Arbeitsmarkt-Integration
+Legal Counsel,Rechtsberatung
+Protection,Schutz
+PSS,Psychosoziale Betreuung
+SB,Sozialberatung
+Language,Sprache
+VB,Verfahrensberatung
+Living,Wohnen

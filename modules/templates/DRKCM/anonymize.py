@@ -47,12 +47,7 @@ def drk_person_anonymize():
                                   })
 
     # Cascade rule for case activities
-    activity_details = [("dvr_response_action", {"key": "case_activity_id",
-                                                 "match": "id",
-                                                 "fields": {"comments": "remove",
-                                                            },
-                                               }),
-                        ("dvr_case_activity_need", {"key": "case_activity_id",
+    activity_details = [("dvr_case_activity_need", {"key": "case_activity_id",
                                                     "match": "id",
                                                     "fields": {"comments": "remove",
                                                                },
@@ -62,6 +57,14 @@ def drk_person_anonymize():
                                                       "fields": {"comments": ("set", ANONYMOUS),
                                                                  },
                                                       }),
+                        ]
+
+    # Cascade rule for response actions
+    response_details = [("dvr_response_action_theme", {"key": "action_id",
+                                                       "match": "id",
+                                                       "fields": {"comments": ("set", ANONYMOUS),
+                                                                  },
+                                                       }),
                         ]
 
     rules = [# Remove identity of beneficiary
@@ -139,7 +142,17 @@ def drk_person_anonymize():
              # Remove activity details, appointments and notes
              {"name": "activities",
               "title": "Activity Details, Appointments, Notes",
-              "cascade": [("dvr_case_activity", {"key": "person_id",
+              "cascade": [("dvr_case_language", {"key": "person_id",
+                                                 "match": "id",
+                                                 "fields": {"comments": "remove",
+                                                            },
+                                                 }),
+                          ("dvr_case_appointment", {"key": "person_id",
+                                                    "match": "id",
+                                                    "fields": {"comments": "remove",
+                                                               },
+                                                    }),
+                          ("dvr_case_activity", {"key": "person_id",
                                                  "match": "id",
                                                  "fields": {"subject": ("set", ANONYMOUS),
                                                             "need_details": "remove",
@@ -148,16 +161,18 @@ def drk_person_anonymize():
                                                             },
                                                  "cascade": activity_details,
                                                  }),
-                          ("dvr_case_appointment", {"key": "person_id",
-                                                    "match": "id",
-                                                    "fields": {"comments": "remove",
-                                                               },
-                                                    }),
-                          ("dvr_case_language", {"key": "person_id",
+                          ("dvr_response_action", {"key": "person_id",
+                                                   "match": "id",
+                                                   "fields": {"comments": "remove",
+                                                              },
+                                                   "cascade": response_details,
+                                                   }),
+                          ("dvr_vulnerability", {"key": "person_id",
                                                  "match": "id",
                                                  "fields": {"comments": "remove",
+                                                            "description": ("set", ANONYMOUS),
                                                             },
-                                                  }),
+                                                 }),
                           ("dvr_note", {"key": "person_id",
                                         "match": "id",
                                         "fields": {"note": "remove",

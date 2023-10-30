@@ -4,22 +4,26 @@
     License: MIT
 """
 
-from gluon import current, URL, \
-                  A, DIV, H2, H3, H4, P, TABLE, TR, TD, XML, HR
+from gluon import current, URL, DIV, H4, P, TAG
 
-from core import IS_ONE_OF
+from core import S3CRUD, FS, IS_ONE_OF, \
+                 LocationSelector, PresenceRegistration, S3SQLCustomForm, \
+                 get_form_record_id, s3_fieldmethod
 
 # -------------------------------------------------------------------------
-def check_in_status(site, person):
+def client_site_status(person_id, site_id, site_type, case_status):
     """
-        Determine the current check-in status for a person
+        Check whether a person to register at a site is a resident,
+        whether they are permitted to enter/leave premises, and whether
+        there are advice/instructions to the reception staff
 
         Args:
-            site: the site record (instance!)
-            person: the person record
-
-        See also:
-            org_SiteCheckInMethod for details of the return value
+            person_id: the person ID
+            site_id: the site ID
+            site_type: the site type (tablename)
+            case_status: the current case status (Row)
+        Returns:
+            dict, see person_site_status
     """
 
     T = current.T
@@ -28,58 +32,40 @@ def check_in_status(site, person):
     s3db = current.s3db
 
     result = {"valid": False,
-              "check_in_allowed": False,
-              "check_out_allowed": False,
+              "allowed_in": False,
+              "allowed_out": False,
               }
-    person_id = person.id
 
-    # Check the case status
-    ctable = s3db.dvr_case
-    cstable = s3db.dvr_case_status
-    query = (ctable.person_id == person_id) & \
-            (cstable.id == ctable.status_id)
-    status = db(query).select(cstable.is_closed,
-                              limitby = (0, 1),
-                              ).first()
-
-    if status and status.is_closed:
-        result["error"] = T("Not currently a resident")
+    if case_status.is_closed:
+        result["error"] = T("Closed case")
         return result
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
-    query = (stable.site_id == site.site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby=(0, 1),
-                                    ).first()
-    if not registration:
-        result["error"] = T("Registration not found")
-        return result
+    if site_type == "cr_shelter":
+        # Check for a shelter registration
+        stable = s3db.cr_shelter
+        rtable = s3db.cr_shelter_registration
+        query = (stable.site_id == site_id) & \
+                (stable.id == rtable.shelter_id) & \
+                (rtable.person_id == person_id) & \
+                (rtable.deleted != True)
+        registration = db(query).select(rtable.id,
+                                        rtable.registration_status,
+                                        limitby=(0, 1),
+                                        ).first()
+        if not registration or registration.registration_status == 3:
+            # No registration with this site, or checked-out
+            return result
 
     result["valid"] = True
 
-    # Check current status
-    reg_status = registration.registration_status
-    if reg_status == 2:
-        # Currently checked-in at this site
-        status = 1
-    elif reg_status == 3:
-        # Currently checked-out from this site
-        status = 2
-    else:
-        # No previous status
-        status = None
-    result["status"] = status
+    # Get the current presence status at the site
+    from core import SitePresence
+    presence = SitePresence.status(person_id, site_id)[0]
 
-    check_in_allowed = True
-    check_out_allowed = True
+    allowed_in = True
+    allowed_out = True
 
-    # Check if we have any case flag to deny check-in or to show advise
+    # Check if we have any case flag to deny passage and/or to show instructions
     ftable = s3db.dvr_case_flag
     ltable = s3db.dvr_case_flag_case
     query = (ltable.person_id == person_id) & \
@@ -94,19 +80,21 @@ def check_in_status(site, person):
                              ftable.advise_at_id_check,
                              ftable.instructions,
                              )
-
     info = []
     append = info.append
     for flag in flags:
+        # Deny IN/OUT?
         if flag.deny_check_in:
-            check_in_allowed = False
+            allowed_in = False
         if flag.deny_check_out:
-            check_out_allowed = False
+            allowed_out = False
 
         # Show flag instructions?
-        if status == 1:
+        if flag.advise_at_id_check:
+            advise = True
+        elif presence == "IN":
             advise = flag.advise_at_check_out
-        elif status == 2:
+        elif presence == "OUT":
             advise = flag.advise_at_check_in
         else:
             advise = flag.advise_at_check_in or flag.advise_at_check_out
@@ -123,112 +111,258 @@ def check_in_status(site, person):
     if info:
         result["info"] = DIV(_class="checkpoint-advise", *info)
 
-    result["check_in_allowed"] = check_in_allowed
-    result["check_out_allowed"] = check_out_allowed
+    result["allowed_in"] = allowed_in
+    result["allowed_out"] = allowed_out
 
     return result
 
 # -------------------------------------------------------------------------
-def site_check_in(site_id, person_id):
+def staff_site_status(person_id, site_id, organisation_ids):
     """
-        When a person is checked-in to a Shelter then update the
-        Shelter Registration
+        Check whether a person to register at a site is a staff member
 
         Args:
-            site_id: the site_id of the shelter
-            person_id: the person_id to check-in
+            person_id: the person ID
+            organisation_ids: IDs of all valid staff organisations for the site
+        Returns:
+            dict, see person_site_status
     """
 
-    s3db = current.s3db
     db = current.db
+    s3db = current.s3db
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id) & \
+            (htable.organisation_id.belongs(organisation_ids)) & \
+            (htable.status == 1) & \
+            (htable.deleted == False)
+    staff = db(query).select(htable.id, limitby=(0, 1)).first()
 
-    query = (stable.site_id == site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby = (0, 1)
-                                    ).first()
-    if not registration:
-        return
+    valid = True if staff else False
 
-    # Update the Shelter Registration
-    registration.update_record(check_in_date = current.request.utcnow,
-                               registration_status = 2,
-                               )
-    s3db.onaccept("cr_shelter_registration", registration, method="update")
+    result = {"valid": valid,
+              "allowed_in": valid,
+              "allowed_out": valid,
+              }
+    return result
 
 # -------------------------------------------------------------------------
-def site_check_out(site_id, person_id):
+def person_site_status(site_id, person):
     """
-        When a person is checked-out from a Shelter then update the
-        Shelter Registration
+        Determine the current status of a person with regard to
+        entering/leaving a site
+
+        Args:
+            site_id: the site ID
+            person: the person record
+        Returns:
+            dict {"valid": Person can be registered in/out at the site,
+                  "error": Error message for the above,
+                  "allowed_in": Person is allowed to enter the site,
+                  "allowed_out": Person is allowed to leave the site,
+                  "info": Instructions for reception staff,
+                  }
+    """
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    result = {"valid": False,
+              "allowed_in": False,
+              "allowed_out": False,
+              }
+    person_id = person.id
+
+    # Get the site type and managing organisation(s)
+    otable = s3db.org_organisation
+    stable = s3db.org_site
+    join = otable.on(otable.id == stable.organisation_id)
+    row = db(stable.site_id == site_id).select(stable.instance_type,
+                                               otable.id,
+                                               otable.root_organisation,
+                                               otable.pe_id,
+                                               join = join,
+                                               limitby = (0, 1),
+                                               ).first()
+    if not row:
+        result["error"] = T("Invalid site")
+        return result
+
+    site = row.org_site
+    organisation = row.org_organisation
+
+    organisation_ids = [organisation.id]
+
+    root_org = organisation.root_organisation
+    if root_org and root_org != organisation.id:
+        # Include all parent organisations
+        pe_ids = s3db.pr_get_ancestors(organisation.pe_id)
+        rows = db((otable.pe_id.belongs(pe_ids))).select(otable.id)
+        organisation_ids += [row.id for row in rows]
+
+    # Check for case
+    ctable = s3db.dvr_case
+    cstable = s3db.dvr_case_status
+    query = (ctable.person_id == person_id) & \
+            (ctable.organisation_id.belongs(organisation_ids)) & \
+            (cstable.id == ctable.status_id)
+    case = db(query).select(ctable.id,
+                            cstable.is_closed,
+                            limitby = (0, 1),
+                            ).first()
+
+    if case and case.dvr_case.id:
+        # Is a client
+        result.update(client_site_status(person_id,
+                                         site_id,
+                                         site.instance_type,
+                                         case.dvr_case_status,
+                                         ))
+        if not result["valid"] and not result.get("error"):
+            result["error"] = T("Not currently a resident")
+    else:
+        # May be a staff member
+        result.update(staff_site_status(person_id,
+                                        site_id,
+                                        organisation_ids,
+                                        ))
+        if not result["valid"] and not result.get("error"):
+            # Neither resident nor active staff member, so invalid ID
+            result["error"] = T("Invalid ID")
+
+    if result["valid"] and not result.get("error"):
+
+        auth = current.auth
+        instructions = None
+
+        uperson_id = auth.s3_logged_in_person()
+        if uperson_id == person_id:
+            if not auth.s3_has_roles(("ORG_ADMIN", "SECURITY")):
+                result["allowed_in"] = None
+                instructions = T("Self-registration not permitted. Please register with authorized staff at the site.")
+        elif not PresenceRegistration.present(site_id):
+            result["allowed_in"] = result["allowed_out"] = None
+            instructions = T("You must be reported as present at the site yourself in order to register the presence of others.")
+
+        if instructions:
+            result["info"] = DIV(DIV(P(instructions),
+                                     _class="checkpoint-instructions",
+                                     ),
+                                 _class="checkpoint-advise",
+                                 )
+    return result
+
+# -------------------------------------------------------------------------
+def on_site_presence_event(site_id, person_id):
+    """
+        Update last_seen_on in case file when a site presence event
+        is registered (if the person has a case file)
 
         Args:
             site_id: the site_id of the shelter
             person_id: the person_id to check-in
     """
 
-    s3db = current.s3db
     db = current.db
+    s3db = current.s3db
 
-    # Find the Registration
-    stable = s3db.cr_shelter
-    rtable = s3db.cr_shelter_registration
-    query = (stable.site_id == site_id) & \
-            (stable.id == rtable.shelter_id) & \
-            (rtable.person_id == person_id) & \
-            (rtable.deleted != True)
-    registration = db(query).select(rtable.id,
-                                    rtable.registration_status,
-                                    limitby = (0, 1)
-                                    ).first()
-    if not registration:
-        return
-
-    # Update the Shelter Registration
-    registration.update_record(check_out_date = current.request.utcnow,
-                               registration_status = 3,
-                               )
-    s3db.onaccept("cr_shelter_registration", registration, method="update")
+    ctable = s3db.dvr_case
+    query = (ctable.person_id == person_id) & \
+            (ctable.deleted == False)
+    if db(query).select(ctable.id, limitby=(0, 1)).first():
+        current.s3db.dvr_update_last_seen(person_id)
 
 # -------------------------------------------------------------------------
 def cr_shelter_resource(r, tablename):
 
+    T = current.T
     s3db = current.s3db
 
-    # Configure components to inherit realm_entity from the shelter
-    # upon forced realm update
+    table = s3db.cr_shelter
+
+    # Configure fields
+    field = table.location_id
+    field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
+                                    required_levels = ("L1", "L2", "L3"),
+                                    show_address = True,
+                                    show_postcode = True,
+                                    address_required = True,
+                                    postcode_required = True,
+                                    show_map = False,
+                                    )
+    field.represent = s3db.gis_LocationRepresent(show_link = False)
+
+    field = table.obsolete
+    field.label = T("Defunct")
+
+    # Custom form
+    crud_fields = ["name",
+                   "organisation_id",
+                   "shelter_type_id",
+                   "status",
+                   "location_id",
+                   "capacity",
+                   "blocked_capacity",
+                   "population",
+                   "available_capacity",
+                   "comments",
+                   "obsolete"
+                   ]
+
+    subheadings = {"name": T("Shelter"),
+                   "location_id": T("Location"),
+                   "capacity": T("Capacity"),
+                   "comments": T("Other"),
+                   }
+
+    # Table configuration
     s3db.configure("cr_shelter",
+                   crud_form = S3SQLCustomForm(*crud_fields),
+                   subheadings = subheadings,
                    realm_components = ("shelter_unit",
                                        ),
+                   create_next = URL(c ="cr",
+                                     f ="shelter",
+                                     args = ["[id]", "shelter_unit"],
+                                     ),
                    )
+
+    # Shelter overview method
+    from ..shelter import ShelterOverview
+    s3db.set_method("cr_shelter",
+                    method = "overview",
+                    action = ShelterOverview,
+                    )
+
+    from ..presence import PresenceList
+    s3db.set_method("cr_shelter",
+                    method = "presence_list",
+                    action = PresenceList,
+                    )
 
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
 
+    T = current.T
     s3 = current.response.s3
+
+    settings = current.deployment_settings
 
     # Custom prep
     standard_prep = s3.prep
     def custom_prep(r):
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
-        if r.method == "check-in":
-            # Configure check-in methods
+        if r.method == "presence":
+            # Configure presence event callbacks
             current.s3db.configure("cr_shelter",
-                                   site_check_in = site_check_in,
-                                   site_check_out = site_check_out,
-                                   check_in_status = check_in_status,
+                                   site_presence_in = on_site_presence_event,
+                                   site_presence_out = on_site_presence_event,
+                                   site_presence_seen = on_site_presence_event,
+                                   site_presence_status = person_site_status,
                                    )
 
         else:
@@ -247,43 +381,49 @@ def cr_shelter_controller(**attr):
                     # No suitable prepop found
                     pass
                 else:
-                    pois = dict(active = True,
-                                layer_id = layer_id,
-                                name = current.T("Buildings"),
-                                id = "profile-header-%s-%s" % ("gis_poi", r.id),
-                                )
+                    pois = {"active": True,
+                            "layer_id": layer_id,
+                            "name": current.T("Buildings"),
+                            "id": "profile-header-%s-%s" % ("gis_poi", r.id),
+                            }
                     profile_layers = s3db.get_config("cr_shelter", "profile_layers")
                     profile_layers += (pois,)
                     s3db.configure("cr_shelter",
                                    profile_layers = profile_layers,
                                    )
-            else:
-                has_role = current.auth.s3_has_role
-                if has_role("SECURITY") and not has_role("ADMIN"):
-                    # Security can access nothing in cr/shelter except
-                    # Dashboard and Check-in/out UI
-                    current.auth.permission.fail()
+            #else:
+                #has_role = current.auth.s3_has_role
+                #if has_role("SECURITY") and not has_role("ADMIN"):
+                #    # Security can access nothing in cr/shelter except
+                #    # Dashboard and Check-in/out UI
+                #    current.auth.permission.fail()
 
             if r.interactive:
+                # TODO should also be deletable while there are no shelter registrations
+                #      => probably the individual record only, not from list
+                r.resource.configure(filter_widgets = None,
+                                     deletable = False,
+                                     )
 
-                resource = r.resource
-                resource.configure(filter_widgets = None,
-                                   insertable = False,
-                                   deletable = False,
-                                   )
+        if not r.component:
+            # Open shelter basic details in read mode
+            settings.ui.open_read_first = True
 
-        if r.component_name == "shelter_unit":
-            # Expose "transitory" flag for housing units
-            utable = current.s3db.cr_shelter_unit
-            field = utable.transitory
-            field.readable = field.writable = True
-            list_fields = ["name",
-                           "transitory",
-                           "capacity",
-                           "population",
-                           "available_capacity",
-                           ]
-            r.component.configure(list_fields=list_fields)
+        #elif r.component_name == "shelter_unit":
+            ## Expose "transitory" flag for housing units
+            #utable = current.s3db.cr_shelter_unit
+            #field = utable.transitory
+            #field.readable = field.writable = True
+
+            ## Custom list fields
+            #list_fields = [(T("Name"), "name"),
+                           #"transitory",
+                           #"capacity",
+                           #"population",
+                           #"blocked_capacity",
+                           #"available_capacity",
+                           #]
+            #r.component.configure(list_fields=list_fields)
 
         return result
     s3.prep = custom_prep
@@ -295,25 +435,222 @@ def cr_shelter_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        # Hide side menu and rheader for check-in
-        if r.method == "check-in":
+        # Hide side menu and rheader for presence registration
+        if r.method == "presence":
             current.menu.options = None
             if isinstance(output, dict):
                 output["rheader"] = ""
+            return output
 
         # Custom view for shelter inspection
         if r.method == "inspection":
             from core import CustomController
             CustomController._view("MRCMS", "shelter_inspection.html")
+            return output
+
+        record = r.record
+
+        # Add presence registration button, if permitted
+        if record and not r.component and \
+            PresenceRegistration.permitted("cr_shelter", record) and \
+            isinstance(output, dict) and "buttons" in output:
+
+            buttons = output["buttons"]
+
+            # Add a "Presence Registration"-button
+            presence_url = URL(c="cr", f="shelter", args=[record.id, "presence"])
+            presence_btn = S3CRUD.crud_button(T("Presence Registration"), _href=presence_url)
+
+            delete_btn = buttons.get("delete_btn")
+            buttons["delete_btn"] = TAG[""](presence_btn, delete_btn) \
+                                    if delete_btn else presence_btn
 
         return output
     s3.postp = custom_postp
 
-    from ..rheaders import mrcms_cr_rheader
+    from ..rheaders import cr_rheader
     attr = dict(attr)
-    attr["rheader"] = mrcms_cr_rheader
+    attr["rheader"] = cr_rheader
 
     return attr
+
+# -------------------------------------------------------------------------
+def cr_shelter_unit_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    table = s3db.cr_shelter_unit
+
+    field = table.location_id
+    field.readable = field.writable = False
+
+    field = table.transitory
+    field.label = T("Staging Area")
+    field.readable = field.writable = True
+
+    table.occupancy = s3_fieldmethod("occupancy",
+                                     shelter_unit_occupancy,
+                                     represent = occupancy_represent,
+                                     )
+
+    list_fields = [(T("Name"), "name"),
+                   "transitory",
+                   "status",
+                   "capacity",
+                   "population",
+                   "blocked_capacity",
+                   "available_capacity",
+                   (T("Occupancy %"), "occupancy"),
+                   ]
+    s3db.configure("cr_shelter_unit",
+                   list_fields = list_fields,
+                   extra_fields = ("capacity", "blocked_capacity", "popuplation"),
+                   )
+
+# -------------------------------------------------------------------------
+def shelter_unit_occupancy(row):
+    """
+        Returns the occupancy of a housing unit in %, field method
+
+        Args:
+            the shelter unit Row (capacity, blocked_capacity, popuplation)
+
+        Returns:
+            integer
+    """
+
+    if hasattr(row, "cr_shelter_unit"):
+        row = row.cr_shelter_unit
+    try:
+        total_capacity = row.capacity
+        blocked_capacity = row.blocked_capacity
+        population = row.population
+    except AttributeError:
+        return None
+
+    if not total_capacity:
+        return None
+    if blocked_capacity is None:
+        blocked_capacity = 0
+    if population is None:
+        population = 0
+
+    # Blocked capacity cannot exceed total capacity
+    blocked_capacity = min(total_capacity, blocked_capacity)
+
+    # Available capacity
+    available = total_capacity - blocked_capacity
+    if available < population:
+        # Population over available capacity:
+        # - ignore any blocked capacity that is actually occupied
+        available = min(total_capacity, population)
+
+    if not available:
+        # A unit with no available capacity is full if, and only if,
+        # it is occupied - otherwise it is (in fact) empty
+        return 100 if population else 0
+    else:
+        # Compute occupancy rate, use floor-rounding so the rate is
+        # still indicative of even small free capacity (=show 100%
+        # only once it is actually reached, not by rounding)
+        return (population * 100 // available)
+
+# -------------------------------------------------------------------------
+def occupancy_represent(value):
+    """
+        Represents occupancy% as progress bar
+
+        Args:
+            value - the occupancy in % (integer >= 0)
+        Returns:
+            DIV.occupancy-bar
+    """
+
+    if value is None:
+        return DIV("?", _class="occupancy-bar")
+    elif not value:
+        value = 0
+        css_class = "occupancy-0"
+    else:
+        reprval = (value - 1) // 10 * 10 + 10
+        if reprval > 100:
+            css_class = "occupancy-exc"
+        else:
+            css_class = "occupancy-%s" % reprval
+
+    return DIV("%s%%" % value,
+               DIV(_class="occupancy %s" % css_class),
+               _class="occupancy-bar",
+               )
+
+# -------------------------------------------------------------------------
+def cr_shelter_unit_controller(**attr):
+
+    db = current.db
+    s3db = current.s3db
+
+    s3 = current.response.s3
+
+    standard_prep = s3.prep
+    def custom_prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if not r.record and r.representation == "json":
+            # Shelter unit selector => return only available units
+            status_query = (FS("status") == 1)
+
+            # Include current unit, if known
+            person_id = str(r.get_vars.get("person"))
+            if person_id.isdigit():
+                rtable = s3db.cr_shelter_registration
+                query = (rtable.person_id == person_id) & \
+                        (rtable.deleted == False)
+                reg = db(query).select(rtable.shelter_unit_id,
+                                        limitby = (0, 1),
+                                        orderby = ~rtable.id,
+                                        ).first()
+                current_unit = reg.shelter_unit_id
+            else:
+                current_unit = None
+
+            if current_unit:
+                status_query |= (FS("id") == current_unit)
+
+            r.resource.add_filter(status_query)
+
+        return result
+    s3.prep = custom_prep
+
+    return attr
+
+# -------------------------------------------------------------------------
+def cr_shelter_registration_onaccept(form):
+    """
+        Onaccept of shelter registration
+            - when checked-out, expire all system-generated ID cards
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    record_id = get_form_record_id(form)
+    if not record_id:
+        return
+
+    table = s3db.cr_shelter_registration
+    record = db(table.id == record_id).select(table.id,
+                                              table.person_id,
+                                              table.registration_status,
+                                              limitby = (0, 1),
+                                              ).first()
+    if not record:
+        return
+
+    if record.registration_status == 3:
+        from ..idcards import IDCard
+        IDCard(record.person_id).auto_expire()
 
 # -------------------------------------------------------------------------
 def cr_shelter_registration_resource(r, tablename):
@@ -321,14 +658,21 @@ def cr_shelter_registration_resource(r, tablename):
     table = current.s3db.cr_shelter_registration
     field = table.shelter_unit_id
 
-    # Filter to available housing units
-    from gluon import IS_EMPTY_OR
-    field.requires = IS_EMPTY_OR(IS_ONE_OF(current.db, "cr_shelter_unit.id",
-                                           field.represent,
-                                           filterby = "status",
-                                           filter_opts = (1,),
-                                           orderby = "shelter_id",
-                                           ))
+    if r.controller == "cr":
+        # Filter to available housing units
+        from gluon import IS_EMPTY_OR
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(current.db, "cr_shelter_unit.id",
+                                               field.represent,
+                                               filterby = "status",
+                                               filter_opts = (1,),
+                                               orderby = "shelter_id",
+                                               ))
+
+    # Custom-callback to trigger status-dependent actions
+    current.s3db.add_custom_callback("cr_shelter_registration",
+                                     "onaccept",
+                                     cr_shelter_registration_onaccept,
+                                     )
 
 # -------------------------------------------------------------------------
 def cr_shelter_registration_controller(**attr):
@@ -350,11 +694,12 @@ def cr_shelter_registration_controller(**attr):
 
         if r.method == "assign":
 
-            from ..helpers import mrcms_default_shelter
+            # TODO replace with default_case_shelter, using viewing
+            from ..helpers import get_default_shelter
 
             # Prep runs before split into create/update (Create should never happen in Village)
             table = r.table
-            shelter_id = mrcms_default_shelter()
+            shelter_id = get_default_shelter()
             if shelter_id:
                 # Only 1 Shelter
                 f = table.shelter_id
@@ -389,270 +734,5 @@ def cr_shelter_registration_controller(**attr):
     s3.prep = custom_prep
 
     return attr
-
-
-# -------------------------------------------------------------------------
-def profile_header(r):
-    """
-        Profile Header for Shelter Profile page
-    """
-
-    T = current.T
-    db = current.db
-    s3db = current.s3db
-
-    rtable = s3db.cr_shelter_registration
-    utable = s3db.cr_shelter_unit
-    ctable = s3db.dvr_case
-    stable = s3db.dvr_case_status
-
-    record = r.record
-    if not record:
-        return ""
-
-    shelter_id = record.id
-
-    # Get nostats flags
-    ftable = s3db.dvr_case_flag
-    query = (ftable.nostats == True) & \
-            (ftable.deleted == False)
-    rows = db(query).select(ftable.id)
-    nostats = set(row.id for row in rows)
-
-    # Get person_ids with nostats-flags
-    # (=persons who are registered as residents, but not BEA responsibility)
-    if nostats:
-        ltable = s3db.dvr_case_flag_case
-        query = (ltable.flag_id.belongs(nostats)) & \
-                (ltable.deleted == False)
-        rows = db(query).select(ltable.person_id)
-        exclude = set(row.person_id for row in rows)
-    else:
-        exclude = set()
-
-    # Count total shelter registrations for non-BEA persons
-    query = (rtable.person_id.belongs(exclude)) & \
-            (rtable.shelter_id == shelter_id) & \
-            (rtable.deleted != True)
-    other_total = db(query).count()
-
-    # Count number of shelter registrations for this shelter,
-    # grouped by transitory-status of the housing unit
-    left = utable.on(utable.id == rtable.shelter_unit_id)
-    query = (~(rtable.person_id.belongs(exclude))) & \
-            (rtable.shelter_id == shelter_id) & \
-            (rtable.deleted != True)
-    count = rtable.id.count()
-    rows = db(query).select(utable.transitory,
-                            count,
-                            groupby = utable.transitory,
-                            left = left,
-                            )
-    transitory = 0
-    regular = 0
-    for row in rows:
-        if row[utable.transitory]:
-            transitory += row[count]
-        else:
-            regular += row[count]
-    total = transitory + regular
-
-    # Children
-    from dateutil.relativedelta import relativedelta
-    EIGHTEEN = r.utcnow - relativedelta(years=18)
-    ptable = s3db.pr_person
-    query = (ptable.date_of_birth > EIGHTEEN) & \
-            (~(ptable.id.belongs(exclude))) & \
-            (ptable.id == rtable.person_id) & \
-            (rtable.shelter_id == shelter_id)
-    count = ptable.id.count()
-    row = db(query).select(count).first()
-    children = row[count]
-
-    CHILDREN = TR(TD(T("Children")),
-                  TD(children),
-                  )
-
-    # Families on-site
-    gtable = s3db.pr_group
-    mtable = s3db.pr_group_membership
-    join = [mtable.on((~(mtable.person_id.belongs(exclude))) & \
-                      (mtable.group_id == gtable.id) & \
-                      (mtable.deleted != True)),
-            rtable.on((rtable.person_id == mtable.person_id) & \
-                      (rtable.shelter_id == shelter_id) & \
-                      (rtable.deleted != True)),
-            ]
-    query = (gtable.group_type == 7) & \
-            (gtable.deleted != True)
-
-    rows = db(query).select(gtable.id,
-                            having = (mtable.id.count() > 1),
-                            groupby = gtable.id,
-                            join = join,
-                            )
-    families = len(rows)
-    FAMILIES = TR(TD(T("Families")),
-                  TD(families),
-                  )
-
-    TOTAL = TR(TD(T("Population BEA")),
-               TD(total),
-               _class="dbstats-total",
-               )
-    TRANSITORY = TR(TD(T("in staging area (PX)")),
-                    TD(transitory),
-                    _class="dbstats-sub",
-                    )
-    REGULAR = TR(TD(T("in housing units")),
-                 TD(regular),
-                 _class="dbstats-sub",
-                 )
-
-    OTHER = TR(TD(T("Population Other")),
-               TD(other_total),
-               _class="dbstats-extra",
-               )
-
-    # Get the IDs of open case statuses
-    query = (stable.is_closed == False) & (stable.deleted != True)
-    rows = db(query).select(stable.id)
-    OPEN = set(row.id for row in rows)
-
-    # Count number of external persons
-    ftable = s3db.dvr_case_flag
-    ltable = s3db.dvr_case_flag_case
-    left = [ltable.on((ltable.flag_id == ftable.id) & \
-                      (ltable.deleted != True)),
-            ctable.on((ctable.person_id == ltable.person_id) & \
-                      (~(ctable.person_id.belongs(exclude))) & \
-                      (ctable.status_id.belongs(OPEN)) & \
-                      ((ctable.archived == False) | (ctable.archived == None)) & \
-                      (ctable.deleted != True)),
-            rtable.on((rtable.person_id == ltable.person_id) & \
-                      (rtable.deleted != True)),
-            ]
-    query = (ftable.is_external == True) & \
-            (ftable.deleted != True) & \
-            (ltable.id != None) & \
-            (ctable.id != None) & \
-            (rtable.shelter_id == shelter_id)
-    count = ctable.id.count()
-    rows = db(query).select(count, left=left)
-    external = rows.first()[count] if rows else 0
-
-    EXTERNAL = TR(TD(T("External (Hospital / Police)")),
-                  TD(external),
-                  )
-
-    # Get the number of free places in the BEA
-    # => Non-BEA registrations do not occupy BEA capacity,
-    #    so need to re-add the total here:
-    free = (record.available_capacity or 0) + other_total
-    FREE = TR(TD(T("Free places")),
-              TD(free),
-              _class="dbstats-total",
-              )
-
-    # Announcements
-    from s3db.cms import S3CMS
-    resource_content = S3CMS.resource_content
-    announce = resource_content("cr", "shelter", shelter_id,
-                                hide_if_empty=True,
-                                )
-
-    # Weather (uses fake weather module/resource)
-    table = s3db.cms_post
-    ltable = db.cms_post_module
-    query = (ltable.module == "weather") & \
-            (ltable.resource == "weather") & \
-            (ltable.record == shelter_id) & \
-            (ltable.post_id == table.id) & \
-            (table.deleted != True)
-    _item = db(query).select(table.id,
-                             table.body,
-                             limitby=(0, 1)).first()
-    auth = current.auth
-    ADMIN = auth.get_system_roles().ADMIN
-    ADMIN = auth.s3_has_role(ADMIN)
-    if ADMIN:
-        url_vars = {"module": "weather",
-                    "resource": "weather",
-                    "record": shelter_id,
-                    # Custom redirect after CMS edit
-                    # (required for fake module/resource)
-                    "url": URL(c = "cr",
-                               f = "shelter",
-                               args = [shelter_id, "profile"],
-                               ),
-                    }
-        EDIT_WEATHER = T("Edit Weather Widget")
-        if _item:
-            item = DIV(XML(_item.body),
-                       A(EDIT_WEATHER,
-                         _href=URL(c="cms", f="post",
-                                   args = [_item.id, "update"],
-                                   vars = url_vars,
-                                   ),
-                         _class="action-btn cms-edit",
-                         ))
-        else:
-            item = A(EDIT_WEATHER,
-                     _href=URL(c="cms", f="post",
-                               args = "create",
-                               vars = url_vars,
-                               ),
-                     _class="action-btn cms-edit",
-                     )
-    elif _item:
-        item = XML(_item.body)
-    else:
-        item = ""
-
-    weather = DIV(item, _id="cms_weather", _class="cms_content")
-
-    # Show Check-in/Check-out action only if user is permitted
-    # to update shelter registrations (NB controllers may be
-    # read-only, therefore checking against default here):
-    if auth.s3_has_permission("update",
-                              "cr_shelter_registration",
-                              c="default",
-                              ):
-        # Action button for check-in/out
-        cico = A("%s / %s" % (T("Check-In"), T("Check-Out")),
-                    _href=r.url(method="check-in"),
-                    _class="action-btn dashboard-action",
-                    )
-    else:
-        cico = ""
-
-    # Generate profile header HTML
-    output = DIV(H2(record.name),
-                    P(record.comments or ""),
-                    H3(T("Announcements")) if announce else "",
-                    announce,
-                    HR(),
-                    # Current population overview
-                    TABLE(TR(TD(TABLE(TOTAL,
-                                      TRANSITORY,
-                                      REGULAR,
-                                      CHILDREN,
-                                      FAMILIES,
-                                      EXTERNAL,
-                                      FREE,
-                                      OTHER,
-                                      _class="dbstats",
-                                      ),
-                                ),
-                             TD(weather,
-                                _class="show-for-large-up",
-                                ),
-                             ),
-                          ),
-                    cico,
-                    _class="profile-header",
-                    )
-
-    return output
 
 # END =========================================================================

@@ -10,6 +10,7 @@ from .merge import S3Merge, S3RecordMerger
 from .mobile import *
 from .organizer import *
 from .pois import *
+from .presence import PresenceRegistration, SitePresence
 from .profile import *
 from .report import *
 from .rest import *

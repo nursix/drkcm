@@ -1,0 +1,8 @@
+Organisation,Code,Name,Inactive,Default,Minimum Interval,Maximum per Day,Excluded By,Presence required,Comments
+Betreuungsverband LUK Rendsburg,FOOD,Food Distribution,true,false,1.0,3,,false,Person has received food (legacy event type)
+Betreuungsverband LUK Rendsburg,FOOD-1,Breakfast,false,false,1.0,1,"FOOD-SUHUR,FOOD-IFTAR",false,Person has received breakfast
+Betreuungsverband LUK Rendsburg,FOOD-2,Lunch,false,false,1.0,1,"FOOD-SUHUR,FOOD-IFTAR",false,Person has received lunch
+Betreuungsverband LUK Rendsburg,FOOD-3,Supper,false,false,1.0,1,"FOOD-SUHUR,FOOD-IFTAR",false,Person has received supper
+Betreuungsverband LUK Rendsburg,FOOD-IFTAR,Iftar (Ramadan),false,false,1.0,1,"FOOD-1,FOOD-2,FOOD-3",false,Person has participated in iftar
+Betreuungsverband LUK Rendsburg,FOOD-SUHUR,Suhur (Ramadan),true,false,1.0,1,"FOOD-1,FOOD-2,FOOD-3",false,Person has participated in suhur
+Betreuungsverband LUK Rendsburg,SURPLUS-MEALS,Surplus Meals,false,false,,,,false,Special event type to register surplus meals

@@ -173,6 +173,7 @@ form {
             }
             label {
                 color: $form_label_color;
+                margin: 0;
             }
         }
         tr.inline-form {
@@ -338,10 +339,10 @@ form {
         }
         .embeddedComponent td {
             [dir=ltr] & {
-                padding-right: rem-calc(9);
+                padding: 0.25rem 0.75rem 0.25rem 0.25rem;
             }
             [dir=rtl] & {
-                padding-left: rem-calc(9);
+                padding: 0.25rem 0.25rem 0.25rem 0.75rem;
             }
         }
     }

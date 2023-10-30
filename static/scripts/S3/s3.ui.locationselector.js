@@ -11,7 +11,7 @@
 (function($, undefined) {
 
     "use strict";
-    var locationselectorID = 0;
+    var selectLocationID = 0;
 
     // Global cache for location data (shared with other location selectors)
     var hierarchyLocations = {},
@@ -21,7 +21,7 @@
     /**
      * LocationSelector widget
      */
-    $.widget('s3.locationselector', {
+    $.widget('s3.selectLocation', {
 
         /**
          * Default options
@@ -66,11 +66,11 @@
 
             //var el = $(this.element);
 
-            this.id = locationselectorID;
-            locationselectorID += 1;
+            this.id = selectLocationID;
+            selectLocationID += 1;
 
             // Namespace for events
-            this.eventNamespace = '.locationselector';
+            this.eventNamespace = '.selectLocation';
         },
 
         /**

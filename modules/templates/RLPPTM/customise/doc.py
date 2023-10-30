@@ -6,9 +6,7 @@
 
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 
-from core import get_form_record_id
-
-from ..helpers import WorkflowOptions
+from core import get_form_record_id, WorkflowOptions
 
 # -------------------------------------------------------------------------
 # Status for uploaded documents

@@ -48,6 +48,8 @@ from core import CustomController, CRUDMethod, DataModel, DateField, FS, \
                  s3_str, get_filter_options, \
                  LocationFilter, OptionsFilter, TextFilter
 
+COMPUTE_ALLOCABLE_CAPACITY = False
+
 # =============================================================================
 class CRReceptionCenterModel(DataModel):
     """ Custom Model for Reception Centers """
@@ -72,6 +74,7 @@ class CRReceptionCenterModel(DataModel):
         population = FieldTemplate("population", "integer",
                                    default = 0,
                                    requires = IS_INT_IN_RANGE(0),
+                                   represent = lambda v, row=None: v if v != None else "-",
                                    )
 
         # ---------------------------------------------------------------------
@@ -153,30 +156,7 @@ class CRReceptionCenterModel(DataModel):
                            represent = type_represent,
                            ),
                      status(),
-                     population("capacity",
-                                label = T("Maximum Capacity"),
-                                comment = T("The maximum (total) capacity as number of people"),
-                                ),
-                     population("available_capacity",
-                                label = T("Free Capacity"),
-                                readable = False,
-                                writable = False,
-                                ),
-                     population(label = T("Current Population (Total)"),
-                                # Computed onaccept
-                                readable = False,
-                                writable = False,
-                                ),
-                     population("population_registered",
-                                label = T("Current Population (Registered)"),
-                                ),
-                     population("population_unregistered",
-                                label = T("Current Population (Unregistered)"),
-                                ),
-                     population("allocatable_capacity",
-                                label = T("Allocatable Capacity"),
-                                comment = T("The number of free places currently allocatable"),
-                                ),
+
                      Field("contact_name",
                            label = T("Contact Name"),
                            represent = lambda v, row=None: v if v else "-",
@@ -191,12 +171,84 @@ class CRReceptionCenterModel(DataModel):
                            requires = IS_EMPTY_OR(IS_EMAIL()),
                            represent = lambda v, row=None: v if v else "-",
                            ),
-                     Field("occupancy", "integer",
+
+                     # Capacity
+                     population("capacity",
+                                label = T("Capacity"),
+                                comment = T("The maximum (total) capacity as number of people"),
+                                ),
+                     population("allocable_capacity_estimate",
+                                # This is not a free estimate, but rather calculated
+                                # by quota - hence the label should say "calculated"
+                                # rather than "estimated":
+                                label = T("Calculated Allocable Capacity"),
+                                comment = T("Calculated total number of allocable places (by quota)"),
+                                ),
+                     population("allocable_capacity",
+                                label = T("Allocable Capacity"),
+                                comment = T("The total number of allocable places"),
+                                # Computed onaccept?
+                                readable = not COMPUTE_ALLOCABLE_CAPACITY,
+                                writable = not COMPUTE_ALLOCABLE_CAPACITY,
+                                ),
+
+                     # Population
+                     population("population_registered",
+                                label = T("Current Population (Registered)"),
+                                ),
+                     population("population_unregistered",
+                                label = T("Current Population (Unregistered)"),
+                                ),
+                     population(label = T("Current Population (Total)"),
+                                # Computed onaccept
+                                readable = False,
+                                writable = False,
+                                ),
+
+                     # Free Capacitiy
+                     population("free_capacity",
+                                label = T("Free Capacity"),
+                                comment = T("The number of free places"),
+                                # Computed onaccept
+                                readable = False,
+                                writable = False,
+                                ),
+                     population("free_allocable_capacity",
+                                label = T("Free Allocable Capacity"),
+                                comment = T("The number of free allocable places"),
+                                # Computed onaccept?
+                                readable = COMPUTE_ALLOCABLE_CAPACITY,
+                                writable = COMPUTE_ALLOCABLE_CAPACITY,
+                                ),
+
+                     # Utilization Rates
+                     Field("utilization_rate", "integer",
+                           label = T("Utilization %"),
+                           represent = self.occupancy_represent,
+                           readable = False,
+                           writable = False,
+                           ),
+                     Field("occupancy_rate", "integer",
                            label = T("Occupancy %"),
                            represent = self.occupancy_represent,
                            readable = False,
                            writable = False,
                            ),
+
+                     # TODO deprecate:
+                     population("available_capacity", # => free_capacity
+                                readable = False,
+                                writable = False,
+                                ),
+                     population("allocatable_capacity", # => free_allocable_capacity
+                                readable = False,
+                                writable = False,
+                                ),
+                     Field("occupancy", "integer", # => utilization_rate
+                           readable = False,
+                           writable = False,
+                           ),
+
                      CommentsField(),
                      )
 
@@ -218,8 +270,8 @@ class CRReceptionCenterModel(DataModel):
                        "capacity",
                        "population_registered",
                        "population_unregistered",
-                       "available_capacity",
-                       "allocatable_capacity",
+                       "free_capacity",
+                       "free_allocable_capacity",
                        "occupancy",
                        ]
 
@@ -239,6 +291,13 @@ class CRReceptionCenterModel(DataModel):
                                         ),
                           ]
 
+        if COMPUTE_ALLOCABLE_CAPACITY:
+            allocable_capacity = None
+            free_allocable_capacity = "free_allocable_capacity"
+        else:
+            allocable_capacity = "allocable_capacity"
+            free_allocable_capacity = None
+
         crud_form = S3SQLCustomForm(# ---- Facility ----
                                     "organisation_id",
                                     "name",
@@ -248,9 +307,11 @@ class CRReceptionCenterModel(DataModel):
                                     "location_id",
                                     # ---- Capacity & Population ----
                                     "capacity",
+                                    "allocable_capacity_estimate",
+                                    allocable_capacity,
                                     "population_registered",
                                     "population_unregistered",
-                                    "allocatable_capacity",
+                                    free_allocable_capacity,
                                     # ---- Contact Information ----
                                     "contact_name",
                                     "phone",
@@ -282,10 +343,12 @@ class CRReceptionCenterModel(DataModel):
                      (T("Current Population (Total)"), "sum(population)"),
                      (T("Current Population (Registered)"), "sum(population_registered)"),
                      (T("Current Population (Unregistered)"), "sum(population_unregistered)"),
-                     (T("Occupancy % (Average)"), "avg(occupancy)"),
-                     (T("Allocatable Capacity"), "sum(allocatable_capacity)"),
-                     (T("Free Capacity"), "sum(available_capacity)"),
-                     (T("Total Capacity"), "sum(capacity)"),
+                     (T("Utilization % (Average)"), "avg(utilization_rate)"),
+                     (T("Occupancy % (Average)"), "avg(occupancy_rate)"),
+                     (T("Maximum Capacity"), "sum(capacity)"),
+                     (T("Allocable Capacity"), "sum(allocable_capacity)"),
+                     (T("Free Capacity"), "sum(free_capacity)"),
+                     (T("Free Allocable Capacity"), "sum(free_allocable_capacity)"),
                      ],
             "defaults": {"rows": "location_id$L2",
                          "cols": "type_id",
@@ -351,28 +414,58 @@ class CRReceptionCenterModel(DataModel):
                                writable = False,
                                ),
                      status(),
+
                      population("capacity",
-                                label = T("Maximum Capacity"),
+                                label = T("Capacity"),
                                 comment = T("The maximum (total) capacity as number of people"),
                                 ),
-                     population("available_capacity",
-                                label = T("Free Capacity"),
+                     population("allocable_capacity_estimate",
+                                label = T("Calculated Allocable Capacity"),
+                                comment = T("Calculated total number of allocable places (by quota)"),
                                 ),
-                     population(label = T("Current Population (Total)"),
+                     population("allocable_capacity",
+                                label = T("Allocable Capacity"),
+                                comment = T("The total number of allocable places"),
                                 ),
+
                      population("population_registered",
                                 label = T("Current Population (Registered)"),
                                 ),
                      population("population_unregistered",
                                 label = T("Current Population (Unregistered)"),
                                 ),
-                     population("allocatable_capacity",
-                                label = T("Allocatable Capacity"),
-                                comment = T("The number of free places currently allocatable"),
+                     population(label = T("Current Population (Total)"),
                                 ),
-                     Field("occupancy", "integer",
+
+                     population("free_capacity",
+                                label = T("Free Capacity"),
+                                comment = T("The number of free places"),
+                                ),
+                     population("free_allocable_capacity",
+                                label = T("Free Allocable Capacity"),
+                                comment = T("The number of free allocable places"),
+                                ),
+                     Field("utilization_rate", "integer",
+                           label = T("Utilization %"),
+                           represent = self.occupancy_represent,
+                           ),
+                     Field("occupancy_rate", "integer",
                            label = T("Occupancy %"),
                            represent = self.occupancy_represent,
+                           ),
+
+                     # TODO deprecate:
+                     population("available_capacity", # => free_capacity
+                                readable = False,
+                                writable = False,
+                                ),
+                     population("allocatable_capacity", # => free_allocable_capacity
+                                readable = False,
+                                writable = False,
+                                ),
+                     Field("occupancy", "integer", # => utilization_rate
+                           readable = False,
+                           writable = False,
                            ),
                      )
 
@@ -404,10 +497,12 @@ class CRReceptionCenterModel(DataModel):
         facts = [(T("Current Population (Total)"), "sum(population)"),
                  (T("Current Population (Registered)"), "sum(population_registered)"),
                  (T("Current Population (Unregistered)"), "sum(population_unregistered)"),
-                 (T("Occupancy % (Average)"), "avg(occupancy)"),
-                 (T("Allocatable Capacity"), "sum(allocatable_capacity)"),
-                 (T("Free Capacity"), "sum(available_capacity)"),
-                 (T("Total Capacity"), "sum(capacity)"),
+                 (T("Utilization % (Average)"), "avg(utilization_rate)"),
+                 (T("Occupancy % (Average)"), "avg(occupancy_rate)"),
+                 (T("Maximum Capacity"), "sum(capacity)"),
+                 (T("Allocable Capacity"), "sum(allocable_capacity)"),
+                 (T("Free Capacity"), "sum(free_capacity)"),
+                 (T("Free Allocable Capacity"), "sum(free_allocable_capacity)"),
                  ]
         timeplot_options = {
             "facts": facts,
@@ -453,9 +548,9 @@ class CRReceptionCenterModel(DataModel):
         """
             Onaccept of reception center
                 - update total population
-                - update gross available capacity
-                - sanitize net available capacity
-                - update occupancy (percentage)
+                - update free capacity
+                - compute allocable / free allocable capacity
+                - update utilization and occupancy rates
                 - update status history
         """
 
@@ -470,31 +565,76 @@ class CRReceptionCenterModel(DataModel):
                                           table.population_registered,
                                           table.population_unregistered,
                                           table.capacity,
-                                          table.allocatable_capacity,
+                                          table.allocable_capacity_estimate,
+                                          table.allocable_capacity,
+                                          table.free_capacity,
+                                          table.free_allocable_capacity,
                                           limitby = (0, 1),
                                           ).first()
 
+        # Compute total population
         num_r = record.population_registered
         num_u = record.population_unregistered
         total = (num_r if num_r else 0) + (num_u if num_u else 0)
         update = {"population": total}
 
+        # Compute free capacity
         capacity = record.capacity
-        if capacity:
-            available = max(0, capacity - total)
+        free_capacity = max(0, capacity - total) if capacity else 0
+        update["free_capacity"] = free_capacity
+
+        # Sanitize allocable_capacity_estimate
+        estimate = record.allocable_capacity_estimate
+        estimate = update["allocable_capacity_estimate"] = max(0, min(capacity, estimate))
+
+        # Compute allocable capacity
+        if COMPUTE_ALLOCABLE_CAPACITY:
+            # Sanitize free_allocable_capacity
+            free_allocable_capacity = record.free_allocable_capacity
+            if free_allocable_capacity > free_capacity:
+                free_allocable_capacity = free_capacity
+            if free_allocable_capacity < 0:
+                free_allocable_capacity = 0
+            # Compute maximum allocable capacity
+            allocable_capacity = min(capacity, free_allocable_capacity + total)
         else:
-            available = 0
-        update["available_capacity"] = available
+            # Sanitize allocable_capacity
+            allocable_capacity = record.allocable_capacity
+            if allocable_capacity > capacity:
+                allocable_capacity = capacity
+            if allocable_capacity < 0:
+                allocable_capacity = 0
+            # Compute free allocable capacity
+            free_allocable_capacity = max(0, allocable_capacity - total)
 
-        allocatable = record.allocatable_capacity
-        if allocatable > available or allocatable < 0:
-            update["allocatable_capacity"] = available
+        # Warn if actual allocable capacity is below estimate:
+        # => this means that the policy makers work with an unrealistic
+        #    estimate (i.e., too high), so the coordinating authority may
+        #    need to report and/or correct this discrepancy (small, transient
+        #    differences do not necessarily require action, however)
+        # => correcting actions could involve:
+        #    - optimizing capacity utilization (re-allocating places)
+        #    - correcting the (maximum) capacity to actual numbers
+        #    - adjusting the quota for estimate calculation
+        if allocable_capacity < estimate:
+            current.response.warning = current.T("Actual allocable capacity is lower than the calculated allocable capacity!")
 
+        update["allocable_capacity"] = allocable_capacity
+        update["free_allocable_capacity"] = free_allocable_capacity
+
+        # Compute utilization rate (by maximum capacity)
         if capacity > 0:
-            occupancy = total * 100 // capacity
+            utilization_rate = total * 100 // capacity
         else:
-            occupancy = 100
-        update["occupancy"] = occupancy
+            utilization_rate = 100
+        update["utilization_rate"] = utilization_rate
+
+        # Compute occupancy rate (by allocable capacity)
+        if allocable_capacity > 0:
+            occupancy_rate = total * 100 // allocable_capacity
+        else:
+            occupancy_rate = 100
+        update["occupancy_rate"] = occupancy_rate
 
         record.update_record(**update)
 
@@ -519,12 +659,15 @@ class CRReceptionCenterModel(DataModel):
 
         status_fields = ("status",
                          "capacity",
-                         "available_capacity",
+                         "allocable_capacity_estimate",
+                         "allocable_capacity",
                          "population",
                          "population_registered",
                          "population_unregistered",
-                         "allocatable_capacity",
-                         "occupancy",
+                         "free_capacity",
+                         "free_allocable_capacity",
+                         "utilization_rate",
+                         "occupancy_rate",
                          )
 
         # Get the reception center record
@@ -567,7 +710,8 @@ class CRReceptionCenterModel(DataModel):
     @staticmethod
     def occupancy_represent(value, row=None):
         """
-            Representation of occupancy as decision aid, progress-bar style
+            Representation of utilization/occupancy rate as decision aid,
+            progress-bar style
 
             Args:
                 value: the occupancy value (percentage, integer 0..>100)
@@ -658,6 +802,7 @@ class CapacityOverview(CRUDMethod):
         """
 
         T = current.T
+        auth = current.auth
 
         resource = self.resource
 
@@ -665,17 +810,34 @@ class CapacityOverview(CRUDMethod):
         resource.add_filter(FS("status").belongs(("OP", "SB")))
 
         # Fields to show (in order)
-        list_fields = [(T("Place"), "location_id$L3"),
-                       (T("Facility"), "name"),
-                       "status",
-                       "capacity",
-                       "population",
-                       "population_unregistered",
-                       "available_capacity",
-                       "allocatable_capacity",
-                       "comments",
-                       "occupancy",
-                       ]
+        if auth.s3_has_roles(("AFA_COORDINATOR", "AFA_MANAGER")):
+            list_fields = [(T("Place"), "location_id$L3"),
+                           (T("Facility"), "name"),
+                           "status",
+                           "capacity",
+                           #"allocable_capacity_estimate",
+                           "allocable_capacity",
+                           "population",
+                           "population_unregistered",
+                           #"free_capacity",
+                           "free_allocable_capacity",
+                           "comments",
+                           "occupancy_rate",
+                           "utilization_rate",
+                           ]
+            if auth.s3_has_role("AFA_COORDINATOR"):
+                list_fields.insert(4, "allocable_capacity_estimate")
+        else:
+            list_fields = [(T("Place"), "location_id$L3"),
+                           (T("Facility"), "name"),
+                           "status",
+                           (T("Capacity"), "allocable_capacity_estimate"),
+                           "population",
+                           "population_unregistered",
+                           (T("Free Capacity"), "free_capacity_estimate"), # Custom
+                           "comments",
+                           (T("Occupancy %"), "occupancy_rate_estimate"), # Custom
+                           ]
 
         # Extract the data (least occupied facilities first)
         data = resource.select(list_fields + ["id", "location_id$L4"],
@@ -702,10 +864,13 @@ class CapacityOverview(CRUDMethod):
 
         # Data rows
         capacity_fields = ["capacity",
+                           "allocable_capacity_estimate",
+                           "allocable_capacity",
                            "population",
                            "population_unregistered",
-                           "available_capacity",
-                           "allocatable_capacity",
+                           "free_capacity_estimate",
+                           "free_capacity",
+                           "free_allocable_capacity",
                            ]
         totals = {fn: 0 for fn in capacity_fields}
 
@@ -734,25 +899,34 @@ class CapacityOverview(CRUDMethod):
                 display = [col[0] for col in columns]
             append(TR([TD(row[colname]) for colname in display]))
 
-        # Compute total occupancy
-        capacity, population = totals["capacity"], totals["population"]
-        if capacity > 0:
-            occupancy = population * 100 // capacity
-        else:
-            occupancy = 100
-        field = self.resource.table.occupancy
-        totals["occupancy"] = field.represent(occupancy)
+        # Compute total utilization/occupancy rates
+        population = totals["population"]
+        rates = {"capacity": "utilization_rate",
+                 "allocable_capacity": "occupancy_rate",
+                 "allocable_capacity_estimate": "occupancy_rate_estimate",
+                 }
+        represent = CRReceptionCenterModel.occupancy_represent
+        for fname, rname in rates.items():
+            capacity = totals[fname]
+            if capacity > 0:
+                rate = population * 100 // capacity
+            else:
+                rate = 100
+            totals[rname] = represent(rate)
 
         # Footer with totals
         tr = TR()
         append = tr.append
         for rfield in rfields:
-            fn = rfield.field.name if rfield.field else None
+            # Skip hidden and excluded fields
+            if not rfield.show or rfield.ftype == "id" or rfield.colname in exclude:
+                continue
+            fn = rfield.fname
             if fn in totals:
                 append(TD(totals[fn]))
             elif fn == "L3":
                 append(TD(T("Total##set")))
-            elif rfield.ftype != "id":
+            else:
                 append(TD())
         tfoot = TFOOT(tr)
 

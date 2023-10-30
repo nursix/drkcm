@@ -133,6 +133,9 @@ class S3NavigationItem:
                 mandatory: item is always active
                 ltr: item is always rendered LTR
                 attributes: attributes to use in layout
+
+            Keyword Args:
+                ignore_args: ignore args when matching current request
         """
 
         # Label
@@ -700,9 +703,11 @@ class S3NavigationItem:
         if not c and self.parent is None:
             return 1
 
+        # Additional preference score
+        preference = 0
 
         rvars = request.get_vars
-        controller = request.controller
+        rcontroller = controller = request.controller
         function = request.function
 
         # Handle "viewing" (foreign controller in a tab)
@@ -721,6 +726,10 @@ class S3NavigationItem:
         # Controller
         if controller == c or controller in mc:
             level = 1
+        if rcontroller == c and controller in mc:
+            # Add preference score if both match
+            # e.g. custom rest controller with viewing-tab
+            preference += 1
 
         # Function
         if level == 1:
@@ -728,11 +737,11 @@ class S3NavigationItem:
             mf = self.get("match_function")
             if function == f or function in mf:
                 level = 2
-            elif f == "index" or "index" in mf:
-                # "weak" match: homepage link matches any function
-                return 1
+            elif f == "index" or "index" in mf or "*" in mf:
+                # "weak" match: homepage link or * matches any function
+                level = 1
             elif f is not None:
-                return 0
+                level = 0
 
         # Args and vars
         # Match levels (=order of preference):
@@ -744,7 +753,7 @@ class S3NavigationItem:
         #   5 = args match but vars mismatch
         #   6 = args match and no vars in item
         #   7 = args match and vars match
-        if level == 2:
+        if level == 2 and not self.opts.ignore_args:
             extra = 1
             for k, v in link_vars.items():
                 if k not in rvars or k in rvars and rvars[k] != s3_str(v):
@@ -755,7 +764,7 @@ class S3NavigationItem:
             rargs = request.args
             if rargs:
                 if args:
-                    largs = [a for a in request.args if not a.isdigit()]
+                    largs = [a for a in rargs if not a.isdigit()]
                     if len(args) == len(largs) and \
                        all([args[i] == largs[i] for i in range(len(args))]):
                         level = 5
@@ -774,7 +783,7 @@ class S3NavigationItem:
                 level = 5
             level += extra
 
-        return level
+        return level + preference
 
     # -------------------------------------------------------------------------
     def branch(self, request=None):
@@ -1522,7 +1531,7 @@ class S3ComponentTabs:
                         args = [record_id]
                 else:
                     if "viewing" not in _vars and record_id:
-                        args = [record_id]
+                        args = [record_id, tab.method] if tab.method else [record_id]
                 _href = URL(function, args=args, vars=_vars)
                 _id = "rheader_tab_%s" % function
 

@@ -60,6 +60,7 @@ def drk_realm_entity(table, row):
                        "dvr_note",
                        "dvr_residence_status",
                        "dvr_response_action",
+                       "dvr_vulnerability",
                        "pr_group_membership",
                        "pr_person_details",
                        "pr_person_tag",
@@ -107,6 +108,21 @@ def drk_realm_entity(table, row):
                                     ).first()
         if activity:
             realm_entity = activity.realm_entity
+
+    elif tablename in ("dvr_vulnerability_case_activity",
+                       "dvr_vulnerability_response_action",
+                       ):
+
+        # Inherit from vulnerability
+        table = s3db.table(tablename)
+        vtable = s3db.dvr_vulnerability
+        query = (table._id == row.id) & \
+                (vtable.id == table.vulnerability_id)
+        vulnerability = db(query).select(vtable.realm_entity,
+                                         limitby = (0, 1),
+                                         ).first()
+        if vulnerability:
+            realm_entity = vulnerability.realm_entity
 
     elif tablename == "pr_group":
 

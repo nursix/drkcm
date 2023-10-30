@@ -1,12 +1,12 @@
 """
-    Helper functions and classes for RLPPTM
+    Helper functions and classes for MRCMS
 
     License: MIT
 """
 
-from gluon import current
+from gluon import current, URL, A
 
-from core import FS, S3DateTime, s3_str
+from core import FS, S3DateTime, WorkflowOptions, s3_fullname, s3_str
 
 # =============================================================================
 def get_role_realms(role):
@@ -36,6 +36,101 @@ def get_role_realms(role):
         role_realms = user.realms.get(role_id, role_realms)
 
     return role_realms
+
+# -----------------------------------------------------------------------------
+def get_role_users(role_uid, pe_id=None, organisation_id=None):
+    """
+        Look up users with a certain user role for a certain organisation
+
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
+
+        Returns:
+            a dict {user_id: pe_id} of all active users with this
+            role for the organisation
+    """
+
+    db = current.db
+
+    auth = current.auth
+    s3db = current.s3db
+
+    if not pe_id and organisation_id:
+        # Look up the realm pe_id from the organisation
+        otable = s3db.org_organisation
+        query = (otable.id == organisation_id) & \
+                (otable.deleted == False)
+        organisation = db(query).select(otable.pe_id,
+                                        limitby = (0, 1),
+                                        ).first()
+        pe_id = organisation.pe_id if organisation else None
+
+    # Get all users with this realm as direct OU ancestor
+    from s3db.pr import pr_realm_users
+    users = pr_realm_users(pe_id) if pe_id else None
+    if users:
+        # Look up those among the realm users who have
+        # the role for either pe_id or for their default realm
+        gtable = auth.settings.table_group
+        mtable = auth.settings.table_membership
+        ltable = s3db.pr_person_user
+        utable = auth.settings.table_user
+        join = [mtable.on((mtable.user_id == ltable.user_id) & \
+                          ((mtable.pe_id == None) | (mtable.pe_id == pe_id)) & \
+                          (mtable.deleted == False)),
+                gtable.on((gtable.id == mtable.group_id) & \
+                          (gtable.uuid == role_uid)),
+                # Only verified+active accounts:
+                utable.on((utable.id == mtable.user_id) & \
+                          ((utable.registration_key == None) | \
+                           (utable.registration_key == "")))
+                ]
+        query = (ltable.user_id.belongs(set(users.keys()))) & \
+                (ltable.deleted == False)
+        rows = db(query).select(ltable.user_id,
+                                ltable.pe_id,
+                                join = join,
+                                )
+        users = {row.user_id: row.pe_id for row in rows}
+
+    return users if users else None
+
+# -----------------------------------------------------------------------------
+def get_role_emails(role_uid, pe_id=None, organisation_id=None):
+    """
+        Look up the emails addresses of users with a certain user role
+        for a certain organisation
+
+        Args:
+            role_uid: the role UUID
+            pe_id: the pe_id of the organisation, or
+            organisation_id: the organisation_id
+
+        Returns:
+            a list of email addresses
+    """
+
+    contacts = None
+
+    users = get_role_users(role_uid,
+                           pe_id = pe_id,
+                           organisation_id = organisation_id,
+                           )
+
+    if users:
+        # Look up their email addresses
+        ctable = current.s3db.pr_contact
+        query = (ctable.pe_id.belongs(set(users.values()))) & \
+                (ctable.contact_method == "EMAIL") & \
+                (ctable.deleted == False)
+        rows = current.db(query).select(ctable.value,
+                                        orderby = ~ctable.priority,
+                                        )
+        contacts = list(set(row.value for row in rows))
+
+    return contacts if contacts else None
 
 # -----------------------------------------------------------------------------
 def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
@@ -80,7 +175,7 @@ def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
                                     )
     return [o.id for o in orgs]
 
-# -----------------------------------------------------------------------------
+# =============================================================================
 def get_user_orgs(roles=None, cacheable=True, limit=None):
     """
         Get the IDs of all organisations the user has any of the
@@ -158,12 +253,73 @@ def get_user_sites(roles=None, site_type="cr_shelter", cacheable=True, limit=Non
     return site_ids
 
 # =============================================================================
-def mrcms_default_shelter():
+def get_current_site_organisation():
     """
-        Lazy getter for the default shelter_id
+        The organisation that manages the site where the user is currently
+        registered as present;
+
+        Returns:
+            organisation ID
     """
 
-    if current.auth.s3_has_role("ADMIN"):
+    person_id = current.auth.s3_logged_in_person()
+    if not person_id:
+        return None
+
+    from core import SitePresence
+    site_id = SitePresence.get_current_site(person_id)
+
+    table = current.s3db.org_site
+    query = (table.site_id == site_id)
+    row = current.db(query).select(table.organisation_id,
+                                   limitby = (0, 1),
+                                   ).first()
+
+    return row.organisation_id if row else None
+
+# =============================================================================
+def get_default_organisation():
+    """
+        The organisation the user has the STAFF or ORG_ADMIN role for
+        (if only one organisation)
+
+        Returns:
+            organisation ID
+    """
+
+    auth = current.auth
+    if not auth.s3_logged_in() or auth.s3_has_roles("ADMIN", "ORG_GROUP_ADMIN"):
+        return None
+
+    s3 = current.response.s3
+    organisation_id = s3.mrcms_default_organisation
+
+    if organisation_id is None:
+
+        organisation_ids = get_user_orgs(limit=2)
+        if len(organisation_ids) == 1:
+            organisation_id = organisation_ids[0]
+        else:
+            organisation_id = None
+        s3.mrcms_default_organisation = organisation_id
+
+    return organisation_id
+
+# -----------------------------------------------------------------------------
+def get_default_shelter():
+    """
+        The single shelter of the default organisation (if there is a default
+        organisation with only a single shelter)
+
+        Returns:
+            shelter ID
+    """
+    # TODO refactor
+    #      - use default organisation instead of user orgs (i.e. no default
+    #        shelter without default organisation)
+
+    auth = current.auth
+    if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
         return None
 
     s3 = current.response.s3
@@ -179,6 +335,249 @@ def mrcms_default_shelter():
         s3.mrcms_default_shelter = shelter_id
 
     return shelter_id
+
+# =============================================================================
+def get_default_case_organisation():
+    """
+        The organisation the user can access case files for (if only one
+        organisation)
+
+        Returns:
+            organisation ID
+    """
+    # TODO parametrize permission
+
+    auth = current.auth
+    if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
+        return None
+
+    permissions = auth.permission
+    permitted_realms = permissions.permitted_realms("dvr_case", "read")
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.org_organisation
+    query = (table.pe_id.belongs(permitted_realms)) & \
+            (table.deleted == False)
+    rows = db(query).select(table.id)
+    if not rows:
+        return None
+    if len(rows) == 1:
+        return rows.first().id
+
+    # TODO remove this fallback?
+    site_org = get_current_site_organisation()
+    if site_org:
+        organisation_ids = [row.id for row in rows]
+        if site_org in organisation_ids:
+            return site_org
+
+    return None
+
+# -------------------------------------------------------------------------
+def get_available_shelters(organisation_id, person_id=None):
+    """
+        The available shelters of the case organisation, to configure
+        inline shelter registration in case form
+
+        Args:
+            organisation_id: the ID of the case organisation
+            person_id: the person_id of the client
+
+        Returns:
+            list of shelter IDs
+
+        Note:
+            - includes the current shelter where the client is registered,
+              even if it is closed
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get the current shelter registration for person_id
+    if person_id:
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        reg = db(query).select(rtable.shelter_id,
+                               limitby = (0, 1),
+                               orderby = ~rtable.id,
+                               ).first()
+        current_shelter = reg.shelter_id if reg else None
+    else:
+        current_shelter = None
+
+    stable = s3db.cr_shelter
+    status_query = (stable.status == 2) & \
+                   (stable.obsolete == False)
+    if current_shelter:
+        status_query |= (stable.id == current_shelter)
+
+    query = (stable.organisation_id == organisation_id) & \
+            status_query & \
+            (stable.deleted == False)
+    rows = db(query).select(stable.id)
+    shelters = [row.id for row in rows]
+
+    return shelters
+
+# -----------------------------------------------------------------------------
+def get_default_case_shelter(person_id):
+    """
+        Get the default shelter (and housing unit) for a case
+
+        Args:
+            person_id: use the shelter registration of this person as
+                       reference, if available
+        Returns:
+            tuple (shelter_id, unit_id)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    shelter_id = unit_id = None
+
+    if person_id:
+        # Get the current shelter_id and unit_id for the person_id
+        # if they are registered as planned or checked-in to a shelter
+        rtable = s3db.cr_shelter_registration
+        query = (rtable.person_id == person_id) & \
+                (rtable.deleted == False)
+        row = db(query).select(rtable.shelter_id,
+                               rtable.shelter_unit_id,
+                               rtable.registration_status,
+                               limitby = (0, 1),
+                               ).first()
+        if row:
+            shelter_id = row.shelter_id
+            if row.registration_status != 3:
+                unit_id = row.shelter_unit_id
+            else:
+                # Person is checked-out, so housing unit no longer valid
+                unit_id = None
+
+    if not shelter_id:
+        # Look up the only available shelter from the default case organisation
+        organisation_id = get_default_case_organisation()
+        if organisation_id:
+            available_shelters = get_available_shelters(organisation_id)
+            if len(available_shelters) == 1:
+                shelter_id = available_shelters[0]
+
+    return shelter_id, unit_id
+
+# =============================================================================
+def account_status(record, represent=True):
+    """
+        Checks the status of the user account for a person
+
+        Args:
+            record: the person record
+            represent: represent the result as workflow option
+
+        Returns:
+            workflow option HTML if represent=True, otherwise boolean
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    ltable = s3db.pr_person_user
+    utable = current.auth.table_user()
+
+    query = (ltable.pe_id == record.pe_id) & \
+            (ltable.deleted == False) & \
+            (utable.id == ltable.user_id)
+
+    account = db(query).select(utable.id,
+                               utable.registration_key,
+                               cache = s3db.cache,
+                               limitby = (0, 1),
+                               ).first()
+
+    if account:
+        status = "DISABLED" if account.registration_key else "ACTIVE"
+    else:
+        status = "N/A"
+
+    if represent:
+        represent = WorkflowOptions(("N/A", "nonexistent", "grey"),
+                                    ("DISABLED", "disabled##account", "red"),
+                                    ("ACTIVE", "active", "green"),
+                                    ).represent
+        status = represent(status)
+
+    return status
+
+# -----------------------------------------------------------------------------
+def hr_details(record):
+    """
+        Looks up relevant HR details for a person
+
+        Args:
+            record: the pr_person record in question
+
+        Returns:
+            dict {"organisation": organisation name,
+                  "account": account status,
+                  }
+
+        Note:
+            all data returned are represented (not raw data)
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    person_id = record.id
+
+    # Get HR record
+    htable = s3db.hrm_human_resource
+    query = (htable.person_id == person_id)
+
+    hr_id = current.request.get_vars.get("human_resource.id")
+    if hr_id:
+        query &= (htable.id == hr_id)
+    query &= (htable.deleted == False)
+
+    rows = db(query).select(htable.organisation_id,
+                            htable.org_contact,
+                            htable.status,
+                            orderby = htable.created_on,
+                            )
+    if not rows:
+        human_resource = None
+    elif len(rows) > 1:
+        rrows = rows
+        rrows = rrows.filter(lambda row: row.status == 1) or rrows
+        rrows = rrows.filter(lambda row: row.org_contact) or rrows
+        human_resource = rrows.first()
+    else:
+        human_resource = rows.first()
+
+    output = {"organisation": "",
+              "account": account_status(record),
+              }
+
+    if human_resource:
+        otable = s3db.org_organisation
+
+        # Link to organisation
+        query = (otable.id == human_resource.organisation_id)
+        organisation = db(query).select(otable.id,
+                                        otable.name,
+                                        limitby = (0, 1),
+                                        ).first()
+        output["organisation"] = A(organisation.name,
+                                   _href = URL(c = "org",
+                                               f = "organisation",
+                                               args = [organisation.id],
+                                               ),
+                                   )
+    return output
 
 # =============================================================================
 class MRCMSSiteActivityReport:

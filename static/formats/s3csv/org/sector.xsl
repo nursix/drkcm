@@ -8,8 +8,6 @@
          CSV Column              Type          Description
          Abrv....................string........Abbreviation (unique, required)
          Name....................string........Name (defaults to Abbreviation)
-         SubsectorOf.............string........Abbreviation of the
-                                                    Sectorname (for subsectors)
 
     *********************************************************************** -->
     <xsl:output method="xml"/>
@@ -33,18 +31,8 @@
     <xsl:template name="Sector">
         <xsl:variable name="SectorName" select="normalize-space(col[@field='Name']/text())"/>
         <xsl:variable name="SectorAbrv" select="normalize-space(col[@field='Abrv']/text())"/>
-        <xsl:variable name="SubsectorOf" select="normalize-space(col[@field='SubsectorOf']/text())"/>
 
-        <xsl:variable name="resource">
-            <xsl:choose>
-                <xsl:when test="$SubsectorOf=''">org_sector</xsl:when>
-                <xsl:otherwise>org_subsector</xsl:otherwise>
-            </xsl:choose>
-        </xsl:variable>
-        <resource>
-            <xsl:attribute name="name">
-                <xsl:value-of select="$resource"/>
-            </xsl:attribute>
+        <resource name="org_sector">
             <data field="abrv">
                 <xsl:choose>
                     <xsl:when test="$SectorAbrv!=''">
@@ -65,14 +53,10 @@
                     </xsl:otherwise>
                 </xsl:choose>
             </data>
-            <xsl:if test="$resource='org_sector'">
-                <xsl:for-each select="//row[normalize-space(col[@field='SubsectorOf']/text())=$SectorAbrv]">
-                    <xsl:call-template name="Sector"/>
-                </xsl:for-each>
-            </xsl:if>
         </resource>
 
     </xsl:template>
 
     <!-- ****************************************************************** -->
+
 </xsl:stylesheet>

@@ -1,9 +1,11 @@
 uid,role,description,hidden,controller,function,table,uacl,oacl,entity
+AFA_COORDINATOR,AfA Coordinator,,,cr,reception_center,,READ|UPDATE,,any
+AFA_COORDINATOR,AfA Coordinator,,,,,cr_reception_center,READ|UPDATE,,any
 AFA_MANAGER,AfA Shelter Manager,,,cr,reception_center,,CREATE|READ|UPDATE|DELETE,,
-AFA_MANAGER,AfA Shelter Manager,,,cr,reception_center_status,,CREATE|READ|UPDATE|DELETE,,
+AFA_MANAGER,AfA Shelter Manager,,,cr,reception_center_status,,READ,,
 AFA_MANAGER,AfA Shelter Manager,,,cr,,,READ,,
 AFA_MANAGER,AfA Shelter Manager,,,,,cr_reception_center,CREATE|READ|UPDATE|DELETE,,
-AFA_MANAGER,AfA Shelter Manager,,,,,cr_reception_center_status,CREATE|READ|UPDATE|DELETE,,
+AFA_MANAGER,AfA Shelter Manager,,,,,cr_reception_center_status,READ,,
 AFA_MANAGER,AfA Shelter Manager,,,,,gis_location,CREATE|READ|UPDATE|DELETE,,
 AFA_READER,AfA Shelter Reader,,,cr,reception_center,,READ,,
 AFA_READER,AfA Shelter Reader,,,cr,reception_center_status,,READ,,

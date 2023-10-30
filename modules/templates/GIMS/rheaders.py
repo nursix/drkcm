@@ -140,7 +140,7 @@ def cr_rheader(r, tabs=None):
 
             rheader_fields = [["organisation_id", "capacity"],
                               ["location_id", "population"],
-                              ["status", "allocatable_capacity"],
+                              ["status", "free_allocable_capacity"],
                               ]
             rheader_title = "name"
 

@@ -924,7 +924,8 @@ class S3Config(Storage):
             a certain required role themselves:
             - a tuple|list of role UUIDs = user must have the roles
               themselves in order to assign them
-            - a dict {assignable_role:required_role}
+            - a dict {assignable_role:required_role}, where required_role
+              can be a single role UID or a tuple|list of alternatives
         """
         return self.__lazy("auth", "privileged_roles", default=[])
 
@@ -1846,20 +1847,15 @@ class S3Config(Storage):
         return self.L10n.get("languages_readonly", True)
 
     def get_L10n_religions(self):
-        """
-            Religions used in Person Registry
-
-            @ToDo: find a better code
-            http://eden.sahanafoundation.org/ticket/594
-        """
+        """ Religions used in Person Registry """
         T = current.T
-        return self.L10n.get("religions", {"none": T("none"),
+        return self.L10n.get("religions", {"none": T("none##Religion"),
                                            "christian": T("Christian"),
                                            "muslim": T("Muslim"),
                                            "jewish": T("Jewish"),
                                            "buddhist": T("Buddhist"),
                                            "hindu": T("Hindu"),
-                                           "bahai": T("Bahai"),
+                                           "bahai": T("Bahá'í"),
                                            "other": T("other")
                                            })
 
@@ -2317,10 +2313,6 @@ class S3Config(Storage):
             Label for attachments tab
         """
         return current.T(self.ui.get("label_attachments", "Attachments"))
-
-    def get_ui_label_cluster(self):
-        """ UN-style deployment? """
-        return self.ui.get("cluster", False)
 
     def get_ui_label_locationselector_map_point_add(self):
         """
@@ -3470,22 +3462,6 @@ class S3Config(Storage):
         """
         return self.cr.get("shelter_allocation", False)
 
-    def get_org_site_check_in_qrcode(self):
-        """
-            Use QRInput for site check-in/out
-                - True to enable and use QR contents verbatim
-                - a tuple (pattern, index) for QR contents parsing
-                - False to disable
-        """
-        return self.org.get("site_check_in_qrcode", False)
-
-    def get_cr_check_out_is_final(self):
-        """
-            Whether checking out of a shelter frees up the place
-            or is just leaving the site temporarily
-        """
-        return self.cr.get("check_out_is_final", True)
-
     def get_cr_tags(self):
         """
             Whether shelters should show a tags tab
@@ -3639,11 +3615,17 @@ class S3Config(Storage):
         """
         return self.dvr.get("label", None)
 
-    def get_dvr_case_flags(self):
+    # Case Details ----------------------------------------
+
+    def get_dvr_household_size(self):
         """
-            Enable features to manage case flags
+            Register number of persons per household (family)
+
+            False = off
+            True = manual
+            "auto" = count family members automatically
         """
-        return self.dvr.get("case_flags", False)
+        return self.dvr.get("household_size", False)
 
     def get_dvr_track_transfer_sites(self):
         """
@@ -3667,27 +3649,54 @@ class S3Config(Storage):
         """
         return self.dvr.get("manage_transferability", False)
 
-    def get_dvr_household_size(self):
-        """
-            Register number of persons per household (family)
+    # Case Documents --------------------------------------
 
-            False = off
-            True = manual
-            "auto" = count family members automatically
+    def get_dvr_case_include_activity_docs(self):
         """
-        return self.dvr.get("household_size", False)
+            Documents-tab of beneficiaries includes case activity attachments
+        """
+        return self.dvr.get("case_include_activity_docs", False)
+
+    def get_dvr_case_include_group_docs(self):
+        """
+            Documents-tab of beneficiaries includes case group attachments
+        """
+        return self.dvr.get("case_include_group_docs", False)
+
+    # Case Flags ------------------------------------------
+
+    def get_dvr_case_flags(self):
+        """
+            Enable features to manage case flags
+        """
+        return self.dvr.get("case_flags", False)
+
+    def get_dvr_case_flags_org_specific(self):
+        """
+            Use organisation-specific case flags
+        """
+        return self.dvr.get("case_flags_org_specific", False)
+
+    # Needs -----------------------------------------------
+    def get_dvr_need_types_org_specific(self):
+        """
+            Use org-specific need types
+        """
+        return self.__lazy("dvr", "need_types_org_specific", False)
+
+    # Appointments ----------------------------------------
+
+    def get_dvr_appointment_types_org_specific(self):
+        """
+            Use organisation-specific appointment types
+        """
+        return self.dvr.get("appointment_types_org_specific", False)
 
     def get_dvr_mandatory_appointments(self):
         """
             Expose flags to mark appointment types as mandatory
         """
         return self.dvr.get("mandatory_appointments", False)
-
-    def get_dvr_case_events_close_appointments(self):
-        """
-            Whether case events automatically close appointments
-        """
-        return self.dvr.get("case_events_close_appointments", False)
 
     def get_dvr_appointments_update_last_seen_on(self):
         """
@@ -3704,29 +3713,19 @@ class S3Config(Storage):
         """
         return self.dvr.get("appointments_update_case_status", False)
 
-    def get_dvr_payments_update_last_seen_on(self):
-        """
-            Whether payments (e.g. allowance) shall automatically update
-            the "last seen on" date when set to "paid"
-        """
-        return self.dvr.get("payments_update_last_seen_on", False)
+    # Case Events -----------------------------------------
 
-    def get_dvr_id_code_pattern(self):
+    def get_dvr_case_event_types_org_specific(self):
         """
-            A regular expression pattern to parse ID Codes (QR codes),
-            None to disable ID code parsing
-
-            Should return the following groups:
-                label                   the PE label, mandatory
-                family                  the PE label of the head of family, optional
-                first_name              optional
-                last_name               optional
-                date_of_birth           optional
-
-            Example:
-                "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
+            Use organisation-specific case event types
         """
-        return self.dvr.get("id_code_pattern", None)
+        return self.dvr.get("case_event_types_org_specific", False)
+
+    def get_dvr_case_events_close_appointments(self):
+        """
+            Whether case events automatically close appointments
+        """
+        return self.dvr.get("case_events_close_appointments", False)
 
     def get_dvr_event_registration_checkin_warning(self):
         """
@@ -3754,62 +3753,133 @@ class S3Config(Storage):
         """
         return self.dvr.get("event_registration_exclude_codes", None)
 
-    def get_dvr_activity_use_service_type(self):
+    def get_dvr_payments_update_last_seen_on(self):
         """
-            Use service type in group/case activities
+            Whether payments (e.g. allowance) shall automatically update
+            the "last seen on" date when set to "paid"
         """
-        return self.dvr.get("activity_use_service_type", False)
+        return self.dvr.get("payments_update_last_seen_on", False)
 
-    def get_dvr_activity_sectors(self):
+    def get_dvr_id_code_pattern(self):
         """
-            Use sectors in group/case activities
-        """
-        return self.dvr.get("activity_sectors", False)
+            A regular expression pattern to parse ID Codes (QR codes),
+            None to disable ID code parsing
 
-    def get_dvr_case_activity_use_status(self):
-        """
-            Use configurable statuses in case activities
-            instead of simple completed-flag
-        """
-        return self.dvr.get("case_activity_use_status", False)
+            Should return the following groups:
+                label                   the PE label, mandatory
+                family                  the PE label of the head of family, optional
+                first_name              optional
+                last_name               optional
+                date_of_birth           optional
 
-    def get_dvr_case_activity_needs_multiple(self):
+            Example:
+                "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
         """
-            Whether Case Activities link to Multiple Needs
-            - e.g. DRK: False
-            - e.g. STL: True
+        return self.dvr.get("id_code_pattern", None)
+
+    # Vulnerabilities -------------------------------------
+
+    def get_dvr_vulnerabilities(self):
         """
-        return self.dvr.get("case_activity_needs_multiple", False)
+            Register vulnerabilities in case file
+        """
+        return self.__lazy("dvr", "vulnerabilities", False)
+
+    # Case Activities -------------------------------------
+
+    def get_dvr_case_activity_subject_type(self):
+        """
+            Whether to use a free-text subject line or need category or both
+            - "subject": use subject line (default)
+            - "need": use need category
+            - "both": use both
+        """
+        return self.__lazy("dvr", "case_activity_subject_type", "subject")
+
+    def get_dvr_case_activity_emergency(self):
+        """
+            Case activities can be marked as emergencies
+        """
+        return self.__lazy("dvr", "case_activity_emergency", False)
+
+    def get_dvr_case_activity_need_details(self):
+        """
+            Use free-text field for need details in case activities
+        """
+        return self.__lazy("dvr", "case_activity_need_details", True)
+
+    def get_dvr_case_activity_vulnerabilities(self):
+        """
+            Link case activities to vulnerabilities triggering the need
+        """
+        default = self.get_dvr_vulnerabilities()
+        return self.__lazy("dvr", "case_activity_vulnerabilities", default)
+
+    def get_dvr_case_activity_response_details(self):
+        """
+            Use simple free-text field to describe measures taken
+            in a case activity
+        """
+        default = not self.get_dvr_manage_response_actions()
+        return self.__lazy("dvr", "case_activity_response_details", default)
+
+    def get_dvr_case_activity_updates(self):
+        """
+            Use inline-updates for case activities
+        """
+        return self.__lazy("dvr", "case_activity_updates", True)
+
+    def get_dvr_case_activity_status(self):
+        """
+            Use status in case activities (so they can be concluded)
+        """
+        return self.__lazy("dvr", "case_activity_status", True)
+
+    def get_dvr_case_activity_outcome(self):
+        """
+            Document outcome in case activities
+        """
+        default = self.get_dvr_case_activity_status()
+        return self.__lazy("dvr", "case_activity_outcome", default)
+
+    def get_dvr_case_activity_achievement(self):
+        """
+            Record achievement level in case activites
+        """
+        default = self.get_dvr_case_activity_need_details()
+        return self.__lazy("dvr", "case_activity_achievement", default)
 
     def get_dvr_case_activity_follow_up(self):
         """
             Enable/disable fields to schedule case activities for follow-up
         """
-        return self.__lazy("dvr", "case_activity_follow_up", default=True)
+        return self.__lazy("dvr", "case_activity_follow_up", True)
 
-    def get_dvr_case_include_activity_docs(self):
+    def get_dvr_case_activity_sectors(self):
         """
-            Documents-tab of beneficiaries includes case activity attachments
+            Link case activities to sectors
         """
-        return self.dvr.get("case_include_activity_docs", False)
+        return self.dvr.get("case_activity_sectors", False)
 
-    def get_dvr_case_include_group_docs(self):
+    def get_dvr_case_activity_use_service_type(self):
         """
-            Documents-tab of beneficiaries includes case group attachments
+            Link case activities to service types
         """
-        return self.dvr.get("case_include_group_docs", False)
+        return self.dvr.get("case_activity_use_service_type", False)
 
-    def get_dvr_needs_use_service_type(self):
+    def get_dvr_case_activity_documents(self):
         """
-            Use service type in needs
+            Documents can be uploaded for individual case activities
         """
-        return self.dvr.get("needs_use_service_type", False)
+        return self.dvr.get("case_activity_documents", False)
 
-    def get_dvr_needs_hierarchical(self):
+    def get_dvr_case_activity_comments(self):
         """
-            Need types are hierarchical
+            Case activities use a separate comments field
         """
-        return self.dvr.get("needs_hierarchical", False)
+        return self.dvr.get("case_activity_comments", False)
+
+    # Response Actions ------------------------------------
 
     def get_dvr_manage_response_actions(self):
         """
@@ -3854,6 +3924,13 @@ class S3Config(Storage):
             Use themes for response actions
         """
         return self.__lazy("dvr", "response_themes", default=False)
+
+    def get_dvr_response_vulnerabilities(self):
+        """
+            Link response actions to vulnerabilities addressed
+        """
+        default = self.get_dvr_vulnerabilities()
+        return self.__lazy("dvr", "response_vulnerabilities", default)
 
     def get_dvr_response_themes_org_specific(self):
         """
@@ -5032,42 +5109,40 @@ class S3Config(Storage):
         """
         return self.org.get("site_check")
 
-    def set_org_dependent_field(self,
-                                tablename=None,
-                                fieldname=None,
-                                enable_field=True):
+    def get_org_site_presence_site_types(self):
         """
-            Enables/Disables optional fields according to a user's Organisation
-            - must specify either field or tablename/fieldname
-                                           (e.g. for virtual fields)
-            @ToDo: Deprecate this (old way IFRC template did some things)
+            Site types where presence registration is allowed
+            - True to allow all site types
+            - List of tablenames to select site types
+            - False to deny all site types
         """
+        return self.org.get("site_presence_site_types", True)
 
-        enabled = False
-        dependent_fields = self.org.get("dependent_fields")
-        if dependent_fields:
-            org_name_list = dependent_fields.get("%s.%s" % (tablename,
-                                                            fieldname),
-                                                 None)
+    def get_org_site_presence_expires(self):
+        """
+            Number of hours after which the user's IN-registration expires
+            - 0 to disable expiry
+        """
+        return self.org.get("site_presence_expires", 0)
 
-            if org_name_list:
-                auth = current.auth
-                if auth.s3_has_role(auth.get_system_roles().ADMIN):
-                    # Admins see all fields unless disabled for all orgs in this deployment
-                    enabled = True
-                else:
-                    root_org = auth.root_org_name()
-                    enabled = root_org in org_name_list
-            else:
-                # Enable if empty list
-                enabled = True
+    def get_org_site_presence_qrcode(self):
+        """
+            Use QRInput for site presence registration
+                - True to enable and use QR contents verbatim
+                - a tuple (pattern, index) for client-side QR contents parsing
+                - False to disable
+        """
+        return self.org.get("site_presence_qrcode", False)
 
-        if enable_field:
-            field = current.s3db[tablename][fieldname]
-            field.readable = enabled
-            field.writable = enabled
-
-        return enabled
+    def get_org_site_presence_validate_id(self):
+        """
+            A function to parse and validate the ID label input
+            server-side; passes the original QR contents if a
+            QR code was scanned, or otherwise whatever the user
+            entered into the manual input field
+            (pe_label, advice, error) = function(id_input)
+        """
+        return self.org.get("site_presence_validate_id", False)
 
     def get_org_office_code_unique(self):
         """
@@ -5090,6 +5165,12 @@ class S3Config(Storage):
     # -------------------------------------------------------------------------
     # Persons
     #
+    def get_pr_generate_pe_label(self):
+        """
+            Autogenerate PE labels for all persons
+        """
+        return self.pr.get("generate_pe_label", False)
+
     def get_pr_age_group(self, age):
         """
             Function to provide the age group for an age

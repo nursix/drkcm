@@ -534,8 +534,7 @@ class ProjectModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for model-global names if module is disabled """
 
         return {"project_project_id": FieldTemplate.dummy("project_id"),
@@ -1785,8 +1784,7 @@ class ProjectLocationModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for model-global names if module is disabled """
 
         return {"project_location_id": FieldTemplate.dummy("project_location_id"),
@@ -2914,8 +2912,7 @@ class ProjectActivityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for model-global names if module is disabled """
 
         return {"project_activity_id": FieldTemplate.dummy("activity_id"),
@@ -4051,8 +4048,7 @@ class ProjectTaskModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for model-global names if module is disabled """
 
         return {"project_task_id": FieldTemplate.dummy("task_id"),
@@ -4439,12 +4435,11 @@ class project_LocationRepresent(S3Represent):
         self.multi_country = len(settings.get_gis_countries()) != 1
         self.use_codes = settings.get_project_codes()
 
-        super(project_LocationRepresent, self).__init__(
-                                            lookup = "project_location",
-                                            show_link = show_link,
-                                            translate = translate,
-                                            multiple = multiple,
-                                            )
+        super().__init__(lookup = "project_location",
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -4548,13 +4543,12 @@ class project_ActivityRepresent(S3Represent):
             self.code = False
             fields = ["name"]
 
-        super(project_ActivityRepresent,
-              self).__init__(lookup = "project_activity",
-                             fields = fields,
-                             show_link = show_link,
-                             translate = translate,
-                             multiple = multiple,
-                             )
+        super().__init__(lookup = "project_activity",
+                         fields = fields,
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def custom_lookup_rows(self, key, values, fields=None):
@@ -4630,10 +4624,10 @@ class project_TaskRepresent(S3Represent):
 
         task_url = URL(c="project", f="task", args=["[id]"])
 
-        super(project_TaskRepresent, self).__init__(lookup = "project_task",
-                                                    show_link = show_link,
-                                                    linkto = task_url,
-                                                    )
+        super().__init__(lookup = "project_task",
+                         show_link = show_link,
+                         linkto = task_url,
+                         )
 
         self.show_project = show_project
         if show_project:
@@ -5165,7 +5159,7 @@ def project_task_controller():
             if r.component_name == "req":
                 if current.deployment_settings.has_module("hrm"):
                     r.component.table.type.default = 3
-                if r.method != "update" and r.method != "read":
+                if r.method not in {"update", "read"}:
                     # Hide fields which don't make sense in a Create form
                     s3db.req_create_form_mods()
             elif r.component_name == "human_resource":
@@ -5282,54 +5276,40 @@ def project_project_filters(org_label):
     append_filter = filter_widgets.append
 
     if settings.get_project_sectors():
-        if settings.get_ui_label_cluster():
-            sector = T("Cluster")
-        else:
-            sector = T("Sector")
-        append_filter(
-            OptionsFilter("sector_project.sector_id",
-                          label = sector,
-                          location_filter = True,
-                          none = True,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("sector_project.sector_id",
+                                    label = T("Sector"),
+                                    location_filter = True,
+                                    none = True,
+                                    hidden = True,
+                                    ))
 
     mode_drr = settings.get_project_mode_drr()
     if mode_drr and settings.get_project_hazards():
-        append_filter(
-            OptionsFilter("hazard_project.hazard_id",
-                          label = T("Hazard"),
-                          help_field = project_hazard_help_fields,
-                          cols = 4,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("hazard_project.hazard_id",
+                                    label = T("Hazard"),
+                                    help_field = project_hazard_help_fields,
+                                    cols = 4,
+                                    hidden = True,
+                                    ))
 
     if settings.get_project_mode_3w() and \
        settings.get_project_themes():
-        append_filter(
-            OptionsFilter("theme_project.theme_id",
-                          label = T("Theme"),
-                          help_field = project_theme_help_fields,
-                          cols = 4,
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("theme_project.theme_id",
+                                    label = T("Theme"),
+                                    help_field = project_theme_help_fields,
+                                    cols = 4,
+                                    hidden = True,
+                                    ))
 
     if settings.get_project_multiple_organisations():
-        append_filter(
-            OptionsFilter("partner.organisation_id",
-                          label = T("Partners"),
-                          hidden = True,
-                          )
-        )
-        append_filter(
-            OptionsFilter("donor.organisation_id",
-                          label = T("Donors"),
-                          hidden = True,
-                          )
-        )
+        append_filter(OptionsFilter("partner.organisation_id",
+                                    label = T("Partners"),
+                                    hidden = True,
+                                    ))
+        append_filter(OptionsFilter("donor.organisation_id",
+                                    label = T("Donors"),
+                                    hidden = True,
+                                    ))
 
     return filter_widgets
 

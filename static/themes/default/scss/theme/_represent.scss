@@ -214,5 +214,42 @@
     }
 }
 
+// ----------------------------------------------------------------------------
+// WorkflowOptions
+//
+.workflow-options {
+    &.workflow-grey {
+        color: #555;
+    }
+    &.workflow-red {
+        color: #c42626;
+    }
+    &.workflow-amber {
+        color: #ec8d27;
+    }
+    &.workflow-green {
+        color: green;
+    }
+    &.workflow-advice {
+        border: 1px solid #c42626;
+        background-color: #ffdede;
+        padding: 0.3rem 0.7rem;
+    }
+    .fa {
+        margin-right: 0.2rem;
+        [dir=rtl] & {
+            margin-right: 0;
+            margin-left: 0.2rem;
+        }
+    }
+    .controls & {
+        margin-left: 0.5rem;
+        [dir=rtl] & {
+            margin-left: 0;
+            margin-right: 0.5rem;
+        }
+    }
+}
+
 // END ========================================================================
 

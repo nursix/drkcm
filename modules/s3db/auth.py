@@ -673,12 +673,12 @@ class auth_UserRepresent(S3Represent):
         if labels is None:
             labels = s3_fullname
 
-        super(auth_UserRepresent, self).__init__(lookup = "auth_user",
-                                                 fields = ["id"],
-                                                 labels = labels,
-                                                 linkto = linkto,
-                                                 show_link = show_link,
-                                                 )
+        super().__init__(lookup = "auth_user",
+                         fields = ["id"],
+                         labels = labels,
+                         linkto = linkto,
+                         show_link = show_link,
+                         )
 
         self.show_name = show_name
         self.show_email = show_email

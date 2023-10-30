@@ -1117,6 +1117,8 @@ class PRPersonModel(DataModel):
                        member_membership = "person_id",
                        # Organisation Group Association
                        org_group_person = "person_id",
+                       # Site Presence History
+                       org_site_presence_event = "person_id",
                        # Education history
                        pr_education = "person_id",
                        # Occupation Types
@@ -1189,40 +1191,35 @@ class PRPersonModel(DataModel):
         else:
             # Use DVR for case management
             add_components(tablename,
-                           dvr_allowance = "person_id",
                            dvr_case = {"name": "dvr_case",
                                        "joinby": "person_id",
                                        "multiple": False,
                                        },
-                           dvr_case_activity = "person_id",
-                           dvr_response_action = "person_id",
-                           dvr_case_appointment = "person_id",
                            dvr_case_details = {"joinby": "person_id",
                                                "multiple": False,
                                                },
-                           dvr_case_effort = "person_id",
-                           dvr_case_event = "person_id",
-                           dvr_case_flag_case = {"name": "dvr_flag",
-                                                 "joinby": "person_id",
-                                                 },
                            dvr_case_flag = {"link": "dvr_case_flag_case",
                                             "joinby": "person_id",
                                             "key": "flag_id",
                                             "actuate": "link",
                                             "autodelete": False,
                                             },
+                           dvr_case_flag_case = {"name": "dvr_flag",
+                                                 "joinby": "person_id",
+                                                 },
+                           dvr_case_activity = "person_id",
+                           dvr_case_appointment = "person_id",
+                           dvr_case_effort = "person_id",
+                           dvr_case_event = "person_id",
                            dvr_case_language = "person_id",
-                           dvr_economy = {"joinby": "person_id",
-                                          "multiple": False,
-                                          },
-                           dvr_evaluation = {"joinby": "person_id",
-                                             "multiple": False,
-                                             },
+                           dvr_response_action = "person_id",
+                           dvr_allowance = "person_id",
                            dvr_note = {"name": "case_note",
                                        "joinby": "person_id",
                                        },
                            dvr_residence_status = "person_id",
                            dvr_service_contact = "person_id",
+                           dvr_vulnerability = "person_id",
                            )
 
         # ---------------------------------------------------------------------
@@ -1301,14 +1298,96 @@ class PRPersonModel(DataModel):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def pr_person_onaccept(form):
+    def generate_pe_label(person_id):
+        """
+            Generates a unique, yet handy ID label for a person, with a
+            typical format of ABC1234 (=group of 3 letters followed by a
+            group of 4-8 digits).
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                the generated label as string
+
+            Notes:
+                - if the person record already has a pe_label, it will be returned
+                - otherwise, the record will be updated with the generated pe_label
+                - the format is intended to be easy to memorize and communicate,
+                  although above ~10 million labels they may become longer and harder
+                  to handle (flexible suffix length)
+                - the algorithm may become slow with very high numbers of existing
+                  labels; using an index on pr_person.pe_label will improve performance
+                - while the label is unique within the database, this is not guaranteed
+                  across databases; must use e.g. origin prefixes in such cases
+        """
+
+        db = current.db
+
+        table = current.s3db.pr_person
+        record = db(table.id == person_id).select(table.id,
+                                                  table.uuid,
+                                                  table.pe_label,
+                                                  limitby = (0, 1),
+                                                  ).first()
+        if not record:
+            raise RuntimeError("Person record not found")
+        if record.pe_label:
+            return record.pe_label
+
+        import uuid
+        import random
+
+        # Produce a 8-digit integer from the record uid
+        try:
+            uid = int(record.uuid[14:8:-1], 16)
+        except (TypeError, ValueError):
+            # Unusual (non-URN, non-UUID4) or no uid
+            # => fallback to random UID
+            uid = int(uuid.uuid4().urn[14:8:-1], 16)
+
+        # Generate code (max 1600 iterations)
+        for i in range(20):
+            # Variable suffix length 4 to 8 digits
+            for suffix_length in range(4, 8):
+                error = False
+                suffix = uid % (10**suffix_length)
+                template = "%%s%%0%sd" % suffix_length
+                for _ in range(20):
+                    prefix = "".join(random.choices("ABCDEFGHJKLNPSTUWY", k=3))
+                    label = template % (prefix, suffix)
+                    query = (table.id != person_id) & \
+                            (table.pe_label == label)
+                    error = bool(db(query).select(table.id, limitby=(0, 1)).first())
+                    if not error:
+                        break
+                if not error:
+                    break
+            if error:
+                # Try another (random) UID
+                uid = int(uuid.uuid4().urn[14:8:-1], 16)
+
+        if error:
+            raise RuntimeError("Could not generate unique ID label")
+
+        record.update_record(pe_label=label,
+                             modified_on = table.modified_on,
+                             modified_by = table.modified_by,
+                             )
+        return label
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def pr_person_onaccept(cls, form):
         """
             Onaccept callback
                 - update any user record associated with this person
+                - generate a unique PE label
         """
 
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         form_vars_get = form.vars.get
         person_id = form_vars_get("id")
@@ -1337,7 +1416,7 @@ class PRPersonModel(DataModel):
             if first_name and user.first_name != first_name:
                 update["first_name"] = first_name
 
-            middle_as_last = current.deployment_settings.get_L10n_mandatory_middlename()
+            middle_as_last = settings.get_L10n_mandatory_middlename()
 
             name = middle_name if middle_as_last else last_name
             if first_name and user.last_name != name:
@@ -1345,6 +1424,9 @@ class PRPersonModel(DataModel):
 
             if update:
                 user.update_record(**update)
+
+        if settings.get_pr_generate_pe_label():
+            cls.generate_pe_label(person_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2735,110 +2817,15 @@ class PRGroupModel(DataModel):
         # Update PE hierarchy affiliations
         pr_update_affiliations(table, record)
 
-        # BR extensions
         s3db = current.s3db
+
+        # BR extensions
         if settings.has_module("br"):
             s3db.br_group_membership_onaccept(record, row.pr_group, group_id, person_id)
 
         # DVR extensions
-        s3db = current.s3db
-        ctable = s3db.table("dvr_case")
-        if not ctable:
-            return
-        response = current.response
-        s3 = response.s3
-        if not s3.purge_case_groups:
-            # Get the group
-            group = row.pr_group
-            if group.id is None and group_id:
-                query = (gtable.id == group_id) & \
-                        (gtable.deleted != True)
-                row = db(query).select(gtable.id,
-                                       gtable.group_type,
-                                       limitby = (0, 1),
-                                       ).first()
-                if row:
-                    group = row
-
-            if group.group_type == 7:
-                # DVR Case Group
-
-                # Case groups should only have one group head
-                if not record.deleted and record.group_head:
-                    query = (table.group_id == group_id) & \
-                            (table.id != record.id) & \
-                            (table.group_head == True)
-                    db(query).update(group_head=False)
-
-                update_household_size = settings.get_dvr_household_size() == "auto"
-                recount = s3db.dvr_case_household_size
-
-                if update_household_size and record.deleted and person_id:
-                    # Update the household size for removed group member
-                    query = (table.person_id == person_id) & \
-                            (table.group_id != group_id) & \
-                            (table.deleted != True) & \
-                            (gtable.id == table.group_id) & \
-                            (gtable.group_type == 7)
-                    row = db(query).select(table.group_id,
-                                           limitby = (0, 1),
-                                           ).first()
-                    if row:
-                        # Person still belongs to other case groups,
-                        # count properly:
-                        recount(row.group_id)
-                    else:
-                        # No further case groups, so household size is 1
-                        ctable = s3db.dvr_case
-                        cquery = (ctable.person_id == person_id)
-                        db(cquery).update(household_size = 1)
-
-                if not s3.bulk:
-                    # Get number of (remaining) members in this group
-                    query = (table.group_id == group_id) & \
-                            (table.deleted != True)
-                    rows = db(query).select(table.id, limitby = (0, 2))
-
-                    if len(rows) < 2:
-                        # Update the household size for current group members
-                        if update_household_size:
-                            recount(group_id)
-                            update_household_size = False
-                        # Remove the case group if it only has one member
-                        s3.purge_case_groups = True
-                        resource = s3db.resource("pr_group", id=group_id)
-                        resource.delete()
-                        s3.purge_case_groups = False
-
-                    elif not record.deleted:
-                        # Generate a case for new case group member
-                        # ...unless we already have one
-                        query = (ctable.person_id == person_id) & \
-                                (ctable.deleted != True)
-                        row = db(query).select(ctable.id, limitby=(0, 1)).first()
-                        if not row:
-                            # Customise case resource
-                            r = CRUDRequest("dvr", "case", current.request)
-                            r.customise_resource("dvr_case")
-
-                            # Get the default case status from database
-                            s3db.dvr_case_default_status()
-
-                            # Create a case
-                            cresource = s3db.resource("dvr_case")
-                            try:
-                                # Using resource.insert for proper authorization
-                                # and post-processing (=audit, ownership, realm,
-                                # onaccept)
-                                cresource.insert(person_id=person_id)
-                            except S3PermissionError:
-                                # Unlikely (but possible) that this situation
-                                # is deliberate => issue a warning
-                                response.warning = current.T("No permission to create a case record for new group member")
-
-                # Update the household size for current group members
-                if update_household_size:
-                    recount(group_id)
+        if settings.has_module("dvr"):
+            s3db.dvr_group_membership_onaccept(record, row.pr_group, group_id, person_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -5158,7 +5145,9 @@ class PREducationModel(DataModel):
 class PRIdentityModel(DataModel):
     """ Identities for Persons """
 
-    names = ("pr_identity",)
+    names = ("pr_identity",
+             "pr_identity_document",
+             )
 
     def model(self):
 
@@ -5179,13 +5168,16 @@ class PRIdentityModel(DataModel):
         #  <xs:enumeration value="Certificate"/>
         #  <xs:enumeration value="MileageProgram"/>
         #
-        pr_id_type_opts = {1:  T("Passport"),
-                           2:  T("National ID Card"),
-                           3:  T("Driving License"),
-                           #4: T("Credit Card"),
-                           5:  T("Residence Permit"),
-                           99: T("other")
-                           }
+        id_types = {1:  T("Passport"),
+                    2:  T("National ID Card"),
+                    3:  T("Driving License"),
+                    #4: T("Credit Card"),
+                    5:  T("Residence Permit"),
+                    98: T("Registration Card (system-generated)"),
+                    99: T("other"),
+                    999: T("Registration Card (system-generated)"), # TODO deprecate
+                    }
+        selectable_opts = {k:v for k, v in id_types.items() if k not in (98, 999)}
 
         tablename = "pr_identity"
         self.define_table(tablename,
@@ -5194,16 +5186,17 @@ class PRIdentityModel(DataModel):
                                             ),
                           Field("type", "integer",
                                 default = 1,
-                                label = T("ID Type"),
-                                represent = represent_option(pr_id_type_opts),
-                                requires = IS_IN_SET(pr_id_type_opts,
-                                                     zero=None),
+                                label = T("Document Type"),
+                                represent = represent_option(id_types),
+                                requires = IS_IN_SET(selectable_opts, zero=None),
                                 ),
                           Field("description",
                                 label = T("Description"),
+                                represent = lambda v, row=None: v or "-",
                                 ),
                           Field("value",
-                                label = T("Number"),
+                                label = T("Number##ordinal"),
+                                represent = lambda v, row=None: v or "-",
                                 ),
                           DateField("valid_from",
                                     label = T("Valid From"),
@@ -5213,8 +5206,6 @@ class PRIdentityModel(DataModel):
                           DateField("valid_until",
                                     label = T("Valid Until"),
                                     set_max = "#pr_identity_valid_from",
-                                    #start_field = "pr_identity_valid_from",
-                                    #default_interval = 12,
                                     ),
                           Field("country_code", length=4,
                                 label = T("Country Code"),
@@ -5230,31 +5221,44 @@ class PRIdentityModel(DataModel):
                                 ),
                           Field("ia_name",
                                 label = T("Issuing Authority"),
+                                represent = lambda v, row=None: v or "-",
                                 ),
-                          #Field("ia_subdivision"), # Name of issuing authority subdivision
-                          #Field("ia_code"), # Code of issuing authority (if any)
                           Field("image", "upload",
                                 autodelete = True,
                                 label = T("Scanned Copy"),
                                 length = current.MAX_FILENAME_LENGTH,
-                                # upload folder needs to be visible to the download() function as well as the upload
-                                uploadfolder = os.path.join(current.request.folder,
-                                                            "uploads"),
-                               ),
+                                uploadfolder = os.path.join(current.request.folder, "uploads"),
+                                represent = represent_file("pr_identity", "image"),
+                                ),
+                          # For internally-issued IDs:
+                          Field("system", "boolean",
+                                default = False,
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("vhash", length=256,
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("invalid", "boolean",
+                                default = False,
+                                readable = False,
+                                writable = False,
+                                ),
                           CommentsField(),
                           )
 
         # CRUD Strings
         current.response.s3.crud_strings[tablename] = Storage(
-            label_create = T("Add Identity"),
-            title_display = T("Identity Details"),
-            title_list = T("Identities"),
-            title_update = T("Edit Identity"),
-            label_list_button = T("List Identities"),
-            msg_record_created = T("Identity added"),
-            msg_record_modified = T("Identity updated"),
-            msg_record_deleted = T("Identity deleted"),
-            msg_list_empty = T("No Identities currently registered"))
+            label_create = T("Add Identity Document"),
+            title_display = T("Identity Document"),
+            title_list = T("Identity Document"),
+            title_update = T("Edit Identity Document"),
+            label_list_button = T("List Identity Documents"),
+            msg_record_created = T("Identity Document added"),
+            msg_record_modified = T("Identity Document updated"),
+            msg_record_deleted = T("Identity Document deleted"),
+            msg_list_empty = T("No Identity Document currently registered"))
 
         self.configure(tablename,
                        # People can have more than 1 'Other', or even Passport
@@ -5274,6 +5278,23 @@ class PRIdentityModel(DataModel):
                                       #"ia_name"
                                       ],
                        )
+
+        # ---------------------------------------------------------------------
+        # TODO documentation + DRY
+        tablename = "pr_identity_document"
+        self.define_table(tablename,
+                          Field("identity_id", "reference pr_identity",
+                                ondelete = "CASCADE",
+                                readable = False,
+                                writable = False,
+                                ),
+                          Field("file", "upload",
+                                autodelete = True,
+                                uploadfolder = os.path.join(current.request.folder, "uploads", "ids"),
+                                represent = represent_file("pr_identity_document", "file"),
+                                writable = False,
+                                ),
+                          )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -5985,11 +6006,12 @@ class pr_RoleRepresent(S3Represent):
 
         self.fields = ["pe_id", "role"]
 
-        super(pr_RoleRepresent, self).__init__(lookup="pr_role",
-                                               fields=self.fields,
-                                               show_link=show_link,
-                                               translate=translate,
-                                               multiple=multiple)
+        super().__init__(lookup = "pr_role",
+                         fields = self.fields,
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # ---------------------------------------------------------------------
     def represent_row(self,row):
@@ -6018,7 +6040,7 @@ class pr_RoleRepresent(S3Represent):
             table = self.table
             fields = [table[f] for f in self.fields]
 
-        rows = super(pr_RoleRepresent, self).lookup_rows(key, values, fields=fields)
+        rows = super().lookup_rows(key, values, fields=fields)
 
         # Bulk represent the pe_ids: this stores the representations
         # in current.s3db.pr_pentity_represent, thereby preventing
@@ -6054,13 +6076,13 @@ class pr_PersonEntityRepresent(S3Represent):
         self.show_type = show_type
         self.training_event_represent = None
 
-        super(pr_PersonEntityRepresent, self).__init__(lookup = "pr_pentity",
-                                                       key = "pe_id",
-                                                       multiple = multiple,
-                                                       show_link = show_link,
-                                                       linkto = linkto,
-                                                       none = none,
-                                                       )
+        super().__init__(lookup = "pr_pentity",
+                         key = "pe_id",
+                         multiple = multiple,
+                         show_link = show_link,
+                         linkto = linkto,
+                         none = none,
+                         )
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -6269,17 +6291,18 @@ class pr_PersonRepresent(S3Represent):
         if not labels:
             labels = s3_fullname
 
-        super(pr_PersonRepresent, self).__init__(lookup,
-                                                 key,
-                                                 fields,
-                                                 labels,
-                                                 options,
-                                                 translate,
-                                                 linkto,
-                                                 show_link,
-                                                 multiple,
-                                                 default,
-                                                 none)
+        super().__init__(lookup = lookup,
+                         key = key,
+                         fields = fields,
+                         labels = labels,
+                         options = options,
+                         translate = translate,
+                         linkto = linkto,
+                         show_link = show_link,
+                         multiple = multiple,
+                         default = default,
+                         none = none,
+                         )
 
 # =============================================================================
 class pr_PersonRepresentContact(pr_PersonRepresent):
@@ -6315,12 +6338,11 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                 styleable: render as styleable HTML
         """
 
-        super(pr_PersonRepresentContact, self).__init__(
-                                                 lookup = "pr_person",
-                                                 labels = labels,
-                                                 linkto = linkto,
-                                                 show_link = show_link,
-                                                 )
+        super().__init__(lookup = "pr_person",
+                         labels = labels,
+                         linkto = linkto,
+                         show_link = show_link,
+                         )
 
         self.show_email = show_email
         self.show_phone = show_phone
@@ -6355,7 +6377,7 @@ class pr_PersonRepresentContact(pr_PersonRepresent):
                 row: the Row
         """
 
-        reprstr = super(pr_PersonRepresentContact, self).represent_row(row)
+        reprstr = super().represent_row(row)
 
         try:
             pe_id = row.pe_id
@@ -6511,9 +6533,7 @@ class pr_GroupRepresent(S3Represent):
 
     def __init__(self):
 
-        super(pr_GroupRepresent, self).__init__("pr_group",
-                                                fields = ["name"],
-                                                )
+        super().__init__(lookup="pr_group", fields=["name"])
 
         self.show_org_groups = current.deployment_settings \
                                       .get_org_group_team_represent()
@@ -6613,12 +6633,12 @@ class pr_ContactRepresent(S3Represent):
                 see super
         """
 
-        super(pr_ContactRepresent, self).__init__(lookup = "pr_contact",
-                                                  fields = ["contact_method",
-                                                            "value",
-                                                            ],
-                                                  show_link = show_link,
-                                                  )
+        super().__init__(lookup = "pr_contact",
+                         fields = ["contact_method",
+                                   "value",
+                                   ],
+                         show_link = show_link,
+                         )
 
     # -------------------------------------------------------------------------
     def link(self, k, v, row=None):
@@ -6951,7 +6971,7 @@ class pr_AssignMethod(CRUDMethod):
                 title: an alternative page title
         """
 
-        super(pr_AssignMethod, self).__init__()
+        super().__init__()
 
         self.component = component
         if next_tab:

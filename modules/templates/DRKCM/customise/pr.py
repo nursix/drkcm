@@ -97,6 +97,31 @@ def pr_contact_resource(r, tablename):
     field.default = "SMS"
 
 # -------------------------------------------------------------------------
+def pr_person_set_realm_components():
+    """
+        Configure components to inherit realm_entity from person record
+    """
+
+    current.s3db.configure("pr_person",
+                           realm_components = ("person_details",
+                                               "contact",
+                                               "contact_emergency",
+                                               "address",
+                                               "image",
+                                               "person_tag",
+                                               "group_membership",
+                                               "dvr_flag",
+                                               "case_details",
+                                               "case_language",
+                                               "case_note",
+                                               "residence_status",
+                                               "vulnerability",
+                                               "case_activity",
+                                               "response_action",
+                                               ),
+                           )
+
+# -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
     s3db = current.s3db
@@ -155,24 +180,8 @@ def pr_person_resource(r, tablename):
                                 action = s3db.pr_Template(),
                                 )
 
-    # Configure components to inherit realm_entity
-    # from the person record
-    s3db.configure("pr_person",
-                   realm_components = ("case_activity",
-                                       "case_details",
-                                       "dvr_flag",
-                                       "case_language",
-                                       "case_note",
-                                       "residence_status",
-                                       "address",
-                                       "contact",
-                                       "contact_emergency",
-                                       "group_membership",
-                                       "image",
-                                       "person_details",
-                                       "person_tag",
-                                       ),
-                   )
+    # Configure components to inherit realm_entity from person record
+    pr_person_set_realm_components()
 
     from .dvr import dvr_case_onaccept
     s3db.add_custom_callback("dvr_case", "onaccept", dvr_case_onaccept)
@@ -244,10 +253,7 @@ def pr_person_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         crud_strings = s3.crud_strings["pr_person"]
 
@@ -853,10 +859,7 @@ def pr_group_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         if r.controller in ("hrm", "vol"):
 
@@ -914,10 +917,7 @@ def pr_group_membership_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         ROLE = T("Role")
 

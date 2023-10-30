@@ -111,24 +111,8 @@ def dvr_case_onaccept(form):
 
         set_realm_entity = current.auth.set_realm_entity
 
-        # Configure components to inherit realm_entity
-        # from the person record
-        s3db.configure("pr_person",
-                       realm_components = ("case_activity",
-                                           "case_details",
-                                           "dvr_flag",
-                                           "case_language",
-                                           "case_note",
-                                           "residence_status",
-                                           "address",
-                                           "contact",
-                                           "contact_emergency",
-                                           "group_membership",
-                                           "image",
-                                           "person_details",
-                                           "person_tag",
-                                           ),
-                       )
+        from .pr import pr_person_set_realm_components
+        pr_person_set_realm_components()
 
         # Force-update the realm entity for the person
         set_realm_entity("pr_person", person_id, force_update=True)
@@ -138,7 +122,6 @@ def dvr_case_onaccept(form):
         s3db.configure("dvr_case_activity",
                        realm_components = ("case_activity_need",
                                            "case_activity_update",
-                                           "response_action",
                                            ),
                        )
 
@@ -552,7 +535,8 @@ def configure_case_activity_subject(r,
 
         # Expose need_id
         field = table.need_id
-        field.label = T("Counseling Reason")
+        if not use_subject:
+            field.label = T("Counseling Reason")
         field.readable = True
         field.writable = not activity_id or not autolink
 
@@ -735,9 +719,25 @@ def dvr_case_activity_resource(r, tablename):
         end_date = None
         outcome = None
 
+    # Deployment-specific terminology for case activities
+    crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
+    crud_strings.update({
+        "label_create": T("Add Counseling Reason"),
+        "title_display": T("Counseling Reason Details"),
+        "title_list": T("Counseling Reasons"),
+        "title_update": T("Edit Counseling Reason"),
+        "title_report": T("Activity Statistic"),
+        "label_list_button": T("List Counseling Reasons"),
+        "label_delete_button": T("Delete Counseling Reason"),
+        "msg_record_created": T("Counseling Reason added"),
+        "msg_record_modified": T("Counseling Reason updated"),
+        "msg_record_deleted": T("Counseling Reason deleted"),
+        })
+
     # Need type and subject
-    use_need = ui_options_get("activity_use_need")
-    use_subject = ui_options_get("activity_use_subject") or not use_need
+    subject_type = ui_options_get("activity_subject_type")
+    use_need = subject_type in ("need", "both")
+    use_subject = subject_type in ("subject", "both") or not use_need
 
     need_label = T("Counseling Reason") if not use_subject else T("Need Type")
 
@@ -999,8 +999,6 @@ def dvr_case_activity_resource(r, tablename):
                                         use_priority = use_priority,
                                         use_theme = use_theme,
                                         )
-        crud_strings = current.response.s3.crud_strings["dvr_case_activity"]
-        crud_strings["title_report"] = T("Activity Statistic")
 
     # Configure components to inherit realm entity
     # from the case activity record
@@ -1032,10 +1030,7 @@ def dvr_case_activity_controller(**attr):
         list_fields = resource.get_config("list_fields")
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         # Restore list_fields
         if list_fields:
@@ -1153,10 +1148,7 @@ def dvr_case_appointment_controller(**attr):
     def custom_prep(r):
 
         # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
+        result = standard_prep(r) if callable(standard_prep) else True
 
         resource = r.resource
 
@@ -1622,7 +1614,7 @@ def configure_response_action_theme(ui_options,
         query = (ttable.organisation_id == case_root_org) & query
 
     themes_needs = settings.get_dvr_response_themes_needs()
-    if ui_options.get("activity_use_need") and themes_needs:
+    if ui_options.get("activity_subject_type") in ("need", "both") and themes_needs:
         # Limit themes to those matching the need of the activity
         if case_activity:
             need_id = case_activity.need_id
@@ -1754,8 +1746,9 @@ def configure_response_action_view(ui_options,
             field.readable = field.writable = False
         else:
             # Show activity_id (read-only)
-            use_need = ui_options_get("activity_use_need")
-            use_subject = ui_options_get("activity_use_subject")
+            subject_type = ui_options_get("activity_subject_type")
+            use_need = subject_type in ("need", "both")
+            use_subject = subject_type in ("subject", "both")
             field.label = T("Counseling Reason")
             field.represent = s3db.dvr_CaseActivityRepresent(
                                         show_as = "need" if use_need else "subject",
@@ -1840,13 +1833,15 @@ def configure_response_action_tab(person_id,
         field.readable = True
 
         # Adjust representation to perspective
-        if ui_options_get("activity_use_need"):
+        subject_type = ui_options_get("activity_subject_type")
+        use_need = subject_type in ("need", "both")
+        use_subject = subject_type in ("subject", "both")
+        if use_need:
             field.label = T("Counseling Reason")
             show_as = "need"
         else:
             field.label = T("Subject")
             show_as = "subject"
-        use_subject = ui_options_get("activity_use_subject")
 
         represent = s3db.dvr_CaseActivityRepresent(show_as = show_as,
                                                    show_link = True,
@@ -2205,6 +2200,16 @@ def dvr_service_contact_resource(r, tablename):
     field.readable = field.writable = False
 
     field = table.organisation
+    field.readable = field.writable = True
+
+# -------------------------------------------------------------------------
+def dvr_vulnerability_resource(r, tablename):
+
+    table = current.s3db.dvr_vulnerability
+
+    # Expose human_resource_id and set default
+    field = table.human_resource_id
+    field.default = current.auth.s3_logged_in_human_resource()
     field.readable = field.writable = True
 
 # END =========================================================================

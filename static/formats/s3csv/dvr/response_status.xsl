@@ -11,7 +11,11 @@
          Status...............string..........Status Name
          Default..............string..........is default status
                                               true|false
-         Closed...............string..........cases with this status are closed
+         Closed...............string..........responses with this status are closed
+                                              true|false
+         Canceled.............string..........responses with this status have been canceled
+                                              true|false
+         Default Closure......string..........this is the default closure status
                                               true|false
          Color................string..........color code (rrggbb)
          Comments.............string..........Comments
@@ -47,6 +51,11 @@
             <xsl:call-template name="Boolean">
                 <xsl:with-param name="column">Closed</xsl:with-param>
                 <xsl:with-param name="field">is_closed</xsl:with-param>
+            </xsl:call-template>
+
+            <xsl:call-template name="Boolean">
+                <xsl:with-param name="column">Canceled</xsl:with-param>
+                <xsl:with-param name="field">is_canceled</xsl:with-param>
             </xsl:call-template>
 
             <xsl:call-template name="Boolean">

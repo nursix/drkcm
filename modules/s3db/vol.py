@@ -1441,16 +1441,6 @@ def vol_volunteer_controller():
                     # Hide volunteer ID as per setting
                     if settings.get_hrm_use_code() is not True:
                         table.code.readable = table.code.writable = False
-                    # Organisation Dependent Fields
-                    # - deprecated (IFRC template only)
-                    #set_org_dependent_field = settings.set_org_dependent_field
-                    #set_org_dependent_field("pr_person_details", "father_name")
-                    #set_org_dependent_field("pr_person_details", "mother_name")
-                    #set_org_dependent_field("pr_person_details", "affiliations")
-                    #set_org_dependent_field("pr_person_details", "company")
-                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
-                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
-                    #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
                     # Label for "occupation"
                     s3db.pr_person_details.occupation.label = T("Normal Job")
                     # Assume staff only between 12-81
@@ -1665,18 +1655,6 @@ def vol_person_controller():
                 table.age_group.readable = table.age_group.writable = False
 
                 s3db.pr_person_details.occupation.label = T("Normal Job")
-
-                # Organisation Dependent Fields
-                # - deprecated (IFRC template only)
-                #set_org_dependent_field = settings.set_org_dependent_field
-                #set_org_dependent_field("pr_person", "middle_name")
-                #set_org_dependent_field("pr_person_details", "father_name")
-                #set_org_dependent_field("pr_person_details", "grandfather_name")
-                #set_org_dependent_field("pr_person_details", "mother_name")
-                #set_org_dependent_field("pr_person_details", "year_of_birth")
-                #set_org_dependent_field("pr_person_details", "affiliations")
-                #set_org_dependent_field("pr_person_details", "company")
-
             else:
                 component_name = r.component_name
                 if component_name == "asset":
@@ -1750,13 +1728,6 @@ def vol_person_controller():
                 #else:
                 #    field.default = org
                 #    field.readable = field.writable = False
-
-                # Organisation Dependent Fields
-                # - deprecated (IFRC template only)
-                #set_org_dependent_field = settings.set_org_dependent_field
-                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_type_id")
-                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_id")
-                #set_org_dependent_field("vol_volunteer_cluster", "vol_cluster_position_id")
 
             elif method == "cv" or r.component_name == "training":
                 list_fields = ["course_id",

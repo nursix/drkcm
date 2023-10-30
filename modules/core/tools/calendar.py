@@ -548,6 +548,8 @@ class S3Calendar:
 
             Args:
                 dt: the datetime (datetime.datetime)
+                dtfmt: a date/time format
+                local: use the configured local date/time format
 
             Returns:
                 the datetime as string

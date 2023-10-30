@@ -42,6 +42,7 @@ __all__ = ("OrgOrganisationModel",
            "OrgSiteModel",
            "OrgSiteDetailsModel",
            "OrgSiteEventModel",
+           "OrgSitePresenceModel",
            "OrgSiteGroupModel",
            "OrgSiteNameModel",
            "OrgSiteShiftModel",
@@ -58,6 +59,7 @@ __all__ = ("OrgOrganisationModel",
            "org_root_organisation",
            "org_root_organisation_name",
            "org_organisation_requires",
+           "org_restrict_for_organisations",
            "org_region_options",
            "org_rheader",
            "org_site_staff_config",
@@ -2075,7 +2077,6 @@ class OrgOrganisationSectorModel(DataModel):
 
     names = ("org_sector",
              "org_sector_id",
-             #"org_subsector",
              "org_sector_organisation",
              )
 
@@ -2101,7 +2102,6 @@ class OrgOrganisationSectorModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Sector
-        # (Cluster in UN-style terminology)
         #
         tablename = "org_sector"
         define_table(tablename,
@@ -2117,73 +2117,8 @@ class OrgOrganisationSectorModel(DataModel):
                            label = T("Abbreviation"),
                            requires = IS_LENGTH(64),
                            ),
-                     self.gis_location_id(
-                        requires = IS_EMPTY_OR(IS_LOCATION()),
-                        widget = S3LocationAutocompleteWidget(),
-                     ),
                      CommentsField(),
                      )
-
-        # CRUD strings
-        if current.deployment_settings.get_ui_label_cluster():
-            SECTOR = T("Cluster")
-            ADD_SECTOR = T("Create Cluster")
-            tooltip = T("If you don't see the Cluster in the list, you can add a new one by clicking link 'Add New Cluster'.")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SECTOR,
-                title_display = T("Cluster Details"),
-                title_list = T("Clusters"),
-                title_update = T("Edit Cluster"),
-                label_list_button = T("List Clusters"),
-                label_delete_button = T("Delete Cluster"),
-                msg_record_created = T("Cluster added"),
-                msg_record_modified = T("Cluster updated"),
-                msg_record_deleted = T("Cluster deleted"),
-                msg_list_empty = T("No Clusters currently registered"))
-        else:
-            SECTOR = T("Sector")
-            ADD_SECTOR = T("Create Sector")
-            tooltip = T("If you don't see the Sector in the list, you can add a new one by clicking link 'Create Sector'.")
-            crud_strings[tablename] = Storage(
-                label_create = ADD_SECTOR,
-                title_display = T("Sector Details"),
-                title_list = T("Sectors"),
-                title_update = T("Edit Sector"),
-                label_list_button = T("List Sectors"),
-                label_delete_button = T("Delete Sector"),
-                msg_record_created = T("Sector added"),
-                msg_record_modified = T("Sector updated"),
-                msg_record_deleted = T("Sector deleted"),
-                msg_list_empty = T("No Sectors currently registered"))
-
-        configure("org_sector",
-                  deduplicate = self.org_sector_duplicate,
-                  onaccept = self.org_sector_onaccept,
-                  )
-
-        sector_comment = lambda child: S3PopupLink(c = "org",
-                                                   f = "sector",
-                                                   vars = {"child": child},
-                                                   label = ADD_SECTOR,
-                                                   title = SECTOR,
-                                                   tooltip = tooltip,
-                                                   )
-
-        represent = S3Represent(lookup=tablename, translate=True)
-        sector_id = FieldTemplate("sector_id", "reference %s" % tablename,
-                                  label = SECTOR,
-                                  ondelete = "SET NULL",
-                                  represent = represent,
-                                  requires = IS_EMPTY_OR(
-                                                IS_ONE_OF(db, "org_sector.id",
-                                                          represent,
-                                                          sort=True,
-                                                          filterby=filterby,
-                                                          filter_opts=filter_opts,
-                                                          )),
-                                  sortby = "abrv",
-                                  comment = sector_comment("sector_id"),
-                                  )
 
         # Components
         add_components(tablename,
@@ -2199,80 +2134,41 @@ class OrgOrganisationSectorModel(DataModel):
                                           "key": "project_id",
                                           "actuate": "hide",
                                           },
-                       #project_activity_type = {"link": "project_activity_type_sector",
-                       #                         "joinby": "sector_id",
-                       #                         "key": "activity_type_id",
-                       #                         "actuate": "hide",
-                       #                         },
-                       #project_theme = {"link": "project_theme_sector",
-                       #                 "joinby": "sector_id",
-                       #                 "key": "theme_id",
-                       #                 "actuate": "hide",
-                       #                 },
-                       #org_subsector = "sector_id",
                        )
 
-        # =====================================================================
-        # (Cluster) Subsector
-        #
-        # tablename = "org_subsector"
-        # define_table(tablename,
-        #              sector_id(),
-        #              Field("name", length=128,
-        #                    label = T("Name"),
-        #                    requires = IS_LENGTH(128),
-        #                    ),
-        #              Field("abrv", length=64,
-        #                    notnull=True, unique=True,
-        #                    label = T("Abbreviation"),
-        #                    requires = IS_LENGTH(64),
-        #                    ),
-        #              )
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Sector"),
+            title_display = T("Sector Details"),
+            title_list = T("Sectors"),
+            title_update = T("Edit Sector"),
+            label_list_button = T("List Sectors"),
+            label_delete_button = T("Delete Sector"),
+            msg_record_created = T("Sector added"),
+            msg_record_modified = T("Sector updated"),
+            msg_record_deleted = T("Sector deleted"),
+            msg_list_empty = T("No Sectors currently registered"))
 
-        ##CRUD strings
-        # if settings.get_ui_label_cluster():
-            # SUBSECTOR = T("Cluster Subsector")
-            # crud_strings[tablename] = Storage(
-                # label_create = T("Create Cluster Subsector"),
-                # title_display = T("Cluster Subsector Details"),
-                # title_list = T("Cluster Subsectors"),
-                # title_update = T("Edit Cluster Subsector"),
-                # label_list_button = T("List Cluster Subsectors"),
-                # label_delete_button = T("Delete Cluster Subsector"),
-                # msg_record_created = T("Cluster Subsector added"),
-                # msg_record_modified = T("Cluster Subsector updated"),
-                # msg_record_deleted = T("Cluster Subsector deleted"),
-                # msg_list_empty = T("No Cluster Subsectors currently registered"))
-        # else:
-            # SUBSECTOR = T("Subsector")
-            # crud_strings[tablename] = Storage(
-                # label_create = T("Add Subsector"),
-                # title_display = T("Subsector Details"),
-                # title_list = T("Subsectors"),
-                # title_update = T("Edit Subsector"),
-                # label_list_button = T("List Subsectors"),
-                # label_delete_button = T("Delete Subsector"),
-                # msg_record_created = T("Subsector added"),
-                # msg_record_modified = T("Subsector updated"),
-                # msg_record_deleted = T("Subsector deleted"),
-                # msg_list_empty = T("No Subsectors currently registered"))
+        # Table configuration
+        configure("org_sector",
+                  deduplicate = self.org_sector_duplicate,
+                  onaccept = self.org_sector_onaccept,
+                  )
 
-        # subsector_id = FieldTemplate("subsector_id", "reference %s" % tablename,
-        #                              label = SUBSECTOR,
-        #                              ondelete = "SET NULL",
-        #                              represent = self.org_subsector_represent,
-        #                              requires = IS_EMPTY_OR(
-        #                                            IS_ONE_OF(db, "org_subsector.id",
-        #                                                      self.org_subsector_represent,
-        #                                                      sort = True,
-        #                                                      )),
-        #                              sortby = "abrv",
-        #                              #comment = Script to filter the sector_subsector drop down
-        #                              )
-
-        # configure("org_subsector",
-        #           deduplicate = self.org_sector_duplicate,
-        #           )
+        represent = S3Represent(lookup=tablename, translate=True)
+        sector_id = FieldTemplate("sector_id", "reference %s" % tablename,
+                                  label = T("Sector"),
+                                  ondelete = "SET NULL",
+                                  represent = represent,
+                                  requires = IS_EMPTY_OR(
+                                                IS_ONE_OF(db, "org_sector.id",
+                                                          represent,
+                                                          sort=True,
+                                                          filterby=filterby,
+                                                          filter_opts=filter_opts,
+                                                          )),
+                                  sortby = "abrv",
+                                  )
 
         # ---------------------------------------------------------------------
         # Organizations <> Sectors Link Table
@@ -3870,6 +3766,228 @@ class OrgSiteEventModel(DataModel):
         return None
 
 # =============================================================================
+class OrgSitePresenceModel(DataModel):
+    """ Model to track the presence of people at sites """
+
+    names = ("org_site_presence_event",
+             "org_site_presence",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        define_table = self.define_table
+        super_link = self.super_link
+        configure = self.configure
+
+        person_id = self.pr_person_id
+        site_represent = self.org_SiteRepresent(show_type=False)
+
+        # ---------------------------------------------------------------------
+        # Presence Events
+        #
+        event_types = {"IN": T("Entering"),
+                       "OUT": T("Leaving"),
+                       "SEEN": T("Seen"),
+                       # Presence events without observation (i.e. those do not
+                       # imply that the person was physically present at the
+                       # time of the event):
+                       # NOTFOUND: person could not be found at the site during a search
+                       # CHECKOUT: person is declared as having left the site permanently
+                       "NOTFOUND": T("Not found##presence"),
+                       "CHECKOUT": T("Checked-out"),
+                       }
+        tablename = "org_site_presence_event"
+        define_table(tablename,
+                     super_link("site_id", "org_site",
+                                label = T("Place"),
+                                represent = site_represent,
+                                readable = True,
+                                writable = False,
+                                ),
+                     person_id(writable=False),
+                     DateTimeField(writable = False),
+                     Field("event_type",
+                           label = T("Event"),
+                           represent = represent_option(event_types),
+                           requires = IS_IN_SET(event_types, zero=None),
+                           writable = False,
+                           ),
+                     Field("vhash",
+                           readable = False,
+                           writable = False,
+                           ),
+                     )
+
+        # List fields
+        list_fields = ["date",
+                       "event_type",
+                       "site_id",
+                       (T("Registered by"), "created_by"),
+                       ]
+
+        configure(tablename,
+                  create_onaccept = self.presence_event_onaccept,
+                  list_fields = list_fields,
+                  orderby = "%s.date desc" % tablename,
+                  insertable = False,
+                  editable = False,
+                  deletable = False,
+                  )
+
+        # ---------------------------------------------------------------------
+        # Current Presence at Sites
+        #
+        presence_status = {"IN": T("Present##presence"),
+                           "OUT": T("Not Present##presence"),
+                           }
+        tablename = "org_site_presence"
+        define_table(tablename,
+                     super_link("site_id", "org_site",
+                                represent = site_represent,
+                                readable = True,
+                                writable = False,
+                                ),
+                     person_id(writable=False),
+                     DateTimeField(writable=False),
+                     Field("status",
+                           represent = represent_option(presence_status),
+                           requires = IS_IN_SET(presence_status, zero=None),
+                           writable = False,
+                           ),
+                     Field("event_id", "reference org_site_presence_event",
+                           ondelete = "RESTRICT",
+                           readable = False,
+                           writable = False,
+                           ),
+                     )
+
+        # Table configuration
+        configure(tablename,
+                  insertable = False,
+                  editable = False,
+                  deletable = False,
+                  )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def presence_event_onaccept(form):
+        """
+            Onaccept routine for new presence events:
+                - set actual date/time and verification hash
+                - update presence records
+        """
+
+        # Get the record_id
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        # Get the current date/time
+        now = datetime.datetime.utcnow().replace(microsecond=0)
+
+        db = current.db
+        s3db = current.s3db
+
+        # Load the record
+        table = s3db.org_site_presence_event
+        record = db(table.id == record_id).select(table.id,
+                                                  table.person_id,
+                                                  table.site_id,
+                                                  table.date,
+                                                  table.event_type,
+                                                  limitby = (0, 1),
+                                                  ).first()
+        if not record:
+            return
+
+        # Load the immediately preceding record for the same person
+        query = (table.person_id == record.person_id) & \
+                (table.date <= record.date) & \
+                (table.deleted == False)
+        previous = db(query).select(table.id,
+                                    table.vhash,
+                                    limitby = (0, 1),
+                                    orderby = (~table.date, ~table.id),
+                                    ).first()
+
+        # Compute the vhash
+        vhash = datahash(previous.vhash if previous else None,
+                         record.person_id,
+                         record.site_id,
+                         now.isoformat(),
+                         record.event_type,
+                         )
+
+        # Update the record date+vhash
+        record.update_record(date=now, vhash=vhash)
+        event_type = record.event_type
+
+        # Create/update presence record(s)
+        ptable = s3db.org_site_presence
+
+        if event_type in ("IN", "OUT", "SEEN"):
+            # These events imply actual observation of presence:
+            # => register as OUT at all sites where the person is currently
+            #    registered as IN, other than the event site (as they cannot
+            #    be in multiple places at once)
+            query = (ptable.person_id == record.person_id) & \
+                    (ptable.site_id != record.site_id) & \
+                    (ptable.status == "IN") & \
+                    (ptable.deleted == False)
+            db(query).update(status="OUT", date=now, event_id=record.id)
+
+        # Get the presence record for the event site
+        query = (ptable.person_id == record.person_id) & \
+                (ptable.site_id == record.site_id) & \
+                (ptable.deleted == False)
+        presence = db(query).select(ptable.id,
+                                    ptable.date,
+                                    ptable.status,
+                                    limitby = (0, 1),
+                                    ).first()
+
+        # Update presence at the site
+        # Notes:
+        #    - IN/NOTFOUND/CHECKOUT will update the presence date only
+        #      if the status changes (tracking earliest date), whereas
+        #      OUT will always update the presence date
+        #    - a SEEN event does not change presence status/date at the site
+        #    - the tracking reference (event_id) will always be updated
+        track_earliest = ("IN", "NOTFOUND", "CHECKOUT")
+        new_status = "IN" if event_type == "IN" else "OUT"
+        if not presence:
+            # Create new presence record
+            presence = {"person_id": record.person_id,
+                        "site_id": record.site_id,
+                        "date": now,
+                        "status": new_status,
+                        "event_id": record.id,
+                        }
+            presence["id"] = ptable.insert(**presence)
+            s3db.update_super(ptable, presence)
+            current.auth.s3_set_record_owner(ptable, presence)
+            s3db.onaccept(ptable, presence, method="create")
+
+        elif event_type in track_earliest and presence.status != new_status or \
+             event_type == "OUT":
+            # Update the presence record according to this event
+            presence.update_record(date = now,
+                                   status = new_status,
+                                   event_id = record.id,
+                                   )
+            s3db.onaccept(ptable, presence, method="update")
+        else:
+            # Update only the event reference (also updates modified_by/on)
+            presence.update_record(event_id = record.id)
+            s3db.onaccept(ptable, presence, method="update")
+
+# =============================================================================
 class OrgSiteGroupModel(DataModel):
     """ Link Sites to Org Groups """
 
@@ -4715,11 +4833,9 @@ class OrgFacilityModel(DataModel):
             output = "grid(%s)" % output
         else:
             filename = "facility.geojson"
-        path = os.path.join(current.request.folder,
-                            "static", "cache",
-                            filename)
+        path = os.path.join(current.request.folder, "static", "cache", filename)
 
-        with open(path, "w") as outfile:
+        with open(path, "w", encoding="utf-8") as outfile:
             outfile.write(output)
 
 # -----------------------------------------------------------------------------
@@ -5429,6 +5545,71 @@ def org_organisation_requires(required = False,
     return requires
 
 # =============================================================================
+def org_restrict_for_organisations(resource):
+    """
+        Restricts an organisation-specific resource to those organisations
+        the user is permitted to create new records for; for use in prep(),
+        multi-tenancy support
+
+        Args:
+            resource: the resource
+        Returns:
+            the default organisation_id, if any - otherwise None
+
+        Note:
+            If the user has site-wide permissions, or realms are not used,
+            this function does nothing.
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    table = resource.table
+    tablename = resource.tablename
+
+    default = None
+
+    realms = auth.permission.permitted_realms(tablename, "create")
+    if realms is not None:
+        # Restricted to realms
+
+        # Filter out any with organisation_id=None
+        resource.add_filter(FS("organisation_id") != None)
+
+        # Look up the organisations
+        otable = s3db.org_organisation
+        query = (otable.pe_id.belongs(realms)) & \
+                (otable.deleted == False)
+        dbset = db(query)
+
+        field = table.organisation_id
+        field.readable = True
+
+        num_orgs = dbset.count()
+        if not num_orgs:
+            # Not permitted for any organisations
+            resource.configure(insertable=False)
+            field.writable = False
+        elif num_orgs == 1:
+            # Permitted for exactly one organisation
+            default_org = dbset.select(otable.id, limitby=(0, 1)).first()
+            field.default = default = default_org.id
+            field.writable = False
+        else:
+            # Permitted for multiple organisations
+            requires = IS_ONE_OF(dbset, "org_organisation.id",
+                                 field.represent,
+                                 )
+            if isinstance(field.requires, IS_EMPTY_OR):
+                field.requires = IS_EMPTY_OR(requires)
+            else:
+                field.requires = requires
+            field.writable = True
+
+    return default
+
+# =============================================================================
 def org_region_options(zones=False):
     """
         Get all options for region IDs
@@ -5497,13 +5678,13 @@ class org_OrganisationRepresent(S3Represent):
                       "acronym",
                       ]
 
-        super(org_OrganisationRepresent,
-              self).__init__(lookup = "org_organisation",
-                             fields = fields,
-                             show_link = show_link,
-                             linkto = linkto,
-                             translate = translate,
-                             multiple = multiple)
+        super().__init__(lookup = "org_organisation",
+                         fields = fields,
+                         show_link = show_link,
+                         linkto = linkto,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def custom_lookup_rows(self, key, values, fields=None):
@@ -5671,12 +5852,12 @@ class org_SiteRepresent(S3Represent):
         self.l10n = {}
         self.show_type = show_type
 
-        super(org_SiteRepresent, self).__init__(lookup = "org_site",
-                                                fields = ["name"],
-                                                show_link = show_link,
-                                                translate = translate,
-                                                multiple = multiple,
-                                                )
+        super().__init__(lookup = "org_site",
+                         fields = ["name"],
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def bulk(self, values, rows=None, list_type=False, show_link=True, include_blank=True):
@@ -5979,7 +6160,7 @@ class org_SiteCheckInMethod(CRUDMethod):
 
         # Configure label input
         label_input = self.label_input
-        use_qr_code = settings.get_org_site_check_in_qrcode()
+        use_qr_code = settings.get_org_site_presence_qrcode()
         if use_qr_code:
             if use_qr_code is True:
                 label_input = S3QRInput()
@@ -6735,11 +6916,7 @@ def org_rheader(r, tabs=None):
                     (ltable.deleted == False)
             rows = db(query).select(ltable.sector_id)
             if rows:
-                if settings.get_ui_label_cluster():
-                    label = T("Clusters")
-                else:
-                    label = T("Sectors")
-                record_data.append(TR(TH("%s: " % label),
+                record_data.append(TR(TH("%s: " % T("Sectors")),
                                       ltable.sector_id.represent.multiple([row.sector_id for row in rows])))
 
         if settings.get_org_country() and record.country:
@@ -7153,14 +7330,10 @@ def org_organisation_controller():
                     else:
                         controller = "vol"
                         function = "volunteer"
-                read_url = URL(c=controller, f=function,
-                               args = ["[id]"],
-                               )
-                update_url = URL(c=controller, f=function,
-                                 args = ["[id]", "update"],
-                                 )
-                S3CRUD.action_buttons(r, read_url = read_url,
-                                         update_url = update_url)
+                args = ["[id]", "read"] if settings.get_ui_open_read_first() else ["[id]"]
+                read_url = URL(c=controller, f=function, args=args)
+                update_url = URL(c=controller, f=function, args=["[id]", "update"])
+                S3CRUD.action_buttons(r, read_url=read_url, update_url=update_url)
 
             elif r.component_name == "branch" and r.record and \
                  isinstance(output, dict) and \
@@ -8366,7 +8539,7 @@ class org_AssignMethod(CRUDMethod):
                 component: the Component in which to create records
         """
 
-        super(org_AssignMethod, self).__init__()
+        super().__init__()
 
         self.component = component
 

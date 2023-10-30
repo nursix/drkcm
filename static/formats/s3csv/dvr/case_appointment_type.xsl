@@ -7,6 +7,10 @@
 
          CSV column..................Format..........Content
 
+         Organisation................string..........Organisation Name
+         Branch......................string..........Organisation Branch Name (optional)
+         ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
+
          Name........................string..........Type Name
          Active......................string..........is active
                                                      true|false
@@ -21,11 +25,21 @@
          Comments....................string..........Comments
 
     *********************************************************************** -->
+    <xsl:import href="../orgh.xsl"/>
+
     <xsl:output method="xml"/>
 
     <!-- ****************************************************************** -->
     <xsl:template match="/">
         <s3xml>
+            <!-- Import the organisation hierarchy -->
+            <xsl:for-each select="table/row[1]">
+                <xsl:call-template name="OrganisationHierarchy">
+                    <xsl:with-param name="level">Organisation</xsl:with-param>
+                    <xsl:with-param name="rows" select="//table/row"/>
+                </xsl:call-template>
+            </xsl:for-each>
+
             <xsl:apply-templates select="./table/row"/>
         </s3xml>
     </xsl:template>
@@ -35,14 +49,19 @@
 
         <resource name="dvr_case_appointment_type">
 
-            <!-- Basic details -->
+            <!-- Link to Organisation -->
+            <reference field="organisation_id" resource="org_organisation">
+                <xsl:attribute name="tuid">
+                    <xsl:call-template name="OrganisationID"/>
+                </xsl:attribute>
+            </reference>
 
+            <!-- Basic details -->
             <data field="name">
                 <xsl:value-of select="col[@field='Name']"/>
             </data>
 
             <!-- Is active -->
-
             <xsl:variable name="is_active" select="col[@field='Active']/text()"/>
             <data field="active">
                 <xsl:attribute name="value">
@@ -58,7 +77,6 @@
             </data>
 
             <!-- Mandatory for age groups -->
-
             <xsl:variable name="mandatory_children" select="col[@field='Mandatory for Children']/text()"/>
             <data field="mandatory_children">
                 <xsl:attribute name="value">
@@ -102,7 +120,6 @@
             </data>
 
             <!-- Requires personal presence -->
-
             <xsl:variable name="presence_required" select="col[@field='Presence required']/text()"/>
             <data field="presence_required">
                 <xsl:attribute name="value">
@@ -118,7 +135,6 @@
             </data>
 
             <!-- Comments -->
-
             <data field="comments">
                 <xsl:value-of select="col[@field='Comments']"/>
             </data>

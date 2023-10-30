@@ -2733,6 +2733,16 @@ code, .code-inline {
   background-color: #80c4e0;
   color: #444;
 }
+/* line 198, ../../foundation/scss/components/_button.scss */
+.button.activity, .button.activity.disabled, .button.activity[disabled], .button.activity.disabled:hover, .button.activity[disabled]:hover, .button.activity.disabled:focus, .button.activity[disabled]:focus {
+  background-color: #154411;
+  color: #fefefe;
+}
+/* line 206, ../../foundation/scss/components/_button.scss */
+.button.activity:hover, .button.activity:focus {
+  background-color: #133d0f;
+  color: #fefefe;
+}
 /* line 216, ../../foundation/scss/components/_button.scss */
 .button.hollow, .button.hollow:hover, .button.hollow:focus, .button.hollow.disabled, .button.hollow.disabled:hover, .button.hollow.disabled:focus, .button.hollow[disabled], .button.hollow[disabled]:hover, .button.hollow[disabled]:focus {
   background-color: transparent;
@@ -2807,6 +2817,16 @@ code, .code-inline {
   border-color: #267b9e;
   color: #267b9e;
 }
+/* line 234, ../../foundation/scss/components/_button.scss */
+.button.hollow.activity, .button.hollow.activity.disabled, .button.hollow.activity[disabled], .button.hollow.activity.disabled:hover, .button.hollow.activity[disabled]:hover, .button.hollow.activity.disabled:focus, .button.hollow.activity[disabled]:focus {
+  border: 1px solid #154411;
+  color: #154411;
+}
+/* line 242, ../../foundation/scss/components/_button.scss */
+.button.hollow.activity:hover, .button.hollow.activity:focus {
+  border-color: #0b2209;
+  color: #0b2209;
+}
 /* line 252, ../../foundation/scss/components/_button.scss */
 .button.clear, .button.clear:hover, .button.clear:focus, .button.clear.disabled, .button.clear.disabled:hover, .button.clear.disabled:focus, .button.clear[disabled], .button.clear[disabled]:hover, .button.clear[disabled]:focus {
   border-color: transparent;
@@ -2868,6 +2888,14 @@ code, .code-inline {
 .button.clear.info:hover, .button.clear.info:focus {
   color: #267b9e;
 }
+/* line 269, ../../foundation/scss/components/_button.scss */
+.button.clear.activity, .button.clear.activity.disabled, .button.clear.activity[disabled], .button.clear.activity.disabled:hover, .button.clear.activity[disabled]:hover, .button.clear.activity.disabled:focus, .button.clear.activity[disabled]:focus {
+  color: #154411;
+}
+/* line 276, ../../foundation/scss/components/_button.scss */
+.button.clear.activity:hover, .button.clear.activity:focus {
+  color: #0b2209;
+}
 /* line 385, ../../foundation/scss/components/_button.scss */
 .button.disabled, .button[disabled] {
   opacity: 0.25;
@@ -2916,6 +2944,10 @@ code, .code-inline {
 /* line 406, ../../foundation/scss/components/_button.scss */
 .button.dropdown.hollow.info::after, .button.dropdown.clear.info::after {
   border-top-color: #a0d3e8;
+}
+/* line 406, ../../foundation/scss/components/_button.scss */
+.button.dropdown.hollow.activity::after, .button.dropdown.clear.activity::after {
+  border-top-color: #154411;
 }
 /* line 415, ../../foundation/scss/components/_button.scss */
 .button.arrow-only::after {
@@ -3040,6 +3072,16 @@ a.button:hover, a.button:focus {
   background-color: #80c4e0;
   color: #444;
 }
+/* line 198, ../../foundation/scss/components/_button.scss */
+.button-group.activity .button, .button-group.activity .button.disabled, .button-group.activity .button[disabled], .button-group.activity .button.disabled:hover, .button-group.activity .button[disabled]:hover, .button-group.activity .button.disabled:focus, .button-group.activity .button[disabled]:focus {
+  background-color: #154411;
+  color: #fefefe;
+}
+/* line 206, ../../foundation/scss/components/_button.scss */
+.button-group.activity .button:hover, .button-group.activity .button:focus {
+  background-color: #133d0f;
+  color: #fefefe;
+}
 /* line 216, ../../foundation/scss/components/_button.scss */
 .button-group.hollow .button, .button-group.hollow .button:hover, .button-group.hollow .button:focus, .button-group.hollow .button.disabled, .button-group.hollow .button.disabled:hover, .button-group.hollow .button.disabled:focus, .button-group.hollow .button[disabled], .button-group.hollow .button[disabled]:hover, .button-group.hollow .button[disabled]:focus {
   background-color: transparent;
@@ -3114,6 +3156,16 @@ a.button:hover, a.button:focus {
   border-color: #267b9e;
   color: #267b9e;
 }
+/* line 234, ../../foundation/scss/components/_button.scss */
+.button-group.hollow.activity .button, .button-group.hollow.activity .button.disabled, .button-group.hollow.activity .button[disabled], .button-group.hollow.activity .button.disabled:hover, .button-group.hollow.activity .button[disabled]:hover, .button-group.hollow.activity .button.disabled:focus, .button-group.hollow.activity .button[disabled]:focus, .button-group.hollow .button.activity, .button-group.hollow .button.activity.disabled, .button-group.hollow .button.activity[disabled], .button-group.hollow .button.activity.disabled:hover, .button-group.hollow .button.activity[disabled]:hover, .button-group.hollow .button.activity.disabled:focus, .button-group.hollow .button.activity[disabled]:focus {
+  border: 1px solid #154411;
+  color: #154411;
+}
+/* line 242, ../../foundation/scss/components/_button.scss */
+.button-group.hollow.activity .button:hover, .button-group.hollow.activity .button:focus, .button-group.hollow .button.activity:hover, .button-group.hollow .button.activity:focus {
+  border-color: #0b2209;
+  color: #0b2209;
+}
 /* line 252, ../../foundation/scss/components/_button.scss */
 .button-group.clear .button, .button-group.clear .button:hover, .button-group.clear .button:focus, .button-group.clear .button.disabled, .button-group.clear .button.disabled:hover, .button-group.clear .button.disabled:focus, .button-group.clear .button[disabled], .button-group.clear .button[disabled]:hover, .button-group.clear .button[disabled]:focus {
   border-color: transparent;
@@ -3174,6 +3226,14 @@ a.button:hover, a.button:focus {
 /* line 276, ../../foundation/scss/components/_button.scss */
 .button-group.clear.info .button:hover, .button-group.clear.info .button:focus, .button-group.clear .button.info:hover, .button-group.clear .button.info:focus {
   color: #267b9e;
+}
+/* line 269, ../../foundation/scss/components/_button.scss */
+.button-group.clear.activity .button, .button-group.clear.activity .button.disabled, .button-group.clear.activity .button[disabled], .button-group.clear.activity .button.disabled:hover, .button-group.clear.activity .button[disabled]:hover, .button-group.clear.activity .button.disabled:focus, .button-group.clear.activity .button[disabled]:focus, .button-group.clear .button.activity, .button-group.clear .button.activity.disabled, .button-group.clear .button.activity[disabled], .button-group.clear .button.activity.disabled:hover, .button-group.clear .button.activity[disabled]:hover, .button-group.clear .button.activity.disabled:focus, .button-group.clear .button.activity[disabled]:focus {
+  color: #154411;
+}
+/* line 276, ../../foundation/scss/components/_button.scss */
+.button-group.clear.activity .button:hover, .button-group.clear.activity .button:focus, .button-group.clear .button.activity:hover, .button-group.clear .button.activity:focus {
+  color: #0b2209;
 }
 /* line 90, ../../foundation/scss/components/_button-group.scss */
 .button-group.no-gaps .button {
@@ -3307,6 +3367,11 @@ a.button:hover, a.button:focus {
 .label.info {
   background: #a0d3e8;
   color: #444;
+}
+/* line 58, ../../foundation/scss/components/_label.scss */
+.label.activity {
+  background: #154411;
+  color: #fefefe;
 }
 
 /* line 305, ../../foundation/scss/components/_table.scss */
