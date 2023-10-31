@@ -5196,9 +5196,8 @@ class DVRServiceContactModel(DataModel):
                   )
 
         # CRUD Strings
-        ADD_TYPE = T("Create Service Contact Type")
         crud_strings[tablename] = Storage(
-            label_create = ADD_TYPE,
+            label_create = T("Create Service Contact Type"),
             title_display = T("Service Contact Type"),
             title_list = T("Service Contact Types"),
             title_update = T("Edit Service Contact Types"),
@@ -5268,7 +5267,7 @@ class DVRServiceContactModel(DataModel):
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
-            label_create = T("Create Service Contact"),
+            label_create = T("Add Service Contact"),
             title_display = T("Service Contact Details"),
             title_list = T("Service Contacts"),
             title_update = T("Edit Service Contacts"),

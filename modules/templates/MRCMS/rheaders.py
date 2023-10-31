@@ -83,7 +83,9 @@ def dvr_rheader(r, tabs=None):
                                          (T("Measures"), "response_action"),
                                          ])
                     else:
-                        tabs.insert(2, (T("ID"), "identity"))
+                        tabs[2:2] = [(T("ID"), "identity"),
+                                     (T("Service Contacts"), "service_contact"),
+                                     ]
                         # TODO activate when implemented
                         #if has_roles(("CASE_ADMIN",)):
                         #    tabs.append((T("Events"), "case_event"))

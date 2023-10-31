@@ -734,6 +734,24 @@ def dvr_case_flag_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def dvr_service_contact_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    table = s3db.dvr_service_contact
+
+    field = table.type_id
+    field.label = T("Type")
+
+    field = table.organisation_id
+    field.readable = field.writable = False
+
+    field = table.organisation
+    field.label = T("Organization")
+    field.readable = field.writable = True
+
+# -------------------------------------------------------------------------
 def dvr_site_activity_resource(r, tablename):
 
     T = current.T
