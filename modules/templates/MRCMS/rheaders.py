@@ -86,9 +86,8 @@ def dvr_rheader(r, tabs=None):
                         tabs[2:2] = [(T("ID"), "identity"),
                                      (T("Service Contacts"), "service_contact"),
                                      ]
-                        # TODO activate when implemented
-                        #if has_roles(("CASE_ADMIN",)):
-                        #    tabs.append((T("Events"), "case_event"))
+                        if has_roles(("CASE_ADMIN",)):
+                           tabs.append((T("Events"), "case_event"))
                         if has_roles(("SHELTER_ADMIN", "SHELTER_MANAGER")):
                             tabs.append((T("Presence"), "site_presence_event"))
                         tabs.extend([(T("Photos"), "image"),

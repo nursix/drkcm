@@ -238,7 +238,7 @@ def config(settings):
     # Case events can close appointments
     settings.dvr.case_events_close_appointments = True
     # Exclude FOOD and SURPLUS-MEALS events from event registration
-    #settings.dvr.event_registration_exclude_codes = ("FOOD*", "SURPLUS-MEALS")
+    settings.dvr.event_registration_exclude_codes = ("FOOD*",)
 
     # Use org-specific appointment types
     settings.dvr.appointment_types_org_specific = True

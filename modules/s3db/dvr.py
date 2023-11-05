@@ -4272,6 +4272,14 @@ class DVRCaseEventModel(DataModel):
         event_types_org_specific = settings.get_dvr_case_event_types_org_specific()
         close_appointments = settings.get_dvr_case_events_close_appointments()
 
+        # TODO L10n
+        event_classes = {"A": T("Administrative"),
+                         "C": T("Checkpoint"),
+                         #"D": T("NFI Distribution"),
+                         "F": T("Food Distribution"),
+                         #"P": T("Payment"),
+                         }
+
         tablename = "dvr_case_event_type"
         define_table(tablename,
                      self.org_organisation_id(
@@ -4279,7 +4287,12 @@ class DVRCaseEventModel(DataModel):
                          readble = event_types_org_specific,
                          writable = event_types_org_specific,
                          ),
-                     # TODO Deprecate? (replace by event class)
+                     Field("event_class",
+                           label = T("Event Class"),
+                           default = "C",
+                           requires = IS_IN_SET(event_classes, zero=None),
+                           represent = represent_option(event_classes),
+                           ),
                      Field("code", length=64, # notnull=True, unique=True,
                            label = T("Code"),
                            requires = [IS_NOT_EMPTY(),
@@ -4311,6 +4324,11 @@ class DVRCaseEventModel(DataModel):
                                                              ),
                                          ),
                            ),
+                     Field("register_multiple", "boolean",
+                           label = T("Allow registration for family members"),
+                           default = False,
+                           represent = BooleanRepresent(icons=True),
+                           ),
                      Field("role_required", "reference %s" % role_table,
                            label = T("User Role Required"),
                            ondelete = "SET NULL",
@@ -4326,16 +4344,16 @@ class DVRCaseEventModel(DataModel):
                                          ),
                            ),
                      self.dvr_appointment_type_id(
-                        "appointment_type_id",
-                        label = T("Appointment Type"),
-                        readable = close_appointments,
-                        writable = close_appointments,
-                        comment = DIV(_class = "tooltip",
-                                      _title = "%s|%s" % (T("Appointment Type"),
-                                                          T("The type of appointments which are completed with this type of event"),
-                                                          ),
-                                      ),
-                        ),
+                            "appointment_type_id",
+                            label = T("Appointment Type"),
+                            readable = close_appointments,
+                            writable = close_appointments,
+                            comment = DIV(_class = "tooltip",
+                                          _title = "%s|%s" % (T("Appointment Type"),
+                                                              T("The type of appointments which are completed with this type of event"),
+                                                              ),
+                                          ),
+                            ),
                      Field("min_interval", "double",
                            label = T("Minimum Interval (Hours)"),
                            comment = DIV(_class = "tooltip",
@@ -4541,7 +4559,7 @@ class DVRCaseEventModel(DataModel):
         # Custom method for event registration
         self.set_method("dvr_case_event",
                         method = "register",
-                        action = DVRRegisterCaseEvent,
+                        action = Checkpoint,
                         )
 
         # ---------------------------------------------------------------------
@@ -9240,7 +9258,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         return output
 
 # =============================================================================
-def dvr_get_flag_instructions(person_id, action=None):
+def dvr_get_flag_instructions(person_id, action=None, organisation_id=None):
     """
         Get handling instructions if flags are set for a person
 
@@ -9248,6 +9266,7 @@ def dvr_get_flag_instructions(person_id, action=None):
             person_id: the person ID
             action: the action for which instructions are needed:
                     - check-in|check-out|payment|id-check
+            organisation_id: check for flags of this organisation
 
         Returns:
             dict {"permitted": whether the action is permitted
@@ -9259,10 +9278,14 @@ def dvr_get_flag_instructions(person_id, action=None):
 
     ftable = s3db.dvr_case_flag
     ltable = s3db.dvr_case_flag_case
-    query = (ltable.person_id == person_id) & \
-            (ltable.deleted != True) & \
-            (ftable.id == ltable.flag_id) & \
-            (ftable.deleted != True)
+
+    join = ltable.on((ltable.flag_id == ftable.id) & \
+                     (ltable.person_id == person_id) & \
+                     (ltable.deleted == False))
+
+    if not current.deployment_settings.get_dvr_case_flags_org_specific():
+        organisation_id = None
+    query = (ftable.organisation_id == organisation_id)
 
     if action == "check-in":
         query &= (ftable.advise_at_check_in == True) | \
@@ -9275,6 +9298,7 @@ def dvr_get_flag_instructions(person_id, action=None):
                  (ftable.allowance_suspended == True)
     else:
         query &= (ftable.advise_at_id_check == True)
+    query &= (ftable.deleted == False)
 
     flags = current.db(query).select(ftable.name,
                                      ftable.deny_check_in,
@@ -9284,6 +9308,7 @@ def dvr_get_flag_instructions(person_id, action=None):
                                      ftable.advise_at_check_out,
                                      ftable.advise_at_id_check,
                                      ftable.instructions,
+                                     join = join,
                                      )
 
     info = []

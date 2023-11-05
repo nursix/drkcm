@@ -11,12 +11,20 @@
          Branch......................string..........Organisation Branch Name (optional)
          ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
 
+         TODO
+         Event Class.................string..........Event Class
+                                                     A|C|F or Administrative|Checkpoint|Food
+
          Code........................string..........Type Code
          Name........................string..........Type Name
          Inactive....................string..........is currently not selectable
                                                      true|false
          Default.....................string..........is default type
                                                      true|false
+         TODO
+         Register Multiple...........string..........allow registration for multiple family members at once
+                                                     true|false
+
          Minimum Interval............number..........minimum interval (hours)
          Maximum per Day.............integer.........maximum number per day
          Excluded By.................string..........comma-separated list of event

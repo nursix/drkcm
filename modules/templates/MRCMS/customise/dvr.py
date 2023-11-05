@@ -13,7 +13,7 @@ from gluon.storage import Storage
 
 from s3dal import Field
 from core import CRUDMethod, CRUDRequest, CustomController, FS, IS_ONE_OF, \
-                 S3PermissionError, S3DateTime, S3SQLCustomForm, \
+                 S3PermissionError, S3DateTime, S3SQLCustomForm, S3SQLInlineLink, \
                  DateFilter, OptionsFilter, TextFilter, \
                  get_form_record_id, s3_fieldmethod, s3_redirect_default, \
                  set_default_filter, set_last_record_id, s3_fullname, s3_str
@@ -675,19 +675,24 @@ def dvr_case_event_type_resource(r, tablename):
 
     s3db = current.s3db
 
+    # TODO filter case event exclusion to types of same org
+    #      if we have a r.record, otherwise OptionsFilterS3?
+
     crud_form = S3SQLCustomForm("organisation_id",
+                                "event_class",
                                 "code",
                                 "name",
                                 "is_inactive",
                                 "is_default",
+                                "register_multiple",
                                 "role_required",
                                 "appointment_type_id",
                                 "min_interval",
                                 "max_per_day",
-                                #S3SQLInlineLink("excluded_by",
-                                #                field = "excluded_by_id",
-                                #                label = current.T("Not Combinable With"),
-                                #                ),
+                                S3SQLInlineLink("excluded_by",
+                                                field = "excluded_by_id",
+                                                label = current.T("Not Combinable With"),
+                                                ),
                                 "presence_required",
                                 )
 

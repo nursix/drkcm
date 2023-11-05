@@ -1,5 +1,5 @@
 """
-    Site Presence Registration UI
+    Presence Registration UI (ORG)
 
     Copyright: 2021-2023 (c) Sahana Software Foundation
 
