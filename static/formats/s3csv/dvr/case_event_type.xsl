@@ -11,18 +11,15 @@
          Branch......................string..........Organisation Branch Name (optional)
          ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
 
-         TODO
-         Event Class.................string..........Event Class
-                                                     A|C|F or Administrative|Checkpoint|Food
-
+         Event Class.................string..........Event Class (A|C|F)
          Code........................string..........Type Code
          Name........................string..........Type Name
          Inactive....................string..........is currently not selectable
                                                      true|false
          Default.....................string..........is default type
                                                      true|false
-         TODO
-         Register Multiple...........string..........allow registration for multiple family members at once
+         Multiple....................string..........allow registration for multiple
+                                                     family members at once
                                                      true|false
 
          Minimum Interval............number..........minimum interval (hours)
@@ -75,6 +72,11 @@
                 </xsl:attribute>
             </reference>
 
+            <xsl:variable name="event_class" select="col[@field='Event Class']/text()"/>
+            <data field="event_class">
+                <xsl:value-of select="$event_class"/>
+            </data>
+
             <data field="code">
                 <xsl:value-of select="$Code"/>
             </data>
@@ -104,6 +106,20 @@
                 <xsl:attribute name="value">
                     <xsl:choose>
                         <xsl:when test="$is_default='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+
+            <xsl:variable name="multiple" select="col[@field='Multiple']/text()"/>
+            <data field="register_multiple">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="$multiple='true'">
                             <xsl:value-of select="'true'"/>
                         </xsl:when>
                         <xsl:otherwise>
