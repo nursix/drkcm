@@ -279,7 +279,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
                         M("Current Cases", f="person", t="dvr_case",
                           check = not case_collaboration,
                           ),
-                        M("All Cases", f="person", t="dvr_case"),
+                        M("All Cases", f="person", t="dvr_case", vars={"closed": "1"}),
                         M("All Activities", f="case_activity", t="dvr_case_activity"),
                         M(all_due_followups_label, f="due_followups",
                           check = followups,
@@ -301,7 +301,7 @@ class S3OptionsMenu(default.S3OptionsMenu):
             menu = M(c="dvr")(
                     M("Current Cases", c=("dvr", "pr"), f="person", t="dvr_case")(
                         M("Create Case", m="create", t="pr_person", p="create"),
-                        M("All Cases", vars = {}),
+                        M("All Cases", vars = {"closed": "1"}),
                         M("Actions", f="response_action"),
                         ),
                     M("Activities", f="case_activity")(

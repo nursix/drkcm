@@ -39,7 +39,7 @@ from s3dal import Field
 
 from .base import CRUDMethod
 from .presence import SitePresence
-from ..tools import s3_encode_iso_datetime, s3_fullname, s3_str, S3DateTime, FormKey
+from ..tools import s3_fullname, s3_str, S3DateTime, FormKey
 from ..resource import FS
 from ..ui import S3QRInput, ICON
 
@@ -95,6 +95,8 @@ class Checkpoint(CRUDMethod):
 
         return output
 
+    # -------------------------------------------------------------------------
+    # Response methods
     # -------------------------------------------------------------------------
     def registration_form(self, r, **attr):
         # TODO docstring
@@ -352,6 +354,8 @@ class Checkpoint(CRUDMethod):
         return json.dumps(output)
 
     # -------------------------------------------------------------------------
+    # Actions
+    # -------------------------------------------------------------------------
     def check(self, r, json_data):
         # TODO docstring
         # JSON format:
@@ -400,11 +404,13 @@ class Checkpoint(CRUDMethod):
         if person:
             output["l"] = person.pe_label
             output["p"] = self.person_details(person).xml().decode('utf-8')
-            output["f"] = self.flags(person, organisation_id=organisation_id)
+            output["f"] = self.flag_instructions(person.id,
+                                                 organisation_id = organisation_id,
+                                                 )
             output["b"] = self.profile_picture(person)
 
             # Family members
-            family = self.get_family_members(person, organisation_id)
+            family = self.get_family_members(person.id, organisation_id)
             if family:
                 output["x"] = family
 
@@ -538,7 +544,8 @@ class Checkpoint(CRUDMethod):
         return output
 
     # -------------------------------------------------------------------------
-    def register_bare(self, person, event_type_id):
+    @staticmethod
+    def register_bare(person, event_type_id):
         # TODO docstring
 
         #print("Register bare:", person, event_type_id)
@@ -585,194 +592,7 @@ class Checkpoint(CRUDMethod):
         return None if record_id else "Registration failed"
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def get_person(label, organisation_id=None):
-        """
-            Get the person record for the label
-
-            Args:
-                label: the PE label
-                organisation_id: the organisation ID
-        """
-
-        if not label or not organisation_id:
-            return None
-
-        # Fields to extract
-        fields = ["id",
-                  "pe_id",
-                  "pe_label",
-                  "first_name",
-                  "middle_name",
-                  "last_name",
-                  "date_of_birth",
-                  "gender",
-                  ]
-
-        query = (FS("pe_label").upper() == label.upper()) & \
-                (FS("dvr_case.organisation_id") == organisation_id) & \
-                (FS("dvr_case.status_id$is_closed") == False)
-
-        presource = current.s3db.resource("pr_person",
-                                          components = [],
-                                          filter = query,
-                                          )
-        rows = presource.select(fields, limit=1, as_rows=True)
-
-        return rows[0] if rows else None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def person_details(person):
-        """
-            Format the person details
-
-            Args:
-                person: the person record (Row)
-        """
-
-        T = current.T
-
-        name = s3_fullname(person)
-        dob = person.date_of_birth
-        if dob:
-            dob = S3DateTime.date_represent(dob)
-            details = "%s (%s %s)" % (name, T("Date of Birth"), dob)
-        else:
-            details = name
-
-        output = SPAN(details, _class = "person-details")
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def profile_picture(person):
-        """
-            Get the profile picture URL for a person
-
-            Args:
-                person: the person record (Row)
-
-            Returns:
-                the profile picture URL (relative URL), or None if
-                no profile picture is available for that person
-        """
-
-        try:
-            pe_id = person.pe_id
-        except AttributeError:
-            return None
-
-        table = current.s3db.pr_image
-        query = (table.pe_id == pe_id) & \
-                (table.profile == True) & \
-                (table.deleted != True)
-        row = current.db(query).select(table.image, limitby=(0, 1)).first()
-
-        return URL(c="default", f="download", args=row.image) if row else None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def flags(person, organisation_id=None):
-        # TODO take organisation_id into account
-        # TODO docstring
-
-        T = current.T
-
-        flags = []
-
-        flag_info = current.s3db.dvr_get_flag_instructions(person.id,
-                                                           organisation_id = organisation_id,
-                                                           )
-        info = flag_info["info"]
-
-        for flagname, instructions in info:
-            flags.append({"n": s3_str(T(flagname)),
-                          "i": s3_str(T(instructions)),
-                          })
-        return flags
-
-    # -------------------------------------------------------------------------
-    # Utilities
-    # -------------------------------------------------------------------------
-    # TODO order methods
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_form_data(person, formfields, data, hidden, permitted=False):
-        # TODO deprecate?
-        """
-            Helper function to extend the form
-
-            Args:
-                person: the person (Row)
-                formfields: list of form fields (Field)
-                data: the form data (dict)
-                hidden: hidden form fields (dict)
-                permitted: whether the action is permitted
-
-            Returns:
-                tuple (widget_id, submit_label)
-        """
-
-        T = current.T
-        s3db = current.s3db
-
-        # Extend form with household size info
-        if person:
-            details = s3db.dvr_get_household_size(person.id,
-                                                  dob = person.date_of_birth,
-                                                  )
-        else:
-            details = ""
-        formfields.extend([Field("details",
-                                 label = T("Family"),
-                                 writable = False,
-                                 ),
-                           ])
-        data["details"] = details
-
-        widget_id = "case-event-form"
-        submit = current.T("Register")
-
-        return widget_id, submit
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def label_input(field, value, **attributes):
-        """
-            Custom widget for label input, providing a clear-button
-            (for ease of use on mobile devices where no ESC exists)
-
-            Args:
-                field: the Field
-                value: the current value
-                attributes: HTML attributes
-
-            Note:
-                expects Foundation theme
-        """
-
-        from gluon.sqlhtml import StringWidget
-
-        default = {"value": (value is not None and str(value)) or ""}
-        attr = StringWidget._attributes(field, default, **attributes)
-
-        placeholder = current.T("Enter or scan ID")
-        attr["_placeholder"] = placeholder
-
-        postfix = ICON("fa fa-close")
-
-        widget = DIV(DIV(INPUT(**attr),
-                         _class="small-11 columns",
-                         ),
-                     DIV(SPAN(postfix, _class="postfix clear-btn"),
-                         _class="small-1 columns",
-                         ),
-                     _class="row collapse",
-                     )
-
-        return widget
-
+    # UI Widgets
     # -------------------------------------------------------------------------
     @staticmethod
     def organisation_selector(organisations, widget_id=None):
@@ -906,6 +726,375 @@ class Checkpoint(CRUDMethod):
                 }
 
     # -------------------------------------------------------------------------
+    @staticmethod
+    def label_input(field, value, **attributes):
+        """
+            Custom widget for label input, providing a clear-button
+            (for ease of use on mobile devices where no ESC exists)
+
+            Args:
+                field: the Field
+                value: the current value
+                attributes: HTML attributes
+
+            Note:
+                expects Foundation theme
+        """
+
+        from gluon.sqlhtml import StringWidget
+
+        default = {"value": (value is not None and str(value)) or ""}
+        attr = StringWidget._attributes(field, default, **attributes)
+
+        placeholder = current.T("Enter or scan ID")
+        attr["_placeholder"] = placeholder
+
+        postfix = ICON("fa fa-close")
+
+        widget = DIV(DIV(INPUT(**attr),
+                         _class="small-11 columns",
+                         ),
+                     DIV(SPAN(postfix, _class="postfix clear-btn"),
+                         _class="small-1 columns",
+                         ),
+                     _class="row collapse",
+                     )
+
+        return widget
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_form_data(person, formfields, data, hidden, permitted=False):
+        # TODO deprecate?
+        """
+            Helper function to extend the form
+
+            Args:
+                person: the person (Row)
+                formfields: list of form fields (Field)
+                data: the form data (dict)
+                hidden: hidden form fields (dict)
+                permitted: whether the action is permitted
+
+            Returns:
+                tuple (widget_id, submit_label)
+        """
+
+        T = current.T
+        s3db = current.s3db
+
+        # Extend form with household size info
+        if person:
+            details = s3db.dvr_get_household_size(person.id,
+                                                  dob = person.date_of_birth,
+                                                  )
+        else:
+            details = ""
+        formfields.extend([Field("details",
+                                 label = T("Family"),
+                                 writable = False,
+                                 ),
+                           ])
+        data["details"] = details
+
+        widget_id = "case-event-form"
+        submit = current.T("Register")
+
+        return widget_id, submit
+
+    # -------------------------------------------------------------------------
+    # Lookup methods
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_person(label, organisation_id=None):
+        """
+            Returns the person record for a label
+
+            Args:
+                label: the PE label
+                organisation_id: the organisation ID
+
+            Returns:
+                the person record (pr_person Row)
+        """
+
+        if not label or not organisation_id:
+            return None
+
+        # Fields to extract
+        fields = ["id",
+                  "pe_id",
+                  "pe_label",
+                  "first_name",
+                  "middle_name",
+                  "last_name",
+                  "date_of_birth",
+                  "gender",
+                  ]
+
+        query = (FS("pe_label").upper() == label.upper()) & \
+                (FS("dvr_case.organisation_id") == organisation_id) & \
+                (FS("dvr_case.status_id$is_closed") == False)
+
+        presource = current.s3db.resource("pr_person",
+                                          components = [],
+                                          filter = query,
+                                          )
+        rows = presource.select(fields, limit=1, as_rows=True)
+
+        return rows[0] if rows else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def person_details(person):
+        """
+            Formats person details
+
+            Args:
+                person: the person record (Row)
+
+            Returns:
+                HTML with formatted details
+        """
+
+        T = current.T
+
+        name = s3_fullname(person)
+        dob = person.date_of_birth
+        if dob:
+            dob = S3DateTime.date_represent(dob)
+            details = "%s (%s %s)" % (name, T("Date of Birth"), dob)
+        else:
+            details = name
+
+        return SPAN(details, _class="person-details")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def profile_picture(person):
+        """
+            Get the profile picture URL for a person
+
+            Args:
+                person: the person record (Row)
+
+            Returns:
+                the profile picture URL (relative URL), or None if
+                no profile picture is available for that person
+        """
+
+        try:
+            pe_id = person.pe_id
+        except AttributeError:
+            return None
+
+        table = current.s3db.pr_image
+        query = (table.pe_id == pe_id) & \
+                (table.profile == True) & \
+                (table.deleted != True)
+        row = current.db(query).select(table.image, limitby=(0, 1)).first()
+
+        return URL(c="default", f="download", args=row.image) if row else None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def flag_instructions(person_id, organisation_id=None):
+        """
+            Returns any flag instructions of an organisation for a client
+
+            Args:
+                person_id: the client person record ID
+                organisation_id: the organisation record ID
+
+            Returns:
+                a JSON-serializable dict {flagname: instructions}
+        """
+
+        T = current.T
+        s3db = current.s3db
+
+        flag_info = s3db.dvr_get_flag_instructions(person_id,
+                                                   organisation_id = organisation_id,
+                                                   )
+        info = flag_info["info"]
+
+        flags = []
+        for flagname, instructions in info:
+            flags.append({"n": s3_str(T(flagname)),
+                          "i": s3_str(T(instructions)),
+                          })
+        return flags
+
+    # -------------------------------------------------------------------------
+    def get_family_members(self, person_id, organisation_id):
+        """
+            Extracts and formats family details for a client
+
+            Args:
+                person_id: the client person record ID
+                organisation_id: the organisation record ID
+
+            Returns:
+                array with family member infos, format:
+                    [{l: pe_label,
+                      n: fullname,
+                      d: dob_formatted,
+                      p: picture_URL,
+                      r: {
+                        # blocked events for this family member
+                        event_code: {m: message, e: earliest_date_ISO}
+                      }, ...
+                     ]
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Case groups this person belongs to
+        gtable = s3db.pr_group
+        mtable = s3db.pr_group_membership
+        join = gtable.on((gtable.id == mtable.group_id) & \
+                         (gtable.group_type == 7))
+        query = ((mtable.person_id == person_id) & \
+                 (mtable.deleted != True))
+        groups = db(query)._select(mtable.group_id, join=join)
+
+        members = {}
+
+        # Open case statuses
+        stable = s3db.dvr_case_status
+        open_status = db(stable.is_closed == False)._select(stable.id)
+
+        # Other group members with open cases with the same organisation
+        ptable = s3db.pr_person
+        itable = s3db.pr_image
+        ctable = s3db.dvr_case
+        join = [ptable.on(ptable.id == mtable.person_id),
+                ctable.on((ctable.person_id == ptable.id) & \
+                          (ctable.organisation_id == organisation_id) & \
+                          (ctable.status_id.belongs(open_status)) & \
+                          (ctable.archived == False) & \
+                          (ctable.deleted == False)),
+                ]
+        left = [itable.on((itable.pe_id == ptable.pe_id) & \
+                          (itable.profile == True) & \
+                          (itable.deleted == False)),
+                ]
+
+        query = (mtable.group_id.belongs(groups)) & \
+                (mtable.deleted ==False)
+        rows = db(query).select(ptable.id,
+                                ptable.pe_label,
+                                ptable.first_name,
+                                ptable.last_name,
+                                ptable.date_of_birth,
+                                itable.image,
+                                join = join,
+                                left = left,
+                                )
+        for row in rows:
+            member_id = row.pr_person.id
+            if member_id not in members:
+                members[member_id] = row
+
+        output = []
+        for member_id, row in members.items():
+            # Person data
+            member = row.pr_person
+            data = {"l": member.pe_label,
+                    "n": s3_fullname(member),
+                    "d": S3DateTime.date_represent(member.date_of_birth),
+                    }
+
+            # Profile picture URL
+            picture = row.pr_image
+            if picture.image:
+                data["p"] = URL(c = "default",
+                                f = "download",
+                                args = picture.image,
+                                )
+            # Blocking rules
+            event_rules = self.get_blocked_events(member_id,
+                                                  organisation_id,
+                                                  serializable = True,
+                                                  )
+            if event_rules:
+                data["r"] = event_rules
+
+            output.append(data)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def get_blocked_events(cls,
+                           person_id,
+                           organisation_id,
+                           event_type_id = None,
+                           serializable = True,
+                           ):
+        """
+            Returns currently excluded events for a person including reasons
+            for their exclusion
+
+            Args:
+                person_id: the person record ID
+                organisation_id: the organisation record ID
+                event_type_id: check only this event type (rather than all
+                               event types defined by the organisation)
+                serializable: return JSON-serializable data
+
+            Returns: a dict with exclusion details
+                     {event_type_id: (error_message, blocked_until_datetime)}
+        """
+
+        now = current.request.utcnow.replace(microsecond=0)
+        day_start = now.replace(hour=0, minute=0, second=0)
+
+        # Get event types for organisation
+        event_types = cls.get_event_types(organisation_id)
+
+        # Get event types to check
+        event_type_ids = set(event_types.keys())
+        event_type_ids.discard("_default")
+        if event_type_id and event_type_id in event_type_ids:
+            check = {event_type_id}
+        else:
+            check = event_type_ids
+
+        excluded = {}
+
+        # Exclude event types that are not combinable with other events
+        # registered today
+        non_combinable = cls.check_non_combinable(person_id, check, day_start, event_types)
+        excluded.update(non_combinable)
+        check -= set(non_combinable.keys())
+
+        # Exclude event types for which maximum number of occurences per
+        # day have been reached
+        max_per_day = cls.check_max_per_day(person_id, check, day_start, event_types)
+        excluded.update(max_per_day)
+        check -= set(max_per_day.keys())
+
+        # Exclude event types for which minimum interval between consecutive
+        # occurences has not yet been reached
+        min_interval = cls.check_min_interval(person_id, check, now, event_types)
+        excluded.update(min_interval)
+        check -= set(min_interval.keys())
+
+        if serializable:
+            formatted = {}
+            for type_id, reason in excluded.items():
+                msg, earliest = reason
+                event_type = event_types[type_id]
+                formatted[event_type.code] = [s3_str(msg), earliest.isoformat() + "Z"]
+            excluded = formatted
+
+        return excluded
+
+    # -------------------------------------------------------------------------
+    # Helper functions
+    # -------------------------------------------------------------------------
     @classmethod
     def get_organisations(cls):
         """
@@ -945,7 +1134,16 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @classmethod
     def get_default_organisation(cls):
-        # TODO docstring
+        """
+            Determines the default organisation for the current user
+                1) the organisation operating the site where the user is
+                   currently reported present
+                2) the organisation employing the user
+                3) no default organisation (must choose)
+
+            Returns:
+                organisation record ID
+        """
 
         person_id = current.auth.s3_logged_in_person()
         if not person_id:
@@ -960,7 +1158,16 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def get_current_site_org(person_id):
-        # TODO docstring
+        """
+            Returns the organisation operating the site where the user
+            is currently reported present
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                organisation record ID
+        """
 
         site_id = SitePresence.get_current_site(person_id)
 
@@ -975,7 +1182,15 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def get_employer_org(person_id):
-        # TODO docstring
+        """
+            Returns the organisation by which the user is currently employed
+
+            Args:
+                person_id: the person record ID
+
+            Returns:
+                organisation record ID
+        """
 
         htable = current.s3db.hrm_human_resource
 
@@ -1052,88 +1267,21 @@ class Checkpoint(CRUDMethod):
         return event_types
 
     # -------------------------------------------------------------------------
-    def permitted(self):
+    @staticmethod
+    def check_non_combinable(person_id, check, day_start, event_types):
         """
-            Helper function to check permissions
-
-            Returns:
-                True if permitted to use this method, else False
-        """
-        # TODO refactor
-        # - take action, tablename, organisation_id as parameters
-        # - check permitted realms for action on tablename contains organisation
-        # - if no organisation is provided, just check the action+tablename
-        # - if a record_id is provided, check permission for this record rather than org
-
-        # User must be permitted to create case events
-        return self._permitted("create")
-
-    # -------------------------------------------------------------------------
-    def get_blocked_events(self, person_id, organisation_id, event_type_id=None, serializable=True):
-        """
-            Check minimum intervals between consecutive registrations
-            of the same event type
+            Returns exclusion details for event types that are not combinable
+            with events already registered for the person on the given day
 
             Args:
                 person_id: the person record ID
-                type_id: check only this event type (rather than all types)
+                check: the event types to check
+                day_start: the start of the 24h persion to check
+                event_types: all event types to consider
 
-            Returns:
-                a dict with blocked event types
-                    {type_id: (error_message, blocked_until_datetime|None)}
+            Returns: a dict with exclusion details
+                     {event_type_id: (error_message, blocked_until_datetime)}
         """
-        # TODO update docstring
-
-        now = current.request.utcnow.replace(microsecond=0)
-        day_start = now.replace(hour=0, minute=0, second=0)
-
-        # Get event types for organisation
-        event_types = self.get_event_types(organisation_id)
-
-        # Get event types to check
-        event_type_ids = set(event_types.keys())
-        event_type_ids.discard("_default")
-        if event_type_id and event_type_id in event_type_ids:
-            check = {event_type_id}
-        else:
-            check = event_type_ids
-
-        excluded = {}
-
-        # Exclude event types that are not combinable with other events
-        # registered today
-        non_combinable = self.check_non_combinable(person_id, check, day_start, event_types)
-        excluded.update(non_combinable)
-        check -= set(non_combinable.keys())
-
-        # Exclude event types for which maximum number of occurences per
-        # day have been reached
-        max_per_day = self.check_max_per_day(person_id, check, day_start, event_types)
-        excluded.update(max_per_day)
-        check -= set(max_per_day.keys())
-
-        # Exclude event types for which minimum interval between consecutive
-        # occurences has not yet been reached
-        min_interval = self.check_min_interval(person_id, check, now, event_types)
-        excluded.update(min_interval)
-        check -= set(min_interval.keys())
-
-        if serializable:
-            output = {}
-            for type_id, reason in excluded.items():
-                msg, earliest = reason
-                event_type = event_types[type_id]
-                output[event_type.code] = [s3_str(msg), earliest.isoformat() + "Z"]
-            excluded = output
-
-        #print(excluded)
-
-        return excluded
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def check_non_combinable(person_id, check, day_start, event_types):
-        # TODO docstring
 
         T = current.T
         db = current.db
@@ -1180,7 +1328,20 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def check_max_per_day(person_id, check, day_start, event_types):
-        # TODO docstring
+        """
+            Returns exclusion details for event types for which the maximum
+            number of registrations for a person has been reached on the
+            given day
+
+            Args:
+                person_id: the person record ID
+                check: the event types to check
+                day_start: the start of the 24h persion to check
+                event_types: all event types to consider
+
+            Returns: a dict with exclusion details
+                     {event_type_id: (error_message, blocked_until_datetime)}
+        """
 
         T = current.T
         db = current.db
@@ -1189,8 +1350,8 @@ class Checkpoint(CRUDMethod):
         etable = s3db.dvr_case_event
         ttable = s3db.dvr_case_event_type
 
-        # Number of registrations for each of check today
-        # Where number of registrations is greater than max_per_day
+        # Number of registrations for each event type where the
+        # of registrations for the person is greater than max_per_day
         join = ttable.on((ttable.id == etable.type_id) & \
                          (ttable.max_per_day != None))
         query = (etable.person_id == person_id) & \
@@ -1211,7 +1372,6 @@ class Checkpoint(CRUDMethod):
             number = row[count]
             type_id = row.dvr_case_event_type.id
             event_type = event_types[type_id]
-
             if number > 1:
                 msg = T("%(event)s already registered %(number)s times today") % \
                        {"event": T(event_type.name), "number": number}
@@ -1225,7 +1385,20 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def check_min_interval(person_id, check, now, event_types):
-        # TODO docstring
+        """
+            Returns exclusion details for event types for which the minimum
+            interval between consecutive registrations for the same person
+            has not been reached yet
+
+            Args:
+                person_id: the person record ID
+                check: the event types to check
+                now: the current date/time
+                event_types: all event types to consider
+
+            Returns: a dict with exclusion details
+                     {event_type_id: (error_message, blocked_until_datetime)}
+        """
 
         T = current.T
         db = current.db
@@ -1254,11 +1427,13 @@ class Checkpoint(CRUDMethod):
         for row in rows:
             type_id = row.dvr_case_event_type.id
             event_type = event_types[type_id]
-
             latest, hours = row[last_reg], row[interval]
+
+            # Compute the earliest next registration time
             if latest and hours:
                 earliest = latest + datetime.timedelta(hours=hours)
             else:
+                # Either no previous registration or no waiting interval
                 continue
 
             if earliest > now:
@@ -1269,134 +1444,21 @@ class Checkpoint(CRUDMethod):
         return exclude
 
     # -------------------------------------------------------------------------
-    def get_family_members(self, person, organisation_id, include_ids=False):
-        # TODO refactor / cleanup
+    def permitted(self):
         """
-            Get infos for all family members of person
-
-            Args:
-                person: the person (Row)
-                include_ids: include the person record IDs
+            Helper function to check permissions
 
             Returns:
-                array with family member infos, format:
-                            [{i: the person record ID (if requested)    # TODO Change to "id"
-                              l: pe_label,
-                              n: fullname,
-                              d: dob_formatted,
-                              p: picture_URL,           # TODO change to i(mage)
-                              r: {
-                                event_code: {
-                                    m: message,
-                                    e: earliest_date_ISO
-                                }
-                              }, ...
-                             ]
+                True if permitted to use this method, else False
         """
+        # TODO refactor
+        # - take action, tablename, organisation_id as parameters
+        # - check permitted realms for action on tablename contains organisation
+        # - if no organisation is provided, just check the action+tablename
+        # - if a record_id is provided, check permission for this record rather than org
 
-        db = current.db
-        s3db = current.s3db
-
-        ptable = s3db.pr_person
-        itable = s3db.pr_image
-        gtable = s3db.pr_group
-        mtable = s3db.pr_group_membership
-        ctable = s3db.dvr_case
-        stable = s3db.dvr_case_status
-
-        # Get all case groups this person belongs to
-        person_id = person.id
-        query = ((mtable.person_id == person_id) & \
-                 (mtable.deleted != True) & \
-                 (gtable.id == mtable.group_id) & \
-                 (gtable.group_type == 7))
-        rows = db(query).select(gtable.id)
-        group_ids = set(row.id for row in rows)
-
-        members = {}
-
-        if group_ids:
-            join = [ptable.on(ptable.id == mtable.person_id),
-                    ctable.on((ctable.person_id == ptable.id) & \
-                              (ctable.organisation_id == organisation_id) & \
-                              (ctable.archived == False) & \
-                              (ctable.deleted == False)),
-                    ]
-
-            left = [stable.on(stable.id == ctable.status_id),
-                    itable.on((itable.pe_id == ptable.pe_id) & \
-                              (itable.profile == True) & \
-                              (itable.deleted == False)),
-                    ]
-
-            query = (mtable.group_id.belongs(group_ids)) & \
-                    (mtable.deleted != True) & \
-                    (stable.is_closed != True)
-            rows = db(query).select(ptable.id,
-                                    ptable.pe_label,
-                                    ptable.first_name,
-                                    ptable.last_name,
-                                    ptable.date_of_birth,
-                                    itable.image,
-                                    join = join,
-                                    left = left,
-                                    )
-
-            for row in rows:
-                member_id = row.pr_person.id
-                if member_id not in members:
-                    members[member_id] = row
-
-        output = []
-
-        if members:
-
-            # All event types and blocking rules
-            event_types = self.get_event_types()
-            #intervals = self.get_interval_rules(set(members.keys()))
-
-            for member_id, data in members.items():
-
-                member = data.pr_person
-                picture = data.pr_image
-
-                # Person data
-                data = {"l": member.pe_label,
-                        "n": s3_fullname(member),
-                        "d": S3DateTime.date_represent(member.date_of_birth),
-                        }
-
-                # Record ID?
-                if include_ids:
-                    data["id"] = member_id
-
-                # Profile picture URL
-                if picture.image:
-                    data["p"] = URL(c = "default",
-                                    f = "download",
-                                    args = picture.image,
-                                    )
-
-                # Blocking rules
-                #person_id, organisation_id, event_type_id=None, serializable=True
-                event_rules = self.get_blocked_events(member_id,
-                                                      organisation_id,
-                                                      serializable = True,
-                                                      )
-                #event_rules = intervals.get(member_id)
-                if event_rules:
-                    #rules = {}
-                    #for event_type_id, rule in event_rules.items():
-                        #code = event_types.get(event_type_id).code
-                        #rules[code] = (s3_str(rule[0]),
-                                       #"%sZ" % s3_encode_iso_datetime(rule[1]),
-                                       #)
-                    data["r"] = event_rules
-
-                # Add info to output
-                output.append(data)
-
-        return output
+        # User must be permitted to create case events
+        return self._permitted("create")
 
     # -------------------------------------------------------------------------
     @staticmethod
