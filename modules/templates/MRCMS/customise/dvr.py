@@ -205,6 +205,8 @@ def dvr_case_activity_controller(**attr):
     s3db = current.s3db
     s3 = current.response.s3
 
+    current.deployment_settings.base.bigtable = True
+
     # Custom prep
     standard_prep = s3.prep
     def custom_prep(r):
@@ -314,6 +316,8 @@ def dvr_case_appointment_controller(**attr):
     auth = current.auth
 
     s3 = current.response.s3
+
+    current.deployment_settings.base.bigtable = True
 
     # Custom prep
     standard_prep = s3.prep

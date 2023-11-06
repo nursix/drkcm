@@ -1229,6 +1229,8 @@ def pr_person_controller(**attr):
     auth = current.auth
     s3 = current.response.s3
 
+    current.deployment_settings.base.bigtable = True
+
     is_org_admin = auth.s3_has_role("ORG_ADMIN")
     is_case_admin = auth.s3_has_role("CASE_ADMIN")
 

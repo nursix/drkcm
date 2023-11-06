@@ -243,6 +243,10 @@ def org_organisation_controller(**attr):
     from ..rheaders import org_rheader
     attr["rheader"] = org_rheader
 
+    if is_org_group_admin:
+        # Show all records by default
+        settings.ui.datatables_pagelength = -1
+
     return attr
 
 # -------------------------------------------------------------------------

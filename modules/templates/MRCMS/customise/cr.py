@@ -346,9 +346,12 @@ def cr_shelter_resource(r, tablename):
 def cr_shelter_controller(**attr):
 
     T = current.T
-    s3 = current.response.s3
+    auth = current.auth
 
+    s3 = current.response.s3
     settings = current.deployment_settings
+
+    is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
     # Custom prep
     standard_prep = s3.prep
@@ -471,6 +474,10 @@ def cr_shelter_controller(**attr):
     from ..rheaders import cr_rheader
     attr = dict(attr)
     attr["rheader"] = cr_rheader
+
+    if is_org_group_admin:
+        # Show all records by default
+        settings.ui.datatables_pagelength = -1
 
     return attr
 

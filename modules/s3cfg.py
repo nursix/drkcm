@@ -2158,6 +2158,7 @@ class S3Config(Storage):
     def get_ui_datatables_pagelength(self):
         """
             Default (minimum) pagelength for datatables
+            - set to -1 to show all records by default
         """
 
         return self.ui.get("datatables_pagelength", 25)

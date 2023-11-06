@@ -1488,7 +1488,7 @@ class S3CRUD(CRUDMethod):
             if not s3.no_sspag:
                 dt_pagination = True
                 if not limit:
-                    limit = 2 * display_length
+                    limit = 2 * display_length if display_length >= 0 else None
                 current.session.s3.filter = get_vars
                 if orderby is None:
                     dt_sorting = {"iSortingCols": "1",
