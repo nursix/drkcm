@@ -391,7 +391,7 @@ class Checkpoint(CRUDMethod):
                 # TODO disable action
                 pass
         else:
-            label, advice, error = label, None, None
+            advice, error = None, None
             person = self.get_person(label, organisation_id)
         if not person:
             if not error:
@@ -502,7 +502,7 @@ class Checkpoint(CRUDMethod):
                     #if advice:
                         #output["q"] = s3_str(advice)
                 else:
-                    label, advice, error = label, None, None
+                    advice, error = None, None
                     person = self.get_person(label, organisation_id)
                 if person:
                     persons.append(person)
@@ -1210,20 +1210,40 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @classmethod
     def get_event_type(cls, code, organisation_id):
-        # TODO docstring
+        """
+            Looks up the event type during registration, enforces event class,
+            active event types and required role; returns the default event
+            type if no code is specified (i.e. None or "")
+
+            Args:
+                code: the event code
+                organisation_id: the organisation ID
+
+            Returns:
+                Row
+        """
 
         db = current.db
         s3db = current.s3db
 
-        # TODO enforce role_required
-        # TODO use default type when no code given
         table = s3db.dvr_case_event_type
-        query = (table.code == code) & \
-                (table.organisation_id == organisation_id) & \
-                (table.event_class.belongs(cls.EVENT_CLASSES)) & \
-                (table.is_inactive == False) & \
-                (table.deleted == False)
+        if code:
+            query = (table.code == code)
+        else:
+            query = (table.is_default == True)
 
+        query &= (table.organisation_id == organisation_id) & \
+                 (table.event_class.belongs(cls.EVENT_CLASSES)) & \
+                 (table.is_inactive == False)
+
+        # Roles required
+        sr = current.auth.get_system_roles()
+        roles = current.session.s3.roles
+        if sr.ADMIN not in roles:
+            query &= (table.role_required == None) | \
+                     (table.role_required.belongs(roles))
+
+        query &= (table.deleted == False)
         return db(query).select(table.id,
                                 #table.name,
                                 table.register_multiple,
