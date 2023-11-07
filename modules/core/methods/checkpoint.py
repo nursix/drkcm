@@ -283,14 +283,17 @@ class Checkpoint(CRUDMethod):
 
             # Build the type list
             types, default = [], None
+            encode = lambda t: [t.code, s3_str(T(t.name)), t.register_multiple]
             for k, v in event_types.items():
-                t = event_types[v] if k == "_default" else v
-                types.append([t.code, s3_str(T(t.name)), t.register_multiple])
+                if k == "_default":
+                    default = encode(event_types[v])
+                else:
+                    types.append(encode(v))
 
             # Sort types alphabetically by label
-            output = {"types": sorted(types, key=lambda i: i[1]),
-                      "default": default,
-                      }
+            output = {"types": sorted(types, key=lambda i: i[1])}
+            if default:
+                output["default"] = default
         else:
             output = {"types": [], "default": None}
 
@@ -539,7 +542,7 @@ class Checkpoint(CRUDMethod):
         if error:
             output = {"a": s3_str(error)}
         else:
-            output = {"m": s3_str(T("Event registered successfully"))}
+            output = {"m": s3_str(T("Event registered"))}
 
         return output
 
@@ -1214,15 +1217,16 @@ class Checkpoint(CRUDMethod):
 
         # TODO enforce role_required
         # TODO use default type when no code given
-        ttable = s3db.dvr_case_event_type
-        query = (ttable.code == code) & \
-                (ttable.organisation_id == organisation_id) & \
-                (ttable.event_class.belongs(cls.EVENT_CLASSES)) & \
-                (ttable.is_inactive == False) & \
-                (ttable.deleted == False)
+        table = s3db.dvr_case_event_type
+        query = (table.code == code) & \
+                (table.organisation_id == organisation_id) & \
+                (table.event_class.belongs(cls.EVENT_CLASSES)) & \
+                (table.is_inactive == False) & \
+                (table.deleted == False)
 
-        return db(query).select(ttable.id,
-                                ttable.register_multiple,
+        return db(query).select(table.id,
+                                #table.name,
+                                table.register_multiple,
                                 limitby = (0, 1),
                                 ).first()
 
