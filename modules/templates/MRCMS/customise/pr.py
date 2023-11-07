@@ -60,9 +60,7 @@ def mrcms_absence(row):
         check_out_date = registration.check_out_date
         if check_out_date:
 
-            delta = (current.request.utcnow - check_out_date).total_seconds()
-            if delta < 0:
-                delta = 0
+            delta = max(0, (current.request.utcnow - check_out_date).total_seconds())
             days = int(delta / 86400)
 
             if days < 1:
@@ -280,7 +278,7 @@ def configure_inline_shelter_registration(component, shelters, person_id=None):
         # Configure shelter ID
         field = rtable.shelter_id
         field.default = default_shelter
-        field.writable = False if default_shelter else True
+        field.writable = not default_shelter
         field.comment = None
         field.widget = None
 
@@ -467,14 +465,18 @@ def configure_case_form(resource,
                 # Other Details ---------------------------
                 "person_details.occupation",
                 S3SQLInlineComponent(
-                        "contact",
+                        "phone",
                         fields = [("", "value")],
-                        filterby = {"field": "contact_method",
-                                    "options": "SMS",
-                                    },
                         label = T("Mobile Phone"),
                         multiple = False,
                         name = "phone",
+                        ),
+                S3SQLInlineComponent(
+                        "email",
+                        fields = [("", "value")],
+                        label = T("Email"),
+                        multiple = False,
+                        name = "email",
                         ),
                 "person_details.literacy",
                 S3SQLInlineComponent(
@@ -554,7 +556,7 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
     get_status_opts = s3db.dvr_case_status_filter_opts
     if closed == "only":
         status_opts = lambda: get_status_opts(closed=True)
-    elif closed == "1" or closed == "include":
+    elif closed in {"1", "include"}:
         status_opts = get_status_opts
     else:
         status_opts = lambda: get_status_opts(closed=False)

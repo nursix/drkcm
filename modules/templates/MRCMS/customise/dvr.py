@@ -840,7 +840,7 @@ def dvr_person_prep(r):
             # Show only closed cases
             CASES = CLOSED
             query &= FS("dvr_case.status_id$is_closed") == True
-        elif closed != "1" and closed != "include":
+        elif closed not in {"1", "include"}:
             # Show only open cases (default)
             CASES = CURRENT
             query &= (FS("dvr_case.status_id$is_closed") == False) | \
