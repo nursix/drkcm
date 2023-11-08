@@ -428,6 +428,9 @@ def cr_shelter_controller(**attr):
                            #]
             #r.component.configure(list_fields=list_fields)
 
+        elif r.component_name == "document":
+            r.component.add_filter(FS("doc_id") == None)
+
         return result
     s3.prep = custom_prep
 

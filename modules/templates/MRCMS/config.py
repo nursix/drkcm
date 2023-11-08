@@ -31,6 +31,7 @@ def config(settings):
     settings.base.rest_controllers = {("counsel", "index"): None,
                                       ("counsel", "person"): ("pr", "person"),
                                       ("counsel", "group_membership"): ("pr", "group_membership"),
+                                      ("counsel", "document"): ("doc", "document"),
                                       ("counsel", "need"): ("dvr", "need"),
                                       ("counsel", "response_type"): ("dvr", "response_type"),
                                       ("counsel", "response_theme"): ("dvr", "response_theme"),
@@ -213,9 +214,11 @@ def config(settings):
     # DOC Settings and Customizations
     #
     from .customise.doc import doc_document_resource, \
+                               doc_document_controller, \
                                doc_image_resource
 
     settings.customise_doc_document_resource = doc_document_resource
+    settings.customise_doc_document_controller = doc_document_controller
     settings.customise_doc_image_resource = doc_image_resource
 
     # -------------------------------------------------------------------------
@@ -225,6 +228,9 @@ def config(settings):
     settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<family>[^,]*),(?P<last_name>[^,]*),(?P<first_name>[^,]*),(?P<date_of_birth>[^,]*),.*"
     # Uncomment this to enable household size in cases, set to "auto" for automatic counting
     settings.dvr.household_size = "auto"
+
+    settings.dvr.case_include_activity_docs = False
+    settings.dvr.case_include_group_docs = True
 
     # Manage case flags
     settings.dvr.case_flags = True

@@ -72,6 +72,7 @@ def dvr_rheader(r, tabs=None):
                             # seized_item
 
                             # Both
+                            # "document"
                             # "case_note"
                             ]
 
@@ -94,7 +95,9 @@ def dvr_rheader(r, tabs=None):
                                      #(T("Confiscation"), "seized_item"),
                                      ])
 
-                    tabs.append((T("Notes"), "case_note"))
+                    tabs.extend([(T("Documents"), "document/"),
+                                 (T("Notes"), "case_note"),
+                                 ])
 
                 case = resource.select(["dvr_case.status_id",
                                         "dvr_case.archived",

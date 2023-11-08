@@ -6,6 +6,8 @@
 
 from gluon import current
 
+from core import FS
+
 # -------------------------------------------------------------------------
 def org_group_controller(**attr):
 
@@ -225,6 +227,9 @@ def org_organisation_controller(**attr):
                            "status",
                            ]
             r.component.configure(list_fields=list_fields)
+
+        elif r.component_name == "document":
+            r.component.add_filter(FS("doc_id") == None)
 
         return result
     s3.prep = prep
