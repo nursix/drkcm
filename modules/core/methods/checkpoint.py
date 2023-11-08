@@ -65,10 +65,6 @@ class Checkpoint(CRUDMethod):
                 attr: controller parameters
         """
 
-        # TODO no permission check here?
-        #if not self.permitted():
-        #    current.auth.permission.fail()
-
         output = {}
 
         representation = r.representation
@@ -99,11 +95,19 @@ class Checkpoint(CRUDMethod):
     # Response methods
     # -------------------------------------------------------------------------
     def registration_form(self, r, **attr):
-        # TODO docstring
-        # TODO refactor
+        """
+            Delivers the event registration form
 
-        # TODO Permissions check
-        # Must be permitted to create case events
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
+
+            Returns:
+                dict with view elements
+        """
+
+        if not current.auth.s3_has_permission("create", "dvr_case_event"):
+            r.unauthorised()
 
         T = current.T
         #s3db = current.s3db
@@ -303,15 +307,41 @@ class Checkpoint(CRUDMethod):
 
     # -------------------------------------------------------------------------
     def check_or_register(self, r, **attr):
-        # TODO docstring
+        """
+            Check the ID label or register an event for the person
 
-        # JSON format:
-        #    {"a": the action ("check"|"register")
-        #     "l": the PE label(s)
-        #     "o": the organisation ID
-        #     "e": the event type code
-        #     "k": XSRF token
-        #     }
+            Args:
+                r: the CRUDRequest
+                **attr: controller parameters
+
+            Returns:
+                a JSON object like:
+                    {"l": the actual PE label (to update the input field),
+                     "p": the person details (HTML),
+                     "f": flags instructions
+                          [{"n": the flag name, "i": flag instructions},...],
+                     "x": the family details,
+                     "d": action details,       # TODO proper explanation
+                     "b": profile picture URL,  # TODO Change into i(mage)
+                     "i": blocked events        # TODO Change into "r" (=rules)
+                          {<event_code>: [<msg>, <blocked_until_datetime>]},
+                     "u": actionable info (e.g. which payment to pay out)
+                     "s": whether the action is permitted or not
+                     "e": form error (for label field)  # TODO use "a" instead
+                     "a": error message                 # TODO use "e" instead
+                     "w": warning message
+                     "m": success message               # TODO use "c" instead
+                     }
+
+            Note:
+                Request body is expected to contain a JSON-object like:
+                    {"a": the action ("check"|"register")
+                     "l": the PE label(s)
+                     "o": the organisation ID
+                     "e": the event type code
+                     "k": XSRF token
+                     }
+        """
 
         # Load JSON data from request body
         s = r.body
@@ -335,24 +365,6 @@ class Checkpoint(CRUDMethod):
         else:
             r.error(400, current.ERROR.BAD_REQUEST)
 
-        # output format:
-        # {l: the actual PE label (to update the input field),
-        #  p: the person details,
-        #  d: the family details,
-        #  f: [{n: the flag name
-        #      i: the flag instructions
-        #      },
-        #      ...],
-        #  b: profile picture URL,
-        #  i: {<event_code>: [<msg>, <blocked_until_datetime>]},
-        #  s: whether the action is permitted or not
-        #  e: form error (for label field)
-        #  a: error message
-        #  w: warning message
-        #  m: success message
-        #  }
-
-
         current.response.headers["Content-Type"] = "application/json"
         return json.dumps(output)
 
@@ -360,25 +372,23 @@ class Checkpoint(CRUDMethod):
     # Actions
     # -------------------------------------------------------------------------
     def check(self, r, json_data):
-        # TODO docstring
-        # JSON format:
-        #    {"a": the action ("check"|"register")
-        #     "l": the PE label(s)
-        #     "o": the organisation ID
-        #     "e": the event type code
-        #     "k": XSRF token
-        #     }
+        """
+            Checks the ID label against the selected organisation, and
+            returns the relevant details to register events for the person
 
-        # TODO permissions check
-        # Must be permitted to read person data for the selected org
-        # => get permitted realms
-        # => if realms is not None and org in realms => okay
-        # => if realms is None => okay
-        # => otherwise: forbidden
+            Args:
+                r: the CRUDRequest
+                json_data: the input JSON, see check_or_register
 
-        # The organisation
-        # TODO does this need to be validated?
+            Returns:
+                a JSON-serializable dict, format see check_or_register
+        """
+
         organisation_id = json_data.get("o")
+        if not organisation_id:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        # NOTE Permission to read person record implied by get_person()
 
         # Identify the person
         label = json_data.get("l")
@@ -431,56 +441,38 @@ class Checkpoint(CRUDMethod):
             output["p"] = None
             output["s"] = False
 
-        # output format:
-        # {l: the actual PE label (to update the input field),
-        #  p: the person details,                                # TODO Break up as n(ame) d(ate_of_birth)
-        #  f: [{n: the flag name
-        #      i: the flag instructions
-        #      },
-        #      ...],
-        #  x: the family details,
-        #  d: action details,                                    # TODO proper explanation
-        #  b: profile picture URL,                               # TODO Change into i(mage)
-        #  i: {<event_code>: [<msg>, <blocked_until_datetime>]}, # TODO Change into "r" (=rules)
-        #  u: actionable info (e.g. which payment to pay out)
-        #  s: whether the action is permitted or not             # TODO what for?
-
-        #  e: form error (for label field)
-        #  a: error message
-        #  w: warning message
-        #  m: success message
-        #  }
-
         return output
 
     # -------------------------------------------------------------------------
     def register(self, r, json_data):
-        # TODO docstring
-        # JSON format:
-        #    {"a": the action ("check"|"register")
-        #     "l": the PE label(s)
-        #     "o": the organisation ID
-        #     "e": the event type code
-        #     "k": XSRF token
-        #     }
+        """
+            Registers a case event for a person with the specified organisation
+
+            Args:
+                r: the CRUDRequest
+                json_data: the input JSON, see check_or_register
+
+            Returns:
+                a JSON-serializable dict, format see check_or_register
+        """
 
         T = current.T
 
-        # TODO permissions check
-        # Must be permitted to create case events for the selected org
-
         organisation_id = json_data.get("o")
+        if not organisation_id:
+            r.error(400, current.ERROR.BAD_REQUEST)
+
+        # Check permission
+        # NOTE Permission to read person record implied by get_person()
+        if not self.permitted("create", "dvr_case_event", organisation_id=organisation_id):
+            r.unauthorised()
+
+        persons = []
 
         # Identify the event type
         code = json_data.get("e")
         event_type = self.get_event_type(code, organisation_id)
-        persons = []
-
-        if not event_type:
-            # TODO Error: invalid event type
-            pass
-
-        else:
+        if event_type:
             # Identify the person(s)
             # TODO check if event type permits group registration
             labels = json_data.get("l")
@@ -490,7 +482,7 @@ class Checkpoint(CRUDMethod):
                 labels = [labels]
             else:
                 # TODO multiple only permitted if event_type has register_multiple
-                pass
+                labels = []
 
             validate = current.deployment_settings.get_org_site_presence_validate_id()
             for i, label in enumerate(labels):
@@ -500,7 +492,7 @@ class Checkpoint(CRUDMethod):
                     label, advice, error = validate(label)
                     person = self.get_person(label, organisation_id) if label else None
                     #if advice:
-                        #output["q"] = s3_str(advice)
+                        #output["e"] = s3_str(advice)
                 else:
                     advice, error = None, None
                     person = self.get_person(label, organisation_id)
@@ -510,35 +502,19 @@ class Checkpoint(CRUDMethod):
                     # TODO Error: person not found
                     break
 
-        # TODO register_bare
         if persons and event_type:
             for person in persons:
                 # TODO Check event type not blocked for that person
-                error = self.register_bare(person, event_type.id)
-                if error:
-                    # TODO Error: event registration failed
+                success = self.register_bare(person, event_type.id)
+                if not success:
+                    error = T("Event registration failed")
                     break
         elif not persons:
-            error = T("Person not found")
+            if not error:
+                error = T("Person not found")
         else:
             error = T("Invalid event type")
 
-        # output format:
-        # {l: the actual PE label (to update the input field),
-        #  p: the person details,
-        #  d: the family details,
-        #  f: [{n: the flag name
-        #      i: the flag instructions
-        #      },
-        #      ...],
-        #  b: profile picture URL,
-        #  i: {<event_code>: [<msg>, <blocked_until_datetime>]},
-        #  s: whether the action is permitted or not
-        #  e: form error (for label field)
-        #  a: error message
-        #  w: warning message
-        #  m: success message
-        #  }
         if error:
             output = {"a": s3_str(error)}
         else:
@@ -549,27 +525,20 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def register_bare(person, event_type_id):
-        # TODO docstring
+        """
+            Registers an event for a person (low-level method)
 
-        #print("Register bare:", person, event_type_id)
+            Args:
+                person: the pr_person Row
+                event_type_id: the event type record ID
+
+            Returns:
+                True if successful, otherwise False
+        """
 
         s3db = current.s3db
 
-        #ctable = s3db.dvr_case
         etable = s3db.dvr_case_event
-
-        # TODO Fix or remove this
-        #      - will require the case org to match the event type
-        ## Get the case ID for the person_id
-        #query = (ctable.person_id == person_id) & \
-                #(ctable.deleted != True)
-        #case = current.db(query).select(ctable.id,
-                                        #limitby=(0, 1),
-                                        #).first()
-        #if case:
-            #case_id = case.id
-        #else:
-            #case_id = None
 
         # Customise event resource
         from ..controller import CRUDRequest
@@ -577,7 +546,6 @@ class Checkpoint(CRUDMethod):
         r.customise_resource("dvr_case_event")
 
         data = {"person_id": person.id,
-                #"case_id": case_id,
                 "type_id": event_type_id,
                 "date": current.request.utcnow,
                 }
@@ -591,8 +559,7 @@ class Checkpoint(CRUDMethod):
             data["id"] = record_id
             s3db.onaccept(etable, data, method="create")
 
-        # TODO should just return True or False
-        return None if record_id else "Registration failed"
+        return bool(record_id)
 
     # -------------------------------------------------------------------------
     # UI Widgets
@@ -601,8 +568,9 @@ class Checkpoint(CRUDMethod):
     def organisation_selector(organisations, widget_id=None):
         """
             Args:
-                organisations: all permitted organisations, Rows
-                organisation_id: the default organisation ID
+                organisations: all permitted organisations (dict as produced
+                               by get_organisations())
+                widget_id: the node ID of the registration form
 
             Returns:
                 dict of view elements
@@ -669,13 +637,13 @@ class Checkpoint(CRUDMethod):
     def event_type_selector(event_types, widget_id=None):
         """
             Args:
-                event_types: all permitted event types, Rows
-                event_type_id: the default event type ID
+                event_types: all permitted event types (dict as produced
+                             by get_event_types())
+                widget_id: the node ID of the registration form
 
             Returns:
                 dict of view elements
         """
-        # TODO update docstring
 
         T = current.T
 
@@ -689,7 +657,6 @@ class Checkpoint(CRUDMethod):
                 name = T(v.name)
                 button = A(name,
                            _class = "secondary button event-type-select",
-                           # TODO add register_multiple
                            data = {"code": s3_str(v.code),
                                    "name": s3_str(name),
                                    "multiple": "T" if v.register_multiple else "F",
@@ -1253,7 +1220,15 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @classmethod
     def get_event_types(cls, organisation_id=None):
-        # TODO docstring
+        """
+            Looks up all available event types for the organisation
+
+            Args:
+                organisation_id: the organisation record ID
+
+            Returns:
+                a dict {event_type_id: event_type_row}
+        """
 
         db = current.db
         s3db = current.s3db
@@ -1468,21 +1443,32 @@ class Checkpoint(CRUDMethod):
         return exclude
 
     # -------------------------------------------------------------------------
-    def permitted(self):
+    def permitted(self, method, tablename, organisation_id=None):
         """
             Helper function to check permissions
 
             Returns:
                 True if permitted to use this method, else False
         """
-        # TODO refactor
-        # - take action, tablename, organisation_id as parameters
-        # - check permitted realms for action on tablename contains organisation
-        # - if no organisation is provided, just check the action+tablename
-        # - if a record_id is provided, check permission for this record rather than org
 
-        # User must be permitted to create case events
-        return self._permitted("create")
+        auth = current.auth
+
+        permitted = False
+
+        if organisation_id:
+            realms = auth.permission.permitted_realms(tablename, method=method)
+            if realms:
+                otable = current.s3db.org_organisation
+                query = (otable.id == organisation_id) & \
+                        (otable.pe_id.belongs(realms))
+                if current.db(query).select(otable.id, limitby=(0, 1)).first():
+                    return True
+            elif realms is None:
+                permitted = True
+        else:
+            permitted = auth.s3_has_permission(method, tablename)
+
+        return permitted
 
     # -------------------------------------------------------------------------
     @staticmethod
