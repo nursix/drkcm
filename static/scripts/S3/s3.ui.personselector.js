@@ -983,7 +983,7 @@
 
             var self = this,
                 throbber = this.idLabelThrobber.show(),
-                url = S3.Ap.concat('/' + opts.c + '/' + opts.f + '/lookup.json?search=1&label=1' + getName + '&~.pe_label=' + value);
+                url = S3.Ap.concat('/' + opts.c + '/' + opts.f + '/lookup.json?search=1&label=1' + getName + '&~.pe_label__like=' + value);
 
             // Ajax lookup
             lookup = $.getJSONS3(url, function(data) {
