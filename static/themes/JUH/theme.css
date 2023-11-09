@@ -4688,241 +4688,246 @@ h4.profile-sub-header {
   width: 100%;
   border: none;
 }
-/* line 131, ../scss/theme/_misc.scss */
+/* line 130, ../scss/theme/_misc.scss */
+.event-registration .case-event-registration .person-details {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+/* line 135, ../scss/theme/_misc.scss */
 .event-registration .family-members {
   width: 100%;
   border-collapse: collapse;
 }
-/* line 134, ../scss/theme/_misc.scss */
+/* line 138, ../scss/theme/_misc.scss */
 .event-registration .family-members div.member-show-picture {
   height: 2.7rem;
 }
-/* line 137, ../scss/theme/_misc.scss */
+/* line 141, ../scss/theme/_misc.scss */
 .event-registration .family-members .member-id {
   color: #808080;
   font-size: 0.8rem;
   margin-bottom: 0.1rem;
 }
-/* line 142, ../scss/theme/_misc.scss */
+/* line 146, ../scss/theme/_misc.scss */
 .event-registration .family-members .member-message {
   margin: 0;
   color: #e0767a;
   font-size: 0.8rem;
   font-style: normal;
 }
-/* line 147, ../scss/theme/_misc.scss */
+/* line 151, ../scss/theme/_misc.scss */
 .event-registration .family-members .member-message .columns {
   padding: 0;
 }
-/* line 152, ../scss/theme/_misc.scss */
+/* line 156, ../scss/theme/_misc.scss */
 .event-registration .family-members .family-member td {
   border-bottom: 1px solid #e0e0e0;
   background-color: white;
 }
-/* line 156, ../scss/theme/_misc.scss */
+/* line 160, ../scss/theme/_misc.scss */
 .event-registration .family-members .family-member.member-blocked td {
   background-color: #f6f6f6;
 }
-/* line 158, ../scss/theme/_misc.scss */
+/* line 162, ../scss/theme/_misc.scss */
 .event-registration .family-members .family-member.member-blocked td .member-id, .event-registration .family-members .family-member.member-blocked td .member-name {
   color: #b0b0b0;
 }
-/* line 164, ../scss/theme/_misc.scss */
+/* line 168, ../scss/theme/_misc.scss */
 .event-registration .family-members .family-all td {
   background-color: #f0f8f6;
   color: #505050;
   font-style: italic;
   height: 2.7rem;
 }
-/* line 171, ../scss/theme/_misc.scss */
+/* line 175, ../scss/theme/_misc.scss */
 .event-registration .family-members button.member-show-picture.showing {
   border: 1px solid black;
 }
-/* line 175, ../scss/theme/_misc.scss */
+/* line 179, ../scss/theme/_misc.scss */
 .event-registration .profile-picture {
   margin: 1rem 0;
   max-width: 80%;
 }
-/* line 178, ../scss/theme/_misc.scss */
+/* line 182, ../scss/theme/_misc.scss */
 .event-registration .profile-picture .member-caption {
   padding: 0.3rem 0;
   font-size: 1.4rem;
 }
 
-/* line 185, ../scss/theme/_misc.scss */
+/* line 189, ../scss/theme/_misc.scss */
 .event-bottom {
   border-top: 1px solid #ddd;
   padding-top: 0.5rem;
 }
-/* line 186, ../scss/theme/_misc.scss */
+/* line 190, ../scss/theme/_misc.scss */
 .event-bottom .username {
   padding: 0;
 }
 
 /* Response Theme Selector */
-/* line 196, ../scss/theme/_misc.scss */
+/* line 200, ../scss/theme/_misc.scss */
 #dvr_response_action_response_theme_ids__row .ui-multiselect.ui-widget,
 #sub-defaultresponse_action .ui-multiselect.ui-widget {
   width: 28rem !important;
   max-width: 100%;
 }
 
-/* line 201, ../scss/theme/_misc.scss */
+/* line 205, ../scss/theme/_misc.scss */
 .ui-widget-content {
   max-width: 100%;
 }
 
-/* line 205, ../scss/theme/_misc.scss */
+/* line 209, ../scss/theme/_misc.scss */
 .dvr-response-action-theme {
   font-size: 0.8rem;
 }
-/* line 207, ../scss/theme/_misc.scss */
+/* line 211, ../scss/theme/_misc.scss */
 .dvr-response-action-theme h6 {
   font-size: 0.9rem;
   font-weight: bold;
   color: black;
   margin: 0;
 }
-/* line 213, ../scss/theme/_misc.scss */
+/* line 217, ../scss/theme/_misc.scss */
 .dvr-response-action-theme .text-body {
   margin: 0.125rem 0.25rem 0.5rem 0.25rem;
 }
 
-/* line 219, ../scss/theme/_misc.scss */
+/* line 223, ../scss/theme/_misc.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 222, ../scss/theme/_misc.scss */
+/* line 226, ../scss/theme/_misc.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;
 }
 
-/* line 228, ../scss/theme/_misc.scss */
+/* line 232, ../scss/theme/_misc.scss */
 .occupancy-bar {
   border: 1px solid black;
   position: relative;
   padding: 0 2px;
   min-width: 4rem;
 }
-/* line 233, ../scss/theme/_misc.scss */
+/* line 237, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy {
   display: block;
   position: absolute;
   top: 0;
   left: 0;
 }
-/* line 234, ../scss/theme/_misc.scss */
+/* line 238, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy:before {
   content: "-";
   visibility: hidden;
 }
-/* line 242, ../scss/theme/_misc.scss */
+/* line 246, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-0 {
   width: 1%;
   background-color: rgba(0, 85, 0, 0.5);
 }
-/* line 246, ../scss/theme/_misc.scss */
+/* line 250, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-10 {
   width: 10%;
   background-color: rgba(0, 115, 0, 0.5);
 }
-/* line 250, ../scss/theme/_misc.scss */
+/* line 254, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-20 {
   width: 20%;
   background-color: rgba(0, 145, 0, 0.5);
 }
-/* line 254, ../scss/theme/_misc.scss */
+/* line 258, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-30 {
   width: 30%;
   background-color: rgba(70, 160, 0, 0.5);
 }
-/* line 258, ../scss/theme/_misc.scss */
+/* line 262, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-40 {
   width: 40%;
   background-color: rgba(100, 160, 0, 0.5);
 }
-/* line 262, ../scss/theme/_misc.scss */
+/* line 266, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-50 {
   width: 50%;
   background-color: rgba(160, 160, 0, 0.5);
 }
-/* line 266, ../scss/theme/_misc.scss */
+/* line 270, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-60 {
   width: 60%;
   background-color: rgba(175, 145, 0, 0.5);
 }
-/* line 270, ../scss/theme/_misc.scss */
+/* line 274, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-70 {
   width: 70%;
   background-color: rgba(190, 120, 0, 0.5);
 }
-/* line 274, ../scss/theme/_misc.scss */
+/* line 278, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-80 {
   width: 80%;
   background-color: rgba(205, 80, 0, 0.5);
 }
-/* line 278, ../scss/theme/_misc.scss */
+/* line 282, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-90 {
   width: 90%;
   background-color: rgba(220, 40, 0, 0.5);
 }
-/* line 282, ../scss/theme/_misc.scss */
+/* line 286, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-100 {
   width: 100%;
   background-color: rgba(235, 20, 0, 0.5);
 }
-/* line 286, ../scss/theme/_misc.scss */
+/* line 290, ../scss/theme/_misc.scss */
 .occupancy-bar .occupancy.occupancy-exc {
   width: 100%;
   background-color: rgba(200, 0, 0, 0.6);
 }
 
-/* line 294, ../scss/theme/_misc.scss */
+/* line 298, ../scss/theme/_misc.scss */
 .shelter-overview-stats {
   font-size: 0.8rem;
   background-color: #eaeaea;
   padding: 0.2rem;
   border: 1px solid #e0e0e0;
 }
-/* line 299, ../scss/theme/_misc.scss */
+/* line 303, ../scss/theme/_misc.scss */
 .shelter-overview-stats .spacer {
   background-color: #eaeaea;
 }
-/* line 302, ../scss/theme/_misc.scss */
+/* line 306, ../scss/theme/_misc.scss */
 .shelter-overview-stats h5 {
   font-size: 0.9rem;
   font-weight: bold;
   text-align: center;
 }
-/* line 307, ../scss/theme/_misc.scss */
+/* line 311, ../scss/theme/_misc.scss */
 .shelter-overview-stats table {
   width: 100%;
   border: 0;
   border-collapse: collapse;
 }
-/* line 311, ../scss/theme/_misc.scss */
+/* line 315, ../scss/theme/_misc.scss */
 .shelter-overview-stats table th {
   font-weight: normal;
 }
-/* line 314, ../scss/theme/_misc.scss */
+/* line 318, ../scss/theme/_misc.scss */
 .shelter-overview-stats table td {
   font-weight: bold;
 }
-/* line 317, ../scss/theme/_misc.scss */
+/* line 321, ../scss/theme/_misc.scss */
 .shelter-overview-stats table .stats-excess {
   background-color: #ffced5;
 }
-/* line 320, ../scss/theme/_misc.scss */
+/* line 324, ../scss/theme/_misc.scss */
 .shelter-overview-stats table .stats-total {
   font-size: 1.0rem;
 }
-/* line 322, ../scss/theme/_misc.scss */
+/* line 326, ../scss/theme/_misc.scss */
 .shelter-overview-stats table .stats-total th {
   font-weight: bold;
 }
 
-/* line 329, ../scss/theme/_misc.scss */
+/* line 333, ../scss/theme/_misc.scss */
 .shelter-overview-residents h4 {
   border-top: 1px solid #ccc;
   padding: 0.5rem;
@@ -4930,27 +4935,27 @@ h4.profile-sub-header {
   font-size: 1.1rem;
   font-weight: bold;
 }
-/* line 337, ../scss/theme/_misc.scss */
+/* line 341, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list {
   /* table */
   min-width: 71%;
 }
-/* line 341, ../scss/theme/_misc.scss */
+/* line 345, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list tr {
   border-left: 2px solid #AAA;
   border-right: 2px solid #AAA;
 }
-/* line 344, ../scss/theme/_misc.scss */
+/* line 348, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list tr.residents-list-spacer {
   border: none;
   border-top: 3px solid #AAA;
 }
-/* line 347, ../scss/theme/_misc.scss */
+/* line 351, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list tr.residents-list-spacer td {
   border: none;
   min-height: 0.5rem;
 }
-/* line 353, ../scss/theme/_misc.scss */
+/* line 357, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-unit {
   /* tr unit header */
   padding: 0;
@@ -4958,110 +4963,110 @@ h4.profile-sub-header {
   border-top: 3px solid #AAA;
   border-collapse: separate;
 }
-/* line 358, ../scss/theme/_misc.scss */
+/* line 362, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-unit .residents-unit-header {
   /* div */
   padding: 0.3rem 0.1rem;
   font-size: 1.1rem;
   font-weight: bold;
 }
-/* line 364, ../scss/theme/_misc.scss */
+/* line 368, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa {
   margin-right: 1.2rem;
 }
-/* line 366, ../scss/theme/_misc.scss */
+/* line 370, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa.fa-ban {
   color: #d71919;
 }
-/* line 369, ../scss/theme/_misc.scss */
+/* line 373, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-unit .residents-unit-link i.fa.fa-check {
   color: #070;
 }
-/* line 375, ../scss/theme/_misc.scss */
+/* line 379, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-status {
   /* subheader tr */
   border-top: 2px solid #AAA;
 }
-/* line 377, ../scss/theme/_misc.scss */
+/* line 381, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-status .residents-status-header.residents-planned {
   /* div */
   font-size: 0.7rem;
   padding: 0.2rem;
   color: #666;
 }
-/* line 384, ../scss/theme/_misc.scss */
+/* line 388, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .residents-header th {
   font-size: 0.9rem;
   color: #777;
   padding: 0.2rem 0.5rem;
 }
-/* line 390, ../scss/theme/_misc.scss */
+/* line 394, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data {
   /* tr */
 }
-/* line 391, ../scss/theme/_misc.scss */
+/* line 395, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
   color: #333;
 }
-/* line 395, ../scss/theme/_misc.scss */
+/* line 399, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data td.resident-name {
   font-weight: bold;
 }
-/* line 398, ../scss/theme/_misc.scss */
+/* line 402, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data td.resident-presence {
   text-align: center;
 }
-/* line 406, ../scss/theme/_misc.scss */
+/* line 410, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data.resident-planned td {
   font-style: italic;
   color: #888;
 }
-/* line 409, ../scss/theme/_misc.scss */
+/* line 413, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data.resident-planned td a {
   color: #888;
 }
-/* line 414, ../scss/theme/_misc.scss */
+/* line 418, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data.group-even {
   background-color: #fdfdfd;
 }
-/* line 417, ../scss/theme/_misc.scss */
+/* line 421, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .resident-data.group-odd {
   background-color: #f9f9f9;
 }
-/* line 421, ../scss/theme/_misc.scss */
+/* line 425, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .capacity-free {
   /* tr */
   background-color: #b9ffb9;
 }
-/* line 422, ../scss/theme/_misc.scss */
+/* line 426, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .capacity-free td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
 }
-/* line 428, ../scss/theme/_misc.scss */
+/* line 432, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .capacity-blocked {
   /* tr */
   background-color: #ffced5;
 }
-/* line 429, ../scss/theme/_misc.scss */
+/* line 433, ../scss/theme/_misc.scss */
 .shelter-overview-residents .residents-list .capacity-blocked td {
   padding: 0.2rem 0.5rem;
   font-size: 0.9rem;
 }
 
-/* line 438, ../scss/theme/_misc.scss */
+/* line 442, ../scss/theme/_misc.scss */
 .id-card-data {
   border: 1px solid #ccc;
   padding: 1rem;
 }
-/* line 441, ../scss/theme/_misc.scss */
+/* line 445, ../scss/theme/_misc.scss */
 .id-card-data .button i.fa {
   margin-right: 0.5rem;
 }
 
-/* line 445, ../scss/theme/_misc.scss */
+/* line 449, ../scss/theme/_misc.scss */
 .id-card-warning {
   border: 1px solid red;
   padding: 0.5rem;

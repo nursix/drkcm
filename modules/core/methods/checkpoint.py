@@ -246,10 +246,7 @@ class Checkpoint(CRUDMethod):
 
         # Inject JS
         options = {"tablename": resourcename,
-                   "ajaxURL": r.url(None,
-                                    method = "register",
-                                    representation = "json",
-                                    ),
+                   "ajaxURL": self.ajax_url(r),
                    "showPicture": show_picture,
                    "showPictureText": s3_str(T("Show Picture")),
                    "hidePictureText": s3_str(T("Hide Picture")),
@@ -468,21 +465,23 @@ class Checkpoint(CRUDMethod):
             r.unauthorised()
 
         persons = []
+        error = None
 
         # Identify the event type
         code = json_data.get("e")
         event_type = self.get_event_type(code, organisation_id)
         if event_type:
             # Identify the person(s)
-            # TODO check if event type permits group registration
             labels = json_data.get("l")
             if not labels:
                 labels = []
             elif not isinstance(labels, list):
                 labels = [labels]
-            else:
-                # TODO multiple only permitted if event_type has register_multiple
+            elif not event_type.register_multiple:
+                # GUI should prevent this, but need to catch forged requests
                 labels = []
+                event_type = None
+                error = T("Multiple-registration not permitted")
 
             validate = current.deployment_settings.get_org_site_presence_validate_id()
             for i, label in enumerate(labels):
@@ -505,15 +504,16 @@ class Checkpoint(CRUDMethod):
         if persons and event_type:
             for person in persons:
                 # TODO Check event type not blocked for that person
+                #      - GUI should prevent this, but need to catch forged requests
                 success = self.register_bare(person, event_type.id)
                 if not success:
                     error = T("Event registration failed")
                     break
-        elif not persons:
+        elif not event_type:
             if not error:
-                error = T("Person not found")
-        else:
-            error = T("Invalid event type")
+                error = T("Invalid event type")
+        elif not error:
+            error = T("Person not found")
 
         if error:
             output = {"a": s3_str(error)}
@@ -734,6 +734,20 @@ class Checkpoint(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def ajax_url(r):
+        """
+            The Ajax URL for check/register requests; for subclasses
+
+            Args:
+                r: the CRUDRequest
+            Returns:
+                URL
+        """
+
+        return r.url(None, method="register", representation="json")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def get_form_data(person, formfields, data, hidden, permitted=False):
         # TODO deprecate?
         """
@@ -833,7 +847,7 @@ class Checkpoint(CRUDMethod):
         dob = person.date_of_birth
         if dob:
             dob = S3DateTime.date_represent(dob)
-            details = "%s (%s %s)" % (name, T("Date of Birth"), dob)
+            details = "%s (%s %s)" % (name, T("DoB"), dob)
         else:
             details = name
 
@@ -1443,7 +1457,8 @@ class Checkpoint(CRUDMethod):
         return exclude
 
     # -------------------------------------------------------------------------
-    def permitted(self, method, tablename, organisation_id=None):
+    @staticmethod
+    def permitted(method, tablename, organisation_id=None):
         """
             Helper function to check permissions
 

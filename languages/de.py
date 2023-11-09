@@ -1892,6 +1892,7 @@
 'Do you want to send these Committed items?': 'Wollen Sie die zugesagten Artikel schicken?',
 'Do you want to send this newsletter?': 'Wollen Sie dieses Rundschreiben senden?',
 'Do you want to send this shipment?': 'Wollen Sie diese Lieferung abschicken?',
+'DoB': 'geb.',
 'Document Details': 'Details zum Dokument',
 'Document Scan': 'Dokumentkopie',
 'Document Templates': 'Dokumentvorlagen',

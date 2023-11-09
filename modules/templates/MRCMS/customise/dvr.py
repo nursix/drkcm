@@ -510,10 +510,10 @@ def dvr_case_event_resource(r, tablename):
 
     s3db = current.s3db
 
-    from ..food import MRCMSRegisterFoodEvent
+    from ..food import FoodDistribution
     s3db.set_method("dvr_case_event",
                     method = "register_food",
-                    action = MRCMSRegisterFoodEvent,
+                    action = FoodDistribution,
                     )
 
     #s3db.add_custom_callback("dvr_case_event",
