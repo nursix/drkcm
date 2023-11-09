@@ -323,6 +323,7 @@ def config(settings):
                                dvr_case_event_controller, \
                                dvr_case_appointment_type_controller, \
                                dvr_case_event_type_resource, \
+                               dvr_case_event_type_controller, \
                                dvr_case_flag_controller, \
                                dvr_note_resource, \
                                dvr_service_contact_resource, \
@@ -339,6 +340,7 @@ def config(settings):
 
     settings.customise_dvr_case_appointment_type_controller = dvr_case_appointment_type_controller
     settings.customise_dvr_case_event_type_resource = dvr_case_event_type_resource
+    settings.customise_dvr_case_event_type_controller = dvr_case_event_type_controller
     settings.customise_dvr_case_flag_controller = dvr_case_flag_controller
 
     settings.customise_dvr_note_resource = dvr_note_resource

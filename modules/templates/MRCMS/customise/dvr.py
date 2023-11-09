@@ -8,7 +8,7 @@ import datetime
 
 from dateutil import tz
 
-from gluon import current, URL, A, INPUT, SQLFORM, TAG
+from gluon import current, URL, A, INPUT, SQLFORM, TAG, IS_EMPTY_OR
 from gluon.storage import Storage
 
 from s3dal import Field
@@ -677,6 +677,8 @@ def dvr_case_appointment_type_controller(**attr):
 # -------------------------------------------------------------------------
 def dvr_case_event_type_resource(r, tablename):
 
+    T = current.T
+
     s3db = current.s3db
 
     # TODO filter case event exclusion to types of same org
@@ -695,7 +697,8 @@ def dvr_case_event_type_resource(r, tablename):
                                 "max_per_day",
                                 S3SQLInlineLink("excluded_by",
                                                 field = "excluded_by_id",
-                                                label = current.T("Not Combinable With"),
+                                                label = T("Not Combinable With"),
+                                                comment = T("Events that exclude registration of this event type on the same day"),
                                                 ),
                                 "presence_required",
                                 )
@@ -703,6 +706,68 @@ def dvr_case_event_type_resource(r, tablename):
     s3db.configure("dvr_case_event_type",
                    crud_form = crud_form,
                    )
+
+# -------------------------------------------------------------------------
+def dvr_case_event_type_controller(**attr):
+
+    T = current.T
+
+    db = current.db
+    auth = current.auth
+
+    s3 = current.response.s3
+
+    # Selectable organisation
+    attr["csv_extra_fields"] = [{"label": "Organisation",
+                                 "field": managed_orgs_field(),
+                                 }]
+
+    standard_prep = s3.prep
+    def prep(r):
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        resource = r.resource
+        table = resource.table
+
+        # Restrict role_required to managed roles
+        from core import S3RoleManager
+        managed_roles = S3RoleManager.get_managed_roles(auth.user.id)
+        roles = {k for k, v in managed_roles.items() if v["a"]}
+
+        rtable = auth.settings.table_group
+        dbset = db(rtable.id.belongs(roles))
+
+        field = table.role_required
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "%s.id" % rtable,
+                                               field.represent,
+                                               ))
+        return result
+    s3.prep = prep
+
+    # Custom postp
+    standard_postp = s3.postp
+    def postp(r, output):
+        # Call standard postp
+        if callable(standard_postp):
+            output = standard_postp(r, output)
+
+        # Import-button
+        if not r.record and not r.method and auth.s3_has_permission("create", "dvr_case_event_type"):
+            if isinstance(output, dict):
+                import_btn = A(T("Import"),
+                               _href = r.url(method="import"),
+                               _class = "action-btn activity button",
+                               )
+                showadd_btn = output.get("showadd_btn")
+                if showadd_btn:
+                    output["showadd_btn"] = TAG[""](import_btn, showadd_btn)
+                else:
+                    output["showadd_btn"] = import_btn
+
+        return output
+    s3.postp = postp
+
+    return attr
 
 # -------------------------------------------------------------------------
 def dvr_case_flag_controller(**attr):
