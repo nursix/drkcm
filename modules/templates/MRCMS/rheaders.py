@@ -164,6 +164,7 @@ def dvr_rheader(r, tabs=None):
                                    ],
                                   ]
 
+                icon = link = None
                 if raw["dvr_case.archived"]:
                     rheader_fields.insert(0, [(None, hint)])
 
@@ -176,8 +177,6 @@ def dvr_rheader(r, tabs=None):
                      has_permission("read", "pr_person", c="dvr", f="person", record_id=record.id):
                     icon = "arrow-circle-left"
                     link = A(T("Manage"), _href=URL(c="dvr", f="person", args=[record.id]))
-                else:
-                    icon = link = None
                 if link:
                     # TODO move CSS into theme
                     link.insert(0, I(_class = "fa fa-%s" % icon,
