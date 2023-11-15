@@ -621,7 +621,7 @@ def cr_shelter_unit_controller(**attr):
                                         limitby = (0, 1),
                                         orderby = ~rtable.id,
                                         ).first()
-                current_unit = reg.shelter_unit_id
+                current_unit = reg.shelter_unit_id if reg else None
             else:
                 current_unit = None
 

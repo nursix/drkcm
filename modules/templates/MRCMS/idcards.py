@@ -17,17 +17,20 @@ from reportlab.platypus import Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 
-from gluon import current, A, BUTTON, DIV, H5, SQLFORM
+from gluon import current, A, BUTTON, DIV, H5, SQLFORM, IS_IN_SET
 from gluon.contenttype import contenttype
 
 from s3dal import Field
 from core import CRUDMethod, DateField, ICON, PDFCardLayout, \
                  s3_format_fullname, s3_mark_required, s3_str
 
+from core.formats.card import CREDITCARD
+
 # Fonts we use in this layout
 NORMAL = "Helvetica"
 BOLD = "Helvetica-Bold"
 
+CCLS = CREDITCARD[::-1]
 # =============================================================================
 class GenerateIDCard(CRUDMethod):
     """
@@ -96,6 +99,12 @@ class GenerateIDCard(CRUDMethod):
         response = current.response
         s3 = response.s3
 
+        # TODO translations
+        card_formats = (("A4", T("A4")),
+                        ("CCL", "%s (%s)" % (T("Credit Card"), T("Landscape##format"))),
+                        ("CCP", "%s (%s)" % (T("Credit Card"), T("Portrait##format"))),
+                        )
+
         # Form fields
         now = request.utcnow.date()
         formfields = [DateField("valid_until",
@@ -105,6 +114,11 @@ class GenerateIDCard(CRUDMethod):
                                 past = 0,
                                 #empty = False,
                                 ),
+                      Field("fmt",
+                            requires = IS_IN_SET(card_formats, zero=None),
+                            default = "A4",
+                            label = T("Format"),
+                            ),
                       Field("confirm", "boolean",
                             requires = lambda v: (v, None) if v else (v, T("You must confirm the action")),
                             default = False,
@@ -151,26 +165,35 @@ class GenerateIDCard(CRUDMethod):
                         hideerror = False
                         ):
 
-            # Read form vars
-            valid_until = form.vars.valid_until
+            form_vars = form.vars
 
-            # Choose layout depending on controller
-            # TODO allow format selection (A4, Credit Card)
+            # Choose layout depending on controller and format selection
+            fmt = form_vars.get("fmt")
+            if r.controller == "hrm":
+                if fmt == "CCL":
+                    layout = StaffIDCardLayoutL
+                elif fmt == "CCP":
+                    layout = StaffIDCardLayoutP
+                else:
+                    layout = StaffIDCardLayoutA4
+            else:
+                if fmt == "CCL":
+                    layout = IDCardLayoutL
+                elif fmt == "CCP":
+                    layout = IDCardLayoutP
+                else:
+                    layout = IDCardLayoutA4
+
+            # Initialize ID card
+            valid_until = form_vars.get("valid_until")
             idcard = IDCard(person_id,
                             valid_until = valid_until if valid_until else None,
                             )
-            if r.controller == "hrm":
-                layout = StaffIDCardLayout
-            else:
-                layout = IDCardLayout
 
             # Generate PDF document (with registration callback)
             resource.configure(id_card_callback = idcard.register)
             from core import DataExporter
-            document = DataExporter.pdfcard(resource,
-                                            layout = layout,
-                                            pagesize = "A4",
-                                            )
+            document = DataExporter.pdfcard(resource, layout=layout)
             resource.clear_config("id_card_callback")
 
             identity_id = idcard.identity_id
@@ -554,6 +577,8 @@ class IDCard:
             if record.type == 999:
                 pick = True
 
+        # TODO consider pair-formatting:
+        # " ".join([s[i:i+2] for i in range(0, len(s), 2)])
         return cls._signature(card_hash, pick=pick) if card_hash else None
 
     # -------------------------------------------------------------------------
@@ -582,8 +607,22 @@ class IDCard:
     # -------------------------------------------------------------------------
     @classmethod
     def identify(cls, label, verify=True):
-        # TODO docstring
-        # TODO cleanup
+        """
+            Identifies the person from any of the registration codes
+            on an ID card (=ID label, barcode or QR code)
+
+            Args:
+                label: the registration code from the ID card
+                verify: verify the label, if possible
+
+            Returns:
+                a tuple (person_id, verify)
+                - verify-flag indicates whether the code has been verified
+
+            Raises:
+                - SyntaxError if the code is malformed
+                - ValueError if the verification failed
+        """
 
         db = current.db
         s3db = current.s3db
@@ -617,8 +656,18 @@ class IDCard:
     # -------------------------------------------------------------------------
     @classmethod
     def _verify(cls, person, token, chash):
-        # TODO docstring
-        # TODO cleanup
+        """
+            Verifies the registration code (Qr code) from an ID card
+
+            Args:
+                person: the person identified by the code
+                token: the verification token from the code
+                hash: the verification hash from the code
+
+            Raises:
+                - SyntaxError if token or hash are missing
+                - ValueError if the code is invalid
+        """
 
         db = current.db
         s3db = current.s3db
@@ -700,16 +749,13 @@ class IDCard:
         self.invalidate_ids(person_id, expire_only=True)
 
 # =============================================================================
-class IDCardLayout(PDFCardLayout):
-    """
-        Layout for printable beneficiary ID cards
-    """
+class IDCardLayoutL(PDFCardLayout):
 
-    cardsize = A4
-    orientation = "Portrait"
-    doublesided = False
+    cardsize = CCLS
+    orientation = "Landscape"
+    doublesided = True
 
-    border_color = HexColor(0x6084bf) # HexColor(0x27548F)
+    border_color = HexColor(0x6084bf)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -802,7 +848,7 @@ class IDCardLayout(PDFCardLayout):
     # -------------------------------------------------------------------------
     def draw(self):
         """
-            Draw the card (one side)
+            Draw the card (one side), to be implemented by subclass
 
             Instance attributes (NB draw-function should not modify them):
             - self.canv...............the canvas (provides the drawing methods)
@@ -815,9 +861,17 @@ class IDCardLayout(PDFCardLayout):
             - self.width..............the width of the card (in points)
             - self.height.............the height of the card (in points)
 
-            NB Canvas coordinates are relative to the lower left corner of the
-               card's frame, drawing must not overshoot self.width/self.height
+            Note:
+                Canvas coordinates are relative to the lower left corner of the
+                card's frame, drawing must not overshoot self.width/self.height
         """
+
+        item = self.item
+
+        # Invoke draw callback
+        callback = self.resource.get_config("id_card_callback")
+        if callable(callback):
+            callback(item)
 
         # Enforce current default language
         T = current.T
@@ -827,46 +881,55 @@ class IDCardLayout(PDFCardLayout):
         else:
             translate = T
 
-        item = self.item
-
-        # Invoke draw callback
-        callback = self.resource.get_config("id_card_callback")
-        if callable(callback):
-            callback(item)
-
-        if not self.backside:
-
-            self.draw_base_layout(item, translate)
+        # Draw contents
+        self.draw_base_layout(item, translate)
+        if self.backside:
+            self.draw_shelter_details(item, translate)
+        else:
             self.draw_organisation_details(item, translate)
             self.draw_person_details(item, translate)
-            self.draw_registration_details(item, translate)
-
-        else:
-            # No backside
-            pass
+        self.draw_registration_details(item, translate)
 
     # -------------------------------------------------------------------------
     def draw_base_layout(self, item, t_):
-        # TODO docstring
-        # TODO i18n
+        """
+            Draws the basic layout elements:
+                - document title
+                - border decorations
+                - validity advice
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
 
         w = self.width
         h = self.height
 
-        # Document Title
-        title = "Registrierungskarte"
-        self.draw_string(20, h-165, title, width=w/2-40, height=20, size=14, bold=True, halign="center")
-
-        # Advice
-        advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
-        self.draw_vertical_string(h/2+20, 25, advice, width=h/2-50)
+        draw_string = self.draw_string
+        if self.backside:
+            # Advice
+            advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
+            draw_string(4, 12, advice, width=w-8, size=6.5, halign="center")
+        else:
+            # Document Title
+            title = "Registrierungskarte"
+            draw_string(60, h-40, title, width=w-68, height=10, size=10, bold=True, halign="center")
 
         # Border
         self.draw_border()
 
     # -------------------------------------------------------------------------
     def draw_organisation_details(self, item, t_):
-        # TODO docstring
+        """
+            Draws the organisation details:
+                - logo
+                - organisation name
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
 
         w = self.width
         h = self.height
@@ -877,161 +940,211 @@ class IDCardLayout(PDFCardLayout):
         # Get the root organisation ID
         root_org = raw["org_organisation.root_organisation"]
 
+        # Get the organisation logo
+        logos = common.get("logos")
+        logo = logos.get(root_org) if logos else None
+        if not logo:
+            logo = self.get_default_org_logo()
+
         # Get the localized root org name
         org_names = common.get("root_org_names")
         if org_names:
             root_org_name = org_names.get(root_org)
 
-        # Get the organisation logo
-        logos = common.get("logos")
-        logo = logos.get(root_org) if logos else None
-        if not logo:
-            # TODO Make the default logo a setting
-            default_logo = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
-            logo = os.path.join(current.request.folder, default_logo)
-
         # Logo
         if logo:
-            self.draw_image(logo, w//4, h-80, width=80, height=80, halign="center", valign="middle")
+            self.draw_image(logo, 30, h-30, width=40, height=40, halign="center", valign="middle")
 
         # Organisation Name
         if root_org_name:
-            self.draw_string(20, h-140, root_org_name, width=w/2-40, height=20, size=12, bold=True, halign="center")
+            self.draw_string(60, h-25, root_org_name, width=w-70, height=14, size=8, bold=True, halign="center")
 
     # -------------------------------------------------------------------------
-    def draw_person_details(self, item, t_):
-        # TODO docstring
+    def draw_shelter_details(self, item, t_):
+        """
+            Draws the shelter details:
+                - shelter name
+                - shelter address
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
 
         w = self.width
         h = self.height
 
         raw = item["_row"]
-        common = self.common
 
         draw_string = self.draw_string
 
-        # ----- Left -----
-
-        # Draw box around person data
-        left = 30
-        bottom = h/2 + 95
-        self.draw_box(left, bottom, w/2-60, 150)
-
-        x = left + 10
-        y = bottom + 120
-        wt = w/2-2*x # text width
+        # Start position
+        x, y = 10, h-16
+        wt = w - x*2 # text width
 
         # Shelter
         shelter_id = raw["cr_shelter_registration.shelter_id"]
         if shelter_id:
+
             # Shelter Name
             shelter = item["cr_shelter_registration.shelter_id"]
-            draw_string(x, y + 14, t_("Shelter"))
-            draw_string(x, y, shelter, width=wt, height=20, size=10)
+            draw_string(x, y, shelter, width=wt, height=12, size=9, halign="center")
 
             # Shelter address
+            address = None
             location = raw["gis_location.L4"] or raw["gis_location.L3"]
             if location:
                 address = item["gis_location.addr_street"]
-                if address:
-                    draw_string(x, y-13, address, width=wt, height=20, size=9)
                 postcode = item["gis_location.addr_postcode"]
                 place = "%s %s" % (postcode, location) if postcode else location
-                if place:
-                    draw_string(x, y-26, place, width=wt, height=20, size=9)
+                if address and place:
+                    address = ", ".join((address, place))
+                elif place:
+                    address = place
 
-        y = bottom + 55
+            if address:
+                draw_string(x, y-9, address, width=wt, height=8, size=7, halign="center")
 
-        # Names
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        """
+            Draws the person details:
+                - full name
+                - date of birth
+                - shelter unit name, if available
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        common = self.common
+
+        raw = item["_row"]
+
+        draw_string = self.draw_string
+
+        # Start position
+        x, y = 12, 55
+        wt = w - (x + 70) # text width
+
+        # Name
         name = s3_format_fullname(fname = raw["pr_person.first_name"],
-                                  #mname = raw["pr_person.middle_name"],
                                   lname = raw["pr_person.last_name"],
                                   truncate = False,
                                   )
-        draw_string(x, y + 13, t_("Name"))
-        draw_string(x, y, name, width=wt, height=20, size=12)
+        draw_string(x, y, name, width=wt, height=12, size=12)
 
         # Date of birth
-        y = y - 26
+        y = y - 19
         dob = raw["pr_person.date_of_birth"]
         if dob:
             dob = item["pr_person.date_of_birth"]
-            draw_string(x, y + 13, t_("Date of Birth"))
-            draw_string(x, y, dob, size=12, width=wt)
+            draw_string(x, y + 8, t_("Date of Birth"), size=6)
+            draw_string(x, y, dob, width=wt, height=9, size=8)
 
         # Shelter Unit
-        # TODO not for staff
         # TODO do not draw if transitory unit?
-        y = y - 26
+        y = y - 19
         unit = raw["cr_shelter_registration.shelter_unit_id"]
         if unit:
             unit = item["cr_shelter_registration.shelter_unit_id"]
-            draw_string(x, y + 13, t_("Housing Unit"))
-            draw_string(x, y, unit, size=12, width=wt)
-
-        # ----- Right -----
+            draw_string(x, y + 8, t_("Housing Unit"), size=6)
+            draw_string(x, y, unit, width=wt, height=9, size=8)
 
         # Profile picture
         pictures = common.get("pictures")
         picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
         if picture:
             self.draw_image(picture,
-                            w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60,
+                            w - 45, 65, height=60, width=60,
                             halign = "center",
                             valign = "middle",
                             )
 
     # -------------------------------------------------------------------------
     def draw_registration_details(self, item, t_):
-        # TODO docstring
+        """
+            Draws the registration details:
+                - ID label and barcode
+                - QR code and signature
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
 
         h = self.height
         w = self.width
 
         raw = item["_row"]
 
-        # ----- Left -----
-
-        # ID Number and barcode
-        y = h/2 + 60
         code = raw["pr_person.pe_label"]
-        if code:
-            self.draw_string(30, y, s3_str(code), width=w/2-60, size=28, bold=True, halign="center")
-            self.draw_barcode(s3_str(code), w / 4, y - 40, height=28, halign="center", maxwidth=w/2-40)
+        if not code:
+            code = "XXXXXXX"
 
-        # ----- Right -----
+        if self.backside:
+            # QR-Code and Hash Signature
+            registration = item.get("_reg")
+            if not registration or \
+               not all(registration.get(d) for d in ("token", "vhash", "vcode")):
+                vcode = "%s##UNVERIFIED##UNREGISTERED" % code
+                signature = None
+            else:
+                vcode = "##".join(map(s3_str, (code, registration["token"], registration["vhash"])))
+                signature = registration["vcode"]
 
-        # QR-Code and Hash Signature
-        registration = item.get("_reg")
-        if not registration or \
-            not all(registration.get(d) for d in ("token", "vhash", "vcode")):
-            vcode = "%s##UNVERIFIED##UNREGISTERED" % code
-            signature = None
+            if vcode:
+                self.draw_qrcode(vcode,
+                                 w * 1/2,
+                                 h * 1/2 + 5,
+                                 size = 96,
+                                 halign = "center",
+                                 valign = "middle",
+                                 level = "M",
+                                 )
+            if signature:
+                self.draw_string(20, h * 1/2 - 50, signature,
+                                 size = 6.5,
+                                 bold = False,
+                                 width = w-40,
+                                 halign = "center",
+                                 )
+
         else:
-            vcode = "##".join(map(s3_str, (code, registration["token"], registration["vhash"])))
-            signature = registration["vcode"]
+            # ID Number and barcode
+            self.draw_string(12, h-75, s3_str(code), width=w-16, size=12, bold=True)
+            self.draw_barcode(s3_str(code), w*3/4, 15, height=12, halign="center", maxwidth=w/2-12)
 
-        if vcode:
-            self.draw_qrcode(vcode,
-                             w * 3/4,
-                             h * 5/8,
-                             size = w/2 - 120,
-                             halign = "center",
-                             valign = "middle",
-                             level = "M",
-                             )
-        if signature:
-            self.draw_string(w/2 + 20, h * 6/8 - 15, signature,
-                             size = 9,
-                             bold = False,
-                             width = w/2-40,
-                             halign = "center",
-                             )
+    # -------------------------------------------------------------------------
+    def draw_border(self):
+        """
+            Draws the border decorations
+        """
+
+        c = self.canv
+        c.saveState()
+
+        w = self.width
+        h = self.height
+
+        c.setFillColor(self.border_color)
+
+        # Horizontal bar bottom
+        c.rect(0, 0, w, 8, fill=1, stroke=0)
+
+        # Vertical bar right
+        if not self.backside:
+            c.rect(w-8, 8, w, h, fill=1, stroke=0)
+
+        c.restoreState()
 
     # -------------------------------------------------------------------------
     def draw_string(self, x, y, value, width=120, height=40, size=7, bold=False, halign=None, box=False):
         """
-            Draw a string (label, value)
+            Draws a string
 
             Args:
                 x: the horizontal position (from left)
@@ -1061,7 +1174,23 @@ class IDCardLayout(PDFCardLayout):
 
     # -------------------------------------------------------------------------
     def draw_vertical_string(self, x, y, value, width=120, height=40, size=7, bold=False, halign=None, box=False):
-        # TODO docstring
+        """
+            Draws a vertical string
+
+            Args:
+                x: the horizontal position (from left)
+                y: the vertical position (from bottom)
+                value: the string to render
+                width: the width of the text box
+                height: the height of the text box
+                size: the font size
+                bold: use boldface font
+                halign: horizonal alignment, "left" (or None, the default)|"right"|"center"
+                box: render the box (with border and grey background)
+
+            Returns:
+                the actual height of the box
+        """
 
         c = self.canv
         c.saveState()
@@ -1132,6 +1261,13 @@ class IDCardLayout(PDFCardLayout):
             para = Paragraph(value, style)
             aw, ah = para.wrap(width, height)
 
+        v = value
+        while((ah > height or aw > width) and len(v) > 4):
+            # Truncate to make fit
+            v = v[:-1]
+            para = Paragraph(v, style)
+            aw, ah = para.wrap(width, height)
+
         if valign == "top":
             vshift = ah
         elif valign == "middle":
@@ -1142,6 +1278,545 @@ class IDCardLayout(PDFCardLayout):
         para.drawOn(self.canv, x - para.width / 2, y - vshift)
 
         return ah
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_default_org_logo():
+        """
+            Returns the default organisation logo for ID cards
+        """
+        # TODO move into config.py, allow override
+
+        path = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
+        return os.path.join(current.request.folder, path)
+
+# =============================================================================
+class IDCardLayoutP(IDCardLayoutL):
+
+    cardsize = CREDITCARD
+    orientation = "Portrait"
+    doublesided = True
+
+    border_color = HexColor(0x6084bf)
+
+    # -------------------------------------------------------------------------
+    def draw_base_layout(self, item, t_):
+        """
+            Draws the basic layout elements:
+                - document title
+                - border decorations
+                - validity advice
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        if self.backside:
+            # Advice
+            advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
+            self.draw_string(8, 12, advice, width=w-16, height=20, size=6, halign="center")
+        else:
+            # Document Title
+            title = "Registrierungskarte"
+            self.draw_string(12, h-80, title, width=w-24, height=10, size=10, bold=True, halign="center")
+
+        # Border
+        self.draw_border()
+
+    # -------------------------------------------------------------------------
+    def draw_organisation_details(self, item, t_):
+        """
+            Draws the organisation details:
+                - logo
+                - organisation name
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        # Get the root organisation ID
+        root_org = raw["org_organisation.root_organisation"]
+
+        # Get the organisation logo
+        logos = common.get("logos")
+        logo = logos.get(root_org) if logos else None
+        if not logo:
+            logo = self.get_default_org_logo()
+
+        # Get the localized root org name
+        org_names = common.get("root_org_names")
+        if org_names:
+            root_org_name = org_names.get(root_org)
+
+        # Logo
+        if logo:
+            self.draw_image(logo, w//2, h-30, width=40, height=40, halign="center", valign="middle")
+
+        # Organisation Name
+        if root_org_name:
+            self.draw_string(10, h-65, root_org_name, width=w-20, height=14, size=8, bold=True, halign="center")
+
+    # -------------------------------------------------------------------------
+    def draw_shelter_details(self, item, t_):
+        """
+            Draws the shelter details:
+                - shelter name
+                - shelter address
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+
+        draw_string = self.draw_string
+
+        # Start position
+        x, y = 8, h-20
+        wt = w - x*2 # text width
+
+        # Shelter
+        shelter_id = raw["cr_shelter_registration.shelter_id"]
+        if shelter_id:
+
+            # Shelter Name
+            shelter = item["cr_shelter_registration.shelter_id"]
+            draw_string(x, y, shelter, width=wt, height=16, size=9, halign="center")
+
+            # Shelter address
+            address = place = None
+            location = raw["gis_location.L4"] or raw["gis_location.L3"]
+            if location:
+                address = item["gis_location.addr_street"]
+                postcode = item["gis_location.addr_postcode"]
+                place = "%s %s" % (postcode, location) if postcode else location
+            if address:
+                y -= 9
+                draw_string(x, y, address, width=wt, height=8, size=7, halign="center")
+            if place:
+                y -= 9
+                draw_string(x, y, place, width=wt, height=8, size=7, halign="center")
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        """
+            Draws the person details:
+                - full name
+                - date of birth
+                - shelter unit name, if available
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        h = self.height
+        w = self.width
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        x, y = 18, 81
+        wt = w-2*x # text width
+
+        # Name
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y, name, width=wt, height=12, size=12, halign="center")
+
+        # Date of birth
+        y = y - 18
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
+            dob = item["pr_person.date_of_birth"]
+            draw_string(x, y + 9, t_("Date of Birth"), size=6, halign="center")
+            draw_string(x, y, dob, width=wt, height=9, size=8, halign="center")
+
+        # Shelter Unit
+        # TODO do not draw if transitory unit?
+        y = y - 18
+        unit = raw["cr_shelter_registration.shelter_unit_id"]
+        if unit:
+            unit = item["cr_shelter_registration.shelter_unit_id"]
+            draw_string(x, y + 9, t_("Housing Unit"), size=6, halign="center")
+            draw_string(x, y, unit, width=wt, height=9, size=8, halign="center")
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 1/2, h * 1/2 + 6, height=60, width=60,
+                            halign = "center",
+                            valign = "middle",
+                            )
+
+    # -------------------------------------------------------------------------
+    def draw_registration_details(self, item, t_):
+        """
+            Draws the registration details:
+                - ID label and barcode
+                - QR code and signature
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        h = self.height
+        w = self.width
+
+        raw = item["_row"]
+        code = raw["pr_person.pe_label"]
+        if not code:
+            code = "XXXXXXX"
+
+        if self.backside:
+            # QR-Code and Hash Signature
+            registration = item.get("_reg")
+            if not registration or \
+               not all(registration.get(d) for d in ("token", "vhash", "vcode")):
+                vcode = "%s##UNVERIFIED##UNREGISTERED" % code
+                signature = None
+            else:
+                vcode = "##".join(map(s3_str, (code, registration["token"], registration["vhash"])))
+                signature = registration["vcode"]
+
+            if vcode:
+                self.draw_qrcode(vcode,
+                                 w * 1/2,
+                                 h * 1/2,
+                                 size = 96,
+                                 halign = "center",
+                                 valign = "middle",
+                                 level = "M",
+                                 )
+            if signature:
+                self.draw_string(20, h * 1/2 + 48, signature,
+                                 size = 6.5,
+                                 bold = False,
+                                 width = w-40,
+                                 halign = "center",
+                                 )
+        else:
+            # ID Number and barcode
+            y = 26
+            self.draw_string(10, y, s3_str(code), width=w-20, size=12, bold=True, halign="center")
+            self.draw_barcode(s3_str(code), w / 2, y - 16, height=14, halign="center", maxwidth=w-40)
+
+# =============================================================================
+class IDCardLayoutA4(IDCardLayoutP):
+    """
+        Layout for printable beneficiary ID cards
+    """
+
+    cardsize = A4
+    orientation = "Portrait"
+    doublesided = False
+
+    # -------------------------------------------------------------------------
+    def draw(self):
+        """
+            Draw the card (one side)
+
+            Instance attributes (NB draw-function should not modify them):
+            - self.canv...............the canvas (provides the drawing methods)
+            - self.resource...........the resource
+            - self.item...............the data item (dict)
+            - self.labels.............the field labels (dict)
+            - self.backside...........this instance should render the backside
+                                      of a card
+            - self.multiple...........there are multiple cards per page
+            - self.width..............the width of the card (in points)
+            - self.height.............the height of the card (in points)
+
+            NB Canvas coordinates are relative to the lower left corner of the
+               card's frame, drawing must not overshoot self.width/self.height
+        """
+
+        # Enforce current default language
+        T = current.T
+        default_language = current.deployment_settings.get_L10n_default_language()
+        if default_language:
+            translate = lambda s: T(s, language=default_language)
+        else:
+            translate = T
+
+        item = self.item
+
+        # Invoke draw callback
+        callback = self.resource.get_config("id_card_callback")
+        if callable(callback):
+            callback(item)
+
+        if not self.backside:
+
+            self.draw_base_layout(item, translate)
+            self.draw_organisation_details(item, translate)
+            self.draw_shelter_details(item, translate)
+            self.draw_person_details(item, translate)
+            self.draw_registration_details(item, translate)
+
+        else:
+            # No backside
+            pass
+
+    # -------------------------------------------------------------------------
+    def draw_base_layout(self, item, t_):
+        """
+            Draws the basic layout elements:
+                - document title
+                - border decorations
+                - validity advice
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        # Document Title
+        title = "Registrierungskarte"
+        self.draw_string(20, h-165, title, width=w/2-40, height=20, size=14, bold=True, halign="center")
+
+        # Advice
+        advice = "Kein Identitätsnachweis! Nur gültig in Verbindung mit dem digitalen Register."
+        self.draw_vertical_string(h/2+20, 25, advice, width=h/2-50)
+
+        # Border
+        self.draw_border()
+
+    # -------------------------------------------------------------------------
+    def draw_organisation_details(self, item, t_):
+        """
+            Draws the organisation details:
+                - logo
+                - organisation name
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        # Get the root organisation ID
+        root_org = raw["org_organisation.root_organisation"]
+
+        # Get the localized root org name
+        org_names = common.get("root_org_names")
+        if org_names:
+            root_org_name = org_names.get(root_org)
+
+        # Get the organisation logo
+        logos = common.get("logos")
+        logo = logos.get(root_org) if logos else None
+        if not logo:
+            logo = self.get_default_org_logo()
+
+        # Logo
+        if logo:
+            self.draw_image(logo, w//4, h-80, width=80, height=80, halign="center", valign="middle")
+
+        # Organisation Name
+        if root_org_name:
+            self.draw_string(20, h-140, root_org_name, width=w/2-40, height=20, size=12, bold=True, halign="center")
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        """
+            Draws the person details:
+                - full name
+                - date of birth
+                - shelter unit name, if available
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        # ----- Left -----
+
+        # Draw box around person data
+        left = 30
+        bottom = h/2 + 95
+        self.draw_box(left, bottom, w/2-60, 150)
+
+        x = left + 10
+        y = bottom + 55
+        wt = w/2 - 2*x # text width
+
+        # Name
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y + 13, t_("Name"))
+        draw_string(x, y, name, width=wt, height=20, size=12)
+
+        # Date of birth
+        y = y - 26
+        dob = raw["pr_person.date_of_birth"]
+        if dob:
+            dob = item["pr_person.date_of_birth"]
+            draw_string(x, y + 13, t_("Date of Birth"))
+            draw_string(x, y, dob, size=12, width=wt)
+
+        # Shelter Unit
+        # TODO do not draw if transitory unit?
+        y = y - 26
+        unit = raw["cr_shelter_registration.shelter_unit_id"]
+        if unit:
+            unit = item["cr_shelter_registration.shelter_unit_id"]
+            draw_string(x, y + 13, t_("Housing Unit"))
+            draw_string(x, y, unit, size=12, width=wt)
+
+        # ----- Right -----
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 3/4, h * 7/8, height=h/4 - 80, width=w/2 - 60,
+                            halign = "center",
+                            valign = "middle",
+                            )
+
+    # -------------------------------------------------------------------------
+    def draw_shelter_details(self, item, t_):
+        """
+            Draws the shelter details:
+                - shelter name
+                - shelter address
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        raw = item["_row"]
+
+        draw_string = self.draw_string
+
+        x = 40
+        y = h/2 + 215
+        wt = w/2 - 2*x # text width
+
+        # Shelter
+        shelter_id = raw["cr_shelter_registration.shelter_id"]
+        if shelter_id:
+            # Shelter Name
+            shelter = item["cr_shelter_registration.shelter_id"]
+            draw_string(x, y + 14, t_("Shelter"))
+            draw_string(x, y, shelter, width=wt, height=20, size=10)
+
+            # Shelter address
+            address = place = None
+            location = raw["gis_location.L4"] or raw["gis_location.L3"]
+            if location:
+                address = item["gis_location.addr_street"]
+                postcode = item["gis_location.addr_postcode"]
+                place = "%s %s" % (postcode, location) if postcode else location
+            if address:
+                y -= 13
+                draw_string(x, y, address, width=wt, height=12, size=9)
+            if place:
+                y -= 13
+                draw_string(x, y, place, width=wt, height=12, size=9)
+
+    # -------------------------------------------------------------------------
+    def draw_registration_details(self, item, t_):
+        """
+            Draws the registration details:
+                - ID label and barcode
+                - QR code and signature
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        h = self.height
+        w = self.width
+
+        raw = item["_row"]
+
+        # ----- Left -----
+
+        # ID Number and barcode
+        y = h/2 + 60
+        code = raw["pr_person.pe_label"]
+        if code:
+            self.draw_string(30, y, s3_str(code), width=w/2-60, size=28, bold=True, halign="center")
+            self.draw_barcode(s3_str(code), w / 4, y - 40, height=28, halign="center", maxwidth=w/2-40)
+
+        # ----- Right -----
+
+        # QR-Code and Hash Signature
+        registration = item.get("_reg")
+        if not registration or \
+            not all(registration.get(d) for d in ("token", "vhash", "vcode")):
+            vcode = "%s##UNVERIFIED##UNREGISTERED" % code
+            signature = None
+        else:
+            vcode = "##".join(map(s3_str, (code, registration["token"], registration["vhash"])))
+            signature = registration["vcode"]
+
+        if vcode:
+            self.draw_qrcode(vcode,
+                             w * 3/4,
+                             h * 5/8,
+                             size = w/2 - 120,
+                             halign = "center",
+                             valign = "middle",
+                             level = "M",
+                             )
+        if signature:
+            self.draw_string(w/2 + 20, h * 6/8 - 15, signature,
+                             size = 9,
+                             bold = False,
+                             width = w/2-40,
+                             halign = "center",
+                             )
 
     # -------------------------------------------------------------------------
     def draw_border(self):
@@ -1191,7 +1866,7 @@ class IDCardLayout(PDFCardLayout):
         c.restoreState()
 
 # =============================================================================
-class StaffIDCardLayout(IDCardLayout):
+class StaffIDCardLayoutL(IDCardLayoutL):
     """
         Variant of IDCardLayout for staff members
     """
@@ -1224,7 +1899,185 @@ class StaffIDCardLayout(IDCardLayout):
 
     # -------------------------------------------------------------------------
     def draw_person_details(self, item, t_):
-        # TODO docstring
+        """
+            Draws the person details:
+                - full name
+                - job title, if availbale
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        x, y = 12, 60
+        wt = w - (x + 70) # text width
+
+        # Names
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y, name, width=wt, height=12, size=12)
+
+        # Date of birth
+        y = y - 17
+        #dob = raw["pr_person.date_of_birth"]
+        #if dob:
+        #    dob = item["pr_person.date_of_birth"]
+        #    draw_string(x, y + 10, t_("Date of Birth"), size=6)
+        #    draw_string(x, y, dob, width=wt, height=9, size=8)
+
+        # Staff Role
+        y = y - 17
+        draw_string(x, y, t_("Staff"), width=wt, height=15, size=12, bold=True)
+        job_title_id = raw["hrm_human_resource.job_title_id"]
+        if job_title_id:
+            job_title = item["hrm_human_resource.job_title_id"]
+            draw_string(x, y-10, job_title, width=wt, height=10, size=10)
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w - 45, 65, height=60, width=60,
+                            halign = "center",
+                            valign = "middle",
+                            )
+
+# =============================================================================
+class StaffIDCardLayoutP(IDCardLayoutP):
+    """
+        Variant of IDCardLayout for staff members
+    """
+
+    border_color = HexColor(0xeb003c)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def fields(cls, resource):
+        """
+            The layout-specific list of fields to look up from the resource
+
+            Args:
+                resource: the resource
+
+            Returns:
+                list of field selectors
+        """
+
+        return ["id",
+                "pe_id",
+                "pe_label",
+                "first_name",
+                #"middle_name",
+                "last_name",
+                "date_of_birth",
+                "human_resource.organisation_id$root_organisation",
+                "human_resource.job_title_id",
+                ]
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        """
+            Draws the person details:
+                - full name
+                - job title, if availbale
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        h = self.height
+        w = self.width
+
+        raw = item["_row"]
+        common = self.common
+
+        draw_string = self.draw_string
+
+        x, y = 18, 81
+        wt = w-2*x # text width
+
+        # Name
+        name = s3_format_fullname(fname = raw["pr_person.first_name"],
+                                  lname = raw["pr_person.last_name"],
+                                  truncate = False,
+                                  )
+        draw_string(x, y, name, width=wt, height=12, size=12, halign="center")
+
+        # Staff Role
+        y = y - 24
+        draw_string(x, y, t_("Staff"), width=wt, height=15, size=12, bold=True, halign="center")
+        job_title_id = raw["hrm_human_resource.job_title_id"]
+        if job_title_id:
+            job_title = item["hrm_human_resource.job_title_id"]
+            draw_string(x, y-12, job_title, width=wt, height=10, size=10, halign="center")
+
+        # Profile picture
+        pictures = common.get("pictures")
+        picture = pictures.get(raw["pr_person.pe_id"]) if pictures else None
+        if picture:
+            self.draw_image(picture,
+                            w * 1/2, h * 1/2 + 6, height=60, width=60,
+                            halign = "center",
+                            valign = "middle",
+                            )
+
+# =============================================================================
+class StaffIDCardLayoutA4(IDCardLayoutA4):
+    """
+        Variant of IDCardLayout for staff members
+    """
+
+    border_color = HexColor(0xeb003c)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def fields(cls, resource):
+        """
+            The layout-specific list of fields to look up from the resource
+
+            Args:
+                resource: the resource
+
+            Returns:
+                list of field selectors
+        """
+
+        return ["id",
+                "pe_id",
+                "pe_label",
+                "first_name",
+                #"middle_name",
+                "last_name",
+                "date_of_birth",
+                "human_resource.organisation_id$root_organisation",
+                "human_resource.job_title_id",
+                ]
+
+    # -------------------------------------------------------------------------
+    def draw_person_details(self, item, t_):
+        """
+            Draws the person details:
+                - full name
+                - job title, if availbale
+                - picture
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
 
         w = self.width
         h = self.height
@@ -1242,17 +2095,8 @@ class StaffIDCardLayout(IDCardLayout):
         self.draw_box(left, bottom, w/2-60, 130)
 
         x = left + 10
-        y = bottom + 105
+        y = bottom + 100
         wt = w/2-2*x # text width
-
-        # Staff Role
-        draw_string(x, y, t_("Staff"), width=wt, height=20, size=18, bold=True)
-        job_title_id = raw["hrm_human_resource.job_title_id"]
-        if job_title_id:
-            job_title = item["hrm_human_resource.job_title_id"]
-            draw_string(x, y-16, job_title, width=wt, height=20, size=12)
-
-        y = bottom + 55
 
         # Names
         name = s3_format_fullname(fname = raw["pr_person.first_name"],
@@ -1263,13 +2107,14 @@ class StaffIDCardLayout(IDCardLayout):
         draw_string(x, y + 13, t_("Name"))
         draw_string(x, y, name, width=wt, height=20, size=12)
 
-        # Date of birth
-        y = y - 26
-        dob = raw["pr_person.date_of_birth"]
-        if dob:
-            dob = item["pr_person.date_of_birth"]
-            draw_string(x, y + 13, t_("Date of Birth"))
-            draw_string(x, y, dob, size=12, width=wt)
+        y = bottom + 50
+
+        # Staff Role
+        draw_string(x, y, t_("Staff"), width=wt, height=20, size=18, bold=True)
+        job_title_id = raw["hrm_human_resource.job_title_id"]
+        if job_title_id:
+            job_title = item["hrm_human_resource.job_title_id"]
+            draw_string(x, y-16, job_title, width=wt, height=20, size=12)
 
         # ----- Right -----
 

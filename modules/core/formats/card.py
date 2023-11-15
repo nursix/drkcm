@@ -124,6 +124,8 @@ class PDFCardWriter(FormatWriter):
             pagesize = A4
         elif pagesize == "Letter":
             pagesize = LETTER
+        elif pagesize == "CreditCard":
+            pagesize = CREDITCARD
         elif not isinstance(pagesize, (tuple, list)):
             pagesize = cardsize
         pagesize = orientation(pagesize)
