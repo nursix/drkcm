@@ -136,17 +136,7 @@
             }
 
             this._clearForm();
-//             this._removeFlagInfo();
-//             this._removeDetails();
-//             this._removeFamily();
-//             this._removeProfilePicture();
-
-            this._resetEventType();
-//             this._toggleSubmit(false);
-//
-//             // Focus on label input at start
-//             var labelInput = $(this.idPrefix + '_label');
-//             labelInput.trigger('focus').val(labelInput.val());
+            this._updateEventType();
 
             this._bindEvents();
         },
@@ -181,20 +171,9 @@
                          'k': formKey,
                          },
                 ajaxURL = this.options.ajaxURL,
-                // Clear the person info
-//                 personInfo = $(prefix + '_person__row .controls').empty(),
                 // Show a throbber
                 throbber = $('<div class="inline-throbber">').insertAfter(this.personContainer),
                 self = this;
-
-            // Remove profile picture
-//             this._removeProfilePicture();
-
-            // Remove family info
-//             this._removeFamily();
-
-            // Clear action details
-//             this._removeDetails();
 
             // Send the ajax request
             $.ajaxS3({
@@ -212,7 +191,7 @@
                         // Show error message on ID field
                         // TODO move into function _showInputAdvice
                         var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.a + '</div></div>').hide();
-                        msg.insertAfter($(prefix + '_label').closest('.controls')).slideDown();
+                        msg.insertAfter($(prefix + '_label').closest('.controls')).slideDown('fast');
 
                     }
 
@@ -325,19 +304,8 @@
                 return;
             }
 
-            let formKey = $('input[type=hidden][name="_formkey"]', form).val();
-
-//             this._clearAlert();
-//
-//             var prefix = this.idPrefix,
-//                 label = $(prefix + '_label').val(),
-//                 event = this.eventType.val();
-//
-//             if (!label || !event) {
-//                 return;
-//             }
-
-            var input = {'a': 'register',
+            let formKey = $('input[type=hidden][name="_formkey"]', form).val(),
+                input = {'a': 'register',
                          'l': label,
                          'o': orgID,
                          'e': eventTypeCode,
@@ -399,7 +367,7 @@
                     if (data.e) {
                         // Show error message on ID field
                         var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.e + '</div></div>').hide();
-                        msg.insertAfter($(prefix + '_label')).slideDown();
+                        msg.insertAfter($(prefix + '_label')).slideDown('fast');
 
                     } else {
                         // Done - clear the form
@@ -426,61 +394,62 @@
 
         /**
          * Helper method to check for blocked events and show message
+         *
+         * @returns {boolean} - whether the event can be registered
          */
         _checkBlockedEvents: function() {
 
             // Get current event type and blocked events
             var event = this.eventType.val(),
                 blocked = this.blockedEvents,
-                info = blocked[event];
+                info = blocked[event],
+                self = this;
 
             // Remove existing message, if any
             if (this.blockingMessage) {
                 this.blockingMessage.remove();
             }
 
-            if ($('.family-members', this.familyContainer).length) {
-                return !!this._updateFamilyStatus();
-            } else {
-                if (info) {
-                    // Check the date
-                    var message = $('<h6>').addClass('event-registration-blocked')
-                                           .html(info[0]),
-                        date = new Date(info[1]),
+            // Helper function to render the overall blocked-info
+            var checkBlocked = function(info, hasFamily) {
+                let permitted = true;
+                if (info && (!hasFamily || !info[2])) {
+                    let message = $('<h6>').addClass('event-registration-blocked').html(info[0]),
+                        date = info[1] ? new Date(info[1]) : null,
                         now = new Date();
-                    if (date > now) {
-                        // Event registration is blocked for main ID, show message and return
-                        this.blockingMessage = $('<div>').addClass('small-12-columns')
+                    if (date === null || date > now) {
+                        // Event registration is blocked for main ID, show message
+                        self.blockingMessage = $('<div>').addClass('small-12-columns')
                                                          .append(message)
                                                          .prependTo($('#submit_record__row'));
-                        return false;
+                        permitted = false;
                     }
                 }
-                return true;
+                return permitted;
+            };
+
+            if ($('.family-members', this.familyContainer).length) {
+                let permitted = checkBlocked(info, true);
+                return !!this._updateFamilyStatus(permitted);
+            } else {
+                return checkBlocked(info, false);
             }
-//             if (info) {
-//                 // Check the date
-//                 var message = $('<h6>').addClass('event-registration-blocked')
-//                                        .html(info[0]),
-//                     date = new Date(info[1]),
-//                     now = new Date();
-//                 if (date > now) {
-//                     // Event registration is blocked, show message and return
-//                     this.blockingMessage = $('<div>').addClass('small-12-columns')
-//                                                      .append(message)
-//                                                      .prependTo($('#submit_record__row'));
-//                     return false;
-//                 }
-//             }
-//             return true;
         },
 
+        /**
+         * Shows the person details
+         *
+         * @param {html} details: the details HTML
+         */
         _showPerson: function(details) {
 
             this.personRow.show();
             this.personContainer.empty().html(details).removeClass('hide').show();
         },
 
+        /**
+         * Removes the person details
+         */
         _removePerson: function() {
 
             this.personRow.hide();
@@ -515,7 +484,7 @@
                         $('<p>' + flag.i + '</p>').appendTo(instructions);
                     }
                 });
-                advise.appendTo(flagInfoContainer).slideDown();
+                advise.appendTo(flagInfoContainer).slideDown('fast');
             }
         },
 
@@ -657,7 +626,6 @@
                 // Hide the details if there are no person data
                 this.detailsRow.hide();
             }
-
 //             // Hide all other details
 //             $(prefix + '_date__row').hide();
 //             $(prefix + '_comments__row').hide();
@@ -722,7 +690,7 @@
         },
 
         /**
-         * Show family members
+         * Shows family members
          */
         _showFamily: function() {
 
@@ -755,7 +723,7 @@
                         .append($('<td colspan="2">' + opts.selectAllText + '</td>'))
                         .appendTo(table);
 
-                    table.appendTo(familyContainer).slideDown();
+                    table.appendTo(familyContainer).slideDown('fast');
                 } else {
                     this.familyRow.hide();
                 }
@@ -763,7 +731,7 @@
         },
 
         /**
-         * TODO docstring
+         * Hides the family info
          */
         _hideFamily: function() {
 
@@ -774,7 +742,7 @@
         },
 
         /**
-         * Remove family info
+         * Removes the family info
          */
         _removeFamily: function() {
 
@@ -784,7 +752,9 @@
         },
 
         /**
-         * TODO docstring
+         * Renders the data of a family member as a table row
+         *
+         * @returns {jQuery} - the <tr> node
          */
         _renderFamilyMember: function(member) {
 
@@ -823,7 +793,7 @@
          *
          * @returns {integer} - the number of selectable family members
          */
-        _updateFamilyStatus: function() {
+        _updateFamilyStatus: function(permitted) {
 
             let family = this.familyContainer,
                 members = $('.family-member', family),
@@ -846,15 +816,15 @@
                 var trow = $(this),
                     member = trow.data('member'),
                     rules = member.r,
-                    blocked = false,
-                    message;
+                    blocked = !permitted,
+                    message = '';
 
                 if (rules && rules.hasOwnProperty(event)) {
 
                     var rule = rules[event],
-                        date = new Date(rule[1]);
+                        date = rule[1] ? new Date(rule[1]) : null;
 
-                    if (date > now) {
+                    if (date === null || date > now) {
                         blocked = true;
                         message = $('<div class="member-message">' + rule[0] + '</div>');
                     }
@@ -865,10 +835,8 @@
 
                 if (blocked) {
                     // Event is blocked for this member
-
                     trow.removeClass('member-selected');
-
-                    trow.find('.member-select').each(function() {
+                    $('.member-select', trow).each(function() {
                         $(this).prop('checked', false)
                                .prop('disabled', true);
                     });
@@ -877,27 +845,24 @@
                     trow.addClass("member-blocked");
 
                     // => show blocking message
-                    var alertRow = $('<div class="member-message row">'),
+                    let alertRow = $('<div class="member-message row">'),
                         alert = $('<div class="columns">').append(message)
                                                           .appendTo(alertRow);
                     trow.find('.member-info.row').after(alertRow);
 
-
                 } else {
-
                     selectable++;
 
                     // => remove blocked-class for row
                     trow.removeClass("member-blocked");
 
                     // => enable and select checkbox
-                    trow.find('.member-select').each(function() {
+                    $('.member-select', trow).each(function() {
                         $(this).prop('disabled', false)
                                .prop('checked', true);
                         trow.addClass('member-selected');
                     });
                 }
-
             });
 
             this._updateSelectAll();
@@ -1074,8 +1039,16 @@
             this._removeFamily();
             this._removeProfilePicture();
 
-            // Remove the data
+            // Remove blocking message
+            if (this.blockingMessage) {
+                this.blockingMessage.remove();
+            }
+
+            // Remove the image
             this.imageURL.val('');
+
+            // Reset submit-button label
+            $('.submit-btn').val(this.submitLabel);
 
             // Disable submit
             this._toggleSubmit(false);
@@ -1086,7 +1059,7 @@
         },
 
         /**
-         * TODO docstring
+         * Get the currently selected event type
          */
         _getEventType: function() {
 
@@ -1113,7 +1086,10 @@
         },
 
         /**
-         * TODO docstring
+         * Select an event type
+         *
+         * @param {string} code: the event type code
+         * @param {string} name: the event type name
          */
         _setEventType: function(code, name) {
 
@@ -1123,7 +1099,7 @@
             // Update event type in header
             $('.event-type-name', this.eventTypeHeader).text(name);
 
-            this._resetEventType();
+            this._updateEventType();
 
             this._updateFamilyStatus();
 
@@ -1134,7 +1110,7 @@
         },
 
         /**
-         * TODO docstring
+         * Remove the current event type selection
          */
         _clearEventType: function() {
 
@@ -1142,15 +1118,16 @@
             $('input[type="hidden"][name="event"]').val('');
 
             // Update event type in header
-            this._resetEventType();
+            this._updateEventType();
 
             this._toggleSubmit(false);
         },
 
         /**
-         * TODO docstring
+         * Updates the event type indicator after setting/clearing the
+         * current event type
          */
-        _resetEventType: function() {
+        _updateEventType: function() {
 
             let eventTypeHeader = this.eventTypeHeader,
                 eventTypeSelect = this.eventTypeSelect,
@@ -1183,11 +1160,17 @@
         },
 
         /**
-         * TODO docstring
+         * (Re-)populates the event selector buttons
+         *
+         * @param {object} data: the response JSON from the event type lookup:
+         *                       {
+         *                        "types": [[code, name, multiple], ...],
+         *                        "default": [code, name, multiple],
+         *                        }
          */
         _populateEventTypes: function(data) {
 
-            // data = {"types": [[code, name, multiple], ...], "default": [code, name, multiple]}
+            // data =
 
             let eventTypeSelect = this.eventTypeSelect.empty(),
                 eventTypes = data.types,
@@ -1216,7 +1199,10 @@
         },
 
         /**
-         * TODO docstring
+         * Handler for organisation selector button to select the respective
+         * organisation, and update selectable events
+         *
+         * @param {jQuery} btn: the selector button
          */
         _selectOrg: function(btn) {
 
@@ -1258,7 +1244,9 @@
         },
 
         /**
-         * TODO docstring
+         * Handler for event selector button to set the respective event type
+         *
+         * @param {jQuery} btn: the selector button
          */
         _selectEventType: function(btn) {
 
@@ -1293,7 +1281,6 @@
                 if (orgHeader.hasClass('disabled')) {
                     return false;
                 }
-                self._clearAlert();
                 eventTypeSelect.slideUp('fast', function() {
                     if (orgSelect.hasClass('hide')) {
                         orgSelect.hide().removeClass('hide').slideDown('fast');
@@ -1315,7 +1302,6 @@
                 if (eventTypeHeader.hasClass('disabled')) {
                     return false;
                 }
-                self._clearAlert();
                 orgSelect.slideUp('fast', function() {
                     if (eventTypeSelect.hasClass('hide')) {
                         eventTypeSelect.hide().removeClass('hide').slideDown('fast');

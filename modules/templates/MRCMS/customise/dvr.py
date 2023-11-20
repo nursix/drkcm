@@ -690,6 +690,7 @@ def dvr_case_event_type_resource(r, tablename):
                                 "name",
                                 "is_inactive",
                                 "is_default",
+                                "residents_only",
                                 "register_multiple",
                                 "role_required",
                                 "appointment_type_id",

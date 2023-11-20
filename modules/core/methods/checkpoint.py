@@ -414,10 +414,22 @@ class Checkpoint(CRUDMethod):
         if person:
             output["l"] = person.pe_label
             output["p"] = self.person_details(person).xml().decode('utf-8')
+            output["b"] = self.profile_picture(person)
+
+            # Check if resident
+            is_resident, site_id = self.is_resident(person.id, organisation_id)
+            if is_resident and site_id:
+                # Absence warning
+                from .presence import SitePresence
+                status = SitePresence.status(person.id, site_id=site_id)[0]
+                if status == "OUT":
+                    warning = current.T("Person currently reported as absent")
+                    output["w"] = s3_str(warning)
+
+            # Flag instructions
             output["f"] = self.flag_instructions(person.id,
                                                  organisation_id = organisation_id,
                                                  )
-            output["b"] = self.profile_picture(person)
 
             # Family members
             family = self.get_family_members(person.id, organisation_id)
@@ -427,6 +439,7 @@ class Checkpoint(CRUDMethod):
             # Blocked events
             blocked = self.get_blocked_events(person.id,
                                               organisation_id,
+                                              is_resident = is_resident,
                                               serializable = True,
                                               )
             if blocked:
@@ -882,6 +895,34 @@ class Checkpoint(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def is_resident(person_id, organisation_id):
+        # TODO docstring
+
+        db = current.db
+        s3db = current.s3db
+
+        is_resident, site_id = None, None
+
+        stable = s3db.cr_shelter
+        query = (stable.organisation_id == organisation_id) & \
+                (stable.deleted == False)
+        has_shelters = db(query).select(stable.id, limitby=(0, 1)).first()
+        if has_shelters:
+            rtable = s3db.cr_shelter_registration
+            join = rtable.on((rtable.shelter_id == stable.id) & \
+                             (rtable.person_id == person_id) & \
+                             (rtable.registration_status == 2) & \
+                             (rtable.deleted == False))
+            row = db(query).select(stable.site_id, join=join, limitby=(0, 1)).first()
+            if row:
+                is_resident, site_id = True, row.site_id
+            else:
+                is_resident = False
+
+        return is_resident, site_id
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def flag_instructions(person_id, organisation_id=None):
         """
             Returns any flag instructions of an organisation for a client
@@ -998,8 +1039,10 @@ class Checkpoint(CRUDMethod):
                                 args = picture.image,
                                 )
             # Blocking rules
+            is_resident = self.is_resident(member_id, organisation_id)[0]
             event_rules = self.get_blocked_events(member_id,
                                                   organisation_id,
+                                                  is_resident = is_resident,
                                                   serializable = True,
                                                   )
             if event_rules:
@@ -1014,6 +1057,7 @@ class Checkpoint(CRUDMethod):
     def get_blocked_events(cls,
                            person_id,
                            organisation_id,
+                           is_resident = True,
                            event_type_id = None,
                            serializable = True,
                            ):
@@ -1024,12 +1068,20 @@ class Checkpoint(CRUDMethod):
             Args:
                 person_id: the person record ID
                 organisation_id: the organisation record ID
+                is_resident: whether the person is currently a checked-in
+                             resident at a shelter of the organisation
                 event_type_id: check only this event type (rather than all
                                event types defined by the organisation)
                 serializable: return JSON-serializable data
 
-            Returns: a dict with exclusion details
-                     {event_type_id: (error_message, blocked_until_datetime)}
+            Returns:
+                a dict with exclusion details
+                {event_type_id: (error_message, blocked_until_datetime, permit_others)}
+
+            Note:
+                - permit_others flag indicates that the registration for other
+                  family members is still permitted even when it is blocked for
+                  the person whose ID is being used for the registration
         """
 
         now = current.request.utcnow.replace(microsecond=0)
@@ -1047,6 +1099,13 @@ class Checkpoint(CRUDMethod):
             check = event_type_ids
 
         excluded = {}
+
+        # Exclude residents-only event types if the person is not currently
+        # a resident at a shelter of the organisation
+        if not is_resident:
+            not_applicable = cls.check_residents_only(check, event_types)
+            excluded.update(not_applicable)
+            check -= set(not_applicable.keys())
 
         # Exclude event types that are not combinable with other events
         # registered today
@@ -1069,9 +1128,10 @@ class Checkpoint(CRUDMethod):
         if serializable:
             formatted = {}
             for type_id, reason in excluded.items():
-                msg, earliest = reason
+                msg, earliest, permit_others = reason
+                earliest = earliest.isoformat() + "Z" if earliest else None
                 event_type = event_types[type_id]
-                formatted[event_type.code] = [s3_str(msg), earliest.isoformat() + "Z"]
+                formatted[event_type.code] = [s3_str(msg), earliest, permit_others]
             excluded = formatted
 
         return excluded
@@ -1269,6 +1329,7 @@ class Checkpoint(CRUDMethod):
                                 table.min_interval,
                                 table.max_per_day,
                                 table.register_multiple,
+                                table.residents_only,
                                 #table.comments,
                                 )
         event_types = {row.id: row for row in rows}
@@ -1278,6 +1339,36 @@ class Checkpoint(CRUDMethod):
                 break
 
         return event_types
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def check_residents_only(check, event_types):
+        """
+            Returns exclusion details for event types that can only be
+            registered if the person is currently a resident of a shelter
+
+            Args:
+                check: the event types to check
+                event_types: all event types to consider
+
+            Returns: a dict with exclusion details
+                     {event_type_id: (error_message, blocked_until_datetime, permit_others)}
+
+            Note:
+                When an event is blocked because the person whose ID is being used
+                to register the event is not a resident, then it cannot be registered
+                for any family member (that is, permit_others=False in this case)
+        """
+
+        msg = current.T("Not currently a resident")
+
+        exclude = {}
+        for type_id in check:
+            event_type = event_types.get(type_id)
+            if event_type and event_type.residents_only:
+                exclude[type_id] = (msg, None, False)
+
+        return exclude
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1293,7 +1384,7 @@ class Checkpoint(CRUDMethod):
                 event_types: all event types to consider
 
             Returns: a dict with exclusion details
-                     {event_type_id: (error_message, blocked_until_datetime)}
+                     {event_type_id: (error_message, blocked_until_datetime, permit_others)}
         """
 
         T = current.T
@@ -1334,7 +1425,7 @@ class Checkpoint(CRUDMethod):
             names = ", ".join(s3_str(T(event_types[i].name)) for i in excluded_by)
             msg = T("%(event)s already registered today, not combinable") % \
                    {"event": names}
-            exclude[type_id] = (msg, next_day)
+            exclude[type_id] = (msg, next_day, True)
 
         return exclude
 
@@ -1353,7 +1444,7 @@ class Checkpoint(CRUDMethod):
                 event_types: all event types to consider
 
             Returns: a dict with exclusion details
-                     {event_type_id: (error_message, blocked_until_datetime)}
+                     {event_type_id: (error_message, blocked_until_datetime, permit_others)}
         """
 
         T = current.T
@@ -1391,7 +1482,7 @@ class Checkpoint(CRUDMethod):
             else:
                 msg = T("%(event)s already registered today") % \
                        {"event": T(event_type.name)}
-            exclude[type_id] = (msg, next_day)
+            exclude[type_id] = (msg, next_day, True)
 
         return exclude
 
@@ -1410,7 +1501,7 @@ class Checkpoint(CRUDMethod):
                 event_types: all event types to consider
 
             Returns: a dict with exclusion details
-                     {event_type_id: (error_message, blocked_until_datetime)}
+                     {event_type_id: (error_message, blocked_until_datetime, permit_others)}
         """
 
         T = current.T
@@ -1452,7 +1543,7 @@ class Checkpoint(CRUDMethod):
             if earliest > now:
                 msg = T("%(event)s already registered on %(timestamp)s") % \
                       {"event": T(event_type.name), "timestamp": represent(latest)}
-                exclude[type_id] = (msg, earliest)
+                exclude[type_id] = (msg, earliest, True)
 
         return exclude
 
