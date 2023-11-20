@@ -831,6 +831,7 @@ class Checkpoint(CRUDMethod):
 
         query = (FS("pe_label").upper() == label.upper()) & \
                 (FS("dvr_case.organisation_id") == organisation_id) & \
+                (FS("dvr_case.archived") == False) & \
                 (FS("dvr_case.status_id$is_closed") == False)
 
         presource = current.s3db.resource("pr_person",
