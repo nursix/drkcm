@@ -433,6 +433,7 @@ def configure_case_form(resource,
                 #"dvr_case.origin_site_id",
                 #"dvr_case.destination_site_id",
 
+                "dvr_case.reference",
                 S3SQLInlineComponent(
                         "bamf",
                         fields = [("", "value")],
@@ -443,8 +444,6 @@ def configure_case_form(resource,
                         multiple = False,
                         name = "bamf",
                         ),
-                "dvr_case.reference",
-
                 S3SQLInlineComponent(
                         "residence_status",
                         fields = ["status_type_id",

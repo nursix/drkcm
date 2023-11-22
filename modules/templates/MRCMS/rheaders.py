@@ -101,6 +101,7 @@ def dvr_rheader(r, tabs=None):
 
                 case = resource.select(["dvr_case.status_id",
                                         "dvr_case.archived",
+                                        "dvr_case.reference",
                                         "dvr_case.household_size",
                                         #"dvr_case.transferable",
                                         "dvr_case.last_seen_on",
@@ -120,6 +121,7 @@ def dvr_rheader(r, tabs=None):
                     case = case[0]
                     raw = case["_row"]
 
+                    case_reference = lambda row: case["dvr_case.reference"]
                     nationality_label = case["pr_person_details.nationality"]
                     nationality = lambda row: SPAN(raw["pr_person_details.nationality"],
                                                    _title = nationality_label,
@@ -139,27 +141,22 @@ def dvr_rheader(r, tabs=None):
                         shelter = lambda row: shelter_name
 
                     unit = lambda row: case["cr_shelter_registration.shelter_unit_id"]
+                    # TODO mark <1day, >1day, >3days
                     last_seen_on = lambda row: case["dvr_case.last_seen_on"]
-
-                    # TODO reinstate when fixed
-                    #absence = lambda row: case["pr_person.absence"]
                 else:
                     # Target record exists, but doesn't match filters
                     return None
 
-                # TODO Refactor:
-                # - presence and shelter information only if the organisation has a shelter
-                # - presence and last_seen_on requires privileged role
                 rheader_fields = [[(T("ID"), "pe_label"),
-                                   (T("Case Status"), case_status),
+                                   (T("Principal Ref.No."), case_reference),
                                    (T("Shelter"), shelter),
                                    ],
                                   ["date_of_birth",
-                                   (T("Size of Family"), household_size),
+                                   (T("Case Status"), case_status),
                                    (T("Housing Unit"), unit),
                                    ],
                                   [(T("Nationality"), nationality),
-                                   ("", None), #(T("Absent##presence"), absence),
+                                   (T("Size of Family"), household_size),
                                    (T("Last seen on"), last_seen_on),
                                    ],
                                   ]
