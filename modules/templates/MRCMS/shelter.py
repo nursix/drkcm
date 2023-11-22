@@ -669,6 +669,7 @@ class ResidentsList:
                 ("status", T("Status"), "string"),
                 ("check_in_date", T("Check-in date"), "date"),
                 ("last_seen_on", T("Last seen on"), "date"),
+                ("present", T("Present##presence"), "string"),
                 )
 
     # -------------------------------------------------------------------------
@@ -745,7 +746,11 @@ class ResidentsList:
                 data["refno"] = ctable.reference.represent(case.reference)
                 household_size = case.household_size
                 data["household_size"] = household_size if household_size else "-"
+
+                # Presence
                 data["last_seen_on"] = ctable.last_seen_on.represent(case.last_seen_on)
+                presence = row.org_site_presence
+                data["present"] = s3_str(T("yes")) if presence.status == "IN" else "-"
 
             data_rows.extend(checked_in)
             data_rows.extend(planned)
