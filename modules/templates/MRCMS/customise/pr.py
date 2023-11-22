@@ -554,15 +554,17 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
     from core import AgeFilter, DateFilter, OptionsFilter, TextFilter, get_filter_options
 
     # Status filter options
-    closed = current.request.get_vars.get("closed")
     get_status_opts = s3db.dvr_case_status_filter_opts
+    default_status = None
+    closed = current.request.get_vars.get("closed")
     if closed == "only":
         status_opts = lambda: get_status_opts(closed=True)
     elif closed in {"1", "include"}:
         status_opts = get_status_opts
     else:
         status_opts = lambda: get_status_opts(closed=False)
-    default_status = s3db.dvr_case_default_status()
+        # Assuming that the default status is an open-status
+        default_status = s3db.dvr_case_default_status()
 
     # Text filter fields
     text_filter_fields = ["pe_label",
@@ -708,21 +710,35 @@ def configure_case_list_fields(resource,
         # Order alphabetically
         orderby = "pr_person.last_name, pr_person.first_name"
 
-    # Standard list fields
-    # TODO include additional details for XLSX exports:
-    #      - BAMF Az
-    #      - household size
-    list_fields = [(T("ID"), "pe_label"),
-                   "last_name",
-                   "first_name",
-                   "date_of_birth",
-                   "gender",
-                   "person_details.nationality",
-                   case_status,
-                   case_date,
-                   shelter,
-                   unit,
-                   ]
+    # Custom list fields
+    if fmt in ("xlsx", "xls"):
+        list_fields = [(T("ID"), "pe_label"),
+                       (T("Principal Ref.No."), "dvr_case.reference"),
+                       (T("BAMF Ref.No."), "bamf.value"),
+                       "last_name",
+                       "first_name",
+                       "date_of_birth",
+                       "gender",
+                       "person_details.nationality",
+                       (T("Size of Family"), "dvr_case.household_size"),
+                       case_status,
+                       case_date,
+                       shelter,
+                       unit,
+                       "dvr_case.last_seen_on",
+                       ]
+    else:
+        list_fields = [(T("ID"), "pe_label"),
+                       "last_name",
+                       "first_name",
+                       "date_of_birth",
+                       "gender",
+                       "person_details.nationality",
+                       case_status,
+                       case_date,
+                       shelter,
+                       unit,
+                       ]
 
     resource.configure(list_fields = list_fields,
                        orderby = orderby,

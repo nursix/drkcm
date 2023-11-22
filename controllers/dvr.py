@@ -86,9 +86,11 @@ def person():
                 CASES = CLOSED
                 query &= FS("dvr_case.status_id$is_closed") == True
                 status_opts = lambda: get_status_opts(closed=True)
+                default_status = None
             elif closed == "1" or closed == "include":
                 # Show both closed and open cases
                 status_opts = get_status_opts
+                default_status = None
             else:
                 # show only open cases (default)
                 CASES = CURRENT
