@@ -21,6 +21,9 @@
          Multiple....................string..........allow registration for multiple
                                                      family members at once
                                                      true|false
+         Residents Only..............string..........allow registration only for currently
+                                                     checked-in shelter residents
+                                                     true|false
 
          Minimum Interval............number..........minimum interval (hours)
          Maximum per Day.............integer.........maximum number per day
@@ -120,6 +123,20 @@
                 <xsl:attribute name="value">
                     <xsl:choose>
                         <xsl:when test="$multiple='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+
+            <xsl:variable name="residents" select="col[@field='Residents Only']/text()"/>
+            <data field="residents_only">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="$residents='true'">
                             <xsl:value-of select="'true'"/>
                         </xsl:when>
                         <xsl:otherwise>
