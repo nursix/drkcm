@@ -337,6 +337,8 @@ class ResidentsList:
         units = self.units
         for unit in units:
             unit_residents = residents.get(unit.id)
+            if unit.status == 3 and not unit_residents:
+                continue
             self.add_residents(residents_list, unit, unit_residents, show_links=show_links)
 
         # Append residents not assigned to any housing unit
@@ -461,6 +463,8 @@ class ResidentsList:
             # TODO also show capacity/occupancy data
             if unit.status == 1:
                 icon = I(_class="fa fa-check", _title=T("Available"))
+            elif unit.status == 3:
+                icon = I(_class="fa fa-times", _title=T("Closed"))
             else:
                 icon = I(_class="fa fa-ban", _title=T("Not allocable"))
             label = A(icon,

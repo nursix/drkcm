@@ -4,6 +4,8 @@
     License: MIT
 """
 
+from collections import OrderedDict
+
 from gluon import current, URL, DIV, H4, P, TAG
 
 from core import S3CRUD, FS, IS_ONE_OF, \
@@ -352,6 +354,7 @@ def cr_shelter_controller(**attr):
     settings = current.deployment_settings
 
     is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
+    is_shelter_admin = auth.s3_has_role("SHELTER_ADMIN")
 
     # Custom prep
     standard_prep = s3.prep
@@ -412,21 +415,29 @@ def cr_shelter_controller(**attr):
             # Open shelter basic details in read mode
             settings.ui.open_read_first = True
 
-        #elif r.component_name == "shelter_unit":
-            ## Expose "transitory" flag for housing units
-            #utable = current.s3db.cr_shelter_unit
-            #field = utable.transitory
-            #field.readable = field.writable = True
+        elif r.component_name == "shelter_unit":
 
-            ## Custom list fields
-            #list_fields = [(T("Name"), "name"),
-                           #"transitory",
-                           #"capacity",
-                           #"population",
-                           #"blocked_capacity",
-                           #"available_capacity",
-                           #]
-            #r.component.configure(list_fields=list_fields)
+            if is_shelter_admin:
+                from core import OptionsFilter, TextFilter
+                r.component.configure(
+                    filter_widgets = [
+                        TextFilter(["name", "comments"],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("status",
+                                      options = OrderedDict((("1", T("Available")),
+                                                             ("2", T("Not allocable")),
+                                                             ("3", T("Closed"))
+                                                             )),
+                                      default = [1, 2],
+                                      cols = 3,
+                                      sort = False,
+                                      ),
+                        ]
+                    )
+                settings.search.filter_manager = False
+            else:
+                r.component.add_filter(FS("status") != 3)
 
         elif r.component_name == "document":
             r.component.add_filter(FS("doc_id") == None)
@@ -481,6 +492,9 @@ def cr_shelter_controller(**attr):
     if is_org_group_admin:
         # Show all records by default
         settings.ui.datatables_pagelength = -1
+
+    # Activate filters on component tabs
+    attr["hide_filter"] = {"shelter_unit": not is_shelter_admin}
 
     return attr
 

@@ -758,7 +758,13 @@ class CRShelterUnitModel(DataModel):
         #
         cr_housing_unit_opts = {1: T("Available"),
                                 2: T("Not allocable"),
+                                3: T("Closed"),
                                 }
+        status_represent = S3PriorityRepresent(cr_housing_unit_opts,
+                                               {1: "lightblue",
+                                                2: "grey",
+                                                3: "black",
+                                                }).represent
 
         tablename = "cr_shelter_unit"
         define_table(tablename,
@@ -779,7 +785,7 @@ class CRShelterUnitModel(DataModel):
                      Field("status", "integer",
                            default = 1,
                            label = T("Status"),
-                           represent = represent_option(cr_housing_unit_opts),
+                           represent = status_represent,
                            requires = IS_EMPTY_OR(IS_IN_SET(cr_housing_unit_opts))
                            ),
                      Field("transitory", "boolean",
@@ -914,19 +920,33 @@ class CRShelterUnitModel(DataModel):
                 - updates shelter capacity
         """
 
+        db = current.db
+        s3db = current.s3db
+
+        manage_registrations = current.deployment_settings.get_cr_shelter_registration()
+
         record_id = get_form_record_id(form)
         if not record_id:
             return
 
-        table = current.s3db.cr_shelter_unit
+        table = s3db.cr_shelter_unit
         query = (table.id == record_id) & \
                 (table.deleted == False)
-        unit = current.db(query).select(table.id,
-                                        table.shelter_id,
-                                        table.capacity,
-                                        table.blocked_capacity,
-                                        limitby = (0, 1),
-                                        ).first()
+        unit = db(query).select(table.id,
+                                table.status,
+                                table.shelter_id,
+                                table.capacity,
+                                table.blocked_capacity,
+                                limitby = (0, 1),
+                                ).first()
+
+        # Remove all checked-in registrations when unit is closed
+        if unit.status == 3 and manage_registrations:
+            rtable = s3db.cr_shelter_registration
+            query = (rtable.shelter_unit_id == unit.id) & \
+                    (rtable.registration_status == 2) & \
+                    (rtable.deleted == False)
+            db(query).update(shelter_unit_id=None)
 
         # Fix capacity<=>blocked_capacity
         capacity = unit.capacity
@@ -943,7 +963,7 @@ class CRShelterUnitModel(DataModel):
         shelter_id = unit.shelter_id if unit else None
         if shelter_id:
             shelter = Shelter(shelter_id)
-            if not current.deployment_settings.get_cr_shelter_registration():
+            if not manage_registrations:
                 shelter.update_population(update_status=False)
             shelter.update_capacity()
 
