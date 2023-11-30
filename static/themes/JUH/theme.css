@@ -5074,3 +5074,15 @@ h4.profile-sub-header {
   background: #fff1df;
   font-size: 1rem;
 }
+
+/* line 457, ../scss/theme/_misc.scss */
+.client-gender-age {
+  font-size: 0.7rem;
+  vertical-align: top;
+  color: #999;
+  margin: 0 1rem;
+}
+/* line 461, ../scss/theme/_misc.scss */
+.client-gender-age .fa {
+  margin: 0 0.2rem;
+}

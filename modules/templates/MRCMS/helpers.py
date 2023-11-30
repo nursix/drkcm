@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current, URL, A
+from gluon import current, URL, A, I, SPAN, TAG
 
 from core import FS, S3DateTime, WorkflowOptions, s3_fullname, s3_str
 
@@ -511,6 +511,43 @@ def account_status(record, represent=True):
         status = represent(status)
 
     return status
+
+# -----------------------------------------------------------------------------
+def client_name_age(record):
+    """
+        Represent a client record as name, gender and age; for dvr_rheader
+
+        Args:
+            record: the client record (pr_person)
+
+        Returns:
+            HTML
+    """
+
+    T = current.T
+
+    pr_age = current.s3db.pr_age
+
+    age = pr_age(record)
+    if age is None:
+        age = "?"
+        unit = T("years")
+    elif age == 0:
+        age = pr_age(record, months=True)
+        unit = T("months") if age != 1 else T("month")
+    else:
+        unit = T("years") if age != 1 else T("year")
+
+    icons = {2: "fa fa-venus",
+             3: "fa fa-mars",
+             4: "fa fa-transgender-alt",
+             }
+    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+
+    client = TAG[""](s3_fullname(record),
+                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     )
+    return client
 
 # -----------------------------------------------------------------------------
 def hr_details(record):

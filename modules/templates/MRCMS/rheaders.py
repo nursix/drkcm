@@ -8,7 +8,7 @@ from gluon import current, A, I, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
-from .helpers import hr_details
+from .helpers import hr_details, client_name_age
 
 # =============================================================================
 def dvr_rheader(r, tabs=None):
@@ -181,7 +181,7 @@ def dvr_rheader(r, tabs=None):
                                      ))
                     rheader_fields.append([(None, lambda item: link, 6)])
 
-                rheader_title = s3_fullname
+                rheader_title = client_name_age
 
                 # Generate rheader XML
                 rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)

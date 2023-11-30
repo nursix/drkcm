@@ -6886,6 +6886,8 @@
 'module allows the site administrator to configure various options.': 'Modul das dem Seitenadministrator ermöglicht verschiedene Optionen zu konfigurieren.',
 'module helps monitoring the status of hospitals.': 'Modul das hilft den Status von Krankenhäusern zu überwachen',
 'module provides a mechanism to collaboratively provide an overview of the developing disaster, using online mapping (GIS).': 'Modul das gemeinschaftlich einen Mechanismus bietet einen GIS-gestützen Überblick über die sich entwickelnde Lage zu erhalten.',
+'month': 'Monat',
+'months': 'Monate',
 'more': 'mehr',
 'n/a': 'nicht zutreffend',
 'native': 'Muttersprache',
@@ -7001,6 +7003,8 @@
 'within human habitat': 'In menschlichen Lebensraum',
 'written-only': 'nur schriftlich',
 'xlwt module not available within the running Python - this needs installing for XLS output!': 'xlwt Modul nicht verfügbar im Rahmen der laufenden Python Umgebung - das muss installiert werden für XLS Ausgabe!',
+'year': 'Jahr',
+'years': 'Jahre',
 'yes': 'ja',
 'Åland Islands': 'Ålandinseln',
 }
