@@ -642,7 +642,12 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
 
     # Additional filters for privileged roles
     if privileged:
+        from ..helpers import AbsenceFilter
         filter_widgets.extend([
+                AbsenceFilter("dvr_case.last_seen_on",
+                              label = T("Last seen"),
+                              hidden = True,
+                              ),
                 DateFilter("dvr_case.date",
                            hidden = True,
                            ),
@@ -906,7 +911,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                                 )
 
             # Configure case filters
-            if not r.record:
+            if not record:
                 configure_case_filters(resource,
                                        organisation_id = case_organisation,
                                        privileged = privileged,
@@ -920,6 +925,11 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                                    privileged = privileged,
                                    fmt = r.representation,
                                    )
+
+        # Apply absence filter
+        if not record:
+            from ..helpers import AbsenceFilter
+            AbsenceFilter.apply_filter(resource, r.get_vars)
 
     elif r.component_name == "case_appointment":
 

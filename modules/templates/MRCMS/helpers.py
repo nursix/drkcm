@@ -4,9 +4,11 @@
     License: MIT
 """
 
-from gluon import current, URL, A, I, SPAN, TAG
+import datetime
 
-from core import FS, S3DateTime, WorkflowOptions, s3_fullname, s3_str
+from gluon import current, URL, A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
+
+from core import FS, S3DateTime, WorkflowOptions, RangeFilter, s3_fullname, s3_str
 
 # =============================================================================
 def get_role_realms(role):
@@ -615,6 +617,122 @@ def hr_details(record):
                                                ),
                                    )
     return output
+
+# =============================================================================
+class AbsenceFilter(RangeFilter):
+    """ Custom filter for last-seen-on date, represented as "days since" """
+
+    operator = ["gt"]
+
+    # Untranslated labels for individual input boxes.
+    input_labels = {"gt": "More than"}
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def _variable(cls, selector, operator):
+
+        return super()._variable("$$absence", operator)
+
+    # -------------------------------------------------------------------------
+    def widget(self, resource, values):
+        """
+            Render this widget as HTML helper object(s)
+
+            Args:
+                resource: the resource
+                values: the search values from the URL query
+        """
+
+        T = current.T
+
+        css_base = self.css_base
+
+        attr = self.attr
+        css = attr.get("class")
+        attr["_class"] = "%s %s" % (css, css_base) if css else css_base
+
+        input_class = "%s-%s" % (css_base, "input")
+        input_labels = self.input_labels
+        input_elements = DIV()
+        ie_append = input_elements.append
+
+        _id = attr["_id"]
+        _variable = self._variable
+        selector = self.selector
+
+        opts = self.opts
+        minimum = opts.get("minimum", 1)
+        maximum = opts.get("maximum", 7)
+
+        for operator in self.operator:
+
+            input_id = "%s-%s" % (_id, operator)
+
+            # Selectable options
+            input_opts = [OPTION("%s" % i, value=i)
+                          for i in range(minimum, maximum + 1)
+                          ]
+            input_opts.insert(0, OPTION("", value=""))
+
+            # Input Element
+            input_box = SELECT(input_opts,
+                               _id = input_id,
+                               _class = input_class,
+                               )
+
+            variable = _variable(selector, operator)
+
+            # Populate with the value, if given
+            # if user has not set any of the limits, we get [] in values.
+            value = values.get(variable, None)
+            if value not in [None, []]:
+                if type(value) is list:
+                    value = value[0]
+                input_box["_value"] = value
+                input_box["value"] = value
+
+            label = input_labels[operator]
+            if label:
+                label = DIV(LABEL("%s:" % T(input_labels[operator]),
+                                  _for = input_id,
+                                  ),
+                            _class = "age-filter-label",
+                            _style = "display:inline-block",
+                            )
+
+            ie_append(DIV(label,
+                          DIV(input_box,
+                              _class = "range-filter-widget",
+                              _style = "display:inline-block",
+                              ),
+                          _class = "range-filter-field",
+                          ))
+
+        ie_append(DIV(LABEL(T("Days")),
+                      _class = "age-filter-unit",
+                      ))
+
+        return input_elements
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def apply_filter(resource, get_vars):
+        """
+            Filter out volunteers who have a confirmed deployment during
+            selected date interval
+        """
+
+        days = get_vars.get("$$absence__gt")
+        if days:
+            try:
+                days = int(days)
+            except (ValueError, TypeError):
+                return
+
+            now = current.request.utcnow
+            latest = now - datetime.timedelta(hours = days * 24)
+            resource.add_filter((FS("dvr_case.last_seen_on") != None) & \
+                                (FS("dvr_case.last_seen_on") < latest))
 
 # =============================================================================
 class MRCMSSiteActivityReport:
