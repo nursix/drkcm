@@ -944,7 +944,7 @@ class CRShelterUnitModel(DataModel):
         if unit.status == 3 and manage_registrations:
             rtable = s3db.cr_shelter_registration
             query = (rtable.shelter_unit_id == unit.id) & \
-                    (rtable.registration_status == 2) & \
+                    (rtable.registration_status != 3) & \
                     (rtable.deleted == False)
             db(query).update(shelter_unit_id=None)
 
