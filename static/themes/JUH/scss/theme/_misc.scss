@@ -464,4 +464,17 @@
     margin: 0 1rem;
 }
 
+.last-seen-critical, .last-seen-warning {
+    .fa {
+        margin: 0.2rem;
+    }
+    cursor: pointer;
+}
+.last-seen-critical {
+    color: #c10031;
+}
+.last-seen-warning {
+    color: #bd5900;
+}
+
 // END ========================================================================

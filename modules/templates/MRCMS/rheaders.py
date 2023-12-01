@@ -8,7 +8,7 @@ from gluon import current, A, I, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
-from .helpers import hr_details, client_name_age
+from .helpers import client_name_age, hr_details, last_seen_represent
 
 # =============================================================================
 def dvr_rheader(r, tabs=None):
@@ -139,10 +139,13 @@ def dvr_rheader(r, tabs=None):
                         shelter = lambda row: A(shelter_name, _href=shelter_url)
                     else:
                         shelter = lambda row: shelter_name
-
                     unit = lambda row: case["cr_shelter_registration.shelter_unit_id"]
-                    # TODO mark <1day, >1day, >3days
-                    last_seen_on = lambda row: case["dvr_case.last_seen_on"]
+
+                    # Represent last-seen-date as warning, if too long ago
+                    last_seen_on = lambda row: \
+                                   last_seen_represent(raw["dvr_case.last_seen_on"],
+                                                       case["dvr_case.last_seen_on"],
+                                                       )
                 else:
                     # Target record exists, but doesn't match filters
                     return None

@@ -5086,3 +5086,22 @@ h4.profile-sub-header {
 .client-gender-age .fa {
   margin: 0 0.2rem;
 }
+
+/* line 467, ../scss/theme/_misc.scss */
+.last-seen-critical, .last-seen-warning {
+  cursor: pointer;
+}
+/* line 468, ../scss/theme/_misc.scss */
+.last-seen-critical .fa, .last-seen-warning .fa {
+  margin: 0.2rem;
+}
+
+/* line 473, ../scss/theme/_misc.scss */
+.last-seen-critical {
+  color: #c10031;
+}
+
+/* line 476, ../scss/theme/_misc.scss */
+.last-seen-warning {
+  color: #bd5900;
+}

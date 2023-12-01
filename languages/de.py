@@ -6800,6 +6800,7 @@
 'database %s select': 'Datenbank%s gewählt',
 'database': 'Datenbank',
 'date of birth': 'Geburtsdatum',
+'days': 'Tage',
 'deceased': 'Verstorbene',
 'delete all checked': 'Alle Ausgewählten löschen',
 'deleted': 'gelöscht',

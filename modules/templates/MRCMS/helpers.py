@@ -6,6 +6,8 @@
 
 import datetime
 
+from dateutil.relativedelta import relativedelta
+
 from gluon import current, URL, A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
 
 from core import FS, S3DateTime, WorkflowOptions, RangeFilter, s3_fullname, s3_str
@@ -517,7 +519,7 @@ def account_status(record, represent=True):
 # -----------------------------------------------------------------------------
 def client_name_age(record):
     """
-        Represent a client record as name, gender and age; for dvr_rheader
+        Represent a client as name, gender and age; for case file rheader
 
         Args:
             record: the client record (pr_person)
@@ -550,6 +552,33 @@ def client_name_age(record):
                      SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
                      )
     return client
+
+# -----------------------------------------------------------------------------
+def last_seen_represent(date, label):
+    """
+        Represent last-seen-on date as warning if more than 3/5 days back;
+        for case file rheader
+
+        Args:
+            date: the date (datetime.datetime)
+            label: the represented date
+
+        Returns:
+            HTML or label
+    """
+
+    if date:
+        days = relativedelta(datetime.datetime.utcnow(), date).days
+        if days > 5:
+            icon = I(_class="fa fa-exclamation-triangle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
+        elif days > 3:
+            icon = I(_class="fa fa-exclamation-circle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
+
+    return label
 
 # -----------------------------------------------------------------------------
 def hr_details(record):
