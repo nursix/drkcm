@@ -3861,6 +3861,8 @@ class DVRCaseAppointmentModel(DataModel):
             query = (table.person_id == person_id) & \
                     (table.status == 4) & \
                     (table.deleted == False)
+            if case_id:
+                query = (table.case_id == case_id) & query
             orderby = ~table.start_date if use_time else ~table.date
             row = db(query).select(ttable.status_id,
                                    join = join,
