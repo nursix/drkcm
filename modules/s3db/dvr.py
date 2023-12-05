@@ -655,8 +655,8 @@ class DVRCaseModel(DataModel):
     @staticmethod
     def case_onvalidation(form):
         """
-            Case onvalidation:
-                - make sure case numbers are unique within the organisation
+            Case form validation:
+                - make sure case numbers are unique within the (root) organisation
 
             Args:
                 form: the FORM
@@ -664,74 +664,46 @@ class DVRCaseModel(DataModel):
 
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         # Read form data
-        form_vars = form.vars
-        if "id" in form_vars:
-            # Inline subtable update
-            record_id = form_vars.id
-        elif hasattr(form, "record_id"):
-            # Regular update form
-            record_id = form.record_id
-        else:
-            # New record
-            record_id = None
+        record_id = get_form_record_id(form)
+
         try:
-            reference = form_vars.reference
+            reference = form.vars.reference
         except AttributeError:
             reference = None
 
-        if reference:
-            # Make sure the case reference is unique within the organisation
+        if reference and settings.get_dvr_case_reference_unique():
 
-            ctable = s3db.dvr_case
-            otable = s3db.org_organisation
+            # Make sure the case reference is unique within the (root) organisation
+            table = s3db.dvr_case
+            data = get_form_record_data(form, table, ["organisation_id"])
+            organisation_id = data.get("organisation_id")
 
-            # Get the organisation_id
-            if "organisation_id" not in form_vars:
-                if not record_id:
-                    # Create form with hidden organisation_id
-                    # => use default
-                    organisation_id = ctable.organisation_id.default
-                else:
-                    # Reload the record to get the organisation_id
-                    query = (ctable.id == record_id)
-                    row = db(query).select(ctable.organisation_id,
-                                           limitby = (0, 1)).first()
-                    if not row:
-                        return
-                    organisation_id = row.organisation_id
-            else:
-                # Use the organisation_id in the form
-                organisation_id = form_vars.organisation_id
-
-            # Case duplicate query
-            dquery = (ctable.reference == reference) & \
-                     (ctable.deleted != True)
-            if record_id:
-                dquery &= (ctable.id != record_id)
-            msg = current.T("This Case Number is already in use")
-
-            # Add organisation query to duplicate query
+            # Use root organisation for cases of all branches
             if current.deployment_settings.get_org_branches():
-                # Get the root organisation
+                otable = s3db.org_organisation
                 query = (otable.id == organisation_id)
                 row = db(query).select(otable.root_organisation,
-                                    limitby = (0, 1)).first()
-                root_organisation = row.root_organisation \
-                                    if row else organisation_id
-                dquery &= (otable.root_organisation == root_organisation)
-                left = otable.on(otable.id == ctable.organisation_id)
-            else:
-                dquery &= (ctable.organisation_id == organisation_id)
-                left = None
+                                       limitby = (0, 1),
+                                       ).first()
+                root_org = row.root_organisation if row else organisation_id
+                if root_org:
+                    organisation_id = root_org
+
+            # Case duplicate query
+            dquery = (table.reference == reference)
+            if record_id:
+                dquery &= (table.id != record_id)
+            dquery &= (table.organisation_id == organisation_id) & \
+                      (table.deleted == False)
 
             # Is there a record with the same reference?
-            row = db(dquery).select(ctable.id,
-                                    left = left,
-                                    limitby = (0, 1)).first()
+            row = db(dquery).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors["reference"] = msg
+                msg = current.T("This Case Number is already in use")
+                form.errors.reference = msg
 
     # -------------------------------------------------------------------------
     @classmethod

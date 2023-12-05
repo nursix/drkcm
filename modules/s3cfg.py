@@ -3616,6 +3616,13 @@ class S3Config(Storage):
         """
         return self.dvr.get("label", None)
 
+    def get_dvr_case_reference_unique(self):
+        """
+            Whether case reference numbers must be unique within
+            the case (root) organisation
+        """
+        return self.dvr.get("case_reference_unique", False)
+
     # Case Details ----------------------------------------
 
     def get_dvr_household_size(self):
