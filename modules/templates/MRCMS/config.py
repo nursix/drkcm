@@ -4,8 +4,6 @@
     License: MIT
 """
 
-import datetime
-
 from collections import OrderedDict
 
 from gluon import current
@@ -246,6 +244,8 @@ def config(settings):
     # Exclude FOOD and SURPLUS-MEALS events from event registration
     settings.dvr.event_registration_exclude_codes = ("FOOD*",)
 
+    # Use date+time (start/end) in appointments
+    settings.dvr.appointments_use_time = True
     # Use org-specific appointment types
     settings.dvr.appointment_types_org_specific = True
     # Appointments can be marked as mandatory
@@ -326,8 +326,7 @@ def config(settings):
                                dvr_case_event_type_controller, \
                                dvr_case_flag_controller, \
                                dvr_note_resource, \
-                               dvr_service_contact_resource, \
-                               dvr_site_activity_resource
+                               dvr_service_contact_resource
 
     settings.customise_dvr_home = dvr_home
     settings.customise_dvr_case_resource = dvr_case_resource
@@ -345,7 +344,6 @@ def config(settings):
 
     settings.customise_dvr_note_resource = dvr_note_resource
     settings.customise_dvr_service_contact_resource = dvr_service_contact_resource
-    settings.customise_dvr_site_activity_resource = dvr_site_activity_resource
 
     # -------------------------------------------------------------------------
     # Human Resource Module Settings
@@ -446,50 +444,6 @@ def config(settings):
     from .customise.security import security_seized_item_resource
 
     settings.customise_security_seized_item_resource = security_seized_item_resource
-
-    # -------------------------------------------------------------------------
-    def org_site_check(site_id):
-        """ Custom tasks for scheduled site checks """
-
-        # Update transferability
-        from .controllers import update_transferability
-        result = update_transferability(site_id=site_id)
-
-        # Log the result
-        msg = "Update Transferability: " \
-              "%s transferable cases found for site %s" % (result, site_id)
-        current.log.info(msg)
-
-        # Check whether we have a site activity report for yesterday
-        YESTERDAY = current.request.utcnow.date() - datetime.timedelta(1)
-        rtable = current.s3db.dvr_site_activity
-        query = (rtable.date == YESTERDAY) & \
-                (rtable.site_id == site_id) & \
-                (rtable.deleted != True)
-        row = current.db(query).select(rtable.id,
-                                       limitby = (0, 1)
-                                       ).first()
-        if not row:
-            # Create one
-            from .helpers import MRCMSSiteActivityReport
-            report = MRCMSSiteActivityReport(date = YESTERDAY,
-                                           site_id = site_id,
-                                           )
-            # Temporarily override authorization,
-            # otherwise the report would be empty
-            auth = current.auth
-            auth.override = True
-            try:
-                record_id = report.store()
-            except:
-                record_id = None
-            auth.override = False
-            if record_id:
-                current.log.info("Residents Report created, record ID=%s" % record_id)
-            else:
-                current.log.error("Could not create Residents Report")
-
-    settings.org.site_check = org_site_check
 
     # -------------------------------------------------------------------------
     # Comment/uncomment modules here to disable/enable them

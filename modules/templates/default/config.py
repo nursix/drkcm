@@ -670,6 +670,8 @@ def config(settings):
     # Use org-specific need types
     #settings.dvr.need_types_org_specific = True
 
+    # Appointments use date+time
+    #settings.dvr.appointments_use_time = True
     # Use org-specific appointment types
     #settings.dvr.appointment_types_org_specific = True
     # Expose flags to mark appointment types as mandatory

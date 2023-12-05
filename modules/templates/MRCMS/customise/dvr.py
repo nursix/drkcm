@@ -6,17 +6,15 @@
 
 import datetime
 
-from dateutil import tz
-
-from gluon import current, URL, A, INPUT, SQLFORM, TAG, IS_EMPTY_OR
+from gluon import current, URL, A, TAG, IS_EMPTY_OR
 from gluon.storage import Storage
 
 from s3dal import Field
-from core import CRUDMethod, CRUDRequest, CustomController, FS, IS_ONE_OF, \
-                 S3PermissionError, S3DateTime, S3SQLCustomForm, S3SQLInlineLink, \
+from core import CRUDRequest, CustomController, FS, IS_ONE_OF, \
+                 S3SQLCustomForm, S3SQLInlineLink, \
                  DateFilter, OptionsFilter, TextFilter, \
-                 get_form_record_id, s3_fieldmethod, s3_redirect_default, \
-                 set_default_filter, set_last_record_id, s3_fullname, s3_str
+                 get_form_record_id, s3_redirect_default, \
+                 set_default_filter, s3_fullname
 
 from .pr import configure_person_tags
 
@@ -289,9 +287,12 @@ def dvr_case_appointment_resource(r, tablename):
     # Configure Organizer
     if title:
         s3db.configure("dvr_case_appointment",
-                       organize = {"start": "date",
+                       organize = {#"start": "date",
+                                   "start": "start_date",
+                                   "end": "end_date",
                                    "title": title,
                                    "description": description,
+                                   "reload_on_update": True,
                                    # Color by status
                                    "color": "status",
                                    "colors": {
@@ -414,10 +415,11 @@ def dvr_case_appointment_controller(**attr):
                     now = r.utcnow
                     today = now.replace(hour=0, minute=0, second=0, microsecond=0)
                     tomorrow = today + datetime.timedelta(days=1)
-                    filter_widgets.insert(-2, DateFilter("date",
-                                                        default = {"ge": today,
-                                                                   "le": tomorrow,
-                                                                   },
+                    filter_widgets.insert(-2, DateFilter(#"date",
+                                                         "start_date",
+                                                         default = {"ge": today,
+                                                                    "le": tomorrow,
+                                                                    },
                                               ))
 
                 # Add organisation filter if user can see appointments
@@ -444,14 +446,12 @@ def dvr_case_appointment_controller(**attr):
                            "person_id$first_name",
                            "person_id$last_name",
                            "type_id",
-                           "date",
+                           #"date",
+                           "start_date",
+                           "end_date",
                            "status",
                            "comments",
                            ]
-
-            #if r.representation in ("xlsx", "xls"):
-            #    # Include Person UUID for bulk status update
-            #    list_fields.append(("UUID", "person_id$uuid"))
 
             resource.configure(list_fields = list_fields,
                                insertable = False,
@@ -479,9 +479,6 @@ def case_event_report_default_filters(event_code=None):
         if event_code[-1] == "*":
             query = (ttable.code.like("%s%%" % event_code[:-1])) & \
                     (ttable.is_inactive == False)
-            if event_code[:-1] == "FOOD":
-                # Include SURPLUS-MEALS events
-                query |= (ttable.code == "SURPLUS-MEALS")
         else:
             query = (ttable.code == event_code)
         query &= (ttable.deleted == False)
@@ -516,82 +513,10 @@ def dvr_case_event_resource(r, tablename):
                     action = FoodDistribution,
                     )
 
-    #s3db.add_custom_callback("dvr_case_event",
-    #                         "onaccept",
-    #                         case_event_create_onaccept,
-    #                         method = "create",
-    #                         )
-
 # -------------------------------------------------------------------------
 def dvr_case_event_controller(**attr):
 
-    T = current.T
     s3 = current.response.s3
-
-    standard_prep = s3.prep
-    def custom_prep(r):
-        # Call standard prep
-        if callable(standard_prep):
-            result = standard_prep(r)
-        else:
-            result = True
-
-        resource = r.resource
-        table = resource.table
-
-        if r.method == "report":
-            # Set report default filters
-            event_code = r.get_vars.get("code")
-            case_event_report_default_filters(event_code)
-
-            dates = MRCMSCaseEventDateAxes()
-
-            # Field method for day-date of events
-            table.date_day = s3_fieldmethod(
-                                "date_day",
-                                dates.case_event_date_day,
-                                represent = dates.case_event_date_day_represent,
-                                )
-            table.date_tod = s3_fieldmethod(
-                                "date_tod",
-                                dates.case_event_time_of_day,
-                                )
-
-            # Pivot axis options
-            report_axes = ["type_id",
-                           (T("Date"), "date_day"),
-                           (T("Time of Day"), "date_tod"),
-                           "created_by",
-                           ]
-
-            # Configure report options
-            code = r.get_vars.get("code")
-            if code and code[-1] != "*":
-                # Single event type => group by ToD (legacy)
-                default_cols = "date_tod"
-            else:
-                # Group by type (standard behavior)
-                default_cols = "type_id"
-            report_options = {
-                "rows": report_axes,
-                "cols": report_axes,
-                "fact": [(T("Total Quantity"), "sum(quantity)"),
-                         #(T("Number of Events"), "count(id)"),
-                         ],
-                "defaults": {"rows": "date_day",
-                             "cols": default_cols,
-                             "fact": "sum(quantity)",
-                             "totals": True,
-                             },
-                }
-            resource.configure(report_options = report_options,
-                               extra_fields = ["date",
-                                               "person_id",
-                                               "type_id",
-                                               ],
-                               )
-        return result
-    s3.prep = custom_prep
 
     # Custom postp
     standard_postp = s3.postp
@@ -825,36 +750,6 @@ def dvr_service_contact_resource(r, tablename):
     field = table.organisation
     field.label = T("Organization")
     field.readable = field.writable = True
-
-# -------------------------------------------------------------------------
-def dvr_site_activity_resource(r, tablename):
-
-    T = current.T
-    s3db = current.s3db
-
-    s3db.set_method("dvr_site_activity",
-                    method = "create",
-                    action = MRCMSCreateSiteActivityReport,
-                    )
-    s3db.configure("dvr_site_activity",
-                   listadd = False,
-                   addbtn = True,
-                   editable = False,
-                   )
-
-    crud_strings = current.response.s3.crud_strings
-    crud_strings["dvr_site_activity"] = Storage(
-        label_create = T("Create Residents Report"),
-        title_display = T("Residents Report"),
-        title_list = T("Residents Reports"),
-        title_update = T("Edit Residents Report"),
-        label_list_button = T("List Residents Reports"),
-        label_delete_button = T("Delete Residents Report"),
-        msg_record_created = T("Residents Report created"),
-        msg_record_modified = T("Residents Report updated"),
-        msg_record_deleted = T("Residents Report deleted"),
-        msg_list_empty = T("No Residents Reports found"),
-        )
 
 # =============================================================================
 def dvr_person_prep(r):
@@ -1109,247 +1004,5 @@ def dvr_group_membership_prep(r):
         field.comment = None
 
     return True
-
-# =============================================================================
-class MRCMSCaseEventDateAxes:
-    """
-        Helper class for virtual date axes in case event statistics
-    """
-
-    def __init__(self):
-        """
-            Perform all slow lookups outside of the field methods
-        """
-
-        # Get timezone descriptions
-        self.UTC = tz.tzutc()
-        self.LOCAL = tz.gettz("Europe/Berlin")
-
-        # Lookup FOOD event type_id
-        table = current.s3db.dvr_case_event_type
-        query = (table.code == "FOOD") & \
-                (table.deleted != True)
-        row = current.db(query).select(table.id, limitby=(0, 1)).first()
-        self.FOOD = row.id if row else None
-
-        self.SURPLUS_MEALS = s3_str(current.T("Surplus Meals"))
-
-    # -------------------------------------------------------------------------
-    def case_event_date_day(self, row):
-        """
-            Field method to reduce case event date/time to just date,
-            used in pivot table reports to group case events by day
-        """
-
-        if hasattr(row, "dvr_case_event"):
-            row = row.dvr_case_event
-
-        try:
-            date = row.date
-        except AttributeError:
-            date = None
-
-        if date:
-            # Get local hour
-            date = date.replace(tzinfo=self.UTC).astimezone(self.LOCAL)
-            hour = date.time().hour
-
-            # Convert to date
-            date = date.date()
-            if hour <= 7:
-                # Map early hours to previous day
-                return date - datetime.timedelta(days=1)
-        else:
-            date = None
-        return date
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def case_event_date_day_represent(value):
-        """
-            Representation method for case_event_date_day, needed in order
-            to sort pivot axis values by raw date, but show them in locale
-            format (default DD.MM.YYYY, doesn't sort properly).
-        """
-
-        return S3DateTime.date_represent(value, utc=True)
-
-    # -------------------------------------------------------------------------
-    def case_event_time_of_day(self, row):
-        """
-            Field method to group events by time of day
-        """
-
-        if hasattr(row, "dvr_case_event"):
-            row = row.dvr_case_event
-
-        try:
-            date = row.date
-        except AttributeError:
-            date = None
-
-        if date:
-            try:
-                person_id = row.person_id
-                type_id = row.type_id
-            except AttributeError:
-                person_id = 0
-                type_id = None
-
-            if type_id == self.FOOD and person_id is None:
-                tod = self.SURPLUS_MEALS
-            else:
-                date = date.replace(tzinfo=self.UTC).astimezone(self.LOCAL)
-                hour = date.time().hour
-
-                if 7 <= hour < 13:
-                    tod = "07:00 - 13:00"
-                elif 13 <= hour < 17:
-                    tod = "13:00 - 17:00"
-                elif 17 <= hour < 20:
-                    tod = "17:00 - 20:00"
-                else:
-                    tod = "20:00 - 07:00"
-        else:
-            tod = "-"
-        return tod
-
-# =============================================================================
-class MRCMSCreateSiteActivityReport(CRUDMethod):
-    """ Custom method to create a dvr_site_activity entry """
-
-    def apply_method(self, r, **attr):
-        """
-            Entry point for REST controller
-
-            Args:
-                r: the CRUDRequest
-                attr: dict of controller parameters
-        """
-
-        if r.representation in ("html", "iframe"):
-            if r.http in ("GET", "POST"):
-                output = self.create_form(r, **attr)
-            else:
-                r.error(405, current.ERROR.BAD_METHOD)
-        else:
-            r.error(415, current.ERROR.BAD_FORMAT)
-
-        return output
-
-    # -------------------------------------------------------------------------
-    def create_form(self, r, **attr):
-        """
-            Generate and process the form
-
-            Args:
-                r: the CRUDRequest
-                attr: dict of controller parameters
-        """
-
-        # User must be permitted to create site activity reports
-        authorised = self._permitted(method="create")
-        if not authorised:
-            r.unauthorised()
-
-        s3db = current.s3db
-
-        T = current.T
-        response = current.response
-        settings = current.deployment_settings
-
-        # Page title
-        output = {"title": T("Create Residents Report")}
-
-        # Form fields
-        table = s3db.dvr_site_activity
-        table.date.default = r.utcnow.date()
-        formfields = [table.site_id,
-                      table.date,
-                      ]
-
-        # Form buttons
-        submit_btn = INPUT(_class = "tiny primary button",
-                           _name = "submit",
-                           _type = "submit",
-                           _value = T("Create Report"),
-                           )
-        cancel_btn = A(T("Cancel"),
-                       _href = r.url(id=None, method=""),
-                       _class = "action-lnk",
-                       )
-        buttons = [submit_btn, cancel_btn]
-
-        # Generate the form and add it to the output
-        resourcename = r.resource.name
-        formstyle = settings.get_ui_formstyle()
-        form = SQLFORM.factory(record = None,
-                               showid = False,
-                               formstyle = formstyle,
-                               table_name = resourcename,
-                               buttons = buttons,
-                               *formfields)
-        output["form"] = form
-
-        # Process the form
-        formname = "%s/manage" % resourcename
-        if form.accepts(r.post_vars,
-                        current.session,
-                        formname = formname,
-                        onvalidation = self.validate,
-                        keepvalues = False,
-                        hideerror = False,
-                        ):
-
-            from ..helpers import MRCMSSiteActivityReport
-            formvars = form.vars
-            report = MRCMSSiteActivityReport(site_id = formvars.site_id,
-                                           date = formvars.date,
-                                           )
-            try:
-                record_id = report.store()
-            except S3PermissionError:
-                # Redirect to list view rather than index page
-                current.auth.permission.homepage = r.url(id=None, method="")
-                r.unauthorised()
-
-            r.resource.lastid = str(record_id)
-            set_last_record_id("dvr_site_activity", record_id)
-
-            current.response.confirmation = T("Report created")
-            self.next = r.url(id=record_id, method="read")
-
-        response.view = self._view(r, "create.html")
-
-        return output
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def validate(form):
-        """
-            Validate the form
-
-            Args:
-                form: the FORM
-        """
-
-        T = current.T
-        formvars = form.vars
-
-        if "site_id" in formvars:
-            site_id = formvars.site_id
-        else:
-            # Fall back to default site
-            site_id = current.deployment_settings.get_org_default_site()
-        if not site_id:
-            form.errors["site_id"] = T("No site specified")
-        formvars.site_id = site_id
-
-        if "date" in formvars:
-            date = formvars.date
-        else:
-            # Fall back to today
-            date = current.request.utcnow.date()
-        formvars.date = date
 
 # END =========================================================================

@@ -3687,6 +3687,12 @@ class S3Config(Storage):
 
     # Appointments ----------------------------------------
 
+    def get_dvr_appointments_use_time(self):
+        """
+            Use date+time (start/end) in case appointments
+        """
+        return self.dvr.get("appointments_use_time", False)
+
     def get_dvr_appointment_types_org_specific(self):
         """
             Use organisation-specific appointment types

@@ -965,7 +965,7 @@ class DateTimeField(Field):
         # Default widget
         if widget is None or widget in ("date", "datetime"):
 
-            widget_options = ("set_min", "set_max", "month_selector")
+            widget_options = ("set_min", "set_max", "month_selector", "minute_step")
             widget_args = {}
             for option in widget_options:
                 if option in args:
