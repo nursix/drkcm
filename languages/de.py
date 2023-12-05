@@ -2230,6 +2230,7 @@
 'End date should be after start date': 'Enddatum muss nach dem Startdatum liegen',
 'End date': 'Enddatum',
 'End of Period': 'Ende des Zeitraums',
+'End': 'Ende',
 'Ended on': 'Beendet am',
 'Enter a GPS Coord': 'Geben Sie eine GPS Koordinate ein',
 'Enter a name for the spreadsheet you are uploading (mandatory).': 'Geben Sie einen Namen für die Tabelle, die Sie hochladen an (obligatorisch).',

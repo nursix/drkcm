@@ -307,6 +307,16 @@ def dvr_case_appointment_resource(r, tablename):
                                    },
                        )
 
+    if r.tablename != "dvr_case_appointment":
+        s3db.configure("dvr_case_appointment",
+                       list_fields = ["type_id",
+                                      (T("Date"), "start_date"),
+                                      "status",
+                                      "comments",
+                                      ],
+                       )
+
+
 # -------------------------------------------------------------------------
 def dvr_case_appointment_controller(**attr):
 
@@ -447,8 +457,8 @@ def dvr_case_appointment_controller(**attr):
                            "person_id$last_name",
                            "type_id",
                            #"date",
-                           "start_date",
-                           "end_date",
+                           (T("Date"), "start_date"),
+                           #"end_date",
                            "status",
                            "comments",
                            ]
