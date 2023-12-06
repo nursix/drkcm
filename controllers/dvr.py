@@ -29,9 +29,6 @@ def index_alt():
 def person():
     """ Persons: RESTful CRUD Controller """
 
-    # Set the default case status
-    default_status = s3db.dvr_case_default_status()
-
     def prep(r):
 
         # Filter to persons who have a case registered
@@ -57,6 +54,9 @@ def person():
 
         # Filters to split case list
         if not r.record:
+
+            # Set the case default status
+            default_status = s3db.dvr_case_default_status()
 
             # Filter to active/archived cases
             archived = get_vars.get("archived")
@@ -98,10 +98,12 @@ def person():
                          (FS("dvr_case.status_id$is_closed") == None)
                 status_opts = lambda: get_status_opts(closed=False)
 
+
             resource.add_filter(query)
         else:
             archived = False
             status_opts = s3db.dvr_case_status_filter_opts
+            default_status = None
 
             # Set default for dvr_case_effort.person_id and hide it
             etable = s3db.dvr_case_effort

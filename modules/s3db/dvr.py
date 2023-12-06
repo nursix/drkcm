@@ -1117,6 +1117,14 @@ class DVRNeedsModel(DataModel):
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
+                     Field("code",
+                           label = T("Code"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(64, minsize=1)),
+                           represent = lambda v, row=None: v if v else "-",
+                           # Enable in template as required:
+                           readable = False,
+                           writable = False,
+                           ),
                      # Activate in template as needed:
                      self.org_organisation_id(readable = False,
                                               writable = False,
@@ -1517,6 +1525,14 @@ class DVRResponseModel(DataModel):
                      Field("name",
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
+                     Field("code",
+                           label = T("Code"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(64, minsize=1)),
+                           represent = lambda v, row=None: v if v else "-",
+                           # Enable in template as required:
+                           readable = False,
+                           writable = False,
+                           ),
                      # This form of hierarchy may not work on all databases:
                      Field("parent", "reference dvr_response_type",
                            label = T("Subtype of"),
@@ -1619,6 +1635,11 @@ class DVRResponseModel(DataModel):
                      Field("is_default_closure", "boolean",
                            default = False,
                            label = T("Default Closure Status"),
+                           represent = BooleanRepresent(),
+                           ),
+                     Field("is_indirect_closure", "boolean",
+                           default = False,
+                           label = T("Indirect Closure Status"),
                            represent = BooleanRepresent(),
                            ),
                      Field("color",
@@ -4783,6 +4804,7 @@ class DVRVulnerabilityModel(DataModel):
     """ Specific vulnerabilities of a client """
 
     names = ("dvr_vulnerability_type",
+             "dvr_vulnerability_type_sector",
              "dvr_vulnerability",
              "dvr_vulnerability_response_action",
              "dvr_vulnerability_case_activity",

@@ -11,6 +11,8 @@
          SubType.....................string..........Sub Type Name
          SubSubType... (indefinite depth)
 
+         Code........................string..........Type code
+
          Default.....................true|false......is default type
          Consultation................true|false......is consultation
          Comments....................string..........Comments
@@ -46,7 +48,6 @@
         <xsl:param name="Subset"/>
 
         <xsl:variable name="Name" select="col[@field=$Level]"/>
-        <test><xsl:value-of select="$Name"/></test>
 
         <xsl:if test="$Name!=''">
 
@@ -140,44 +141,62 @@
             <!-- Name -->
             <data field="name"><xsl:value-of select="$Name"/></data>
 
-            <!-- Is Default? -->
-            <data field="is_default">
-                <xsl:attribute name="value">
-                    <xsl:choose>
-                        <xsl:when test="col[@field='Default']/text()='true'">
-                            <xsl:value-of select="'true'"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="'false'"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:attribute>
-            </data>
+            <xsl:if test="$Row">
+                <!-- Code -->
+                <xsl:variable name="Code" select="col[@field='Code']/text()"/>
+                <xsl:if test="$Code!=''">
+                    <data field="code"><xsl:value-of select="$Code"/></data>
+                </xsl:if>
+
+                <!-- Is Default? -->
+                <xsl:call-template name="Boolean">
+                    <xsl:with-param name="column">Default</xsl:with-param>
+                    <xsl:with-param name="field">is_default</xsl:with-param>
+                </xsl:call-template>
+
+                <!-- Comments -->
+                <xsl:variable name="Comments" select="col[@field='Comments']/text()"/>
+                <xsl:if test="$Comments!=''">
+                    <data field="comments">
+                        <xsl:value-of select="$Comments"/>
+                    </data>
+                </xsl:if>
+            </xsl:if>
 
             <!-- Is Consultation? -->
-            <data field="is_consultation">
-                <xsl:attribute name="value">
-                    <xsl:choose>
-                        <xsl:when test="col[@field='Consultation']/text()='true'">
-                            <xsl:value-of select="'true'"/>
-                        </xsl:when>
-                        <xsl:otherwise>
-                            <xsl:value-of select="'false'"/>
-                        </xsl:otherwise>
-                    </xsl:choose>
-                </xsl:attribute>
-            </data>
+            <xsl:call-template name="Boolean">
+                <xsl:with-param name="column">Consultation</xsl:with-param>
+                <xsl:with-param name="field">is_consultation</xsl:with-param>
+            </xsl:call-template>
 
-            <!-- Comments -->
-            <xsl:variable name="Comments" select="col[@field='Comments']/text()"/>
-            <xsl:if test="$Comments!=''">
-                <data field="comments">
-                    <xsl:value-of select="$Comments"/>
-                </data>
-            </xsl:if>
         </resource>
     </xsl:template>
 
     <!-- ****************************************************************** -->
+    <!-- Helper for boolean fields -->
+    <xsl:template name="Boolean">
+
+        <xsl:param name="column"/>
+        <xsl:param name="field"/>
+
+        <data>
+            <xsl:attribute name="field">
+                <xsl:value-of select="$field"/>
+            </xsl:attribute>
+            <xsl:attribute name="value">
+                <xsl:choose>
+                    <xsl:when test="col[@field=$column]/text()='true'">
+                        <xsl:value-of select="'true'"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="'false'"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:attribute>
+        </data>
+
+    </xsl:template>
+
+    <!-- END ************************************************************** -->
 
 </xsl:stylesheet>

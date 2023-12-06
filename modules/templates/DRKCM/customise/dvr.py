@@ -1283,6 +1283,10 @@ def dvr_need_resource(r, tablename):
 
     table = current.s3db.dvr_need
 
+    # Expose code
+    field = table.code
+    field.readable = field.writable = True
+
     # Expose organisation_id (only relevant for ADMINs)
     field = table.organisation_id
     field.readable = field.writable = True
@@ -1818,14 +1822,16 @@ def configure_response_action_tab(person_id,
         field.readable = False
 
         list_fields = ["start_date",
+                       response_type,
                        (T("Themes"), "dvr_response_action_theme.id"),
                        "human_resource_id",
                        "hours",
                        "status_id",
                        ]
         pdf_fields = ["start_date",
-                      #"human_resource_id",
+                       response_type,
                       (T("Themes"), "dvr_response_action_theme.id"),
+                      #"human_resource_id",
                       ]
     else:
         # Show case_activity_id
@@ -2185,6 +2191,13 @@ def dvr_response_theme_resource(r, tablename):
         msg_record_deleted = T("Counseling Theme deleted"),
         msg_list_empty = T("No Counseling Themes currently defined"),
         )
+
+# -------------------------------------------------------------------------
+def dvr_response_type_resource(r, tablename):
+
+    table = current.s3db.dvr_response_type
+    field = table.code
+    field.readable = field.writable = True
 
 # -------------------------------------------------------------------------
 def dvr_service_contact_resource(r, tablename):

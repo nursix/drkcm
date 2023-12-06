@@ -2903,6 +2903,7 @@
 'Incorrect PIN': 'Falsche PIN',
 'India': 'Indien',
 'Indicates Cancelation': 'Bedeutet Absage',
+'Indirect Closure Status': 'Indirekter Abschluss-Status',
 'Indirect support cost HQ': 'Indirekte Unterstützungskosten Hauptquartier',
 'Individual Counseling': 'Einzelberatung',
 'Individuals': 'Einzelpersonen',
