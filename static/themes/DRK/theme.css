@@ -296,56 +296,55 @@ button.toggle-text {
 
 /* line 111, ../../default/scss/theme/_represent.scss */
 .prio-lightgreen {
-  color: #E0E0E0;
-  background-color: #009f00;
+  background-color: #a0d7a0;
 }
 
-/* line 115, ../../default/scss/theme/_represent.scss */
+/* line 114, ../../default/scss/theme/_represent.scss */
 .prio-green {
   color: #E0E0E0;
   background-color: #006100;
 }
 
-/* line 119, ../../default/scss/theme/_represent.scss */
+/* line 118, ../../default/scss/theme/_represent.scss */
 .prio-blue {
   color: white;
   background-color: #10427b;
 }
 
-/* line 123, ../../default/scss/theme/_represent.scss */
+/* line 122, ../../default/scss/theme/_represent.scss */
 .prio-lightblue {
   background-color: #b7ddff;
 }
 
-/* line 126, ../../default/scss/theme/_represent.scss */
+/* line 125, ../../default/scss/theme/_represent.scss */
 .prio-grey {
   background-color: silver;
 }
 
-/* line 129, ../../default/scss/theme/_represent.scss */
+/* line 128, ../../default/scss/theme/_represent.scss */
 .prio-black {
   color: #E0E0E0;
   background-color: #1f1f1f;
 }
 
-/* line 137, ../../default/scss/theme/_represent.scss */
+/* line 136, ../../default/scss/theme/_represent.scss */
 .wh-schedule {
   list-style: none;
   white-space: pre;
   margin: 0;
   font-size: 0.7rem;
 }
-/* line 142, ../../default/scss/theme/_represent.scss */
+/* line 141, ../../default/scss/theme/_represent.scss */
 .wh-schedule .wh-dayname {
   width: 1.5rem;
   display: inline-block;
 }
-/* line 146, ../../default/scss/theme/_represent.scss */
+/* line 145, ../../default/scss/theme/_represent.scss */
 .wh-schedule .wh-dayname::after {
   content: ":";
 }
 
-/* line 154, ../../default/scss/theme/_represent.scss */
+/* line 153, ../../default/scss/theme/_represent.scss */
 .showall {
   display: none;
   position: absolute;
@@ -355,7 +354,7 @@ button.toggle-text {
   margin: 0 20px 0 -50px;
 }
 
-/* line 166, ../../default/scss/theme/_represent.scss */
+/* line 165, ../../default/scss/theme/_represent.scss */
 .newsletter-text {
   white-space: pre-line;
   background: #fcfcfc;
@@ -368,44 +367,48 @@ button.toggle-text {
   font-size: 0.85rem;
 }
 
-/* line 182, ../../default/scss/theme/_represent.scss */
+/* line 181, ../../default/scss/theme/_represent.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 185, ../../default/scss/theme/_represent.scss */
+/* line 184, ../../default/scss/theme/_represent.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;
 }
 
-/* line 191, ../../default/scss/theme/_represent.scss */
+/* line 190, ../../default/scss/theme/_represent.scss */
 .img-preview {
   max-width: 120px;
   max-height: 80px;
 }
 
-/* line 199, ../../default/scss/theme/_represent.scss */
+/* line 198, ../../default/scss/theme/_represent.scss */
 .contact-repr {
   background-color: #FFF0C1;
   border: 1px solid #E0E0E0;
   padding: 0.25rem 0.5rem;
 }
-/* line 203, ../../default/scss/theme/_represent.scss */
+/* line 202, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-name {
   display: block;
   font-weight: bold;
   margin-bottom: 0.2rem;
 }
-/* line 208, ../../default/scss/theme/_represent.scss */
+/* line 207, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-info {
   white-space: nowrap;
   font-size: 0.8rem;
 }
-/* line 211, ../../default/scss/theme/_represent.scss */
+/* line 210, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-info .fa {
   padding-right: 0.4rem;
 }
 
+/* line 219, ../../default/scss/theme/_represent.scss */
+.workflow-options {
+  white-space: pre;
+}
 /* line 221, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-grey {
   color: #555;

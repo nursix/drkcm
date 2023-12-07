@@ -26,6 +26,8 @@ def config(settings):
     settings.base.theme_config = "MRCMS"
     settings.base.theme_layouts = "MRCMS"
 
+    # Custom models/controllers
+    settings.base.models = "templates.MRCMS.models"
     settings.base.rest_controllers = {("counsel", "index"): None,
                                       ("counsel", "person"): ("pr", "person"),
                                       ("counsel", "group_membership"): ("pr", "group_membership"),

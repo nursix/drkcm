@@ -33,6 +33,30 @@ def doc_image_resource(r, tablename):
     doc_set_default_organisation(r, table=table)
 
 # -------------------------------------------------------------------------
+def document_onaccept(form):
+
+    try:
+        record_id = form.vars.id
+    except AttributeError:
+        return
+
+    db = current.db
+    #s3db = current.s3db
+
+    table = db.doc_document
+    row = db(table.id == record_id).select(table.id,
+                                           table.name,
+                                           table.file,
+                                           limitby=(0, 1),
+                                           ).first()
+    if row and not row.name and row.file:
+        # Use the original file name as title
+        prop = table.file.retrieve_file_properties(row.file)
+        name = prop.get("filename")
+        if name:
+            row.update_record(name=name)
+
+# -------------------------------------------------------------------------
 def doc_document_resource(r, tablename):
 
     T = current.T
@@ -70,6 +94,12 @@ def doc_document_resource(r, tablename):
     s3db.configure("doc_document",
                    list_fields = list_fields,
                    )
+
+    # Custom onaccept to make sure the document has a title
+    s3db.add_custom_callback("doc_document",
+                             "onaccept",
+                             document_onaccept,
+                             )
 
 # -------------------------------------------------------------------------
 def dvr_document_prep(r):

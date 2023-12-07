@@ -157,7 +157,9 @@ def realm_entity(table, row):
     #    # Self-owned, OU of managing organisation (default ok)
     #    pass
 
-    elif tablename == "cr_shelter_unit":
+    elif tablename in ("cr_shelter_unit",
+                       "cr_shelter_note",
+                       ):
         realm_entity = inherit_realm(tablename, row, "cr_shelter", "shelter_id")
 
     elif tablename in ("dvr_case_activity_status",
