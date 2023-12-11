@@ -19,6 +19,8 @@ class PerformanceIndicators:
 
         self.styles = None
 
+        self.title = current.T("Performance Indicators")
+
     # -------------------------------------------------------------------------
     @staticmethod
     def compute(resource):
@@ -371,6 +373,8 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
 
         self._sector_id = None
 
+        self.title = current.T("Indikatorenbericht")
+
     # -------------------------------------------------------------------------
     def compute(self, resource):
         """
@@ -396,6 +400,107 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
                   }
 
         return output
+
+    # -------------------------------------------------------------------------
+    def export(self, resource, sheet, title, subtitle=None):
+        """
+            Export performance indicators
+
+            Args:
+                resource: the CRUDResource
+                sheet: the XLS worksheet to write to
+                title: the title for the export
+                subtitle: an optional subtitle (e.g. start+end dates)
+        """
+
+        write = self.write
+        rowindex = 0
+
+        # Title
+        write(sheet, rowindex, 0, title, style="header")
+        rowindex += 1
+
+        # Subtitle (optional)
+        if subtitle:
+            write(sheet, rowindex, 0, subtitle)
+            rowindex += 2
+        else:
+            rowindex += 1
+
+        indicators = (
+            (1, "Anzahl der Beratungen", "consultations", "total"),
+            (2, "Anzahl der beratenen Personen", "clients", "total"),
+            (3, "Anzahl der Beratungen pro VZÄ (Durchschnitt)", "consultations", "per_fte"),
+            (4, "Anzahl aller Männer", "clients", "gender", "male"),
+            (5, "Anzahl aller Frauen", "clients", "gender", "female"),
+            (6, "Anzahl aller Divers", "clients", "gender", "diverse"),
+            (7, "Anzahl aller Personen bis zum vollendeten 18. Lebensjahr", "clients", "age_group", "u18"),
+            (8, "Anzahl aller Personen vom vollendeten 18. bis zum vollendeten 27. Lebensjahr", "clients", "age_group", "18-17"),
+            (9, "Anzahl aller Personen über dem vollendeten 65. Lebensjahr", "clients", "age_group", "65+"),
+            (10, "Anzahl aller beratenen Personen aus Syrien", "clients", "nationality", "SY"),
+            (11, "Anzahl aller beratenen Personen aus Afghanistan", "clients", "nationality", "AF"),
+            (12, "Anzahl aller beratenen Personen aus Türkei", "clients", "nationality", "TR"),
+            (13, "Anzahl aller beratenen Personen aus Georgien", "clients", "nationality", "GE"),
+            (14, "Anzahl aller beratenen Personen aus Iran", "clients", "nationality", "IR"),
+            (15, "Anzahl aller beratenen Personen aus Irak", "clients", "nationality", "IQ"),
+            (16, "Anzahl aller beratenen Personen aus Russische Föderation", "clients", "nationality", "RU"),
+            (17, "Anzahl aller beratenen Personen aus Nordmazedonien", "clients", "nationality", "MK"),
+            (18, "Anzahl aller beratenen Personen aus Venezuela", "clients", "nationality", "VE"),
+            (19, "Anzahl aller beratenen Personen aus Somalia", "clients", "nationality", "SO"),
+            (20, "Anzahl aller beratenen Personen aus Eritrea", "clients", "nationality", "ER"),
+            (21, "Anzahl aller beratenen Personen aus Algerien", "clients", "nationality", "DZ"),
+            (22, "Anzahl aller beratenen Personen aus Kolumbien", "clients", "nationality", "CO"),
+            (23, "Anzahl aller beratenen Personen aus Tunesien", "clients", "nationality", "TN"),
+            (24, "Anzahl aller beratenen Personen aus Nigeria", "clients", "nationality", "NG"),
+            (25, "Anzahl aller beratenen Personen aus Ungeklärt", "clients", "nationality", None),
+            (26, "Anzahl aller beratenen Personen aus Indien", "clients", "nationality", "IN"),
+            (27, "Anzahl aller beratenen Personen aus Pakistan", "clients", "nationality", "PK"),
+            (28, "Anzahl aller beratenen Personen aus Ägypten", "clients", "nationality", "EG"),
+            (29, "Anzahl aller beratenen Personen aus Serbien", "clients", "nationality", "RS"),
+            (30, "Anzahl aller beratenen Personen aus anderen Staaten", "clients", "nationality", "*"),
+            (31, "Anzahl der Fälle bei denen eine Weiterleitung zu Beratungsstelle stattgefunden hat", "referrals", "total"),
+            (32, "Anzahl der Weiterleitung von Meldebögen zu Vulnerabilitäten an BAMF", "vulnerabilities", "VRBAMF", "reports"),
+            (33, "Davon Anzahl der Fälle zu unbegleiteten minderjährigen Ausländern", "vulnerabilities", "VRBAMF", "cases", "UAM"),
+            (34, "Davon Anzahl der Fälle zu sexueller Orientierung oder geschlechtlicher Identität", "vulnerabilities", "VRBAMF", "cases", "LGBQTi"),
+            (35, "Davon Anzahl der Fälle zu Opfer von Menschenhandel", "vulnerabilities", "VRBAMF", "cases", "VHT"),
+            (36, "Davon Anzahl der Fälle zu Opfer von Folter, Vergewaltigung oder sonstigen schweren Formen psychischer, physischer oder sexueller Gewalt", "vulnerabilities", "VRBAMF", "cases", "VT"),
+            (37, "Davon Anzahl der Fälle zu Behinderung", "vulnerabilities", "VRBAMF", "cases", "DISAB"),
+            (38, "Davon Anzahl der Fälle die keiner der oben genannten Kategorien zugewiesen werden kann", "vulnerabilities", "VRBAMF", "cases", "*"),
+            (39, "Anzahl der Weiterleitung von Vulnerabilitäten an Aufnahmeeinrichtungen", "vulnerabilities", "VRRP", "reports"),
+            (40, "Davon Anzahl der Fälle zu unbegleiteten minderjährigen Ausländern", "vulnerabilities", "VRRP", "cases", "UAM"),
+            (41, "Davon Anzahl der Fälle zu sexueller Orientierung oder geschlechtlicher identität", "vulnerabilities", "VRRP", "cases", "LGBQTi"),
+            (42, "Davon Anzahl der Fälle zu Opfer von Menschenhandel", "vulnerabilities", "VRRP", "cases", "VHT"),
+            (43, "Davon Anzahl der Fälle zu Opfer von Folter, Vergewaltigung oder sonstigen schweren Formen psychischer, physischer oder sexueller Gewalt", "vulnerabilities", "VRRP", "cases", "VT"),
+            (44, "Davon Anzahl der Fälle zu Behinderung", "vulnerabilities", "VRRP", "cases", "DISAB"),
+            (45, "Davon Anzahl der Fälle die keiner der oben genannten Kategorien zugewiesen werden kann", "vulnerabilities", "VRRP", "cases", "*"),
+            (46, "Anzahl der Beratungen mit dem Themenschwerpunkt Anhörung", "themes", "HEARING"),
+            (47, "Anzahl der Beratungen mit dem Themenschwerpunkt Bescheid", "themes", "DECISION"),
+            (48, "Anzahl der Beratungen mit dem Themenschwerpunkt Klage", "themes", "COMPLAINT"),
+            (49, "Anzahl der Beratungen mit dem Themenschwerpunkt Dublin", "themes", "DUBLIN"),
+            (50, "Anzahl der Beratungen mit dem Themenschwerpunkt Sonstiges", "themes", "*"),
+            (51, "Anzahl der Erstgespräche (Erstes Beratungsgespräch eines Falles) gesamt", "followups", "initial"),
+            (52, "Anzahl der Folgegespräche (Beratungen nach Erstberatung eines Falles) gesamt", "followups", "followup"),
+            (53, "Anzahl der Beratungen mit einer Beratungszeit unter 15 Minuten", "efforts", "<15min"),
+            (54, "Anzahl der Beratungen mit einer Beratungszeit unter 30 Minuten", "efforts", "<30min"),
+            (55, "Anzahl der Beratungen mit einer Beratungszeit unter 60 Minuten", "efforts", "<60min"),
+            )
+        data = self.compute(resource)
+
+        for indicator in indicators:
+            index, title = indicator[:2]
+
+            items = data
+            for key in indicator[2:-1]:
+                items = items.get(key)
+                if items is None:
+                    break
+            value = items.get(indicator[-1], 0) if items else 0
+
+            write(sheet, rowindex, 0, index)
+            if value is not None:
+                write(sheet, rowindex, 1, value)
+            write(sheet, rowindex, 2, title)
+            rowindex += 1
 
     # -------------------------------------------------------------------------
     # Properties and helper functions
@@ -718,7 +823,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
             nationality = row.pr_person_details.nationality
             if nationality not in nationalities:
                 nationality = "*"
-            clients[nationality] += 1
+            clients[nationality] += row[num_clients]
 
         return clients
 
@@ -1042,37 +1147,6 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
 
         return result
 
-    # -------------------------------------------------------------------------
-    def export(self, resource, sheet, title, subtitle=None):
-        """
-            Export performance indicators
-
-            Args:
-                resource: the CRUDResource
-                sheet: the XLS worksheet to write to
-                title: the title for the export
-                subtitle: an optional subtitle (e.g. start+end dates)
-        """
-
-        T = current.T
-        s3db = current.s3db
-
-        indicators = self.compute(resource)
-
-        write = self.write
-        rowindex = 0
-
-        # Title
-        write(sheet, rowindex, 0, title, style="header")
-        rowindex += 1
-
-        # Subtitle (optional)
-        if subtitle:
-            write(sheet, rowindex, 0, subtitle)
-            rowindex += 2
-        else:
-            rowindex += 1
-
 # =============================================================================
 class PerformanceIndicatorExport(CRUDMethod):
     """ REST Method to produce a response statistics data sheet """
@@ -1145,14 +1219,17 @@ class PerformanceIndicatorExport(CRUDMethod):
         # Create workbook and sheet
         book = xlwt.Workbook(encoding="utf-8")
 
-        title = s3_str(T("Performance Indicators"))
+        title = indicators.title
+        if not title:
+            title = T("Performance Indicators")
+        title = s3_str(title)
         sheet = book.add_sheet(title)
 
         # Title and Report Dates (from filter)
         dates = []
         get_vars = r.get_vars
         field = table.date
-        for fvar in ("~.start_date__ge", "~.end_date__le"):
+        for fvar in ("~.start_date__ge", "~.start_date__le"):
             dtstr = get_vars.get(fvar)
             if dtstr:
                 try:

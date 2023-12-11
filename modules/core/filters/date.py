@@ -171,6 +171,7 @@ class DateFilter(RangeFilter):
 
                 # Instantiate the widget
                 widget = S3CalendarWidget(timepicker = timepicker,
+                                          month_selector = True,
                                           minimum = minimum,
                                           maximum = maximum,
                                           set_min = set_min,
