@@ -2472,12 +2472,12 @@ class DVRResponseModel(DataModel):
                         duplicates.append(row.id)
                         if row.comments:
                             details.append(row.comments.strip())
-                        if row.hours:
+                        if row.hours is not None:
                             hours.append(row.hours)
 
                     if record.comments:
                         details.append(record.comments.strip())
-                    if record.hours:
+                    if record.hours is not None:
                         hours.append(record.hours)
 
                     record.update_record(comments = "\n\n".join(c for c in details if c),
