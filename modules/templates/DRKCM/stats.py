@@ -15,15 +15,19 @@ from core import CRUDMethod, XLSWriter, s3_decode_iso_datetime, s3_str
 class PerformanceIndicators:
     """ Default Performance Indicators Set (Base Class) """
 
+    sectors = None
+    exclude_sectors = None
+
     def __init__(self):
 
         self.styles = None
 
         self.title = current.T("Performance Indicators")
 
+        self._sector_ids = None
+
     # -------------------------------------------------------------------------
-    @staticmethod
-    def compute(resource):
+    def compute(self, resource):
         """
             Query/compute the performance indicators
 
@@ -34,35 +38,24 @@ class PerformanceIndicators:
                 dict with performance indicators (raw values)
         """
 
-        db = current.db
-        s3db = current.s3db
-
         table = resource.table
         rows = resource.select(["id"], as_rows=True)
 
         # Master query
         record_ids = set(row.id for row in rows)
-        master_query = table._id.belongs(record_ids)
+        dbset = self.dbset(record_ids,
+                           consultation = current.deployment_settings.get_dvr_response_types(),
+                           )
 
         # Total clients
         num_clients = table.person_id.count(distinct=True)
-        row = db(master_query).select(num_clients).first()
+        row = dbset.select(num_clients).first()
         total_clients = row[num_clients]
 
         # Total number of consultations, average effort per consultation
-        ttable = s3db.dvr_response_type
-        if current.deployment_settings.get_dvr_response_types():
-            join = ttable.on((ttable.id == table.response_type_id) & \
-                             (ttable.is_consultation == True))
-        else:
-            # Count all responses
-            join = None
-        num_responses = table._id.count()
+        num_responses = table._id.count(distinct=True)
         avg_hours = table.hours.avg()
-        row = db(master_query).select(num_responses,
-                                      avg_hours,
-                                      join = join,
-                                      ).first()
+        row = dbset.select(num_responses, avg_hours).first()
         total_responses = row[num_responses]
         avg_hours_per_response = row[avg_hours]
 
@@ -164,13 +157,176 @@ class PerformanceIndicators:
         row = sheet.row(rowindex)
         row.write(colindex, label, style)
 
-# =============================================================================
-class PerformanceIndicatorsLEA(PerformanceIndicators):
-    """ LEA-specific Performance Indicators Set """
+    # -------------------------------------------------------------------------
+    # Properties and helper functions
+    # -------------------------------------------------------------------------
+    @property
+    def sector_ids(self):
+        """
+            The record ID of the relevant sector (lazy property)
+
+            Returns:
+                org_sector record ID
+        """
+
+        sector_ids = self._sector_ids
+        if sector_ids is None:
+
+            table = current.s3db.org_sector
+
+            query = (table.deleted == False)
+            for exclude, sectors in enumerate((self.sectors, self.exclude_sectors)):
+                if sectors:
+                    if len(sectors) == 1:
+                        q = (table.abrv == sectors[0])
+                    else:
+                        q = (table.abrv.belongs(sectors))
+                    if exclude:
+                        q = ~q
+                    query = q & query
+
+            rows = current.db(query).select(table.id)
+            sector_ids = self._sector_ids = {row.id for row in rows}
+
+        return sector_ids
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def compute(resource):
+    def need_ids(code):
+        """
+            Returns a sub-select for dvr_need.id matching the given type code
+
+            Args:
+                code: the need type code
+
+            Returns:
+                sub-select
+        """
+
+        table = current.s3db.dvr_need
+        if isinstance(code, (tuple, set, list)):
+            query = (table.code.belongs(code))
+        else:
+            query = (table.code == code)
+        query &= (table.deleted == False)
+
+        return current.db(query)._select(table.id)
+
+    # -------------------------------------------------------------------------
+    def theme_ids(self, need=None, invert=False):
+        """
+            Returns a sub-select for the themes in the relevant sector
+
+            Args:
+                need: limit selection to themes linked to need types with
+                      this type code(s)
+                invert: invert the need filter
+
+            Returns:
+                sub-select
+        """
+
+        table = current.s3db.dvr_response_theme
+        query = (table.sector_id.belongs(self.sector_ids))
+        if need:
+            if invert:
+                query &= (~(table.need_id.belongs(self.need_ids(need))))
+            else:
+                query &= (table.need_id.belongs(self.need_ids(need)))
+        query &= (table.deleted == False)
+        return current.db(query)._select(table.id)
+
+    # -------------------------------------------------------------------------
+    def action_ids(self, subset, need=None, invert=False):
+        """
+            Returns a sub-select for actions in the subset linked to relevant
+            themes
+
+            Args:
+                subset: a pre-filtered set of dvr_response_action.id
+                need: limit selection to actions with themes linked to need
+                      types with this type code(s)
+                invert: invert the need filter
+
+            Returns:
+                sub-select
+        """
+
+        table = current.s3db.dvr_response_action_theme
+        query = (table.theme_id.belongs(self.theme_ids(need=need, invert=invert))) & \
+                (table.action_id.belongs(subset)) & \
+                (table.deleted == False)
+        return current.db(query)._select(table.action_id, distinct=True)
+
+    # -------------------------------------------------------------------------
+    def dbset(self,
+              subset,
+              consultation = True,
+              code = None,
+              indirect_closure = False,
+              need = None,
+              invert = False,
+              ):
+        """
+            Returns a Set (dbset) of relevant dvr_response_action
+
+            Args:
+                subset: a pre-filtered set of dvr_response_action.id
+                consultation: only consultation-type actions
+                code: limit selection to actions of types with this type code
+                indirect_closure: whether to include actions that have been
+                                  accomplished by participation of the client
+                                  in another action
+                need: limit selection to actions with themes linked to needs
+                      with this type code(s) (mutually exclusive with code)
+                invert: invert the need filter
+
+            Returns:
+                a Set (dbset)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Status filter
+        stable = s3db.dvr_response_status
+        query = (stable.is_closed == True)
+        if not indirect_closure:
+            query &= (stable.is_indirect_closure == False)
+        query &= (stable.is_canceled == False) & \
+                 (stable.deleted == False)
+        status_ids = db(query)._select(stable.id)
+
+        # Type filter
+        ttable = s3db.dvr_response_type
+        query = (ttable.deleted == False)
+        if consultation:
+            query = (ttable.is_consultation == True) & query
+        if code:
+            query = (ttable.code == code) & query
+        type_ids = db(query)._select(ttable.id)
+
+        # Themes filter
+        if consultation:
+            subset = self.action_ids(subset, need=need, invert=invert)
+
+        atable = s3db.dvr_response_action
+        master_query = (atable.status_id.belongs(status_ids)) & \
+                       (atable.response_type_id.belongs(type_ids)) & \
+                       (atable.id.belongs(subset)) & \
+                       (atable.deleted == False)
+
+        return db(master_query)
+
+# =============================================================================
+class PerformanceIndicatorsRP(PerformanceIndicators):
+    """ Performance Indicators Set RP (LEA) """
+
+    sectors = None
+    exclude_sectors = ("AVB",)
+
+    # -------------------------------------------------------------------------
+    def compute(self, resource):
         """
             Query/compute the performance indicators
 
@@ -180,7 +336,6 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
             Returns:
                 dict with performance indicators (raw values)
         """
-        # TODO adjust to only include efforts of SB/VB (exclude AVB-efforts)
 
         db = current.db
         s3db = current.s3db
@@ -190,20 +345,20 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
 
         # Master query
         record_ids = set(row.id for row in rows)
-        master_query = table._id.belongs(record_ids)
 
-        # Total responses
-        total_responses = len(record_ids)
-
-        # Total clients, average effort per response
-        num_clients = table.person_id.count(distinct=True)
+        # Total number of consultations, average effort per consultation
+        dbset = self.dbset(record_ids)
+        num_responses = table._id.count(distinct=True)
         avg_hours = table.hours.avg()
-
-        row = db(master_query).select(num_clients,
-                                      avg_hours,
-                                      ).first()
-        total_clients = row[num_clients]
+        row = dbset.select(num_responses, avg_hours).first()
+        total_responses = row[num_responses]
         avg_hours_per_response = row[avg_hours]
+
+        # Total clients
+        dbset = self.dbset(record_ids, indirect_closure=True)
+        num_clients = table.person_id.count(distinct=True)
+        row = dbset.select(num_clients).first()
+        total_clients = row[num_clients]
 
         # Average number of responses per client
         if total_clients:
@@ -217,26 +372,21 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
                          (ctable.household_size == 1))
 
         num_clients = table.person_id.count(distinct=True)
-
-        row = db(master_query).select(num_clients,
-                                      join = join,
-                                      ).first()
+        row = dbset.select(num_clients, join=join).first()
         singles = row[num_clients]
         families = total_clients - singles
 
         # Top 5 Nationalities
         dtable = s3db.pr_person_details
         left = dtable.on(dtable.person_id == table.person_id)
-
         nationality = dtable.nationality
         num_clients = table.person_id.count(distinct=True)
-
-        rows = db(master_query).select(nationality,
-                                       groupby = nationality,
-                                       orderby = ~num_clients,
-                                       left = left,
-                                       limitby = (0, 5),
-                                       )
+        rows = dbset.select(nationality,
+                            groupby = nationality,
+                            orderby = ~num_clients,
+                            left = left,
+                            limitby = (0, 5),
+                            )
         top_5_nationalities = [row[nationality] for row in rows]
 
         # Top 5 Needs (only possible if using themes+needs)
@@ -249,7 +399,7 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
             num_responses = ltable.action_id.count(distinct=True)
             need = ttable.need_id
 
-            query = ltable.action_id.belongs(record_ids)
+            query = ltable.action_id.belongs(dbset._select(table.id))
             rows = db(query).select(need,
                                     groupby = need,
                                     orderby = ~num_responses,
@@ -363,15 +513,15 @@ class PerformanceIndicatorsLEA(PerformanceIndicators):
 
 # =============================================================================
 class PerformanceIndicatorsBAMF(PerformanceIndicators):
+    """ Performance Indicator Set BAMF (LEA) """
 
-    sector = "AVB"
+    sectors = ("AVB",)
+    exclude_sectors = None
 
     # -------------------------------------------------------------------------
     def __init__(self):
 
         super().__init__()
-
-        self._sector_id = None
 
         self.title = current.T("Indikatorenbericht")
 
@@ -501,151 +651,6 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
                 write(sheet, rowindex, 1, value)
             write(sheet, rowindex, 2, title)
             rowindex += 1
-
-    # -------------------------------------------------------------------------
-    # Properties and helper functions
-    # -------------------------------------------------------------------------
-    @property
-    def sector_id(self):
-        """
-            The record ID of the relevant sector (lazy property)
-
-            Returns:
-                org_sector record ID
-        """
-
-        sector_id = self._sector_id
-        if sector_id is None:
-
-            table = current.s3db.org_sector
-
-            query = (table.abrv == self.sector) & (table.deleted == False)
-            row = current.db(query).select(table.id, limitby=(0, 1)).first()
-
-            sector_id = self._sector_id = row.id if row else None
-
-        return sector_id
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def need_ids(code):
-        """
-            Returns a sub-select for dvr_need.id matching the given type code
-
-            Args:
-                code: the need type code
-
-            Returns:
-                sub-select
-        """
-
-        table = current.s3db.dvr_need
-        if isinstance(code, (tuple, set, list)):
-            query = (table.code.belongs(code))
-        else:
-            query = (table.code == code)
-        query &= (table.deleted == False)
-
-        return current.db(query)._select(table.id)
-
-    # -------------------------------------------------------------------------
-    def theme_ids(self, need=None, invert=False):
-        """
-            Returns a sub-select for the themes in the relevant sector
-
-            Args:
-                need: limit selection to themes linked to need types with
-                      this type code(s)
-                invert: invert the need filter
-
-            Returns:
-                sub-select
-        """
-
-        table = current.s3db.dvr_response_theme
-        query = (table.sector_id == self.sector_id)
-        if need:
-            if invert:
-                query &= (~(table.need_id.belongs(self.need_ids(need))))
-            else:
-                query &= (table.need_id.belongs(self.need_ids(need)))
-        query &= (table.deleted == False)
-        return current.db(query)._select(table.id)
-
-    # -------------------------------------------------------------------------
-    def action_ids(self, subset, need=None, invert=False):
-        """
-            Returns a sub-select for actions in the subset linked to relevant
-            themes
-
-            Args:
-                subset: a pre-filtered set of dvr_response_action.id
-                need: limit selection to actions with themes linked to need
-                      types with this type code(s)
-                invert: invert the need filter
-
-            Returns:
-                sub-select
-        """
-
-        table = current.s3db.dvr_response_action_theme
-        query = (table.theme_id.belongs(self.theme_ids(need=need, invert=invert))) & \
-                (table.action_id.belongs(subset)) & \
-                (table.deleted == False)
-        return current.db(query)._select(table.action_id, distinct=True)
-
-    # -------------------------------------------------------------------------
-    def dbset(self, subset, code=None, indirect_closure=False, need=None, invert=False):
-        """
-            Returns a Set (dbset) of relevant dvr_response_action
-
-            Args:
-                subset: a pre-filtered set of dvr_response_action.id
-                code: limit selection to actions of types with this type code
-                      (without a code, selection is limited to consultation types)
-                indirect_closure: whether to include actions that have been
-                                  accomplished by participation of the client
-                                  in another action
-                need: limit selection to actions with themes linked to needs
-                      with this type code(s) (mutually exclusive with code)
-                invert: invert the need filter
-
-            Returns:
-                a Set (dbset)
-        """
-
-        db = current.db
-        s3db = current.s3db
-
-        # Status filter
-        stable = s3db.dvr_response_status
-        query = (stable.is_closed == True)
-        if not indirect_closure:
-            query &= (stable.is_indirect_closure == False)
-        query &= (stable.is_canceled == False) & \
-                 (stable.deleted == False)
-        status_ids = db(query)._select(stable.id)
-
-        # Type filter
-        ttable = s3db.dvr_response_type
-        if code:
-            query = (ttable.code == code)
-        else:
-            query = (ttable.is_consultation == True)
-        query &= (ttable.deleted == False)
-        type_ids = db(query)._select(ttable.id)
-
-        # Themes filter
-        if not code:
-            subset = self.action_ids(subset, need=need, invert=invert)
-
-        atable = s3db.dvr_response_action
-        master_query = (atable.status_id.belongs(status_ids)) & \
-                       (atable.response_type_id.belongs(type_ids)) & \
-                       (atable.id.belongs(subset)) & \
-                       (atable.deleted == False)
-
-        return db(master_query)
 
     # -------------------------------------------------------------------------
     # Client indicators
@@ -875,7 +880,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         s3db = current.s3db
         atable = s3db.dvr_response_action
 
-        dbset = self.dbset(subset, code=response_type)
+        dbset = self.dbset(subset, code=response_type, consultation=False)
 
         num_actions = atable.id.count(distinct=True)
         row = dbset.select(num_actions).first()
@@ -996,7 +1001,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         reports = {}
 
         # All vulnerability types linked to self.sector
-        query = (ltable.sector_id == self.sector_id) & \
+        query = (ltable.sector_id.belongs(self.sector_ids)) & \
                 (ltable.deleted == False)
         type_ids = db(query)._select(ltable.vulnerability_type_id)
 
@@ -1005,7 +1010,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         types = {row.id: row.code for row in rows}
 
         for code in response_types:
-            dbset = self.dbset(subset, code=code)
+            dbset = self.dbset(subset, code=code, consultation=False)
 
             # Count all reports
             num_reports = atable.id.count(distinct=True)
@@ -1152,7 +1157,7 @@ class PerformanceIndicatorExport(CRUDMethod):
     """ REST Method to produce a response statistics data sheet """
 
     # Custom Performance Indicator Sets
-    PISETS = {"lea": PerformanceIndicatorsLEA,
+    PISETS = {"rp": PerformanceIndicatorsRP,
               "bamf": PerformanceIndicatorsBAMF,
               }
 
@@ -1163,6 +1168,8 @@ class PerformanceIndicatorExport(CRUDMethod):
         """
 
         super().__init__()
+
+        self.suffix = pitype
 
         indicators = self.PISETS.get(pitype) if pitype else None
 
@@ -1250,9 +1257,13 @@ class PerformanceIndicatorExport(CRUDMethod):
         book.save(output)
         output.seek(0)
 
+        # Filename
+        suffix = self.suffix
+        filename = ("indicators_%s.xls" % suffix) if suffix else "indicators.xls"
+
         # Response headers
         from gluon.contenttype import contenttype
-        disposition = "attachment; filename=\"%s\"" % "indicators.xls"
+        disposition = "attachment; filename=\"%s\"" % filename
         response = current.response
         response.headers["Content-Type"] = contenttype(".xls")
         response.headers["Content-disposition"] = disposition

@@ -119,7 +119,7 @@ UI_OPTIONS = {"LEA": {"case_arrival_date_label": "Date of AKN",
                       "response_themes_details": True,
                       "response_themes_efforts": True,
                       "response_tab_need_filter": True,
-                      "response_performance_indicators": "lea",
+                      "response_performance_indicators": ("bamf", "rp"),
                       },
               }
 

@@ -2111,19 +2111,41 @@ def dvr_response_action_controller(**attr):
                 return False
 
         if not r.id:
+            # pisets = {pitype: (method, icon, title)}
+            pisets = {None: ("indicators",
+                             "line-chart",
+                             T("Performance Indicators"),
+                             ),
+                      "rp": ("indicators_rp",
+                             "line-chart",
+                             "%s %s" % (T("Performance Indicators"), "RP"),
+                             ),
+                      "bamf": ("indicators_bamf",
+                               "tachometer",
+                               "%s %s" % (T("Performance Indicators"), "BAMF"),
+                               ),
+                      }
+
             from ..stats import PerformanceIndicatorExport
-            pitype = get_ui_options().get("response_performance_indicators")
-            s3db.set_method("dvr_response_action",
-                            method = "indicators",
-                            action = PerformanceIndicatorExport(pitype),
-                            )
-            export_formats = list(settings.get_ui_export_formats())
-            export_formats.append(("indicators.xls",
-                                   "fa fa-line-chart",
-                                   T("Performance Indicators"),
-                                   ))
-            s3.formats["indicators.xls"] = r.url(method="indicators")
-            settings.ui.export_formats = export_formats
+            pitypes = get_ui_options().get("response_performance_indicators")
+            if not isinstance(pitypes, (tuple, list)):
+                pitypes = [pitypes]
+
+            for pitype in pitypes:
+                piset = pisets.get(pitype)
+                if not piset:
+                    continue
+                method, icon, title = piset
+                s3db.set_method("dvr_response_action",
+                                method = method,
+                                action = PerformanceIndicatorExport(pitype),
+                                )
+                export_formats = list(settings.get_ui_export_formats())
+                fmt = "%s.xls" % method
+                export_formats.append((fmt, "fa fa-%s" % icon, title))
+                s3.formats[fmt] = r.url(method=method)
+                settings.ui.export_formats = export_formats
+
         return result
     s3.prep = custom_prep
 
