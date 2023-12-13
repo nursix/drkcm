@@ -750,23 +750,27 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
 
         atable = s3db.dvr_response_action
         ptable = s3db.pr_person
-        join = ptable.on(ptable.id == atable.person_id)
+        join = ptable.on((ptable.id == atable.person_id) & \
+                         (ptable.date_of_birth != None))
 
-        rows = dbset.select(atable.id,
-                            atable.date,
-                            ptable.date_of_birth,
+        dob = ptable.date_of_birth.max()
+        doi = atable.date.min() # first consultation of the client
+
+        rows = dbset.select(ptable.id,
+                            dob,
+                            doi,
                             join = join,
+                            groupby = ptable.id,
                             )
         for row in rows:
-            action = row.dvr_response_action
-            client = row.pr_person
-            age = relativedelta(action.date, client.date_of_birth).years
+            age = relativedelta(row[doi], row[dob]).years
             for g in age_groups:
                 if age >= g[0] and (g[1] is None or age < g[1]):
                     age_groups[g] += 1
 
         return {"u18": age_groups[(0, 18)],
                 "18-27": age_groups[(18, 27)],
+                "27-65": age_groups[(27, 65)],
                 "65+": age_groups[(65, None)],
                 }
 
@@ -939,20 +943,37 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
                 # 50 Anzahl der Beratungen mit dem Themenschwerpunkt Sonstiges
         """
 
-        needs = ("HEARING", "DECISION", "COMPLAINT", "DUBLIN")
+        needs = ("HEARING", "DECISION", "COMPLAINT", "DUBLIN", "*")
 
-        table = current.s3db.dvr_response_action
-        num_actions = table.id.count()
+        s3db = current.s3db
+        atable = s3db.dvr_response_action
+        ltable = s3db.dvr_response_action_theme
+        ttable = s3db.dvr_response_theme
+        ntable = s3db.dvr_need
 
-        result = {}
-        for need in needs:
-            dbset = self.dbset(subset, need=need)
-            row = dbset.select(num_actions).first()
-            result[need] = row[num_actions] if row else 0
+        join = [ttable.on(ttable.id == ltable.theme_id),
+                ntable.on(ntable.id == ttable.need_id),
+                ]
 
-        dbset = self.dbset(subset, need=needs, invert=True)
-        row = dbset.select(num_actions).first()
-        result["*"] = row[num_actions] if row else 0
+        action_ids = self.dbset(subset)._select(atable.id)
+        query = (ltable.action_id.belongs(action_ids)) & \
+                (ltable.theme_id.belongs(self.theme_ids())) & \
+                (ltable.deleted == False)
+
+        num_actions = ltable.action_id.count(distinct=True)
+        rows = current.db(query).select(ntable.code,
+                                        num_actions,
+                                        join = join,
+                                        groupby = ntable.code,
+                                        )
+
+        result = {c: 0 for c in needs}
+        for row in rows:
+            code = row[ntable.code]
+            if code in needs:
+                result[code] = row[num_actions]
+            else:
+                result["*"] += row[num_actions]
 
         return result
 
