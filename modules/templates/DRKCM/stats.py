@@ -753,14 +753,14 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         join = ptable.on(ptable.id == atable.person_id)
 
         rows = dbset.select(atable.id,
-                            atable.date,
+                            atable.start_date,
                             ptable.date_of_birth,
                             join = join,
                             )
         for row in rows:
             action = row.dvr_response_action
             client = row.pr_person
-            age = relativedelta(action.date, client.date_of_birth).years
+            age = relativedelta(action.start_date, client.date_of_birth).years
             for g in age_groups:
                 if age >= g[0] and (g[1] is None or age < g[1]):
                     age_groups[g] += 1
