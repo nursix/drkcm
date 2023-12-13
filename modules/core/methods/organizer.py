@@ -671,6 +671,7 @@ class S3Organizer(CRUDMethod):
                 "end": end_rfield,
                 "start_editable": config.get("start_editable", True),
                 "duration_editable": config.get("duration_editable", True),
+                "reload_on_update": bool(config.get("reload_on_update")),
                 "use_time": use_time,
                 "title": represent,
                 "description": description,

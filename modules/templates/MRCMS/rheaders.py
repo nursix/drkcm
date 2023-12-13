@@ -8,7 +8,7 @@ from gluon import current, A, I, URL, SPAN
 
 from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 
-from .helpers import hr_details
+from .helpers import client_name_age, hr_details, last_seen_represent
 
 # =============================================================================
 def dvr_rheader(r, tabs=None):
@@ -72,6 +72,7 @@ def dvr_rheader(r, tabs=None):
                             # seized_item
 
                             # Both
+                            # "document"
                             # "case_note"
                             ]
 
@@ -83,20 +84,24 @@ def dvr_rheader(r, tabs=None):
                                          (T("Measures"), "response_action"),
                                          ])
                     else:
-                        tabs.insert(2, (T("ID"), "identity"))
-                        # TODO activate when implemented
-                        #if has_roles(("CASE_ADMIN",)):
-                        #    tabs.append((T("Events"), "case_event"))
+                        tabs[2:2] = [(T("ID"), "identity"),
+                                     (T("Service Contacts"), "service_contact"),
+                                     ]
+                        if has_roles(("CASE_ADMIN",)):
+                            tabs.append((T("Events"), "case_event"))
                         if has_roles(("SHELTER_ADMIN", "SHELTER_MANAGER")):
                             tabs.append((T("Presence"), "site_presence_event"))
                         tabs.extend([(T("Photos"), "image"),
                                      #(T("Confiscation"), "seized_item"),
                                      ])
 
-                    tabs.append((T("Notes"), "case_note"))
+                    tabs.extend([(T("Documents"), "document/"),
+                                 (T("Notes"), "case_note"),
+                                 ])
 
                 case = resource.select(["dvr_case.status_id",
                                         "dvr_case.archived",
+                                        "dvr_case.reference",
                                         "dvr_case.household_size",
                                         #"dvr_case.transferable",
                                         "dvr_case.last_seen_on",
@@ -116,6 +121,7 @@ def dvr_rheader(r, tabs=None):
                     case = case[0]
                     raw = case["_row"]
 
+                    case_reference = lambda row: case["dvr_case.reference"]
                     nationality_label = case["pr_person_details.nationality"]
                     nationality = lambda row: SPAN(raw["pr_person_details.nationality"],
                                                    _title = nationality_label,
@@ -133,33 +139,32 @@ def dvr_rheader(r, tabs=None):
                         shelter = lambda row: A(shelter_name, _href=shelter_url)
                     else:
                         shelter = lambda row: shelter_name
-
                     unit = lambda row: case["cr_shelter_registration.shelter_unit_id"]
-                    last_seen_on = lambda row: case["dvr_case.last_seen_on"]
 
-                    # TODO reinstate when fixed
-                    #absence = lambda row: case["pr_person.absence"]
+                    # Represent last-seen-date as warning, if too long ago
+                    last_seen_on = lambda row: \
+                                   last_seen_represent(raw["dvr_case.last_seen_on"],
+                                                       case["dvr_case.last_seen_on"],
+                                                       )
                 else:
                     # Target record exists, but doesn't match filters
                     return None
 
-                # TODO Refactor:
-                # - presence and shelter information only if the organisation has a shelter
-                # - presence and last_seen_on requires privileged role
                 rheader_fields = [[(T("ID"), "pe_label"),
-                                   (T("Case Status"), case_status),
+                                   (T("Principal Ref.No."), case_reference),
                                    (T("Shelter"), shelter),
                                    ],
                                   ["date_of_birth",
-                                   (T("Size of Family"), household_size),
+                                   (T("Case Status"), case_status),
                                    (T("Housing Unit"), unit),
                                    ],
                                   [(T("Nationality"), nationality),
-                                   ("", None), #(T("Absent##presence"), absence),
+                                   (T("Size of Family"), household_size),
                                    (T("Last seen on"), last_seen_on),
                                    ],
                                   ]
 
+                icon = link = None
                 if raw["dvr_case.archived"]:
                     rheader_fields.insert(0, [(None, hint)])
 
@@ -172,8 +177,6 @@ def dvr_rheader(r, tabs=None):
                      has_permission("read", "pr_person", c="dvr", f="person", record_id=record.id):
                     icon = "arrow-circle-left"
                     link = A(T("Manage"), _href=URL(c="dvr", f="person", args=[record.id]))
-                else:
-                    icon = link = None
                 if link:
                     # TODO move CSS into theme
                     link.insert(0, I(_class = "fa fa-%s" % icon,
@@ -181,7 +184,7 @@ def dvr_rheader(r, tabs=None):
                                      ))
                     rheader_fields.append([(None, lambda item: link, 6)])
 
-                rheader_title = s3_fullname
+                rheader_title = client_name_age
 
                 # Generate rheader XML
                 rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
@@ -299,6 +302,7 @@ def cr_rheader(r, tabs=None):
                 tabs = [(T("Basic Details"), None, {}, "read"),
                         (T("Overview"), "overview"),
                         (T("Housing Units"), "shelter_unit"),
+                        (T("Journal"), "shelter_note"),
                         (T("Images"), "image"),
                         (T("Documents"), "document"),
                         ]

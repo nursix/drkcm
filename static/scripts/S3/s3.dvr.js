@@ -687,23 +687,8 @@
                 self = this;
 
             // Events for outside elements
-            var zxingButton = $('.zxing-button'),
-                eventTypeToggle = $('#event-type-toggle'),
+            var eventTypeToggle = $('#event-type-toggle'),
                 eventTypeSelector = $('#event-type-selector');
-
-            if (navigator.userAgent.toLowerCase().indexOf("android") == -1) {
-                // Disable Zxing-button if not Android
-                zxingButton.addClass('disabled').on('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                });
-            } else {
-                // Clear alert space when launching Zxing
-                zxingButton.on('click' + ns, function() {
-                    self._clearAlert();
-                });
-            }
 
             // Toggle event type selector
             eventTypeToggle.on('click' + ns, function() {
@@ -732,15 +717,6 @@
                 if ($(prefix + '_person__row .controls').text()) {
                     self._toggleSubmit(true);
                 }
-
-                // Update Zxing URL
-                zxingButton.each(function() {
-                    var $zxing = $(this),
-                        urlTemplate = $zxing.data('tmp');
-                    if (urlTemplate) {
-                        $zxing.attr('href', urlTemplate.replace('%7BEVENT%7D', code));
-                    }
-                });
 
                 // Hide event type selector
                 eventTypeSelector.slideUp();
@@ -805,7 +781,6 @@
                 ns = this.eventNamespace,
                 prefix = this.idPrefix;
 
-            $('.zxing-button').off(ns).off('click');
             $('#event-type-toggle').off(ns);
             $('#event-type-selector').find('a.event-type-selector').off(ns);
 

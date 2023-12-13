@@ -732,7 +732,7 @@ class CRReceptionCenterModel(DataModel):
 
         return DIV("%s%%" % value,
                    DIV(_class="occupancy %s" % css_class),
-                   _class="occupancy-bar",
+                   _class = "occupancy-bar",
                    )
 
 # =============================================================================
@@ -819,7 +819,6 @@ class CapacityOverview(CRUDMethod):
                            "allocable_capacity",
                            "population",
                            "population_unregistered",
-                           #"free_capacity",
                            "free_allocable_capacity",
                            "comments",
                            "occupancy_rate",
@@ -831,12 +830,17 @@ class CapacityOverview(CRUDMethod):
             list_fields = [(T("Place"), "location_id$L3"),
                            (T("Facility"), "name"),
                            "status",
-                           (T("Capacity"), "allocable_capacity_estimate"),
+                           "capacity",
+                           "allocable_capacity_estimate",
+                           "allocable_capacity",
                            "population",
                            "population_unregistered",
-                           (T("Free Capacity"), "free_capacity_estimate"), # Custom
+                           #(T("Free Capacity"), "free_capacity_estimate"), # Custom
+                           "free_allocable_capacity",
                            "comments",
-                           (T("Occupancy %"), "occupancy_rate_estimate"), # Custom
+                           #(T("Occupancy %"), "occupancy_rate_estimate"), # Custom
+                           "occupancy_rate",
+                           "utilization_rate",
                            ]
 
         # Extract the data (least occupied facilities first)

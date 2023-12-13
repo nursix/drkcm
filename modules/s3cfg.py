@@ -2158,6 +2158,7 @@ class S3Config(Storage):
     def get_ui_datatables_pagelength(self):
         """
             Default (minimum) pagelength for datatables
+            - set to -1 to show all records by default
         """
 
         return self.ui.get("datatables_pagelength", 25)
@@ -3615,6 +3616,13 @@ class S3Config(Storage):
         """
         return self.dvr.get("label", None)
 
+    def get_dvr_case_reference_unique(self):
+        """
+            Whether case reference numbers must be unique within
+            the case (root) organisation
+        """
+        return self.dvr.get("case_reference_unique", False)
+
     # Case Details ----------------------------------------
 
     def get_dvr_household_size(self):
@@ -3685,6 +3693,12 @@ class S3Config(Storage):
         return self.__lazy("dvr", "need_types_org_specific", False)
 
     # Appointments ----------------------------------------
+
+    def get_dvr_appointments_use_time(self):
+        """
+            Use date+time (start/end) in case appointments
+        """
+        return self.dvr.get("appointments_use_time", False)
 
     def get_dvr_appointment_types_org_specific(self):
         """

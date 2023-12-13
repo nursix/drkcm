@@ -1,7 +1,10 @@
-Type,SubType,Default,Consultation,Comments
-Persönliches Gespräch,Erstgespräch,false,true,Initial Consultation
-Persönliches Gespräch,Erstgespräch mit Dolmetscher,false,true,Initial Consultation with Interpreter
-Persönliches Gespräch,Folgegespräch,true,true,Follow-up Consultation
-Persönliches Gespräch,Folgegespräch mit Dolmetscher,false,true,Follow-up Consultation with Interpreter
-Sonstiger Kontakt,Sonstiger Kontakt mit Klient,false,false,Other Contact with Client
-Sonstiger Kontakt,Sonstiger Kontakt mit Umfeld,false,false,Other Contact
+Type,SubType,Code,Default,Consultation,Comments
+Persönliches Gespräch,Erstgespräch,INI,false,true,Initial Consultation
+Persönliches Gespräch,Erstgespräch mit Dolmetscher,INI,false,true,Initial Consultation with Interpreter
+Persönliches Gespräch,Folgegespräch,FUP,true,true,Follow-up Consultation
+Persönliches Gespräch,Folgegespräch mit Dolmetscher,FUP,false,true,Follow-up Consultation with Interpreter
+Sonstiger Kontakt,Sonstiger Kontakt mit Klient,OCC,false,false,Other Contact with Client
+Sonstiger Kontakt,Sonstiger Kontakt mit Umfeld,OCE,false,false,Other Contact
+Vulnerabilitäten,Meldung an BAMF,VRBAMF,false,false,Report of Vulnerabilities to BAMF
+Vulnerabilitäten,Meldung an RP/Aufnahmeeinrichtung,VRRP,false,false,Report of Vulnerabilities to other agency
+Weiterleitung,Weiterleitung an Beratungsstelle,REF,false,false,Referral to other consultancy

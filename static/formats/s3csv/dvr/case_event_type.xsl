@@ -11,12 +11,20 @@
          Branch......................string..........Organisation Branch Name (optional)
          ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
 
+         Event Class.................string..........Event Class (A|C|F)
          Code........................string..........Type Code
          Name........................string..........Type Name
          Inactive....................string..........is currently not selectable
                                                      true|false
          Default.....................string..........is default type
                                                      true|false
+         Multiple....................string..........allow registration for multiple
+                                                     family members at once
+                                                     true|false
+         Residents Only..............string..........allow registration only for currently
+                                                     checked-in shelter residents
+                                                     true|false
+
          Minimum Interval............number..........minimum interval (hours)
          Maximum per Day.............integer.........maximum number per day
          Excluded By.................string..........comma-separated list of event
@@ -67,6 +75,11 @@
                 </xsl:attribute>
             </reference>
 
+            <xsl:variable name="event_class" select="col[@field='Event Class']/text()"/>
+            <data field="event_class">
+                <xsl:value-of select="$event_class"/>
+            </data>
+
             <data field="code">
                 <xsl:value-of select="$Code"/>
             </data>
@@ -96,6 +109,34 @@
                 <xsl:attribute name="value">
                     <xsl:choose>
                         <xsl:when test="$is_default='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+
+            <xsl:variable name="multiple" select="col[@field='Multiple']/text()"/>
+            <data field="register_multiple">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="$multiple='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="'false'"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+
+            <xsl:variable name="residents" select="col[@field='Residents Only']/text()"/>
+            <data field="residents_only">
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="$residents='true'">
                             <xsl:value-of select="'true'"/>
                         </xsl:when>
                         <xsl:otherwise>

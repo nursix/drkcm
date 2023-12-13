@@ -1,9 +1,10 @@
-Position,Status,Default,Closed,Canceled,Default Closure,Color,Comments
-1,Planned,true,false,false,false,8f3d5e,Response action is planned
-2,In Progress,false,false,false,false,c85583,Response action is in progress
-3,On Hold,false,false,false,false,fc6900,Response action is waiting for something (e.g. a document to be produced)
-4,Completed,false,true,false,true,a0d0a0,Response action is completed
-5,Canceled,false,true,true,false,e0e0e0,Response action canceled
-6,Canceled (failed to appear),false,true,true,false,e0e0e0,Response action canceled because client failed to appear
-7,Canceled (excused),false,true,true,false,e0e0e0,"Response action canceled, client have excused themselves"
-8,Obsolete,false,true,true,false,e0e0e0,Response action is no longer required
+Position,Status,Default,Closed,Canceled,Default Closure,Indirect Closure,Color,Comments
+1,Planned,true,false,false,false,false,8f3d5e,Response action is planned
+2,In Progress,false,false,false,false,false,c85583,Response action is in progress
+3,On Hold,false,false,false,false,false,fc6900,Response action is waiting for something (e.g. a document to be produced)
+4,Completed,false,true,false,true,false,a0d0a0,Response action is completed
+5,Participated,false,true,false,false,true,bfd0a0,Response action completed by client’s participation in another action
+6,Canceled,false,true,true,false,false,e0e0e0,Response action canceled
+7,Canceled (failed to appear),false,true,true,false,false,e0e0e0,Response action canceled because client failed to appear
+8,Canceled (excused),false,true,true,false,false,e0e0e0,"Response action canceled, client have excused themselves"
+9,Obsolete,false,true,true,false,false,e0e0e0,Response action is no longer required

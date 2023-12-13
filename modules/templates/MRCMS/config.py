@@ -4,8 +4,6 @@
     License: MIT
 """
 
-import datetime
-
 from collections import OrderedDict
 
 from gluon import current
@@ -28,9 +26,12 @@ def config(settings):
     settings.base.theme_config = "MRCMS"
     settings.base.theme_layouts = "MRCMS"
 
+    # Custom models/controllers
+    settings.base.models = "templates.MRCMS.models"
     settings.base.rest_controllers = {("counsel", "index"): None,
                                       ("counsel", "person"): ("pr", "person"),
                                       ("counsel", "group_membership"): ("pr", "group_membership"),
+                                      ("counsel", "document"): ("doc", "document"),
                                       ("counsel", "need"): ("dvr", "need"),
                                       ("counsel", "response_type"): ("dvr", "response_type"),
                                       ("counsel", "response_theme"): ("dvr", "response_theme"),
@@ -213,9 +214,11 @@ def config(settings):
     # DOC Settings and Customizations
     #
     from .customise.doc import doc_document_resource, \
+                               doc_document_controller, \
                                doc_image_resource
 
     settings.customise_doc_document_resource = doc_document_resource
+    settings.customise_doc_document_controller = doc_document_controller
     settings.customise_doc_image_resource = doc_image_resource
 
     # -------------------------------------------------------------------------
@@ -225,6 +228,9 @@ def config(settings):
     settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<family>[^,]*),(?P<last_name>[^,]*),(?P<first_name>[^,]*),(?P<date_of_birth>[^,]*),.*"
     # Uncomment this to enable household size in cases, set to "auto" for automatic counting
     settings.dvr.household_size = "auto"
+
+    settings.dvr.case_include_activity_docs = False
+    settings.dvr.case_include_group_docs = True
 
     # Manage case flags
     settings.dvr.case_flags = True
@@ -238,8 +244,10 @@ def config(settings):
     # Case events can close appointments
     settings.dvr.case_events_close_appointments = True
     # Exclude FOOD and SURPLUS-MEALS events from event registration
-    #settings.dvr.event_registration_exclude_codes = ("FOOD*", "SURPLUS-MEALS")
+    settings.dvr.event_registration_exclude_codes = ("FOOD*",)
 
+    # Use date+time (start/end) in appointments
+    settings.dvr.appointments_use_time = True
     # Use org-specific appointment types
     settings.dvr.appointment_types_org_specific = True
     # Appointments can be marked as mandatory
@@ -317,9 +325,10 @@ def config(settings):
                                dvr_case_event_controller, \
                                dvr_case_appointment_type_controller, \
                                dvr_case_event_type_resource, \
+                               dvr_case_event_type_controller, \
                                dvr_case_flag_controller, \
                                dvr_note_resource, \
-                               dvr_site_activity_resource
+                               dvr_service_contact_resource
 
     settings.customise_dvr_home = dvr_home
     settings.customise_dvr_case_resource = dvr_case_resource
@@ -332,10 +341,11 @@ def config(settings):
 
     settings.customise_dvr_case_appointment_type_controller = dvr_case_appointment_type_controller
     settings.customise_dvr_case_event_type_resource = dvr_case_event_type_resource
+    settings.customise_dvr_case_event_type_controller = dvr_case_event_type_controller
     settings.customise_dvr_case_flag_controller = dvr_case_flag_controller
 
     settings.customise_dvr_note_resource = dvr_note_resource
-    settings.customise_dvr_site_activity_resource = dvr_site_activity_resource
+    settings.customise_dvr_service_contact_resource = dvr_service_contact_resource
 
     # -------------------------------------------------------------------------
     # Human Resource Module Settings
@@ -436,50 +446,6 @@ def config(settings):
     from .customise.security import security_seized_item_resource
 
     settings.customise_security_seized_item_resource = security_seized_item_resource
-
-    # -------------------------------------------------------------------------
-    def org_site_check(site_id):
-        """ Custom tasks for scheduled site checks """
-
-        # Update transferability
-        from .controllers import update_transferability
-        result = update_transferability(site_id=site_id)
-
-        # Log the result
-        msg = "Update Transferability: " \
-              "%s transferable cases found for site %s" % (result, site_id)
-        current.log.info(msg)
-
-        # Check whether we have a site activity report for yesterday
-        YESTERDAY = current.request.utcnow.date() - datetime.timedelta(1)
-        rtable = current.s3db.dvr_site_activity
-        query = (rtable.date == YESTERDAY) & \
-                (rtable.site_id == site_id) & \
-                (rtable.deleted != True)
-        row = current.db(query).select(rtable.id,
-                                       limitby = (0, 1)
-                                       ).first()
-        if not row:
-            # Create one
-            from .helpers import MRCMSSiteActivityReport
-            report = MRCMSSiteActivityReport(date = YESTERDAY,
-                                           site_id = site_id,
-                                           )
-            # Temporarily override authorization,
-            # otherwise the report would be empty
-            auth = current.auth
-            auth.override = True
-            try:
-                record_id = report.store()
-            except:
-                record_id = None
-            auth.override = False
-            if record_id:
-                current.log.info("Residents Report created, record ID=%s" % record_id)
-            else:
-                current.log.error("Could not create Residents Report")
-
-    settings.org.site_check = org_site_check
 
     # -------------------------------------------------------------------------
     # Comment/uncomment modules here to disable/enable them

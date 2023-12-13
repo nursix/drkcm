@@ -2,6 +2,7 @@ from .base import *
 from .anonymize import *
 from .cico import *
 from .crud import *
+from .checkpoint import Checkpoint
 from .filtermgr import *
 from .grouped import *
 from .hcrud import *

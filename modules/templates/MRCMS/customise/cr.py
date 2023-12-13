@@ -4,6 +4,8 @@
     License: MIT
 """
 
+from collections import OrderedDict
+
 from gluon import current, URL, DIV, H4, P, TAG
 
 from core import S3CRUD, FS, IS_ONE_OF, \
@@ -327,6 +329,7 @@ def cr_shelter_resource(r, tablename):
                                      f ="shelter",
                                      args = ["[id]", "shelter_unit"],
                                      ),
+                   ignore_master_access = ("shelter_note",),
                    )
 
     # Shelter overview method
@@ -346,15 +349,29 @@ def cr_shelter_resource(r, tablename):
 def cr_shelter_controller(**attr):
 
     T = current.T
-    s3 = current.response.s3
+    auth = current.auth
+    s3db = current.s3db
 
+    s3 = current.response.s3
     settings = current.deployment_settings
+
+    is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
+    is_shelter_admin = auth.s3_has_role("SHELTER_ADMIN")
+
+    # Custom components
+    s3db.add_components("cr_shelter",
+                        cr_shelter_note = "shelter_id",
+                        )
 
     # Custom prep
     standard_prep = s3.prep
     def custom_prep(r):
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
+
+        if is_org_group_admin and r.component_name != "shelter_note":
+            # Show all records by default
+            settings.ui.datatables_pagelength = -1
 
         if r.method == "presence":
             # Configure presence event callbacks
@@ -405,25 +422,44 @@ def cr_shelter_controller(**attr):
                                      deletable = False,
                                      )
 
+        if r.component_name != "document":
+            # Customise doc_document in any case (for inline-attachments)
+            r.customise_resource("doc_document")
+
         if not r.component:
             # Open shelter basic details in read mode
             settings.ui.open_read_first = True
 
-        #elif r.component_name == "shelter_unit":
-            ## Expose "transitory" flag for housing units
-            #utable = current.s3db.cr_shelter_unit
-            #field = utable.transitory
-            #field.readable = field.writable = True
+        elif r.component_name == "shelter_unit":
 
-            ## Custom list fields
-            #list_fields = [(T("Name"), "name"),
-                           #"transitory",
-                           #"capacity",
-                           #"population",
-                           #"blocked_capacity",
-                           #"available_capacity",
-                           #]
-            #r.component.configure(list_fields=list_fields)
+            if is_shelter_admin:
+                from core import OptionsFilter, TextFilter
+                r.component.configure(
+                    filter_widgets = [
+                        TextFilter(["name", "comments"],
+                                   label = T("Search"),
+                                   ),
+                        OptionsFilter("status",
+                                      options = OrderedDict((("1", T("Available")),
+                                                             ("2", T("Not allocable")),
+                                                             ("3", T("Closed"))
+                                                             )),
+                                      default = [1, 2],
+                                      cols = 3,
+                                      sort = False,
+                                      ),
+                        ]
+                    )
+                settings.search.filter_manager = False
+            else:
+                r.component.add_filter(FS("status") != 3)
+
+        elif r.component_name == "shelter_note":
+            settings.ui.open_read_first = True
+            current.s3db.cr_configure_shelter_note_form(r)
+
+        elif r.component_name == "document":
+            r.component.add_filter(FS("doc_id") == None)
 
         return result
     s3.prep = custom_prep
@@ -471,6 +507,11 @@ def cr_shelter_controller(**attr):
     from ..rheaders import cr_rheader
     attr = dict(attr)
     attr["rheader"] = cr_rheader
+
+    # Activate filters on component tabs
+    attr["hide_filter"] = {"shelter_unit": not is_shelter_admin,
+                           "shelter_note": False,
+                           }
 
     return attr
 
@@ -611,7 +652,7 @@ def cr_shelter_unit_controller(**attr):
                                         limitby = (0, 1),
                                         orderby = ~rtable.id,
                                         ).first()
-                current_unit = reg.shelter_unit_id
+                current_unit = reg.shelter_unit_id if reg else None
             else:
                 current_unit = None
 

@@ -655,8 +655,8 @@ class DVRCaseModel(DataModel):
     @staticmethod
     def case_onvalidation(form):
         """
-            Case onvalidation:
-                - make sure case numbers are unique within the organisation
+            Case form validation:
+                - make sure case numbers are unique within the (root) organisation
 
             Args:
                 form: the FORM
@@ -664,74 +664,46 @@ class DVRCaseModel(DataModel):
 
         db = current.db
         s3db = current.s3db
+        settings = current.deployment_settings
 
         # Read form data
-        form_vars = form.vars
-        if "id" in form_vars:
-            # Inline subtable update
-            record_id = form_vars.id
-        elif hasattr(form, "record_id"):
-            # Regular update form
-            record_id = form.record_id
-        else:
-            # New record
-            record_id = None
+        record_id = get_form_record_id(form)
+
         try:
-            reference = form_vars.reference
+            reference = form.vars.reference
         except AttributeError:
             reference = None
 
-        if reference:
-            # Make sure the case reference is unique within the organisation
+        if reference and settings.get_dvr_case_reference_unique():
 
-            ctable = s3db.dvr_case
-            otable = s3db.org_organisation
+            # Make sure the case reference is unique within the (root) organisation
+            table = s3db.dvr_case
+            data = get_form_record_data(form, table, ["organisation_id"])
+            organisation_id = data.get("organisation_id")
 
-            # Get the organisation_id
-            if "organisation_id" not in form_vars:
-                if not record_id:
-                    # Create form with hidden organisation_id
-                    # => use default
-                    organisation_id = ctable.organisation_id.default
-                else:
-                    # Reload the record to get the organisation_id
-                    query = (ctable.id == record_id)
-                    row = db(query).select(ctable.organisation_id,
-                                           limitby = (0, 1)).first()
-                    if not row:
-                        return
-                    organisation_id = row.organisation_id
-            else:
-                # Use the organisation_id in the form
-                organisation_id = form_vars.organisation_id
-
-            # Case duplicate query
-            dquery = (ctable.reference == reference) & \
-                     (ctable.deleted != True)
-            if record_id:
-                dquery &= (ctable.id != record_id)
-            msg = current.T("This Case Number is already in use")
-
-            # Add organisation query to duplicate query
+            # Use root organisation for cases of all branches
             if current.deployment_settings.get_org_branches():
-                # Get the root organisation
+                otable = s3db.org_organisation
                 query = (otable.id == organisation_id)
                 row = db(query).select(otable.root_organisation,
-                                    limitby = (0, 1)).first()
-                root_organisation = row.root_organisation \
-                                    if row else organisation_id
-                dquery &= (otable.root_organisation == root_organisation)
-                left = otable.on(otable.id == ctable.organisation_id)
-            else:
-                dquery &= (ctable.organisation_id == organisation_id)
-                left = None
+                                       limitby = (0, 1),
+                                       ).first()
+                root_org = row.root_organisation if row else organisation_id
+                if root_org:
+                    organisation_id = root_org
+
+            # Case duplicate query
+            dquery = (table.reference == reference)
+            if record_id:
+                dquery &= (table.id != record_id)
+            dquery &= (table.organisation_id == organisation_id) & \
+                      (table.deleted == False)
 
             # Is there a record with the same reference?
-            row = db(dquery).select(ctable.id,
-                                    left = left,
-                                    limitby = (0, 1)).first()
+            row = db(dquery).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors["reference"] = msg
+                msg = current.T("This Case Number is already in use")
+                form.errors.reference = msg
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -1027,8 +999,21 @@ class DVRCaseFlagModel(DataModel):
         if flags_org_specific:
             list_fields.insert(1, "organisation_id")
 
+        # Filter widgets
+        filter_widgets = [TextFilter(["name",
+                                      "instructions",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                           OptionsFilter("organisation_id",
+                                         hidden = True,
+                                         ),
+                          ]
+
         # Table configuration
         configure(tablename,
+                  filter_widgets = filter_widgets,
                   list_fields = list_fields,
                   update_realm = True,
                   deduplicate = S3Duplicate(primary = ("name",),
@@ -1131,6 +1116,14 @@ class DVRNeedsModel(DataModel):
                      Field("name",
                            label = T("Name"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
+                           ),
+                     Field("code",
+                           label = T("Code"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(64, minsize=1)),
+                           represent = lambda v, row=None: v if v else "-",
+                           # Enable in template as required:
+                           readable = False,
+                           writable = False,
                            ),
                      # Activate in template as needed:
                      self.org_organisation_id(readable = False,
@@ -1532,6 +1525,14 @@ class DVRResponseModel(DataModel):
                      Field("name",
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
                            ),
+                     Field("code",
+                           label = T("Code"),
+                           requires = IS_EMPTY_OR(IS_LENGTH(64, minsize=1)),
+                           represent = lambda v, row=None: v if v else "-",
+                           # Enable in template as required:
+                           readable = False,
+                           writable = False,
+                           ),
                      # This form of hierarchy may not work on all databases:
                      Field("parent", "reference dvr_response_type",
                            label = T("Subtype of"),
@@ -1634,6 +1635,11 @@ class DVRResponseModel(DataModel):
                      Field("is_default_closure", "boolean",
                            default = False,
                            label = T("Default Closure Status"),
+                           represent = BooleanRepresent(),
+                           ),
+                     Field("is_indirect_closure", "boolean",
+                           default = False,
+                           label = T("Indirect Closure Status"),
                            represent = BooleanRepresent(),
                            ),
                      Field("color",
@@ -3486,6 +3492,7 @@ class DVRCaseAppointmentModel(DataModel):
         configure = self.configure
         define_table = self.define_table
 
+        use_time = settings.get_dvr_appointments_use_time()
         appointment_types_org_specific = settings.get_dvr_appointment_types_org_specific()
         mandatory_appointments = settings.get_dvr_mandatory_appointments()
         update_case_status = settings.get_dvr_appointments_update_case_status()
@@ -3564,8 +3571,20 @@ class DVRCaseAppointmentModel(DataModel):
                      CommentsField(),
                      )
 
+        # Filter widgets
+        filter_widgets = [TextFilter(["name",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                           OptionsFilter("organisation_id",
+                                         hidden = True,
+                                         ),
+                          ]
+
         # Table configuration
         configure(tablename,
+                  filter_widgets = filter_widgets,
                   update_realm = True,
                   deduplicate = S3Duplicate(primary = ("name",),
                                             secondary = ("organisation_id",),
@@ -3630,8 +3649,25 @@ class DVRCaseAppointmentModel(DataModel):
                                        ),
                      appointment_type_id(empty = False,
                                          ),
+
+                     # Date/Time
                      DateField(label = T("Planned on"),
+                               readable = not use_time,
+                               writable = not use_time,
                                ),
+                     DateTimeField("start_date",
+                                   label = T("Date"),
+                                   set_min = "#dvr_case_appointment_end_date",
+                                   readable = use_time,
+                                   writable = use_time,
+                                   ),
+                     DateTimeField("end_date",
+                                   label = T("End"),
+                                   set_max = "#dvr_case_appointment_start_date",
+                                   readable = use_time,
+                                   writable = use_time,
+                                   ),
+
                      # Activate in template as needed:
                      self.hrm_human_resource_id(comment = None,
                                                 widget = None,
@@ -3678,9 +3714,6 @@ class DVRCaseAppointmentModel(DataModel):
                   onvalidation = self.case_appointment_onvalidation,
                   )
 
-        # @todo: onaccept to change status "planning" to "planned" if a date
-        #        has been entered, and vice versa
-
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
@@ -3702,6 +3735,7 @@ class DVRCaseAppointmentModel(DataModel):
     def case_appointment_onvalidation(form):
         """
             Validate appointment form
+                - Start date must be before end date
                 - Future appointments can not be set to completed
                 - Undated appointments can not be set to completed
 
@@ -3709,16 +3743,38 @@ class DVRCaseAppointmentModel(DataModel):
                 form: the FORM
         """
 
-        formvars = form.vars
+        T = current.T
 
-        date = formvars.get("date")
-        status = formvars.get("status")
+        use_time = current.deployment_settings.get_dvr_appointments_use_time()
+        if use_time:
+            fields = ["start_date", "end_date", "status"]
+        else:
+            fields = ["date", "status"]
+
+        table = current.s3db.dvr_case_appointment
+        data = get_form_record_data(form, table, fields)
+        status = data["status"]
+        now = current.request.utcnow
+
+        if use_time:
+            start, end = data["start_date"], data["end_date"]
+            if start and end and start >= end:
+                if "end_date" in form.vars:
+                    form.errors.end_date = T("End date must be after start date")
+                else:
+                    form.errors.start_date = T("Start date must be before end date")
+            date = start
+            date_field = "start_date"
+        else:
+            date = data["date"]
+            date_field = "date"
+            now = now.date()
 
         if str(status) == "4":
             if date is None:
-                form.errors["date"] = current.T("Date is required when marking the appointment as completed")
-            elif date > current.request.utcnow.date():
-                form.errors["status"] = current.T("Appointments with future dates can not be marked as completed")
+                form.errors[date_field] = T("Date is required when marking the appointment as completed")
+            elif date > now:
+                form.errors["status"] = T("Appointments with future dates can not be marked as completed")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -3738,11 +3794,10 @@ class DVRCaseAppointmentModel(DataModel):
         if not record_id:
             return
 
-        formvars = form.vars
-
         db = current.db
         s3db = current.s3db
         settings = current.deployment_settings
+        use_time = settings.get_dvr_appointments_use_time()
 
         # Reload the record
         table = s3db.dvr_case_appointment
@@ -3750,6 +3805,8 @@ class DVRCaseAppointmentModel(DataModel):
                                                   table.case_id,
                                                   table.person_id,
                                                   table.date,
+                                                  table.start_date,
+                                                  table.end_date,
                                                   table.status,
                                                   limitby = (0, 1),
                                                   ).first()
@@ -3757,98 +3814,110 @@ class DVRCaseAppointmentModel(DataModel):
         person_id = record.person_id
         case_id = record.case_id
 
-        # Fix up status+date to plausible combination
-        today = current.request.utcnow.date()
-        date = record.date
+        # Fix status/date to plausible combinations
+        now = current.request.utcnow
+        today = now.date()
+        time_window = AppointmentEvent.time_window
+
         status = record.status
+        update = {}
+
+        if use_time:
+            start, end = record.start_date, record.end_date
+            if end and not start:
+                end = update["end_date"] = None
+            if start and not end:
+                end = update["end_date"] = time_window(start, duration=60)[1]
+            date = start.date() if start else None
+            future = (start > now) if start else False
+        else:
+            date = record.date
+            future = (date > today) if date else False
+
+        fix_date = False
         if status == 3: # in progress
-            record.update_record(date=today)
+            fix_date = True
         elif date:
             if status == 7: # not required
-                record.update_record(date=None)
-            elif date >= today:
-                if status == 1: # required
-                    record.update_record(status=2)
-                elif status == 4: # completed
-                    record.update_record(date=today)
+                update["date"] = update["start_date"] = update["end_date"] = None
+            elif status == 1: # required
+                update["status"] = 2
+            elif status == 4 and future: # completed
+                update["status"] = 2
         elif status == 2: # planned
-            record.update_record(status=1)
+            update["status"] = 1
         elif status == 4: # completed
-            record.update_record(date=today)
+            fix_date = True
+
+        if fix_date:
+            if use_time:
+                window = time_window(now)
+                if not start or start > now:
+                    start = update["start_date"] = window[0]
+                if not end or end < now:
+                    end = update["end_date"] = window[1]
+            else:
+                date = update["date"] = today
+
+        if use_time:
+            # Always set date
+            update["date"] = start.date() if start else None
+        if update:
+            record.update_record(**update)
 
         # Update last-seen-on date when appointment gets updated
         if settings.get_dvr_appointments_update_last_seen_on() and person_id:
-            # Update last_seen_on
             dvr_update_last_seen(person_id)
 
         # Update the case status if appointment is completed
         # NB appointment status "completed" must be set by this form
         if settings.get_dvr_appointments_update_case_status() and \
-           s3_str(formvars.get("status")) == "4":
+           s3_str(form.vars.get("status")) == "4":
 
-            # Get the case status to be set when appointment is completed
+            # Get the case status to be set for the last completed
+            # appointment of this client
             ttable = s3db.dvr_case_appointment_type
-            query = (table.id == record_id) & \
-                    (table.deleted != True) & \
-                    (ttable.id == table.type_id) & \
-                    (ttable.status_id != None)
-            row = db(query).select(table.date,
-                                   ttable.status_id,
+            join = ttable.on((ttable.id == table.type_id) & \
+                             (ttable.status_id != None))
+            query = (table.person_id == person_id) & \
+                    (table.status == 4) & \
+                    (table.deleted == False)
+            if case_id:
+                query = (table.case_id == case_id) & query
+            orderby = ~table.start_date if use_time else ~table.date
+            row = db(query).select(ttable.status_id,
+                                   join = join,
+                                   orderby = orderby,
                                    limitby = (0, 1),
                                    ).first()
-            if row:
-                # Check whether there is a later appointment that
-                # would have set a different case status (we don't
-                # want to override this when closing appointments
-                # restrospectively):
-                date = row.dvr_case_appointment.date
-                if not date:
-                    # Assume today if no date given
-                    date = current.request.utcnow.date()
-                status_id = row.dvr_case_appointment_type.status_id
-                query = (table.person_id == person_id)
-                if case_id:
-                    query &= (table.case_id == case_id)
-                query &= (table.date != None) & \
-                         (table.status == 4) & \
-                         (table.date > date) & \
-                         (table.deleted != True) & \
-                         (ttable.id == table.type_id) & \
-                         (ttable.status_id != None) & \
-                         (ttable.status_id != status_id)
-                later = db(query).select(table.id, limitby = (0, 1)).first()
-                if later:
-                    status_id = None
-            else:
-                status_id = None
+            status_id = row.status_id if row else None
 
             if status_id:
-                # Update the corresponding case(s)
-                # NB appointments without case_id update all cases for the person
-                ctable = s3db.dvr_case
+                # Get open case statuses
                 stable = s3db.dvr_case_status
-                query = (ctable.person_id == person_id) & \
-                        (ctable.archived != True) & \
-                        (ctable.deleted != True) & \
-                        (stable.id == ctable.status_id) & \
-                        (stable.is_closed != True)
+                open_status = db(stable.is_closed == False)._select(stable.id)
+
+                # All open cases of this client that do not have this status
+                ctable = s3db.dvr_case
+                query = current.auth.s3_accessible_query("update", ctable) & \
+                        (ctable.person_id == person_id) & \
+                        (ctable.archived == False) & \
+                        (ctable.deleted == False) & \
+                        (ctable.status_id != status_id) & \
+                        (ctable.status_id.belongs(open_status))
                 if case_id:
-                    query &= (ctable.id == case_id)
-                cases = db(query).select(ctable.id,
-                                         ctable.person_id,
-                                         ctable.archived,
-                                         )
-                has_permission = current.auth.s3_has_permission
-                for case in cases:
-                    if has_permission("update", ctable, record_id=case.id):
-                        # Customise case resource
-                        r = CRUDRequest("dvr", "case",
-                                        current.request,
-                                        args = [],
-                                        get_vars = {},
-                                        )
-                        r.customise_resource("dvr_case")
-                        # Update case status + run onaccept
+                    query = (ctable.id == case_id) & query
+
+                # Update cases
+                cases = db(query).select(ctable.id)
+                if cases:
+                    r = CRUDRequest("dvr", "case",
+                                    current.request,
+                                    args = [],
+                                    get_vars = {},
+                                    )
+                    r.customise_resource("dvr_case")
+                    for case in cases:
                         case.update_record(status_id = status_id)
                         s3db.onaccept(ctable, case, method="update")
 
@@ -4272,6 +4341,13 @@ class DVRCaseEventModel(DataModel):
         event_types_org_specific = settings.get_dvr_case_event_types_org_specific()
         close_appointments = settings.get_dvr_case_events_close_appointments()
 
+        event_classes = {"A": T("Administrative"),
+                         "C": T("Checkpoint"),
+                         #"D": T("NFI Distribution"),
+                         "F": T("Food Distribution"),
+                         #"P": T("Payment"),
+                         }
+
         tablename = "dvr_case_event_type"
         define_table(tablename,
                      self.org_organisation_id(
@@ -4279,13 +4355,20 @@ class DVRCaseEventModel(DataModel):
                          readble = event_types_org_specific,
                          writable = event_types_org_specific,
                          ),
-                     # TODO Deprecate? (replace by event class)
-                     Field("code", length=64, # notnull=True, unique=True,
+                     Field("event_class",
+                           label = T("Event Class"),
+                           default = "C",
+                           requires = IS_IN_SET(event_classes, zero=None),
+                           represent = represent_option(event_classes),
+                           ),
+                     Field("code", length=64,
                            label = T("Code"),
                            requires = [IS_NOT_EMPTY(),
                                        IS_LENGTH(64, minsize=1),
+                                       # uniqueness only required within organisation
                                        #IS_NOT_ONE_OF(db, "dvr_case_event_type.code"),
                                        ],
+                           comment = T("A unique code for this event type"),
                            ),
                      Field("name",
                            label = T("Name"),
@@ -4294,22 +4377,34 @@ class DVRCaseEventModel(DataModel):
                      Field("is_inactive", "boolean",
                            default = False,
                            label = T("Inactive"),
-                           represent = s3_yes_no_represent,
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Inactive"),
-                                                             T("This event type can not currently be registered"),
-                                                             ),
-                                         ),
+                           represent = BooleanRepresent(icons = (BooleanRepresent.NEG,
+                                                                 BooleanRepresent.POS,
+                                                                 ),
+                                                        labels = False,
+                                                        flag = True,
+                                                        ),
+                           comment = T("This event type can not currently be registered"),
                            ),
                      Field("is_default", "boolean",
                            default = False,
                            label = T("Default Event Type"),
-                           represent = s3_yes_no_represent,
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Default Event Type"),
-                                                             T("Assume this event type if no type was specified for an event"),
-                                                             ),
-                                         ),
+                           represent = BooleanRepresent(icons = True,
+                                                        labels = False,
+                                                        flag = True,
+                                                        ),
+                           comment = T("Assume this event type if no type was specified for an event"),
+                           ),
+                     Field("register_multiple", "boolean",
+                           label = T("Allow registration for family members"),
+                           default = False,
+                           represent = BooleanRepresent(icons=True, colors=True),
+                           comment = T("Allow registration of the same event for multiple family members with a single ID"),
+                           ),
+                     Field("residents_only", "boolean",
+                           label = T("Current residents only"),
+                           default = False,
+                           represent = BooleanRepresent(icons=True, colors=True),
+                           comment = T("Registration requires that the person is checked-in at a shelter"),
                            ),
                      Field("role_required", "reference %s" % role_table,
                            label = T("User Role Required"),
@@ -4319,50 +4414,30 @@ class DVRCaseEventModel(DataModel):
                                                             "%s.id" % role_table,
                                                             role_represent,
                                                             )),
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("User Role Required"),
-                                                             T("User role required to register events of this type"),
-                                                             ),
-                                         ),
+                           comment = T("User role required to register events of this type"),
                            ),
                      self.dvr_appointment_type_id(
-                        "appointment_type_id",
-                        label = T("Appointment Type"),
-                        readable = close_appointments,
-                        writable = close_appointments,
-                        comment = DIV(_class = "tooltip",
-                                      _title = "%s|%s" % (T("Appointment Type"),
-                                                          T("The type of appointments which are completed with this type of event"),
-                                                          ),
-                                      ),
-                        ),
+                            "appointment_type_id",
+                            label = T("Appointment Type"),
+                            readable = close_appointments,
+                            writable = close_appointments,
+                            comment = T("The type of appointments which are completed with this type of event"),
+                            ),
                      Field("min_interval", "double",
                            label = T("Minimum Interval (Hours)"),
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Minimum Interval (Hours)"),
-                                                             T("Minimum interval between two consecutive registrations of this event type for the same person"),
-                                                             ),
-                                         ),
+                           comment = T("Minimum interval between two consecutive registrations of this event type for the same person"),
                            requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
                            ),
                      Field("max_per_day", "integer",
                            label = T("Maximum Number per Day"),
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Maximum Number per Day"),
-                                                             T("Maximum number of occurences of this event type for the same person on the same day"),
-                                                             ),
-                                         ),
+                           comment = T("Maximum number of occurences of this event type for the same person on the same day"),
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0, None)),
                            ),
                      Field("presence_required", "boolean",
                            default = True,
                            label = T("Presence required"),
                            represent = s3_yes_no_represent,
-                           comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Presence required"),
-                                                             T("This event type requires the presence of the person concerned"),
-                                                             ),
-                                         ),
+                           comment = T("This event type requires the presence of the person concerned"),
                            ),
                      CommentsField(),
                      )
@@ -4376,12 +4451,30 @@ class DVRCaseEventModel(DataModel):
                                               },
                             )
 
+        # Filter widgets
+        filter_widgets = [TextFilter(["name",
+                                      "code",
+                                      "comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                           OptionsFilter("event_class",
+                                         options = event_classes,
+                                         hidden = True,
+                                         ),
+                           OptionsFilter("organisation_id",
+                                         hidden = True,
+                                         ),
+                          ]
+
         # Table Configuration
         configure(tablename,
                   deduplicate = S3Duplicate(primary = ("code", "name"),
                                             secondary = ("organisation_id",),
                                             ignore_deleted = True,
                                             ),
+                  filter_widgets = filter_widgets,
+                  onvalidation = self.case_event_type_onvalidation,
                   onaccept = self.case_event_type_onaccept,
                   )
 
@@ -4541,7 +4634,7 @@ class DVRCaseEventModel(DataModel):
         # Custom method for event registration
         self.set_method("dvr_case_event",
                         method = "register",
-                        action = DVRRegisterCaseEvent,
+                        action = Checkpoint,
                         )
 
         # ---------------------------------------------------------------------
@@ -4555,6 +4648,44 @@ class DVRCaseEventModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def case_event_type_onvalidation(form):
+        """
+            Form validation of case event types
+                - code must be unique (within the organisation)
+                - multiple-registration excluded when presence required
+
+            Args:
+                form: the FORM
+        """
+
+        T = current.T
+
+        table = current.s3db.dvr_case_event_type
+        data = get_form_record_data(form, table, ["code",
+                                                  "organisation_id",
+                                                  "register_multiple",
+                                                  "presence_required",
+                                                  ])
+        code = data.get("code")
+        if code:
+            # Check that code is unique for the organisation
+            query = (table.code == code) & \
+                    (table.organisation_id == data.get("organisation_id")) & \
+                    (table.deleted == False)
+            record_id = get_form_record_id(form)
+            if record_id:
+                query &= (table.id != record_id)
+            if current.db(query).select(table.id, limitby=(0, 1)).first():
+                form.errors.code = T("Code must be unique")
+
+        presence_required = data.get("presence_required")
+        register_multiple = data.get("register_multiple")
+        if presence_required and register_multiple:
+            msg = T("Presence required excludes multiple-registration")
+            form.errors.register_multiple = msg
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4594,44 +4725,24 @@ class DVRCaseEventModel(DataModel):
                 form: the FORM
         """
 
-        formvars = form.vars
-        try:
-            record_id = formvars.id
-        except AttributeError:
-            record_id = None
+        db = current.db
+        s3db = current.s3db
+        settings = current.deployment_settings
+
+        record_id = get_form_record_id(form)
         if not record_id:
             return
 
-        db = current.db
-        s3db = current.s3db
+        table = s3db.dvr_case_event
+        fields = ("person_id", "type_id")
+        form_data = get_form_record_data(form, table, fields)
 
-        close_appointments = current.deployment_settings \
-                                    .get_dvr_case_events_close_appointments()
-
-        case_id = formvars.get("case_id")
-        person_id = formvars.get("person_id")
-        type_id = formvars.get("type_id")
-
-        if not person_id or not type_id or \
-           close_appointments and not case_id:
-            # Reload the record
-            table = s3db.dvr_case_event
-            row = db(table.id == record_id).select(table.case_id,
-                                                   table.person_id,
-                                                   table.type_id,
-                                                   limitby = (0, 1),
-                                                   ).first()
-            if not row:
-                return
-
-            case_id = row.case_id
-            person_id = row.person_id
-            type_id = row.type_id
-
+        person_id = form_data["person_id"]
         if not person_id:
             return
 
         # Get the event type
+        type_id = form_data["type_id"]
         ttable = s3db.dvr_case_event_type
         query = (ttable.id == type_id) & \
                 (ttable.deleted == False)
@@ -4647,108 +4758,16 @@ class DVRCaseEventModel(DataModel):
             dvr_update_last_seen(person_id)
 
         # Close appointments
+        close_appointments = settings.get_dvr_case_events_close_appointments()
         appointment_type_id = event_type.appointment_type_id
         if close_appointments and appointment_type_id:
-
-            today = current.request.utcnow.date()
-
-            atable = s3db.dvr_case_appointment
-            query = (atable.type_id == appointment_type_id) & \
-                    (atable.person_id == person_id) & \
-                    ((atable.date == None) | (atable.date <= today)) & \
-                    (atable.deleted == False)
-
-            if case_id:
-                query &= (atable.case_id == case_id) | \
-                         (atable.case_id == None)
-
-            rows = db(query).select(atable.id,
-                                    atable.date,
-                                    atable.status,
-                                    orderby = ~atable.date,
-                                    )
-
-            data = {"date": today, "status": 4}
-
-            if not rows:
-
-                # No appointment of this type yet
-                # => create a new closed appointment
-                data["type_id"] = appointment_type_id
-                data["person_id"] = person_id
-                data["case_id"] = case_id
-
-                aresource = s3db.resource("dvr_case_appointment")
-                try:
-                    record_id = aresource.insert(**data)
-                except S3PermissionError:
-                    current.log.error("Event Registration: %s" % sys.exc_info()[1])
-
+            try:
+                appointment_id = AppointmentEvent(record_id).close()
+            except S3PermissionError:
+                current.log.error("Not permitted to close appointment for event %s" % record_id)
             else:
-                update = None
-
-                # Find key dates
-                undated = open_today = closed_today = previous = None
-
-                for row in rows:
-                    if row.date is None:
-                        if not undated:
-                            # An appointment without date
-                            undated = row
-                    elif row.date == today:
-                        if row.status != 4:
-                            # An open or cancelled appointment today
-                            open_today = row
-                        else:
-                            # A closed appointment today
-                            closed_today = row
-                    elif previous is None:
-                        # The last appointment before today
-                        previous = row
-
-                if open_today:
-                    # If we have an open appointment for today, update it
-                    update = open_today
-                elif closed_today:
-                    # If we already have a closed appointment for today,
-                    # do nothing
-                    update = None
-                elif previous:
-                    if previous.status not in (1, 2, 3):
-                        # Last appointment before today is closed
-                        # => create a new one unless there is an undated one
-                        if undated:
-                            update = undated
-                    else:
-                        # Last appointment before today is still open
-                        # => update it
-                        update = previous
-                else:
-                    update = undated
-
-                if update:
-                    # Update the appointment
-                    permitted = current.auth.s3_has_permission("update",
-                                                               atable,
-                                                               record_id=update.id,
-                                                               )
-                    if permitted:
-                        # Customise appointment resource
-                        r = CRUDRequest("dvr", "case_appointment",
-                                        current.request,
-                                        args = [],
-                                        get_vars = {},
-                                        )
-                        r.customise_resource("dvr_case_appointment")
-                        # Update appointment
-                        success = update.update_record(**data)
-                        if success:
-                            data["id"] = update.id
-                            s3db.onaccept(atable, data, method="update")
-                        else:
-                            current.log.error("Event Registration: could not update appointment %s" % update.id)
-                    else:
-                        current.log.error("Event registration: not permitted to update appointment %s" % update.id)
+                if not appointment_id:
+                    current.log.error("Could not close appointment for event %s" % record_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -4785,6 +4804,7 @@ class DVRVulnerabilityModel(DataModel):
     """ Specific vulnerabilities of a client """
 
     names = ("dvr_vulnerability_type",
+             "dvr_vulnerability_type_sector",
              "dvr_vulnerability",
              "dvr_vulnerability_response_action",
              "dvr_vulnerability_case_activity",
@@ -5196,9 +5216,8 @@ class DVRServiceContactModel(DataModel):
                   )
 
         # CRUD Strings
-        ADD_TYPE = T("Create Service Contact Type")
         crud_strings[tablename] = Storage(
-            label_create = ADD_TYPE,
+            label_create = T("Create Service Contact Type"),
             title_display = T("Service Contact Type"),
             title_list = T("Service Contact Types"),
             title_update = T("Edit Service Contact Types"),
@@ -5268,7 +5287,7 @@ class DVRServiceContactModel(DataModel):
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
-            label_create = T("Create Service Contact"),
+            label_create = T("Add Service Contact"),
             title_display = T("Service Contact Details"),
             title_list = T("Service Contacts"),
             title_update = T("Edit Service Contacts"),
@@ -7059,6 +7078,325 @@ class dvr_VulnerabilityRepresent(S3Represent):
         type_name = self.vulnerability_types.get(type_id, self.none)
 
         return "[%s] %s" % (self.table.date.represent(row.date), type_name)
+
+# =============================================================================
+class AppointmentEvent:
+    """ Closing of appointments by case events """
+
+    def __init__(self, event_id):
+        """
+            Args:
+                event_id: the dvr_case_event record ID
+        """
+
+        self.event_id = event_id
+
+        self._event = None
+        self._event_type = None
+        self._appointment_type = None
+
+    # -------------------------------------------------------------------------
+    @property
+    def event(self):
+        """
+            The event (lazy property)
+
+            Returns:
+                dvr_case_event Row
+        """
+
+        event = self._event
+        if event is None:
+
+            s3db = current.s3db
+            etable = s3db.dvr_case_event
+            ttable = s3db.dvr_case_event_type
+
+            left = ttable.on(ttable.id == etable.type_id)
+            query = (etable.id == self.event_id)
+            row = current.db(query).select(etable.id,
+                                           etable.person_id,
+                                           etable.case_id,
+                                           etable.date,
+                                           ttable.id,
+                                           ttable.appointment_type_id,
+                                           left = left,
+                                           limitby = (0, 1),
+                                           ).first()
+            if row:
+                self._event_type = row.dvr_case_event_type
+                event = self._event = row.dvr_case_event
+
+        return event
+
+    # -------------------------------------------------------------------------
+    @property
+    def event_type(self):
+        """
+            The event type (lazy property)
+
+            Returns:
+                dvr_case_event_type Row
+        """
+
+        return self._event_type if self.event else None
+
+    # -------------------------------------------------------------------------
+    @property
+    def appointment_type_id(self):
+        """
+            The appointment type ID (lazy property)
+
+            Returns:
+                dvr_case_appointment_type record ID
+        """
+
+        event_type = self.event_type
+
+        return event_type.appointment_type_id if event_type else None
+
+    # -------------------------------------------------------------------------
+    def appointment(self):
+        """
+            Finds the appointment to be closed
+
+            Returns:
+                dvr_case_appointment Row
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        appointment_type_id = self.appointment_type_id
+        if not appointment_type_id:
+            return None
+
+        event = self.event
+
+        # Appointments of the same case
+        atable = s3db.dvr_case_appointment
+        base_query = (atable.person_id == event.person_id)
+        if event.case_id:
+            base_query &= (atable.case_id == event.case_id)
+
+        # The event date
+        event_date = event.date
+        if not event_date:
+            event_date = current.request.utcnow.replace(microsecond=0)
+
+        # Identify the appointment
+        appointment = None
+        fields = (atable.id,
+                  atable.type_id,
+                  atable.date,
+                  atable.start_date,
+                  atable.end_date,
+                  atable.status,
+                  )
+
+        use_time = current.deployment_settings.get_dvr_appointments_use_time()
+        if use_time:
+            # The last appointment preceding the event on that day
+            day_start = event_date.replace(hour=0, minute=0, second=0)
+            query = base_query & \
+                    (atable.start_date != None) & \
+                    (atable.start_date >= day_start) & \
+                    (atable.start_date <= event_date) & \
+                    (atable.deleted == False)
+            preceding = (db(query), ~atable.start_date)
+
+            # The first appointment following the event on that day
+            day_end = day_start + datetime.timedelta(days=1)
+            query = base_query & \
+                    (atable.start_date != None) & \
+                    (atable.start_date > event_date) & \
+                    (atable.start_date < day_end) & \
+                    (atable.deleted == False)
+            following = (db(query), atable.start_date)
+
+            # The first of the two that matches the type and has status 2|4
+            for dbset, orderby in (preceding, following):
+                row = dbset.select(*fields,
+                                   orderby = orderby,
+                                   limitby = (0, 1),
+                                   ).first()
+                if row and row.type_id == appointment_type_id and row.status in (2, 4):
+                    appointment = row
+                    break
+        else:
+            # The first pending appointment of that type on the same day,
+            # or otherwise any completed appointment of that type on the day
+            for status in (2, 4):
+                query = base_query & \
+                        (atable.date == event_date.date()) & \
+                        (atable.type_id == appointment_type_id) & \
+                        (atable.status == status) & \
+                        (atable.deleted == False)
+                row = db(query).select(*fields,
+                                       orderby = atable.created_on,
+                                       limitby = (0, 1),
+                                       ).first()
+                if row:
+                    appointment = row
+                    break
+
+        if not appointment:
+            # The oldest undated appointment with this type and status 1
+            if use_time:
+                query = base_query & (atable.start_date == None)
+            else:
+                query = base_query & (atable.date == None)
+            query &= (atable.type_id == appointment_type_id) & \
+                     (atable.status == 1) & \
+                     (atable.deleted == False)
+            appointment = db(query).select(*fields,
+                                           orderby = atable.created_on,
+                                           limitby = (0, 1),
+                                           ).first()
+
+        return appointment
+
+    # -------------------------------------------------------------------------
+    def close(self):
+        """
+            Closes a matching appointment for the event
+
+            Returns:
+                True|False for success
+
+            Raises:
+                S3PermissionError if operation not permitted
+        """
+
+        if current.deployment_settings.get_dvr_case_events_close_appointments():
+
+            appointment = self.appointment()
+            if appointment:
+                appointment_id = self._close(appointment)
+            else:
+                appointment_id = self._create()
+            return bool(appointment_id)
+        else:
+            return True
+
+    # -------------------------------------------------------------------------
+    def _close(self, appointment):
+        """
+            Adjusts its time frame to include the event (if using time), and
+            closes the appointment
+
+            Args:
+                appointment: the dvr_case_appointment Row
+
+            Returns:
+                dvr_case_appointment record ID
+        """
+
+        s3db = current.s3db
+
+        if not current.auth.s3_has_permission("update",
+                                              "dvr_case_appointment",
+                                              record_id = appointment.id,
+                                              ):
+            raise S3PermissionError()
+
+        event_date = self.event.date
+
+        update = {}
+        if current.deployment_settings.get_dvr_appointments_use_time():
+            window = self.time_window(event_date)
+            start, end = appointment.start_date, appointment.end_date
+            if not start or start > event_date:
+                start = update["start_date"] = window[0]
+            if not end or end < event_date:
+                update["end_date"] = window[1]
+            date = start.date()
+        else:
+            date = event_date.date()
+
+        if appointment.status != 4:
+            update["status"] = 4
+        if appointment.date != date:
+            update["date"] = date
+
+        if update:
+            atable = s3db.dvr_case_appointment
+            success = appointment.update_record(**update)
+            if success:
+                s3db.onaccept(atable, appointment, method="update")
+        else:
+            success = True
+
+        return appointment.id if success else None
+
+    # -------------------------------------------------------------------------
+    def _create(self):
+        """
+            Creates a new closed appointment from the event
+
+            Returns:
+                dvr_case_appointment record ID
+        """
+
+        s3db = current.s3db
+        auth = current.auth
+
+        if not auth.s3_has_permission("create", "dvr_case_appointment"):
+            raise S3PermissionError()
+
+        event = self.event
+        event_date = event.date
+
+        # Prepare data
+        appointment = {"person_id": event.person_id,
+                       "type_id": self.appointment_type_id,
+                       "status": 4, # closed
+                       }
+        if current.deployment_settings.get_dvr_appointments_use_time():
+            window = self.time_window(event_date)
+            appointment["start_date"] = window[0]
+            appointment["end_date"] = window[1]
+            appointment["date"] = window[0].date()
+        else:
+            appointment["date"] = event_date.date()
+
+        # Create new appointment
+        atable = s3db.dvr_case_appointment
+        appointment_id = appointment["id"] = atable.insert(**appointment)
+        if appointment_id:
+            s3db.update_super(atable, appointment)
+            auth.s3_set_record_owner(atable, appointment_id)
+            auth.s3_make_session_owner(atable, appointment_id)
+            s3db.onaccept(atable, appointment, method="create")
+
+        return appointment_id
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def time_window(dt, duration=15):
+        """
+            Computes a suitable time window that includes dt
+
+            Args:
+                dt: a datetime
+                duration: the minimum duration in minutes
+
+            Returns:
+                tuple (start, end) of datetime
+        """
+
+        p = 15 # Quarter hour point
+        q = lambda minute: minute // p * p
+
+        # The quarter point preceding dt
+        start = dt.replace(minute=q(dt.minute), microsecond=0)
+
+        # The quarter point following dt + duration
+        delta = p + duration - 1
+        end = dt + datetime.timedelta(minutes=delta)
+        end = end.replace(minute=q(end.minute), microsecond=0)
+
+        return (start, end - datetime.timedelta(seconds=1))
 
 # =============================================================================
 class DVRManageAppointments(CRUDMethod):
@@ -9241,7 +9579,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
         return output
 
 # =============================================================================
-def dvr_get_flag_instructions(person_id, action=None):
+def dvr_get_flag_instructions(person_id, action=None, organisation_id=None):
     """
         Get handling instructions if flags are set for a person
 
@@ -9249,6 +9587,7 @@ def dvr_get_flag_instructions(person_id, action=None):
             person_id: the person ID
             action: the action for which instructions are needed:
                     - check-in|check-out|payment|id-check
+            organisation_id: check for flags of this organisation
 
         Returns:
             dict {"permitted": whether the action is permitted
@@ -9260,10 +9599,14 @@ def dvr_get_flag_instructions(person_id, action=None):
 
     ftable = s3db.dvr_case_flag
     ltable = s3db.dvr_case_flag_case
-    query = (ltable.person_id == person_id) & \
-            (ltable.deleted != True) & \
-            (ftable.id == ltable.flag_id) & \
-            (ftable.deleted != True)
+
+    join = ltable.on((ltable.flag_id == ftable.id) & \
+                     (ltable.person_id == person_id) & \
+                     (ltable.deleted == False))
+
+    if not current.deployment_settings.get_dvr_case_flags_org_specific():
+        organisation_id = None
+    query = (ftable.organisation_id == organisation_id)
 
     if action == "check-in":
         query &= (ftable.advise_at_check_in == True) | \
@@ -9276,6 +9619,7 @@ def dvr_get_flag_instructions(person_id, action=None):
                  (ftable.allowance_suspended == True)
     else:
         query &= (ftable.advise_at_id_check == True)
+    query &= (ftable.deleted == False)
 
     flags = current.db(query).select(ftable.name,
                                      ftable.deny_check_in,
@@ -9285,6 +9629,7 @@ def dvr_get_flag_instructions(person_id, action=None):
                                      ftable.advise_at_check_out,
                                      ftable.advise_at_id_check,
                                      ftable.instructions,
+                                     join = join,
                                      )
 
     info = []
@@ -9349,7 +9694,7 @@ def dvr_update_last_seen(person_id):
             (etable.type_id.belongs(type_ids)) & \
             (etable.date != None) & \
             (etable.date <= now) & \
-            (etable.deleted != True)
+            (etable.deleted == False)
     event = db(query).select(etable.date,
                              orderby = ~etable.date,
                              limitby = (0, 1),
@@ -9398,35 +9743,48 @@ def dvr_update_last_seen(person_id):
     # Case appointments to update last_seen_on?
     if settings.get_dvr_appointments_update_last_seen_on():
 
+        use_time = settings.get_dvr_appointments_use_time()
+
         # Get appointment types that require presence
         attable = s3db.dvr_case_appointment_type
         query = (attable.presence_required == True) & \
                 (attable.deleted == False)
-        types = db(query).select(attable.id, cache=s3db.cache)
-        type_ids = set(t.id for t in types)
+        types = db(query)._select(attable.id)
 
         # Get last appointment that required presence
         atable = s3db.dvr_case_appointment
+        if use_time:
+            query = (atable.start_date != None) & \
+                    (atable.start_date <= now)
+            if last_seen_on is not None:
+                query &= (atable.start_date > last_seen_on)
+        else:
+            query = (atable.date != None) & \
+                    (atable.date <= now.date())
+            if last_seen_on is not None:
+                query &= (atable.date > last_seen_on.date())
+
         query = (atable.person_id == person_id) & \
-                (atable.date != None) & \
-                (atable.type_id.belongs(type_ids)) & \
-                (atable.date <= now.date()) & \
+                (atable.type_id.belongs(types)) & \
                 (atable.status == 4) & \
-                (atable.deleted != True)
-        if last_seen_on is not None:
-            query &= atable.date > last_seen_on.date()
+                query & \
+                (atable.deleted == False)
         appointment = db(query).select(atable.date,
-                                       orderby = ~atable.date,
+                                       atable.start_date,
+                                       orderby = (~atable.date, ~atable.start_date),
                                        limitby = (0, 1),
                                        ).first()
         if appointment:
-            date = appointment.date
-            # Default to 08:00 local time (...unless that would be in the future)
-            try:
-                date = datetime.datetime.combine(date, datetime.time(8, 0, 0))
-            except TypeError:
-                pass
-            date = min(now, S3DateTime.to_utc(date))
+            if use_time:
+                date = appointment.start_date
+            else:
+                date = appointment.date
+                # Default to 08:00 local time (...unless that would be in the future)
+                try:
+                    date = datetime.datetime.combine(date, datetime.time(8, 0, 0))
+                except TypeError:
+                    pass
+                date = min(now, S3DateTime.to_utc(date))
             last_seen_on = date
 
     # Allowance payments to update last_seen_on?
@@ -9436,7 +9794,7 @@ def dvr_update_last_seen(person_id):
         query = (atable.person_id == person_id) & \
                 (atable.paid_on != None) & \
                 (atable.status == 2) & \
-                (atable.deleted != True)
+                (atable.deleted == False)
         if last_seen_on is not None:
             query &= atable.paid_on > last_seen_on
         payment = db(query).select(atable.paid_on,
@@ -9449,8 +9807,8 @@ def dvr_update_last_seen(person_id):
     # Update last_seen_on
     ctable = s3db.dvr_case
     query = (ctable.person_id == person_id) & \
-            (ctable.archived != True) & \
-            (ctable.deleted != True)
+            (ctable.archived == False) & \
+            (ctable.deleted == False)
     db(query).update(last_seen_on = last_seen_on,
                      # Don't change author stamp for
                      # system-controlled record update:

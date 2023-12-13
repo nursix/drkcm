@@ -149,8 +149,6 @@ def get_form_record_data(form, table, fields):
     form_data = {}
 
     record_id = get_form_record_id(form)
-    if not record_id:
-        return form_data
 
     lookup = []
     for fn in fields:
@@ -161,13 +159,14 @@ def get_form_record_data(form, table, fields):
         else:
             form_data[fn] = table[fn].default
 
-    if lookup:
+    if lookup and record_id:
         fields = [table[fn] for fn in lookup]
         row = current.db(table.id == record_id).select(*fields,
                                                        limitby = (0, 1),
                                                        ).first()
-        for fn in lookup:
-            form_data[fn] = row[fn]
+        form_data.update({fn: row[fn] for fn in lookup})
+    else:
+        form_data.update({fn: None for fn in lookup})
 
     return form_data
 

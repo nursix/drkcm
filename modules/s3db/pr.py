@@ -754,7 +754,8 @@ class PRPersonEntityModel(DataModel):
 class PRPersonModel(DataModel):
     """ Persons and Groups """
 
-    names = ("pr_person",
+    names = ("pr_age",
+             "pr_person",
              "pr_gender",
              "pr_gender_opts",
              "pr_person_id",
@@ -1225,7 +1226,8 @@ class PRPersonModel(DataModel):
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"pr_gender": pr_gender,
+        return {"pr_age": self.pr_age,
+                "pr_gender": pr_gender,
                 "pr_gender_opts": pr_gender_opts,
                 "pr_person_id": person_id,
                 "pr_person_lookup": self.pr_person_lookup,
@@ -1266,15 +1268,16 @@ class PRPersonModel(DataModel):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def pr_age(row):
+    def pr_age(row, months=False):
         """
             Compute the age of a person
 
             Args:
                 row: a Row containing the person record
+                months: return the age in months rather than years
 
             Returns:
-                age in years (integer)
+                age in years or months (integer)
         """
 
         if hasattr(row, "pr_person"):
@@ -1292,7 +1295,8 @@ class PRPersonModel(DataModel):
             dob = None
         if dob:
             from dateutil.relativedelta import relativedelta
-            return relativedelta(current.request.utcnow.date(), dob).years
+            delta = relativedelta(current.request.utcnow.date(), dob)
+            return delta.months if months else delta.years
         else:
             return None
 

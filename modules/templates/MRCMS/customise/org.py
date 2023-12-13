@@ -6,6 +6,8 @@
 
 from gluon import current
 
+from core import FS
+
 # -------------------------------------------------------------------------
 def org_group_controller(**attr):
 
@@ -226,6 +228,9 @@ def org_organisation_controller(**attr):
                            ]
             r.component.configure(list_fields=list_fields)
 
+        elif r.component_name == "document":
+            r.component.add_filter(FS("doc_id") == None)
+
         return result
     s3.prep = prep
 
@@ -242,6 +247,10 @@ def org_organisation_controller(**attr):
     # Custom rheader
     from ..rheaders import org_rheader
     attr["rheader"] = org_rheader
+
+    if is_org_group_admin:
+        # Show all records by default
+        settings.ui.datatables_pagelength = -1
 
     return attr
 

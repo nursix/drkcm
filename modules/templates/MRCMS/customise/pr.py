@@ -60,9 +60,7 @@ def mrcms_absence(row):
         check_out_date = registration.check_out_date
         if check_out_date:
 
-            delta = (current.request.utcnow - check_out_date).total_seconds()
-            if delta < 0:
-                delta = 0
+            delta = max(0, (current.request.utcnow - check_out_date).total_seconds())
             days = int(delta / 86400)
 
             if days < 1:
@@ -195,22 +193,24 @@ def pr_person_resource(r, tablename):
     # Configure components to inherit realm_entity from the person
     # record upon forced realm update
     s3db.configure("pr_person",
-                   realm_components = ("case_activity",
+                   realm_components = ("address",
+                                       "case_activity",
                                        "case_details",
                                        "case_language",
                                        "case_note",
-                                       "residence_status",
-                                       "response_action",
-                                       "group_membership",
-                                       "identity",
-                                       "person_details",
-                                       "person_tag",
-                                       "shelter_registration",
-                                       "shelter_registration_history",
-                                       "address",
                                        "contact",
                                        "contact_emergency",
+                                       "group_membership",
+                                       "identity",
                                        "image",
+                                       "person_details",
+                                       "person_tag",
+                                       "residence_status",
+                                       "response_action",
+                                       "service_contact",
+                                       "shelter_registration",
+                                       "shelter_registration_history",
+                                       "vulnerability",
                                        ),
                    )
 
@@ -280,7 +280,7 @@ def configure_inline_shelter_registration(component, shelters, person_id=None):
         # Configure shelter ID
         field = rtable.shelter_id
         field.default = default_shelter
-        field.writable = False if default_shelter else True
+        field.writable = not default_shelter
         field.comment = None
         field.widget = None
 
@@ -433,6 +433,7 @@ def configure_case_form(resource,
                 #"dvr_case.origin_site_id",
                 #"dvr_case.destination_site_id",
 
+                "dvr_case.reference",
                 S3SQLInlineComponent(
                         "bamf",
                         fields = [("", "value")],
@@ -443,8 +444,6 @@ def configure_case_form(resource,
                         multiple = False,
                         name = "bamf",
                         ),
-                "dvr_case.reference",
-
                 S3SQLInlineComponent(
                         "residence_status",
                         fields = ["status_type_id",
@@ -467,14 +466,18 @@ def configure_case_form(resource,
                 # Other Details ---------------------------
                 "person_details.occupation",
                 S3SQLInlineComponent(
-                        "contact",
+                        "phone",
                         fields = [("", "value")],
-                        filterby = {"field": "contact_method",
-                                    "options": "SMS",
-                                    },
                         label = T("Mobile Phone"),
                         multiple = False,
                         name = "phone",
+                        ),
+                S3SQLInlineComponent(
+                        "email",
+                        fields = [("", "value")],
+                        label = T("Email"),
+                        multiple = False,
+                        name = "email",
                         ),
                 "person_details.literacy",
                 S3SQLInlineComponent(
@@ -550,15 +553,17 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
     from core import AgeFilter, DateFilter, OptionsFilter, TextFilter, get_filter_options
 
     # Status filter options
-    closed = current.request.get_vars.get("closed")
     get_status_opts = s3db.dvr_case_status_filter_opts
+    default_status = None
+    closed = current.request.get_vars.get("closed")
     if closed == "only":
         status_opts = lambda: get_status_opts(closed=True)
-    elif closed == "1" or closed == "include":
+    elif closed in {"1", "include"}:
         status_opts = get_status_opts
     else:
         status_opts = lambda: get_status_opts(closed=False)
-    default_status = s3db.dvr_case_default_status()
+        # Assuming that the default status is an open-status
+        default_status = s3db.dvr_case_default_status()
 
     # Text filter fields
     text_filter_fields = ["pe_label",
@@ -637,7 +642,12 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
 
     # Additional filters for privileged roles
     if privileged:
+        from ..helpers import AbsenceFilter
         filter_widgets.extend([
+                AbsenceFilter("dvr_case.last_seen_on",
+                              label = T("Last seen"),
+                              hidden = True,
+                              ),
                 DateFilter("dvr_case.date",
                            hidden = True,
                            ),
@@ -704,21 +714,35 @@ def configure_case_list_fields(resource,
         # Order alphabetically
         orderby = "pr_person.last_name, pr_person.first_name"
 
-    # Standard list fields
-    # TODO include additional details for XLSX exports:
-    #      - BAMF Az
-    #      - household size
-    list_fields = [(T("ID"), "pe_label"),
-                   "last_name",
-                   "first_name",
-                   "date_of_birth",
-                   "gender",
-                   "person_details.nationality",
-                   case_status,
-                   case_date,
-                   shelter,
-                   unit,
-                   ]
+    # Custom list fields
+    if fmt in ("xlsx", "xls"):
+        list_fields = [(T("ID"), "pe_label"),
+                       (T("Principal Ref.No."), "dvr_case.reference"),
+                       (T("BAMF Ref.No."), "bamf.value"),
+                       "last_name",
+                       "first_name",
+                       "date_of_birth",
+                       "gender",
+                       "person_details.nationality",
+                       (T("Size of Family"), "dvr_case.household_size"),
+                       case_status,
+                       case_date,
+                       shelter,
+                       unit,
+                       "dvr_case.last_seen_on",
+                       ]
+    else:
+        list_fields = [(T("ID"), "pe_label"),
+                       "last_name",
+                       "first_name",
+                       "date_of_birth",
+                       "gender",
+                       "person_details.nationality",
+                       case_status,
+                       case_date,
+                       shelter,
+                       unit,
+                       ]
 
     resource.configure(list_fields = list_fields,
                        orderby = orderby,
@@ -887,7 +911,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                                 )
 
             # Configure case filters
-            if not r.record:
+            if not record:
                 configure_case_filters(resource,
                                        organisation_id = case_organisation,
                                        privileged = privileged,
@@ -901,6 +925,11 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
                                    privileged = privileged,
                                    fmt = r.representation,
                                    )
+
+        # Apply absence filter
+        if not record:
+            from ..helpers import AbsenceFilter
+            AbsenceFilter.apply_filter(resource, r.get_vars)
 
     elif r.component_name == "case_appointment":
 
@@ -1228,6 +1257,8 @@ def pr_person_controller(**attr):
     T = current.T
     auth = current.auth
     s3 = current.response.s3
+
+    current.deployment_settings.base.bigtable = True
 
     is_org_admin = auth.s3_has_role("ORG_ADMIN")
     is_case_admin = auth.s3_has_role("CASE_ADMIN")

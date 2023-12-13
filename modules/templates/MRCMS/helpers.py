@@ -4,9 +4,13 @@
     License: MIT
 """
 
-from gluon import current, URL, A
+import datetime
 
-from core import FS, S3DateTime, WorkflowOptions, s3_fullname, s3_str
+from dateutil.relativedelta import relativedelta
+
+from gluon import current, URL, A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
+
+from core import FS, WorkflowOptions, RangeFilter, s3_fullname
 
 # =============================================================================
 def get_role_realms(role):
@@ -513,6 +517,70 @@ def account_status(record, represent=True):
     return status
 
 # -----------------------------------------------------------------------------
+def client_name_age(record):
+    """
+        Represent a client as name, gender and age; for case file rheader
+
+        Args:
+            record: the client record (pr_person)
+
+        Returns:
+            HTML
+    """
+
+    T = current.T
+
+    pr_age = current.s3db.pr_age
+
+    age = pr_age(record)
+    if age is None:
+        age = "?"
+        unit = T("years")
+    elif age == 0:
+        age = pr_age(record, months=True)
+        unit = T("months") if age != 1 else T("month")
+    else:
+        unit = T("years") if age != 1 else T("year")
+
+    icons = {2: "fa fa-venus",
+             3: "fa fa-mars",
+             4: "fa fa-transgender-alt",
+             }
+    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+
+    client = TAG[""](s3_fullname(record),
+                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     )
+    return client
+
+# -----------------------------------------------------------------------------
+def last_seen_represent(date, label):
+    """
+        Represent last-seen-on date as warning if more than 3/5 days back;
+        for case file rheader
+
+        Args:
+            date: the date (datetime.datetime)
+            label: the represented date
+
+        Returns:
+            HTML or label
+    """
+
+    if date:
+        days = relativedelta(datetime.datetime.utcnow(), date).days
+        if days > 5:
+            icon = I(_class="fa fa-exclamation-triangle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
+        elif days > 3:
+            icon = I(_class="fa fa-exclamation-circle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
+
+    return label
+
+# -----------------------------------------------------------------------------
 def hr_details(record):
     """
         Looks up relevant HR details for a person
@@ -580,434 +648,119 @@ def hr_details(record):
     return output
 
 # =============================================================================
-class MRCMSSiteActivityReport:
-    """
-        Helper class to produce site activity reports ("Residents Report")
-    """
+class AbsenceFilter(RangeFilter):
+    """ Custom filter for last-seen-on date, represented as "days since" """
 
-    def __init__(self, site_id=None, date=None):
-        """
-            Args:
-                site_id: the site ID (defaults to default site)
-                date: the date of the report (defaults to today)
-        """
+    operator = ["gt"]
 
-        if site_id is None:
-            site_id = current.deployment_settings.get_org_default_site()
-        self.site_id = site_id
-
-        if date is None:
-            date = current.request.utcnow.date()
-        self.date = date
+    # Untranslated labels for individual input boxes.
+    input_labels = {"gt": "More than"}
 
     # -------------------------------------------------------------------------
-    def extract(self):
-        """
-            Extract the data for this report
-        """
+    @classmethod
+    def _variable(cls, selector, operator):
 
-        db = current.db
-        s3db = current.s3db
+        return super()._variable("$$absence", operator)
+
+    # -------------------------------------------------------------------------
+    def widget(self, resource, values):
+        """
+            Render this widget as HTML helper object(s)
+
+            Args:
+                resource: the resource
+                values: the search values from the URL query
+        """
 
         T = current.T
 
-        site_id = self.site_id
-        date = self.date
+        css_base = self.css_base
 
-        # Get all flags for which cases shall be excluded
-        ftable = s3db.dvr_case_flag
-        query = (ftable.nostats == True) & \
-                (ftable.deleted == False)
-        rows = db(query).select(ftable.id)
-        nostats = set(row.id for row in rows)
+        attr = self.attr
+        css = attr.get("class")
+        attr["_class"] = "%s %s" % (css, css_base) if css else css_base
 
-        # Identify the relevant cases
-        ctable = s3db.dvr_case
-        ltable = s3db.dvr_case_flag_case
+        input_class = "%s-%s" % (css_base, "input")
+        input_labels = self.input_labels
+        input_elements = DIV()
+        ie_append = input_elements.append
 
-        num_nostats_flags = ltable.id.count()
-        left = ltable.on((ltable.person_id == ctable.person_id) & \
-                         (ltable.flag_id.belongs(nostats)) & \
-                         (ltable.deleted == False))
+        _id = attr["_id"]
+        _variable = self._variable
+        selector = self.selector
 
-        query = (ctable.site_id == site_id) & \
-                ((ctable.date == None) | (ctable.date <= date)) & \
-                ((ctable.closed_on == None) | (ctable.closed_on >= date)) & \
-                (ctable.archived != True) & \
-                (ctable.deleted != True)
+        opts = self.opts
+        minimum = opts.get("minimum", 1)
+        maximum = opts.get("maximum", 7)
 
+        for operator in self.operator:
 
-        rows = db(query).select(ctable.id,
-                                ctable.person_id,
-                                ctable.date,
-                                ctable.closed_on,
-                                num_nostats_flags,
-                                groupby = ctable.id,
-                                left = left,
-                                )
+            input_id = "%s-%s" % (_id, operator)
 
-        # Count them
-        old_total, ins, outs = 0, 0, 0
-        person_ids = set()
-        for row in rows:
-            if row[num_nostats_flags]:
-                continue
-            case = row.dvr_case
-            person_ids.add(case.person_id)
-            if not case.date or case.date < date:
-                old_total += 1
-            else:
-                ins += 1
-            if case.closed_on and case.closed_on == date:
-                outs += 1
-        result = {"old_total": old_total,
-                  "new_total": old_total - outs + ins,
-                  "ins": ins,
-                  "outs": outs,
-                  }
+            # Selectable options
+            input_opts = [OPTION("%s" % i, value=i)
+                          for i in range(minimum, maximum + 1)
+                          ]
+            input_opts.insert(0, OPTION("", value=""))
 
-        # Add completed appointments as pr_person components
-        atypes = {"BAMF": None,
-                  "GU": None,
-                  "Transfer": None,
-                  "X-Ray": None,
-                  "Querverlegung": None,
-                  }
-        COMPLETED = 4
-        attable = s3db.dvr_case_appointment_type
-        query = attable.name.belongs(set(atypes.keys()))
-        rows = db(query).select(attable.id,
-                                attable.name,
-                                )
-        add_components = s3db.add_components
-        hooks = []
-        for row in rows:
-            type_id = row.id
-            name = row.name
-            atypes[name] = alias = "appointment%s" % type_id
-            hook = {"name": alias,
-                    "joinby": "person_id",
-                    "filterby": {"type_id": type_id,
-                                 "status": COMPLETED,
-                                 },
-                    }
-            hooks.append(hook)
-        s3db.add_components("pr_person", dvr_case_appointment = hooks)
-        date_completed = lambda t: (T("%(event)s on") % {"event": T(t)},
-                                    "%s.date" % atypes[t],
-                                    )
-
-        # Filtered component for paid allowances
-        PAID = 2
-        add_components("pr_person",
-                       dvr_allowance = {"name": "payment",
-                                        "joinby": "person_id",
-                                        "filterby": {"status": PAID},
-                                        },
-                       )
-
-        # Represent paid_on as date
-        atable = s3db.dvr_allowance
-        atable.paid_on.represent = lambda dt: \
-                                   S3DateTime.date_represent(dt,
-                                                             utc=True,
-                                                             )
-
-        # Filtered component for preliminary residence permit
-        s3db.add_components("pr_person",
-                            pr_identity = {"name": "residence_permit",
-                                           "joinby": "person_id",
-                                           "filterby": {"type": 5},
-                                           "multiple": False,
-                                           },
-                            )
-
-        # Filtered component for family
-        s3db.add_components("pr_person",
-                            pr_group = {"name": "family",
-                                        "link": "pr_group_membership",
-                                        "joinby": "person_id",
-                                        "key": "group_id",
-                                        "filterby": {"group_type": 7},
-                                        },
-                            )
-
-        # Get family roles
-        gtable = s3db.pr_group
-        mtable = s3db.pr_group_membership
-        join = gtable.on(gtable.id == mtable.group_id)
-        query = (mtable.person_id.belongs(person_ids)) & \
-                (mtable.deleted != True) & \
-                (gtable.group_type == 7)
-        rows = db(query).select(mtable.person_id,
-                                mtable.group_head,
-                                mtable.role_id,
-                                join = join,
-                                )
-
-        # Bulk represent all possible family roles (to avoid repeated lookups)
-        represent = mtable.role_id.represent
-        rtable = s3db.pr_group_member_role
-        if hasattr(represent, "bulk"):
-            query = (rtable.group_type == 7) & (rtable.deleted != True)
-            roles = db(query).select(rtable.id)
-            role_ids = [role.id for role in roles]
-            represent.bulk(role_ids)
-
-        # Create a dict of {person_id: role}
-        roles = {}
-        HEAD_OF_FAMILY = T("Head of Family")
-        for row in rows:
-            person_id = row.person_id
-            role = row.role_id
-            if person_id in roles:
-                continue
-            if (row.group_head):
-                roles[person_id] = HEAD_OF_FAMILY
-            elif role:
-                roles[person_id] = represent(role)
-
-        # Field method to determine the family role
-        def family_role(row):
-            person_id = row["pr_person.id"]
-            return roles.get(person_id, "")
-
-        # Dummy virtual fields to produce empty columns
-        from s3dal import Field
-        ptable = s3db.pr_person
-        empty = lambda row: ""
-        if not hasattr(ptable, "xray_place"):
-            ptable.xray_place = Field.Method("xray_place", empty)
-        if not hasattr(ptable, "family_role"):
-            ptable.family_role = Field.Method("family_role", family_role)
-
-        # List fields for the report
-        list_fields = ["family.id",
-                       (T("ID"), "pe_label"),
-                       (T("Name"), "last_name"),
-                       "first_name",
-                       "date_of_birth",
-                       "gender",
-                       "person_details.nationality",
-                       (T("Family Role"), "family_role"),
-                       (T("Room No."), "shelter_registration.shelter_unit_id"),
-                       "case_flag_case.flag_id",
-                       "dvr_case.comments",
-                       date_completed("GU"),
-                       date_completed("X-Ray"),
-                       (T("X-Ray Place"), "xray_place"),
-                       date_completed("BAMF"),
-                       (T("BÜMA valid until"), "dvr_case.valid_until"),
-                       (T("Preliminary Residence Permit until"), "residence_permit.valid_until"),
-                       (T("Allowance Payments"), "payment.paid_on"),
-                       (T("Admitted on"), "dvr_case.date"),
-                       "dvr_case.origin_site_id",
-                       date_completed("Transfer"),
-                       date_completed("Querverlegung"),
-                       #"dvr_case.closed_on",
-                       "dvr_case.status_id",
-                       "dvr_case.destination_site_id",
-                       ]
-
-        query = FS("id").belongs(person_ids)
-        resource = s3db.resource("pr_person", filter = query)
-
-        data = resource.select(list_fields,
-                               represent = True,
-                               raw_data = True,
-                               # Keep families together, eldest member first
-                               orderby = ["pr_family_group.id",
-                                          "pr_person.date_of_birth",
-                                          ],
+            # Input Element
+            input_box = SELECT(input_opts,
+                               _id = input_id,
+                               _class = input_class,
                                )
 
-        # Generate headers, labels, types for XLS report
-        rfields = data.rfields
-        columns = []
-        headers = {}
-        types = {}
-        for rfield in rfields:
-            colname = rfield.colname
-            if colname in ("dvr_case_flag_case.flag_id",
-                           "pr_family_group.id",
-                           ):
-                continue
-            columns.append(colname)
-            headers[colname] = rfield.label
-            types[colname] = rfield.ftype
+            variable = _variable(selector, operator)
 
-        # Post-process rows
-        rows = []
-        for row in data.rows:
+            # Populate with the value, if given
+            # if user has not set any of the limits, we get [] in values.
+            value = values.get(variable, None)
+            if value not in [None, []]:
+                if type(value) is list:
+                    value = value[0]
+                input_box["_value"] = value
+                input_box["value"] = value
 
-            flags = "dvr_case_flag_case.flag_id"
-            comments = "dvr_case.comments"
+            label = input_labels[operator]
+            if label:
+                label = DIV(LABEL("%s:" % T(input_labels[operator]),
+                                  _for = input_id,
+                                  ),
+                            _class = "age-filter-label",
+                            _style = "display:inline-block",
+                            )
 
-            raw = row["_row"]
-            if raw[flags]:
-                items = ["%s: %s" % (T("Advice"), s3_str(row[flags]))]
-                if raw[comments]:
-                    items.insert(0, raw[comments])
-                row[comments] = ", ".join(items)
-            rows.append(row)
+            ie_append(DIV(label,
+                          DIV(input_box,
+                              _class = "range-filter-widget",
+                              _style = "display:inline-block",
+                              ),
+                          _class = "range-filter-field",
+                          ))
 
-        # Add XLS report data to result
-        report = {"columns": columns,
-                  "headers": headers,
-                  "types": types,
-                  "rows": rows,
-                  }
-        result["report"] = report
+        ie_append(DIV(LABEL(T("Days")),
+                      _class = "age-filter-unit",
+                      ))
 
-        return result
+        return input_elements
 
     # -------------------------------------------------------------------------
-    def store(self, authorised=None):
+    @staticmethod
+    def apply_filter(resource, get_vars):
         """
-            Store this report in dvr_site_activity
-        """
-
-        db = current.db
-        s3db = current.s3db
-        auth = current.auth
-        settings = current.deployment_settings
-
-        # Table name and table
-        tablename = "dvr_site_activity"
-        table = s3db.table(tablename)
-        if not table:
-            return None
-
-        # Get the current site activity record
-        query = (table.date == self.date) & \
-                (table.site_id == self.site_id) & \
-                (table.deleted != True)
-        row = db(query).select(table.id,
-                               limitby = (0, 1),
-                               orderby = ~table.created_on,
-                               ).first()
-
-        # Check permission
-        if authorised is None:
-            has_permission = current.auth.s3_has_permission
-            if row:
-                authorised = has_permission("update", tablename, record_id=row.id)
-            else:
-                authorised = has_permission("create", tablename)
-        if not authorised:
-            from core import S3PermissionError
-            raise S3PermissionError
-
-        # Extract the data
-        data = self.extract()
-
-        # Custom header for Excel Export (disabled for now)
-        settings.base.xls_title_row = lambda sheet: self.summary(sheet, data)
-
-        # Export as XLS
-        title = current.T("Resident List")
-        from core import DataExporter
-        exporter = DataExporter.xls
-        report = exporter(data["report"],
-                          title = title,
-                          as_stream = True,
-                          )
-
-        # Construct the filename
-        filename = "%s_%s_%s.xls" % (title, self.site_id, str(self.date))
-
-        # Store the report
-        report_ = table.report.store(report, filename)
-        record = {"site_id": self.site_id,
-                  "old_total": data["old_total"],
-                  "new_total": data["new_total"],
-                  "cases_new": data["ins"],
-                  "cases_closed": data["outs"],
-                  "date": self.date,
-                  "report": report_,
-                  }
-
-        # Customize resource
-        from core import CRUDRequest
-        r = CRUDRequest("dvr", "site_activity",
-                        current.request,
-                        args = [],
-                        get_vars = {},
-                        )
-        r.customise_resource("dvr_site_activity")
-
-        if row:
-            # Trigger auto-delete of the previous file
-            row.update_record(report=None)
-            # Update it
-            success = row.update_record(**record)
-            if success:
-                s3db.onaccept(table, record, method="create")
-                result = row.id
-            else:
-                result = None
-        else:
-            # Create a new one
-            record_id = table.insert(**record)
-            if record_id:
-                record["id"] = record_id
-                s3db.update_super(table, record)
-                auth.s3_set_record_owner(table, record_id)
-                auth.s3_make_session_owner(table, record_id)
-                s3db.onaccept(table, record, method="create")
-                result = record_id
-            else:
-                result = None
-
-        return result
-
-    # -------------------------------------------------------------------------
-    def summary(self, sheet, data=None):
-        """
-            Header for the Excel sheet
-
-            Args:
-                sheet: the sheet
-                data: the data dict from extract()
-
-            Returns:
-                the number of rows in the header
+            Filter out volunteers who have a confirmed deployment during
+            selected date interval
         """
 
-        length = 3
+        days = get_vars.get("$$absence__gt")
+        if days:
+            try:
+                days = int(days)
+            except (ValueError, TypeError):
+                return
 
-        if sheet is not None and data is not None:
-
-            T = current.T
-            output = (("Date", S3DateTime.date_represent(self.date, utc=True)),
-                      ("Previous Total", data["old_total"]),
-                      ("Admissions", data["ins"]),
-                      ("Departures", data["outs"]),
-                      ("Current Total", data["new_total"]),
-                      )
-
-            import xlwt
-            label_style = xlwt.XFStyle()
-            label_style.font.bold = True
-
-            col_index = 3
-            for label, value in output:
-                label_ = s3_str(T(label))
-                value_ = s3_str(value)
-
-                # Adjust column width
-                width = max(len(label_), len(value_))
-                sheet.col(col_index).width = max(width * 310, 2000)
-
-                # Write the label
-                current_row = sheet.row(0)
-                current_row.write(col_index, label_, label_style)
-
-                # Write the data
-                current_row = sheet.row(1)
-                current_row.write(col_index, value_)
-                col_index += 1
-
-        return length
+            now = current.request.utcnow
+            latest = now - datetime.timedelta(hours = days * 24)
+            resource.add_filter((FS("dvr_case.last_seen_on") != None) & \
+                                (FS("dvr_case.last_seen_on") < latest))
 
 # END =========================================================================

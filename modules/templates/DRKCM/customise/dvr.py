@@ -1283,6 +1283,10 @@ def dvr_need_resource(r, tablename):
 
     table = current.s3db.dvr_need
 
+    # Expose code
+    field = table.code
+    field.readable = field.writable = True
+
     # Expose organisation_id (only relevant for ADMINs)
     field = table.organisation_id
     field.readable = field.writable = True
@@ -1500,7 +1504,7 @@ def configure_response_action_filters(r,
                       ),
         DateFilter("start_date",
                    hidden = not is_report,
-                   hide_time = not use_time,
+                   hide_time = True, #not use_time,
                    ),
         OptionsFilter("person_id$person_details.nationality",
                       label = T("Client Nationality"),
@@ -1818,14 +1822,16 @@ def configure_response_action_tab(person_id,
         field.readable = False
 
         list_fields = ["start_date",
+                       response_type,
                        (T("Themes"), "dvr_response_action_theme.id"),
                        "human_resource_id",
                        "hours",
                        "status_id",
                        ]
         pdf_fields = ["start_date",
-                      #"human_resource_id",
+                       response_type,
                       (T("Themes"), "dvr_response_action_theme.id"),
+                      #"human_resource_id",
                       ]
     else:
         # Show case_activity_id
@@ -2105,19 +2111,41 @@ def dvr_response_action_controller(**attr):
                 return False
 
         if not r.id:
+            # pisets = {pitype: (method, icon, title)}
+            pisets = {None: ("indicators",
+                             "line-chart",
+                             T("Performance Indicators"),
+                             ),
+                      "rp": ("indicators_rp",
+                             "line-chart",
+                             "%s %s" % (T("Performance Indicators"), "RP"),
+                             ),
+                      "bamf": ("indicators_bamf",
+                               "tachometer",
+                               "%s %s" % (T("Performance Indicators"), "BAMF"),
+                               ),
+                      }
+
             from ..stats import PerformanceIndicatorExport
-            pitype = get_ui_options().get("response_performance_indicators")
-            s3db.set_method("dvr_response_action",
-                            method = "indicators",
-                            action = PerformanceIndicatorExport(pitype),
-                            )
-            export_formats = list(settings.get_ui_export_formats())
-            export_formats.append(("indicators.xls",
-                                   "fa fa-line-chart",
-                                   T("Performance Indicators"),
-                                   ))
-            s3.formats["indicators.xls"] = r.url(method="indicators")
-            settings.ui.export_formats = export_formats
+            pitypes = get_ui_options().get("response_performance_indicators")
+            if not isinstance(pitypes, (tuple, list)):
+                pitypes = [pitypes]
+
+            for pitype in pitypes:
+                piset = pisets.get(pitype)
+                if not piset:
+                    continue
+                method, icon, title = piset
+                s3db.set_method("dvr_response_action",
+                                method = method,
+                                action = PerformanceIndicatorExport(pitype),
+                                )
+                export_formats = list(settings.get_ui_export_formats())
+                fmt = "%s.xls" % method
+                export_formats.append((fmt, "fa fa-%s" % icon, title))
+                s3.formats[fmt] = r.url(method=method)
+                settings.ui.export_formats = export_formats
+
         return result
     s3.prep = custom_prep
 
@@ -2185,6 +2213,13 @@ def dvr_response_theme_resource(r, tablename):
         msg_record_deleted = T("Counseling Theme deleted"),
         msg_list_empty = T("No Counseling Themes currently defined"),
         )
+
+# -------------------------------------------------------------------------
+def dvr_response_type_resource(r, tablename):
+
+    table = current.s3db.dvr_response_type
+    field = table.code
+    field.readable = field.writable = True
 
 # -------------------------------------------------------------------------
 def dvr_service_contact_resource(r, tablename):

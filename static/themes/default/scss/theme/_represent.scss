@@ -109,8 +109,7 @@
     background-color: #ffaa00;
 }
 .prio-lightgreen {
-    color: #E0E0E0;
-    background-color: #009f00;
+    background-color: #a0d7a0;
 }
 .prio-green {
     color: #E0E0E0;
@@ -218,6 +217,7 @@
 // WorkflowOptions
 //
 .workflow-options {
+    white-space: pre;
     &.workflow-grey {
         color: #555;
     }

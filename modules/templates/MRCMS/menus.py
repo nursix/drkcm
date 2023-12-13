@@ -295,8 +295,8 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                     #  ),
                     ),
-                #M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
-                #M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
+                M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
                 M("Statistics", link=False)(
                     M("Cases", c="dvr", f="person", m="report",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
@@ -331,12 +331,13 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     # Org-specific types
                     M("Flags", f="case_flag"),
                     M("Appointment Types", f="case_appointment_type"),
-                    #M("Event Types", f="case_event_type"),
+                    M("Event Types", f="case_event_type"),
 
                     # Global types
                     M("Case Status", f="case_status", restrict=ADMIN),
                     M("Residence Status Types", f="residence_status_type", restrict=ADMIN),
                     M("Residence Permit Types", f="residence_permit_type", restrict=ADMIN),
+                    M("Service Contact Types", f="service_contact_type", restrict=ADMIN),
                     ),
                 )
 

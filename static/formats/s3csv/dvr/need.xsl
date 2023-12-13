@@ -12,18 +12,15 @@
          ...SubBranch,SubSubBranch...etc (indefinite depth, must specify all from root)
 
          Type........................string..........Type Name
-         SubType.....................string..........Sub Type Name
-         SubSubType... (indefinite depth)
-
-         Service.....................string..........Service Type Name
+         Code........................string..........Type Code
+         Protection..................string..........is protection need type
+                                                     true|false
          Comments....................string..........Comments
 
     *********************************************************************** -->
     <xsl:import href="../orgh.xsl"/>
 
     <xsl:output method="xml"/>
-
-    <xsl:key name="services" match="row" use="col[@field='Service']"/>
 
     <!-- ****************************************************************** -->
     <xsl:template match="/">
@@ -33,17 +30,7 @@
             <xsl:for-each select="table/row[1]">
                 <xsl:call-template name="OrganisationHierarchy">
                     <xsl:with-param name="level">Organisation</xsl:with-param>
-                    <xsl:with-param name="rows" select="//table/row"/>
-                </xsl:call-template>
-            </xsl:for-each>
-
-            <!-- Services -->
-            <xsl:for-each select="//row[generate-id(.)=generate-id(key('services',
-                                                                   col[@field='Service'])[1])]">
-                <xsl:call-template name="Service">
-                    <xsl:with-param name="Name">
-                         <xsl:value-of select="col[@field='Service']"/>
-                    </xsl:with-param>
+                    <xsl:with-param name="rows" select="//table/row"></xsl:with-param>
                 </xsl:call-template>
             </xsl:for-each>
 
@@ -55,163 +42,73 @@
 
     <!-- ****************************************************************** -->
     <xsl:template match="row">
-        <xsl:call-template name="TypeHierarchy">
-            <xsl:with-param name="Level">Type</xsl:with-param>
-            <xsl:with-param name="Subset" select="//row"/>
-        </xsl:call-template>
-    </xsl:template>
 
-    <!-- ****************************************************************** -->
-    <!-- Process the type hierarchy -->
-
-    <xsl:template name="TypeHierarchy">
-        <xsl:param name="Parent"/>
-        <xsl:param name="ParentPath"/>
-        <xsl:param name="Level"/>
-        <xsl:param name="Subset"/>
-
-        <xsl:variable name="Name" select="col[@field=$Level]"/>
-
+        <xsl:variable name="Name" select="col[@field='Type']/text()"/>
         <xsl:if test="$Name!=''">
+            <resource name="dvr_need">
 
-            <xsl:variable name="SubSubset" select="$Subset[col[@field=$Level]/text()=$Name]"/>
+                <!-- Name -->
+                <data field="name"><xsl:value-of select="$Name"/></data>
 
-            <!-- Construct the path (for tuid-generation) -->
-            <xsl:variable name="Path">
-                <xsl:choose>
-                    <xsl:when test="$ParentPath!=''">
-                        <xsl:value-of select="concat($ParentPath, '/', $Name)"/>
-                    </xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="$Name"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:variable>
+                <!-- Code -->
+                <xsl:variable name="Code" select="col[@field='Code']/text()"/>
+                <xsl:if test="$Code!=''">
+                    <data field="code"><xsl:value-of select="$Code"/></data>
+                </xsl:if>
 
-            <!-- Generate the column name of the next level from the current level -->
-            <xsl:variable name="NextLevel">
-                <xsl:choose>
-                    <xsl:when test="$Level='Type'">SubType</xsl:when>
-                    <xsl:otherwise>
-                        <xsl:value-of select="concat('Sub', $Level)"/>
-                    </xsl:otherwise>
-                </xsl:choose>
-            </xsl:variable>
+                <!-- Link to Organisation -->
+                <xsl:variable name="Organisation" select="col[@field='Organisation']/text()"/>
+                <xsl:if test="$Organisation!=''">
+                    <reference field="organisation_id" resource="org_organisation">
+                        <xsl:attribute name="tuid">
+                            <xsl:call-template name="OrganisationID"/>
+                        </xsl:attribute>
+                    </reference>
+                </xsl:if>
 
-            <xsl:choose>
-                <xsl:when test="col[@field=$NextLevel] and col[@field=$NextLevel]/text()!=''">
+                <!-- Is Protection Need? -->
+                <xsl:call-template name="Boolean">
+                    <xsl:with-param name="column">Protection</xsl:with-param>
+                    <xsl:with-param name="field">protection</xsl:with-param>
+                </xsl:call-template>
 
-                    <xsl:if test="generate-id($SubSubset[1])=generate-id(.)">
-                        <!-- If the parent type does not exist in the source,
-                            then create it now from the bare name -->
-                        <xsl:variable name="ParentRow" select="$SubSubset[not(col[@field=$NextLevel]) or
-                                                                        not(col[@field=$NextLevel]/text()!='')]"/>
-                        <xsl:if test="count($ParentRow)=0">
-                            <xsl:call-template name="NeedType">
-                                <xsl:with-param name="Name" select="$Name"/>
-                                <xsl:with-param name="Path" select="$Path"/>
-                                <xsl:with-param name="ParentPath" select="$ParentPath"/>
-                            </xsl:call-template>
-                        </xsl:if>
-                    </xsl:if>
-
-                    <!-- Descend one more level down -->
-                    <xsl:call-template name="TypeHierarchy">
-                        <xsl:with-param name="Parent" select="$Name"/>
-                        <xsl:with-param name="ParentPath" select="$Path"/>
-                        <xsl:with-param name="Level" select="$NextLevel"/>
-                        <xsl:with-param name="Subset" select="$SubSubset"/>
-                    </xsl:call-template>
-
-                </xsl:when>
-                <xsl:otherwise>
-
-                    <!-- Generate the type from this row -->
-                    <xsl:call-template name="NeedType">
-                        <xsl:with-param name="Name" select="$Name"/>
-                        <xsl:with-param name="Path" select="$Path"/>
-                        <xsl:with-param name="ParentPath" select="$ParentPath"/>
-                        <xsl:with-param name="Row" select="."/>
-                    </xsl:call-template>
-
-                </xsl:otherwise>
-            </xsl:choose>
-        </xsl:if>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="NeedType">
-        <xsl:param name="Name"/>
-        <xsl:param name="Path"/>
-        <xsl:param name="ParentPath"/>
-        <xsl:param name="Row"/>
-
-        <resource name="dvr_need">
-            <!-- Use path with prefix to generate the tuid -->
-            <xsl:attribute name="tuid">
-                <xsl:value-of select="concat('TYPE:', $Path)"/>
-            </xsl:attribute>
-
-            <!-- Add link to parent (if there is one) -->
-            <xsl:if test="$ParentPath!=''">
-                <reference field="parent" resource="dvr_need">
-                    <xsl:attribute name="tuid">
-                        <xsl:value-of select="concat('TYPE:', $ParentPath)"/>
-                    </xsl:attribute>
-                </reference>
-            </xsl:if>
-
-            <!-- Name -->
-            <data field="name"><xsl:value-of select="$Name"/></data>
-
-            <!-- Link to Organisation -->
-            <xsl:variable name="Organisation" select="col[@field='Organisation']/text()"/>
-            <xsl:if test="$Organisation!=''">
-                <reference field="organisation_id" resource="org_organisation">
-                    <xsl:attribute name="tuid">
-                        <xsl:call-template name="OrganisationID"/>
-                    </xsl:attribute>
-                </reference>
-            </xsl:if>
-
-            <!-- Link to Service -->
-            <xsl:variable name="Service" select="col[@field='Service']/text()"/>
-            <xsl:if test="$Service!=''">
-                <reference field="service_id" resource="org_service">
-                    <xsl:attribute name="tuid">
-                        <xsl:value-of select="concat('SERVICE:', $Service)"/>
-                    </xsl:attribute>
-                </reference>
-            </xsl:if>
-
-            <!-- Comments -->
-            <xsl:variable name="Comments" select="col[@field='Comments']/text()"/>
-            <xsl:if test="$Comments!=''">
-                <data field="comments">
-                    <xsl:value-of select="$Comments"/>
-                </data>
-            </xsl:if>
-        </resource>
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="Service">
-
-        <xsl:param name="Name"/>
-
-        <xsl:if test="$Name!=''">
-            <resource name="org_service">
-                <xsl:attribute name="tuid">
-                    <xsl:value-of select="concat('SERVICE:', $Name)"/>
-                </xsl:attribute>
-                <data field="name">
-                    <xsl:value-of select="$Name"/>
-                </data>
+                <!-- Comments -->
+                <xsl:variable name="Comments" select="col[@field='Comments']/text()"/>
+                <xsl:if test="$Comments!=''">
+                    <data field="comments">
+                        <xsl:value-of select="$Comments"/>
+                    </data>
+                </xsl:if>
             </resource>
         </xsl:if>
 
     </xsl:template>
 
     <!-- ****************************************************************** -->
+    <!-- Helper for boolean fields -->
+    <xsl:template name="Boolean">
+
+        <xsl:param name="column"/>
+        <xsl:param name="field"/>
+
+        <data>
+            <xsl:attribute name="field">
+                <xsl:value-of select="$field"/>
+            </xsl:attribute>
+            <xsl:attribute name="value">
+                <xsl:choose>
+                    <xsl:when test="col[@field=$column]/text()='true'">
+                        <xsl:value-of select="'true'"/>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:value-of select="'false'"/>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </xsl:attribute>
+        </data>
+
+    </xsl:template>
+
+    <!-- END ************************************************************** -->
 
 </xsl:stylesheet>

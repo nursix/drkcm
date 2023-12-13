@@ -290,6 +290,7 @@ def config(settings):
                                dvr_response_action_resource, \
                                dvr_response_action_controller, \
                                dvr_response_theme_resource, \
+                               dvr_response_type_resource, \
                                dvr_service_contact_resource, \
                                dvr_vulnerability_resource
 
@@ -310,6 +311,7 @@ def config(settings):
     settings.customise_dvr_response_action_resource = dvr_response_action_resource
     settings.customise_dvr_response_action_controller = dvr_response_action_controller
     settings.customise_dvr_response_theme_resource = dvr_response_theme_resource
+    settings.customise_dvr_response_type_resource = dvr_response_type_resource
 
     settings.customise_dvr_service_contact_resource = dvr_service_contact_resource
 
