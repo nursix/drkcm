@@ -585,7 +585,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
             (5, "Anzahl aller Frauen", "clients", "gender", "female"),
             (6, "Anzahl aller Divers", "clients", "gender", "diverse"),
             (7, "Anzahl aller Personen bis zum vollendeten 18. Lebensjahr", "clients", "age_group", "u18"),
-            (8, "Anzahl aller Personen vom vollendeten 18. bis zum vollendeten 27. Lebensjahr", "clients", "age_group", "18-17"),
+            (8, "Anzahl aller Personen vom vollendeten 18. bis zum vollendeten 27. Lebensjahr", "clients", "age_group", "18-27"),
             (9, "Anzahl aller Personen über dem vollendeten 65. Lebensjahr", "clients", "age_group", "65+"),
             (10, "Anzahl aller beratenen Personen aus Syrien", "clients", "nationality", "SY"),
             (11, "Anzahl aller beratenen Personen aus Afghanistan", "clients", "nationality", "AF"),
@@ -753,14 +753,14 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         join = ptable.on(ptable.id == atable.person_id)
 
         rows = dbset.select(atable.id,
-                            atable.start_date,
+                            atable.date,
                             ptable.date_of_birth,
                             join = join,
                             )
         for row in rows:
             action = row.dvr_response_action
             client = row.pr_person
-            age = relativedelta(action.start_date, client.date_of_birth).years
+            age = relativedelta(action.date, client.date_of_birth).years
             for g in age_groups:
                 if age >= g[0] and (g[1] is None or age < g[1]):
                     age_groups[g] += 1
