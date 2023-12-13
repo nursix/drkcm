@@ -1098,7 +1098,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         efforts = {row[action_id]: row[total_hours] for row in rows}
 
         # For all other actions in the set...
-        query = ~atable.id.belongs(efforts.keys())
+        query = (~atable.id.belongs(efforts.keys())) & (atable.hours != None)
 
         # ...determine the total effort and the total number of theme links
         left = ltable.on((ltable.action_id == atable.id) & \
@@ -1144,7 +1144,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         result = {k: 0 for k, _ in groups}
         for record_id, hours in efforts.items():
             for indicator, limit in groups:
-                if hours < limit:
+                if hours is None or hours < limit:
                     result[indicator] += 1
                     # TODO assuming exclusive effort groups here
                     #      - but is this correct? (indicator definitions are insufficient)
