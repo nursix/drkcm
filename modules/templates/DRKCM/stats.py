@@ -1167,8 +1167,6 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
             for indicator, limit in groups:
                 if hours is None or hours < limit:
                     result[indicator] += 1
-                    # TODO assuming exclusive effort groups here
-                    #      - but is this correct? (indicator definitions are insufficient)
                     break
 
         return result
