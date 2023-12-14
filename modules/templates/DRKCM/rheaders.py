@@ -6,6 +6,8 @@
 
 from gluon import current, A, DIV, SPAN, URL
 
+from .helpers import client_name_age
+
 # =============================================================================
 def drk_cr_rheader(r, tabs=None):
     """ CR custom resource headers """
@@ -56,9 +58,7 @@ def drk_dvr_rheader(r, tabs=None):
         # Resource headers only used in interactive views
         return None
 
-    from core import s3_rheader_resource, \
-                     S3ResourceHeader, \
-                     s3_fullname
+    from core import s3_rheader_resource, S3ResourceHeader
     from .uioptions import get_ui_options
 
     tablename, record = s3_rheader_resource(r)
@@ -165,8 +165,6 @@ def drk_dvr_rheader(r, tabs=None):
             if case:
                 # Extract case data
                 case = case[0]
-
-                name = lambda person: s3_fullname(person, truncate=False)
                 raw = case["_row"]
 
                 case_status = lambda row: case["dvr_case.status_id"]
@@ -256,7 +254,14 @@ def drk_dvr_rheader(r, tabs=None):
                 rheader_fields.insert(0, [(T("Organization"), organisation, colspan)])
             if flags_sel:
                 rheader_fields.append([(T("Flags"), flags, colspan)])
-            if ui_opts_get("case_header_protection_themes"):
+            if ui_opts_get("case_use_vulnerabilities"):
+                from .helpers import get_vulnerabilities
+                vulnerabilities = get_vulnerabilities(record)
+                rheader_fields.append([(T("Vulnerabilities"),
+                                       lambda i: vulnerabilities if vulnerabilities else "-",
+                                       colspan,
+                                       )])
+            elif ui_opts_get("case_header_protection_themes"):
                 from .helpers import get_protection_themes
                 rheader_fields.append([(T("Protection Need"),
                                         get_protection_themes,
@@ -267,12 +272,11 @@ def drk_dvr_rheader(r, tabs=None):
                 hint = lambda record: SPAN(T("Invalid Case"), _class="invalid-case")
                 rheader_fields.insert(0, [(None, hint)])
 
+            rheader_title = client_name_age
+
             # Generate rheader XML
-            rheader = S3ResourceHeader(rheader_fields, tabs, title=name)(
-                            r,
-                            table = resource.table,
-                            record = record,
-                            )
+            rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+            rheader = rheader(r, table=resource.table, record=record)
 
             # Add profile picture
             from core import s3_avatar_represent

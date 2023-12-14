@@ -4833,11 +4833,39 @@ body.rtl .event-type-header {
   margin: 0.125rem 0.25rem 0.5rem 0.25rem;
 }
 
-/* line 248, ../scss/theme/_misc.scss */
+/* line 247, ../scss/theme/_misc.scss */
+.client-gender-age {
+  font-size: 0.7rem;
+  vertical-align: top;
+  color: #999;
+  margin: 0 1rem;
+}
+/* line 251, ../scss/theme/_misc.scss */
+.client-gender-age .fa {
+  margin: 0 0.2rem;
+}
+
+/* line 257, ../scss/theme/_misc.scss */
+.vuln-tag {
+  border: 1px solid #ccc;
+  padding: 0.1rem 0.2rem;
+  background-color: #fdc;
+  font-weight: normal;
+  font-size: 0.7rem;
+  white-space: pre;
+  margin-right: 0.3rem;
+}
+/* line 265, ../scss/theme/_misc.scss */
+[dir=rtl] .vuln-tag {
+  margin-left: 0.3rem;
+  margin-right: 0;
+}
+
+/* line 272, ../scss/theme/_misc.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 251, ../scss/theme/_misc.scss */
+/* line 275, ../scss/theme/_misc.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;

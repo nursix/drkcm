@@ -4,9 +4,7 @@
     License: MIT
 """
 
-from gluon import current
-from gluon.html import *
-from gluon.storage import Storage
+from gluon import current, DIV, H3, H4, I, LI, P, TAG, UL, XML
 
 from core import FS, CustomController
 

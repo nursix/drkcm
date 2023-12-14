@@ -548,7 +548,7 @@ def client_name_age(record):
              }
     icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
 
-    client = TAG[""](s3_fullname(record),
+    client = TAG[""](s3_fullname(record, truncate=False),
                      SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
                      )
     return client
