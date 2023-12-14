@@ -254,6 +254,20 @@ body.rtl {
     margin: 0 1rem;
 }
 
+.vuln-tag {
+    border: 1px solid #ccc;
+    padding: 0.1rem 0.2rem;
+    background-color: #fdc;
+    font-weight: normal;
+    font-size: 0.7rem;
+    white-space: pre;
+    margin-right: 0.3rem;
+    [dir=rtl] & {
+        margin-left: 0.3rem;
+        margin-right: 0;
+    }
+}
+
 .file-repr {
     i.fa {
         font-size: 1.1rem;
@@ -263,5 +277,4 @@ body.rtl {
         font-size: 0.7rem;
     }
 }
-
 // END ========================================================================

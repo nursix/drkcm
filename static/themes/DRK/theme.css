@@ -4845,11 +4845,27 @@ body.rtl .event-type-header {
   margin: 0 0.2rem;
 }
 
-/* line 258, ../scss/theme/_misc.scss */
+/* line 257, ../scss/theme/_misc.scss */
+.vuln-tag {
+  border: 1px solid #ccc;
+  padding: 0.1rem 0.2rem;
+  background-color: #fdc;
+  font-weight: normal;
+  font-size: 0.7rem;
+  white-space: pre;
+  margin-right: 0.3rem;
+}
+/* line 265, ../scss/theme/_misc.scss */
+[dir=rtl] .vuln-tag {
+  margin-left: 0.3rem;
+  margin-right: 0;
+}
+
+/* line 272, ../scss/theme/_misc.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 261, ../scss/theme/_misc.scss */
+/* line 275, ../scss/theme/_misc.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;

@@ -254,7 +254,14 @@ def drk_dvr_rheader(r, tabs=None):
                 rheader_fields.insert(0, [(T("Organization"), organisation, colspan)])
             if flags_sel:
                 rheader_fields.append([(T("Flags"), flags, colspan)])
-            if ui_opts_get("case_header_protection_themes"):
+            if ui_opts_get("case_use_vulnerabilities"):
+                from .helpers import get_vulnerabilities
+                vulnerabilities = get_vulnerabilities(record)
+                rheader_fields.append([(T("Vulnerabilities"),
+                                       lambda i: vulnerabilities if vulnerabilities else "-",
+                                       colspan,
+                                       )])
+            elif ui_opts_get("case_header_protection_themes"):
                 from .helpers import get_protection_themes
                 rheader_fields.append([(T("Protection Need"),
                                         get_protection_themes,

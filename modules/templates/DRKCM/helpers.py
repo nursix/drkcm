@@ -147,6 +147,41 @@ def get_protection_themes(person):
     return represent(theme_list)
 
 # =============================================================================
+def get_vulnerabilities(person):
+    """
+        Get current vulnerabilities of a client
+
+        Args:
+            person: the client record (pr_person Row)
+
+        Returns:
+            list-representation of vulnerabilities
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    vtable = s3db.dvr_vulnerability
+    ttable = s3db.dvr_vulnerability_type
+
+    today = current.request.utcnow.date()
+    join = vtable.on((vtable.person_id == person.id) & \
+                     (vtable.vulnerability_type_id == ttable.id) & \
+                     ((vtable.date == None) | (vtable.date <= today)) & \
+                     ((vtable.end_date == None) | (vtable.end_date >= today)) & \
+                     (vtable.deleted == False))
+    query = (ttable.obsolete == False) & (ttable.deleted == False)
+    rows = db(query).select(ttable.id,
+                            ttable.name,
+                            distinct = True,
+                            join = join,
+                            )
+    from core import s3_truncate
+    names = [SPAN(s3_truncate(row.name), _class="vuln-tag") for row in rows]
+
+    return TAG[""](*names) if len(names) else None
+
+# =============================================================================
 def client_name_age(record):
     """
         Represent a client as name, gender and age; for case file rheader
