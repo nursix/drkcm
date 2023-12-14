@@ -466,7 +466,7 @@ def pr_person_controller(**attr):
                     field.default = None
                     options = dict(s3db.pr_gender_opts)
                     del options[1] # Remove "unknown"
-                    field.requires = IS_PERSON_GENDER(options, sort = True)
+                    field.requires = IS_PERSON_GENDER(options, sort=True)
 
                     # Last name is required
                     field = table.last_name
@@ -603,6 +603,15 @@ def pr_person_controller(**attr):
                         (T("Invalid"), "dvr_case.archived"),
                         )
 
+                    # Subheadings for case form
+                    person_details = "pe_label" if pe_label else "last_name"
+                    subheadings = {
+                        "dvr_case_date": T("Case Status"),
+                        person_details: T("Person Details"),
+                        "phonecontact": T("Other Details"),
+                        "dvr_case_archived": T("File Status"),
+                        }
+
                     # Custom filter widgets
 
                     # Extract case status options from original filter widget
@@ -689,6 +698,7 @@ def pr_person_controller(**attr):
                             OptionsFilter("dvr_case.organisation_id"))
 
                     configure(crud_form = crud_form,
+                              subheadings = subheadings,
                               filter_widgets = filter_widgets,
                               )
 

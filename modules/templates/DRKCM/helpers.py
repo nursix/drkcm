@@ -6,9 +6,9 @@
 
 import os
 
-from gluon import current, A, DIV, SPAN, URL
+from gluon import current, A, DIV, I, SPAN, TAG, URL
 
-from core import ICON
+from core import ICON, s3_fullname
 
 # =============================================================================
 def case_read_multiple_orgs():
@@ -145,6 +145,43 @@ def get_protection_themes(person):
     # Return presented as list
     represent = rtable.response_theme_ids.represent
     return represent(theme_list)
+
+# =============================================================================
+def client_name_age(record):
+    """
+        Represent a client as name, gender and age; for case file rheader
+
+        Args:
+            record: the client record (pr_person)
+
+        Returns:
+            HTML
+    """
+
+    T = current.T
+
+    pr_age = current.s3db.pr_age
+
+    age = pr_age(record)
+    if age is None:
+        age = "?"
+        unit = T("years")
+    elif age == 0:
+        age = pr_age(record, months=True)
+        unit = T("months") if age != 1 else T("month")
+    else:
+        unit = T("years") if age != 1 else T("year")
+
+    icons = {2: "fa fa-venus",
+             3: "fa fa-mars",
+             4: "fa fa-transgender-alt",
+             }
+    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+
+    client = TAG[""](s3_fullname(record, truncate=False),
+                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     )
+    return client
 
 # =============================================================================
 def user_mailmerge_fields(resource, record):

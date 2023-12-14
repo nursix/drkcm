@@ -4833,11 +4833,23 @@ body.rtl .event-type-header {
   margin: 0.125rem 0.25rem 0.5rem 0.25rem;
 }
 
-/* line 248, ../scss/theme/_misc.scss */
+/* line 247, ../scss/theme/_misc.scss */
+.client-gender-age {
+  font-size: 0.7rem;
+  vertical-align: top;
+  color: #999;
+  margin: 0 1rem;
+}
+/* line 251, ../scss/theme/_misc.scss */
+.client-gender-age .fa {
+  margin: 0 0.2rem;
+}
+
+/* line 258, ../scss/theme/_misc.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 251, ../scss/theme/_misc.scss */
+/* line 261, ../scss/theme/_misc.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;
