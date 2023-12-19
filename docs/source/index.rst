@@ -6,7 +6,7 @@ humanitarian and emergency management applications, originally derived from the
 *Sahana Eden Humanitarian Management Platform*.
 
 Eden ASP builds on the **web2py** web application framework, and is written in the
-**Python** programming language (version 3.6+). It also uses *HTML5*, *JavaScript*,
+**Python** programming language (version 3.9+). It also uses *HTML5*, *JavaScript*,
 and *SCSS* to generate web contents, as well as *XSLT* to handle certain data formats.
 
 This documentation is aimed at application developers, and included in the source code.
