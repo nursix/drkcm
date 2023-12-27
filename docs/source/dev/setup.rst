@@ -71,7 +71,7 @@ all submodules) to the supported stable version (currently 2.27.1):
 .. code-block:: bash
 
    cd ~/web2py
-   git reset --hard 8d7d029f
+   git reset --hard 49bb23c4
    git submodule update --recursive
 
 Installing Eden ASP
