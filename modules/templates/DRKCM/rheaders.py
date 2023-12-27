@@ -6,7 +6,7 @@
 
 from gluon import current, A, DIV, SPAN, URL
 
-from .helpers import client_name_age
+from .helpers import client_name_age, warn_if_missing
 
 # =============================================================================
 def drk_cr_rheader(r, tabs=None):
@@ -147,6 +147,7 @@ def drk_dvr_rheader(r, tabs=None):
 
             case = resource.select(["first_name",
                                     "last_name",
+                                    "date_of_birth",
                                     "dvr_case.status_id",
                                     "dvr_case.archived",
                                     "dvr_case.household_size",
@@ -172,12 +173,12 @@ def drk_dvr_rheader(r, tabs=None):
                 organisation = lambda row: case["dvr_case.organisation_id"]
                 arrival_date = lambda row: case["dvr_case_details.arrival_date"]
                 household_size = lambda row: case["dvr_case.household_size"]
-                nationality = lambda row: case["pr_person_details.nationality"]
 
-                # Warn if nationality is lacking while mandatory
-                if ui_opts_get("case_nationality_mandatory") and \
-                   raw["pr_person_details.nationality"] is None:
-                    current.response.warning = T("Nationality lacking!")
+                dob = (T("Date of Birth"), warn_if_missing(case, "pr_person.date_of_birth"))
+                if ui_opts_get("case_nationality_mandatory"):
+                    nationality = (T("Nationality"), warn_if_missing(case, "pr_person_details.nationality"))
+                else:
+                    nationality = (T("Nationality"), lambda row: case["pr_person_details.nationality"])
 
                 bamf = lambda row: case["pr_bamf_person_tag.value"]
 
@@ -203,7 +204,7 @@ def drk_dvr_rheader(r, tabs=None):
 
             # Adaptive rheader-fields
             rheader_fields = [[None,
-                               (T("Nationality"), nationality),
+                               nationality,
                                (T("Case Status"), case_status)],
                               [None, None, None],
                               [None, None, None],
@@ -211,9 +212,9 @@ def drk_dvr_rheader(r, tabs=None):
 
             if ui_opts_get("case_use_pe_label"):
                 rheader_fields[0][0] = (T("ID"), "pe_label")
-                rheader_fields[1][0] = "date_of_birth"
+                rheader_fields[1][0] = dob
             else:
-                rheader_fields[0][0] = "date_of_birth"
+                rheader_fields[0][0] = dob
 
             if pob_sel:
                 pob_row = 1 if rheader_fields[1][0] is None else 2
