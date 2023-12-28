@@ -69,19 +69,22 @@ if not failed:
         statuses = (stable.is_closed == True) & \
                    (stable.is_canceled == False) & \
                    (stable.deleted == False)
-        statuses = db(query)._select(stable.id)
+        rows = db(query).select(stable.id)
+        statuses = {row.id for row in rows}
 
         # Initial consultation types
         query = (ttable.code.belongs(initial_codes)) & \
                 (ttable.is_consultation == True) & \
                 (ttable.deleted == False)
-        initial_types = db(query)._select(ttable.id)
+        rows = db(query).select(ttable.id)
+        initial_types = {row.id for row in rows}
 
         # Follow-up consultation types
         query = (ttable.code.belongs(followup_codes)) & \
                 (ttable.is_consultation == True) & \
                 (ttable.deleted == False)
-        followup_types = db(query)._select(ttable.id)
+        rows = db(query).select(ttable.id)
+        followup_types = {row.id for row in rows}
 
         query = (atable.response_type_id.belongs(followup_types)) & \
                 (atable.status_id.belongs(statuses)) & \
@@ -110,7 +113,7 @@ if not failed:
                                           atable.response_type_id,
                                           limitby = (0, 1),
                                           orderby = atable.start_date,
-                                          )
+                                          ).first()
 
                 # Get the corresponding initial type
                 old_code = type_ids.get(action.response_type_id)
