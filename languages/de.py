@@ -4067,6 +4067,7 @@
 'No entries matching the query': 'Die Abfrage lieferte keine Einträge',
 'No entry available': 'Kein Eintrag verfügbar',
 'No event types available': 'Keine Ereignistypen verfügbar',
+'No initial consultation registered yet': 'Noch kein Erstgespräch registriert',
 'No instructions for this flag': 'Keine Anweisungen zu dieser Markierung',
 'No items currently in stock': 'Zurzeit keine Artikel auf Lager',
 'No items have been selected for shipping.': 'Es wurden keine Artikel für die Lieferung ausgewählt',

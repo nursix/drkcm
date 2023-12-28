@@ -303,7 +303,10 @@ class PerformanceIndicators:
         if consultation:
             query = (ttable.is_consultation == True) & query
         if code:
-            query = (ttable.code == code) & query
+            if isinstance(code, (tuple, list, set)):
+                query = (ttable.code.belongs(code)) & query
+            else:
+                query = (ttable.code == code) & query
         type_ids = db(query)._select(ttable.id)
 
         # Themes filter
@@ -910,19 +913,23 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
                 # 52 Anzahl der Folgegespräche (Beratungen nach Erstberatung eines Falles) gesamt
         """
 
-        response_types = {"INI": "initial", "FUP": "followup"}
+        response_types = {"initial": ("INI", "INI+I"),
+                          "followup": ("FUP", "FUP+I"),
+                          }
+
+        result = {k: 0 for k in response_types}
 
         s3db = current.s3db
         atable = s3db.dvr_response_action
 
-        result = {}
-        for code, indicator in response_types.items():
+        for indicator, code in response_types.items():
 
             dbset = self.dbset(subset, code=code)
             num_actions = atable.id.count(distinct=True)
 
             row = dbset.select(num_actions).first()
-            result[indicator] = row[num_actions] if row else 0
+            if row:
+                result[indicator] += row[num_actions]
 
         return result
 

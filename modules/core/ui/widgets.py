@@ -312,7 +312,7 @@ class S3CalendarWidget(EdenFormWidget):
                  future = None,
                  past_months = None,
                  future_months = None,
-                 month_selector = False,
+                 month_selector = True,
                  year_selector = True,
                  min_year = None,
                  max_year = None,
