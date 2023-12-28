@@ -303,7 +303,10 @@ class PerformanceIndicators:
         if consultation:
             query = (ttable.is_consultation == True) & query
         if code:
-            query = (ttable.code == code) & query
+            if isinstance(code, (tuple, list, set)):
+                query = (ttable.code.belongs(code)) & query
+            else:
+                query = (ttable.code == code) & query
         type_ids = db(query)._select(ttable.id)
 
         # Themes filter
@@ -602,7 +605,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
             (22, "Anzahl aller beratenen Personen aus Kolumbien", "clients", "nationality", "CO"),
             (23, "Anzahl aller beratenen Personen aus Tunesien", "clients", "nationality", "TN"),
             (24, "Anzahl aller beratenen Personen aus Nigeria", "clients", "nationality", "NG"),
-            (25, "Anzahl aller beratenen Personen aus Ungeklärt", "clients", "nationality", None),
+            (25, "Anzahl aller beratenen Personen aus Ungeklärt", "clients", "nationality", "??"),
             (26, "Anzahl aller beratenen Personen aus Indien", "clients", "nationality", "IN"),
             (27, "Anzahl aller beratenen Personen aus Pakistan", "clients", "nationality", "PK"),
             (28, "Anzahl aller beratenen Personen aus Ägypten", "clients", "nationality", "EG"),
@@ -812,7 +815,7 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
 
         nationalities = ("SY", "AF", "TR", "GE", "IR", "IQ", "RU",
                          "MK", "VE", "SO", "ER", "DZ", "CO", "TN",
-                         "NG", None, "IN", "PK", "EG", "RS", "*"
+                         "NG", "??", "IN", "PK", "EG", "RS", "*"
                          )
 
         s3db = current.s3db
@@ -830,6 +833,8 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
         clients = {n:0 for n in nationalities}
         for row in rows:
             nationality = row.pr_person_details.nationality
+            if nationality is None:
+                nationality = "??"
             if nationality not in nationalities:
                 nationality = "*"
             clients[nationality] += row[num_clients]
@@ -908,19 +913,23 @@ class PerformanceIndicatorsBAMF(PerformanceIndicators):
                 # 52 Anzahl der Folgegespräche (Beratungen nach Erstberatung eines Falles) gesamt
         """
 
-        response_types = {"INI": "initial", "FUP": "followup"}
+        response_types = {"initial": ("INI", "INI+I"),
+                          "followup": ("FUP", "FUP+I"),
+                          }
+
+        result = {k: 0 for k in response_types}
 
         s3db = current.s3db
         atable = s3db.dvr_response_action
 
-        result = {}
-        for code, indicator in response_types.items():
+        for indicator, code in response_types.items():
 
             dbset = self.dbset(subset, code=code)
             num_actions = atable.id.count(distinct=True)
 
             row = dbset.select(num_actions).first()
-            result[indicator] = row[num_actions] if row else 0
+            if row:
+                result[indicator] += row[num_actions]
 
         return result
 

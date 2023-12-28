@@ -11,7 +11,7 @@ from collections import OrderedDict
 from gluon import current, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_IN_SET, IS_LENGTH
 from gluon.storage import Storage
 
-from core import FS, IS_ONE_OF
+from core import FS, IS_ONE_OF, get_form_record_data, get_form_record_id
 
 from ..uioptions import get_ui_options
 
@@ -1313,39 +1313,70 @@ def dvr_need_resource(r, tablename):
 def response_action_onvalidation(form):
     """
         Onvalidation for response actions:
+            - make sure an initial consultation is documented before
+              any follow-up consultations
             - enforce hours for closed-statuses (org-specific UI option)
     """
 
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+
+    table = s3db.dvr_response_action
+    ttable = s3db.dvr_response_type
+    stable = s3db.dvr_response_status
+
+    # Get form record data
+    data = get_form_record_data(form, table, ["person_id",
+                                              "response_type_id",
+                                              "status_id",
+                                              ])
+
     ui_options = get_ui_options()
+    if ui_options.get("response_types"):
+        record_id = get_form_record_id(form)
+
+        follow_up_types = ("FUP", "FUP+I")
+        query = (ttable.id == data.get("response_type_id"))
+        row = db(query).select(ttable.code,
+                               ttable.is_consultation,
+                               limitby = (0, 1),
+                               ).first()
+
+        # If this is a follow-up consultation, make sure that an initial
+        # consultation has already been documented for the client
+        if row and row.is_consultation and row.code in follow_up_types:
+            initial_types = ("INI", "INI+I")
+            join = [ttable.on((ttable.id == table.response_type_id) & \
+                              (ttable.is_consultation == True) & \
+                              (ttable.code.belongs(initial_types))),
+                    stable.on((stable.id == table.status_id) & \
+                              (stable.is_canceled == False)),
+                    ]
+            query = (table.person_id == data.get("person_id")) & \
+                    (table.deleted == False)
+            if record_id:
+                query = (table.id != record_id) & query
+            initial = db(query).select(table.id, join=join, limitby=(0, 1)).first()
+            if not initial:
+                form.errors["response_type_id"] = T("No initial consultation registered yet")
+
     if ui_options.get("response_effort_required") and not \
        current.deployment_settings.get_dvr_response_themes_efforts():
 
-        db = current.db
-        s3db = current.s3db
-
-        form_vars = form.vars
-
-        # Get the new status
-        if "status_id" in form_vars:
-            status_id = form_vars.status_id
-        else:
-            status_id = s3db.dvr_response_action.status_id.default
-
         try:
-            hours = form_vars.hours
+            hours = form.vars.hours
         except AttributeError:
             # No hours field in form, so no point validating it
             return
 
         if hours is None:
             # If new status is closed, require hours
-            stable = s3db.dvr_response_status
-            query = (stable.id == status_id)
-            status = db(query).select(stable.is_closed,
-                                      limitby = (0, 1),
-                                      ).first()
+            query = (stable.id == data.get("status_id"))
+            status = db(query).select(stable.is_closed, limitby=(0, 1)).first()
             if status and status.is_closed:
-                form.errors["hours"] = current.T("Please specify the effort spent")
+                form.errors["hours"] = T("Please specify the effort spent")
 
 # -------------------------------------------------------------------------
 def response_date_dt_orderby(field, direction, orderby, left_joins):

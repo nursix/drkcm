@@ -254,6 +254,14 @@ body.rtl {
     margin: 0 1rem;
 }
 
+.incomplete-data {
+    color: #d92c20;
+    animation: blinker 0.7s step-start 4;
+    i.fa {
+        margin: 0.15rem;
+    }
+}
+
 .vuln-tag {
     border: 1px solid #ccc;
     padding: 0.1rem 0.2rem;

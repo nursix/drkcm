@@ -883,6 +883,7 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
             requires = field.requires
             if isinstance(requires, IS_EMPTY_OR):
                 field.requires = requires.other
+            settings.pr.nationality_explicit_unclear = True
 
             # Check whether the shelter registration shall be cancelled
             cancel = False

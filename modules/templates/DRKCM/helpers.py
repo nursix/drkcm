@@ -211,12 +211,47 @@ def client_name_age(record):
              3: "fa fa-mars",
              4: "fa fa-transgender-alt",
              }
-    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+    icon = icons.get(record.gender)
+    if not icon:
+        icon = "fa fa-question-circle-o incomplete-data"
+        title = T("Gender unknown")
+    else:
+        table = current.s3db.pr_person
+        title = table.gender.represent(record.gender)
 
     client = TAG[""](s3_fullname(record, truncate=False),
-                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     SPAN(I(_class=icon, _title=title),
+                          "%s %s" % (age, unit),
+                          _class = "client-gender-age",
+                          ),
                      )
     return client
+
+# =============================================================================
+def warn_if_missing(row, colname):
+    """
+        Returns a rheader field function that renders a warning instead
+        of a null-value if the field value is empty (None or "")
+
+        Args:
+            row: the Resource row, including raw data
+            colname: the column name
+        Returns:
+            function
+    """
+
+    def rheader_field(record):
+        raw = row["_row"]
+        if raw.get(colname) in ("", None):
+            # Indicate missing value
+            return SPAN(current.T("missing##data"),
+                        ICON("fa fa-exclamation-circle"),
+                        _class = "incomplete-data",
+                        )
+        else:
+            return row[colname]
+
+    return rheader_field
 
 # =============================================================================
 def user_mailmerge_fields(resource, record):
