@@ -318,9 +318,6 @@ def get_default_shelter():
         Returns:
             shelter ID
     """
-    # TODO refactor
-    #      - use default organisation instead of user orgs (i.e. no default
-    #        shelter without default organisation)
 
     auth = current.auth
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
@@ -349,7 +346,6 @@ def get_default_case_organisation():
         Returns:
             organisation ID
     """
-    # TODO parametrize permission
 
     auth = current.auth
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
@@ -370,7 +366,6 @@ def get_default_case_organisation():
     if len(rows) == 1:
         return rows.first().id
 
-    # TODO remove this fallback?
     site_org = get_current_site_organisation()
     if site_org:
         organisation_ids = [row.id for row in rows]
@@ -474,6 +469,8 @@ def get_default_case_shelter(person_id):
     return shelter_id, unit_id
 
 # =============================================================================
+# Helpers for HRM rheader
+# =============================================================================
 def account_status(record, represent=True):
     """
         Checks the status of the user account for a person
@@ -515,70 +512,6 @@ def account_status(record, represent=True):
         status = represent(status)
 
     return status
-
-# -----------------------------------------------------------------------------
-def client_name_age(record):
-    """
-        Represent a client as name, gender and age; for case file rheader
-
-        Args:
-            record: the client record (pr_person)
-
-        Returns:
-            HTML
-    """
-
-    T = current.T
-
-    pr_age = current.s3db.pr_age
-
-    age = pr_age(record)
-    if age is None:
-        age = "?"
-        unit = T("years")
-    elif age == 0:
-        age = pr_age(record, months=True)
-        unit = T("months") if age != 1 else T("month")
-    else:
-        unit = T("years") if age != 1 else T("year")
-
-    icons = {2: "fa fa-venus",
-             3: "fa fa-mars",
-             4: "fa fa-transgender-alt",
-             }
-    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
-
-    client = TAG[""](s3_fullname(record, truncate=False),
-                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
-                     )
-    return client
-
-# -----------------------------------------------------------------------------
-def last_seen_represent(date, label):
-    """
-        Represent last-seen-on date as warning if more than 3/5 days back;
-        for case file rheader
-
-        Args:
-            date: the date (datetime.datetime)
-            label: the represented date
-
-        Returns:
-            HTML or label
-    """
-
-    if date:
-        days = relativedelta(datetime.datetime.utcnow(), date).days
-        if days > 5:
-            icon = I(_class="fa fa-exclamation-triangle")
-            title = "> %s %s" % (days, current.T("days"))
-            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
-        elif days > 3:
-            icon = I(_class="fa fa-exclamation-circle")
-            title = "> %s %s" % (days, current.T("days"))
-            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
-
-    return label
 
 # -----------------------------------------------------------------------------
 def hr_details(record):
@@ -646,6 +579,72 @@ def hr_details(record):
                                                ),
                                    )
     return output
+
+# =============================================================================
+# Helpers for DVR rheader
+# =============================================================================
+def client_name_age(record):
+    """
+        Represent a client as name, gender and age; for case file rheader
+
+        Args:
+            record: the client record (pr_person)
+
+        Returns:
+            HTML
+    """
+
+    T = current.T
+
+    pr_age = current.s3db.pr_age
+
+    age = pr_age(record)
+    if age is None:
+        age = "?"
+        unit = T("years")
+    elif age == 0:
+        age = pr_age(record, months=True)
+        unit = T("months") if age != 1 else T("month")
+    else:
+        unit = T("years") if age != 1 else T("year")
+
+    icons = {2: "fa fa-venus",
+             3: "fa fa-mars",
+             4: "fa fa-transgender-alt",
+             }
+    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+
+    client = TAG[""](s3_fullname(record, truncate=False),
+                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     )
+    return client
+
+# -----------------------------------------------------------------------------
+def last_seen_represent(date, label):
+    """
+        Represent last-seen-on date as warning if more than 3/5 days back;
+        for case file rheader
+
+        Args:
+            date: the date (datetime.datetime)
+            label: the represented date
+
+        Returns:
+            HTML or label
+    """
+
+    if date:
+        days = relativedelta(datetime.datetime.utcnow(), date).days
+        if days > 5:
+            icon = I(_class="fa fa-exclamation-triangle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
+        elif days > 3:
+            icon = I(_class="fa fa-exclamation-circle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
+
+    return label
 
 # =============================================================================
 class AbsenceFilter(RangeFilter):
