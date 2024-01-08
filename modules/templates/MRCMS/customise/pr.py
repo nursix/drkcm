@@ -6,7 +6,7 @@
 
 import datetime
 
-from gluon import current, URL, A, IS_EMPTY_OR, SPAN, TAG
+from gluon import current, URL, A, IS_EMPTY_OR, SPAN
 from gluon.storage import Storage
 
 from core import FS, IS_ONE_OF, s3_str
@@ -831,6 +831,13 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
         configure_person_tags()
 
+        # Attach registration history method
+        from ..presence import RegistrationHistory
+        s3db.set_method("pr_person",
+                        method = "registration_history",
+                        action = RegistrationHistory,
+                        )
+
         # Determine available shelters and default
         if case_organisation:
             from ..helpers import get_available_shelters
@@ -1351,41 +1358,40 @@ def pr_person_controller(**attr):
 
         if r.record and isinstance(output, dict):
 
-            # Generate-ID button (required appropriate role)
+            from ..helpers import inject_button
+
+            component_name = r.component_name
+
+            # Generate-ID button (requires appropriate role)
             if r.controller == "dvr" and is_case_admin or \
                r.controller == "hrm" and is_org_admin:
-                id_btn = A(T("Generate ID"),
-                           _href = r.url(component = "identity",
-                                         method = "generate",
-                                         ),
-                          _class = "action-btn activity button",
-                          )
+                btn = A(T("Generate ID"),
+                        _href = r.url(component = "identity",
+                                      method = "generate",
+                                      ),
+                        _class = "action-btn activity button",
+                        )
                 if not r.component:
-                    if "buttons" not in output:
-                        buttons = output["buttons"] = {}
-                    else:
-                        buttons = output["buttons"]
-                    buttons["delete_btn"] = TAG[""](id_btn)
+                    inject_button(output, btn, before="delete_btn", alt=None)
                 elif r.component_name == "identity":
-                    showadd_btn = output.get("showadd_btn")
-                    if showadd_btn:
-                        output["showadd_btn"] = TAG[""](id_btn, showadd_btn)
-                    else:
-                        output["showadd_btn"] = id_btn
+                    inject_button(output, btn)
 
-            # Organizer-button for appointments
-            if r.component_name == "case_appointment":
-                oa_btn = A(T("Calendar"),
-                           _href = r.url(component = "case_appointment",
-                                         method = "organize",
-                                         ),
-                           _class = "action-btn activity button",
-                           )
-                showadd_btn = output.get("showadd_btn")
-                if showadd_btn:
-                    output["showadd_btn"] = TAG[""](oa_btn, showadd_btn)
-                else:
-                    output["showadd_btn"] = oa_btn
+            # Organizer-button on appointments tab
+            if component_name == "case_appointment":
+                btn = A(T("Calendar"),
+                        _href = r.url(component = "case_appointment",
+                                      method = "organize",
+                                      ),
+                        _class = "action-btn activity button",
+                        )
+                inject_button(output, btn)
+
+            # Registration History button on presence tab
+            elif component_name == "site_presence_event":
+                btn = A(T("Registration History"),
+                        _class = "action-btn activity button",
+                        )
+                inject_button(output, btn)
 
         return output
     s3.postp = postp

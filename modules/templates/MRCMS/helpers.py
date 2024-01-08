@@ -469,6 +469,29 @@ def get_default_case_shelter(person_id):
     return shelter_id, unit_id
 
 # =============================================================================
+def inject_button(output, button, before="add_btn", alt="showadd_btn"):
+    """
+        Injects an additional action button into a CRUD view
+
+        Args:
+            output: the output dict
+            button: the button to inject
+            before: the output["buttons"] element to inject the button
+            alt: output element that overrides "before" if it is present
+    """
+
+    buttons = output.get("buttons")
+    btn = buttons.get(before) if buttons else None
+
+    alt_btn = output.get(alt) if alt else None
+    if alt_btn:
+        output[alt] = TAG[""](button, alt_btn) if alt_btn else button
+    else:
+        if not buttons:
+            buttons = output["buttons"] = {}
+        buttons[before] = TAG[""](button, btn) if btn else button
+
+# =============================================================================
 # Helpers for HRM rheader
 # =============================================================================
 def account_status(record, represent=True):
