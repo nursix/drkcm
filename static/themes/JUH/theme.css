@@ -5108,3 +5108,54 @@ h4.profile-sub-header {
 .last-seen-warning {
   color: #bd5900;
 }
+
+/* line 480, ../scss/theme/_misc.scss */
+.rhist {
+  border: 1px solid #ccc;
+  margin-bottom: 0.7rem;
+  padding: 0.5rem;
+  background-color: #fafafa;
+}
+/* line 485, ../scss/theme/_misc.scss */
+.rhist table {
+  border: 1px solid #ccc;
+  border-collapse: collapse;
+  margin: 1rem 3rem;
+}
+/* line 489, ../scss/theme/_misc.scss */
+.rhist table th, .rhist table td {
+  padding: 0.2rem 0.7rem;
+  border: 0;
+  cursor: default;
+}
+/* line 494, ../scss/theme/_misc.scss */
+.rhist table th {
+  font-size: 0.8rem;
+  font-weight: normal;
+  font-style: italic;
+  color: grey;
+  border-bottom: 1px solid #ccc;
+}
+/* line 501, ../scss/theme/_misc.scss */
+.rhist table td {
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+/* line 505, ../scss/theme/_misc.scss */
+.rhist table td.rhist-planned {
+  font-size: 0.7rem;
+  font-weight: normal;
+  color: grey;
+}
+/* line 510, ../scss/theme/_misc.scss */
+.rhist table .rhist-headers {
+  background-color: #eee;
+}
+/* line 513, ../scss/theme/_misc.scss */
+.rhist table .rhist-current {
+  background-color: #dff4bf;
+}
+/* line 517, ../scss/theme/_misc.scss */
+.rhist .empty {
+  margin: 0.7rem 1.4rem;
+}

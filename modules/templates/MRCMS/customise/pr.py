@@ -5,6 +5,7 @@
 """
 
 import datetime
+import json
 
 from gluon import current, URL, A, IS_EMPTY_OR, SPAN
 from gluon.storage import Storage
@@ -1388,10 +1389,46 @@ def pr_person_controller(**attr):
 
             # Registration History button on presence tab
             elif component_name == "site_presence_event":
-                btn = A(T("Registration History"),
+
+                widget_id = "rhist-btn"
+                label = T("Registration History")
+
+                btn = A(label,
+                        _id = widget_id,
                         _class = "action-btn activity button",
                         )
                 inject_button(output, btn)
+
+                # TODO move into function
+
+                # Inject JS
+                appname = current.request.application
+                script = "/%s/static/themes/JUH/js/rhist.js" % appname
+                if script not in s3.scripts:
+                    s3.scripts.append(script)
+
+                # Instantiate widget
+                opts = {"ajaxURL": r.url(component="",
+                                         method="registration_history",
+                                         representation="json",
+                                         ),
+                        "container": "map",
+                        "labelTitle": s3_str(label),
+                        "labelShelter": s3_str(T("Shelter")),
+                        "labelPlanned": s3_str(T("Planned since")),
+                        "labelArrival": s3_str(T("Arrival")),
+                        "labelDeparture": s3_str(T("Departure")),
+                        "labelEmpty": s3_str(T("No data available")),
+                        "labelMissing": s3_str(T("Date not registered")),
+                        "labelClose": s3_str(T("Close")),
+                        }
+                from core import JSONSEPARATORS
+                script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
+                         {"selector": widget_id,
+                          "options": json.dumps(opts, separators=JSONSEPARATORS),
+                          }
+                s3.jquery_ready.append(script)
+
 
         return output
     s3.postp = postp
