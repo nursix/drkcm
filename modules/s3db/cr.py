@@ -2005,7 +2005,6 @@ class CRShelterRegistrationModel(DataModel):
         # Get the last registration history entry
         htable = s3db.cr_shelter_registration_history
         query = (htable.person_id == person_id) & \
-                (htable.shelter_id == shelter_id) & \
                 (htable.deleted != True)
         row = db(query).select(htable.status,
                                htable.date,
@@ -2042,8 +2041,8 @@ class CRShelterRegistrationModel(DataModel):
         else:
             effective_date = registration.modified_on
 
-        # Status change?
-        if current_status != previous_status:
+        # Status or shelter changed?
+        if current_status != previous_status or shelter_id != last_shelter_id:
 
             # Insert new history entry
             htable.insert(previous_status = previous_status,
