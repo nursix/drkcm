@@ -11,7 +11,7 @@
     var registrationHistoryID = 0;
 
     /**
-     * registrationHistory, instantiate on trigger button
+     * registrationHistory, instantiated on trigger button
      */
     $.widget('cr.registrationHistory', {
 
@@ -19,6 +19,8 @@
          * Default options
          *
          * @prop {string} ajaxURL - the URL to send Ajax requests to
+         * @prop {string} container - the node ID of the container element
+         * @prop {string} label* - localized labels for the viewer
          */
         options: {
 
@@ -47,15 +49,14 @@
         },
 
         /**
-         * Update the widget options
+         * Initializes the widget
          */
         _init: function() {
 
-            let opts = this.options;
-
-            this.container = $('#' + opts.container);
-
-            this.refresh();
+            this.container = $('#' + this.options.container);
+            if (this.container) {
+                this.refresh();
+            }
         },
 
         /**
@@ -71,15 +72,12 @@
          */
         refresh: function() {
 
-            var opts = this.options;
-
-            this._unbindEvents();
-
-            this._bindEvents();
+            this._unbindEvents()._bindEvents();
         },
 
         /**
-         * TODO docstring
+         * Loads the registration details from the server and
+         * displays them in the viewer widget
          */
         _showHistory: function() {
 
@@ -107,46 +105,51 @@
                     self._renderWidget(data);
                 },
                 'error': function () {
+                    console.log('here');
                     throbber.remove();
-                    this._showTrigger();
+                    self._showTrigger();
                 }
             });
         },
 
         /**
-         * TODO docstring
+         * Hides the trigger (button)
          */
         _hideTrigger: function() {
+
             $(this.element).hide();
         },
 
         /**
-         * TODO docstring
+         * Shows the trigger (button)
          */
         _showTrigger: function() {
+
             $(this.element).show();
         },
 
         /**
-         * TODO docstring
+         * Renders the viewer and appends it to the container
+         *
+         * @param {Array} data: array of objects with registration details
          */
         _renderWidget: function(data) {
 
             let opts = this.options,
-                widget = $('<div class="rhist">'),
-                title = $('<h6>').text(opts.labelTitle).appendTo(widget);
+                widget = $('<div class="rhist">');
+
+            // Add the title
+            $('<h6>').text(opts.labelTitle).appendTo(widget);
 
             if (data.length) {
-                let history = $('<table>').appendTo(widget),
-                    row = $('<tr class="rhist-headers">').appendTo(history);
+                let history = $('<table>').appendTo(widget);
 
                 // Table Header
-                $('<th>').appendTo(row);
-                $('<th>').text(opts.labelShelter).appendTo(row);
-                $('<th>').text(opts.labelPlanned).appendTo(row);
-                $('<th>').text(opts.labelArrival).appendTo(row);
-                $('<th>').appendTo(row);
-                $('<th>').text(opts.labelDeparture).appendTo(row);
+                let row = $('<tr class="rhist-headers">').appendTo(history),
+                    labels = ['', opts.labelShelter, opts.labelPlanned, opts.labelArrival, '', opts.labelDeparture];
+                labels.forEach(function(label) {
+                     $('<th>').text(label).appendTo(row);
+                });
 
                 // Items
                 data.forEach(function(item, idx) {
@@ -202,7 +205,9 @@
         },
 
         /**
-         * TODO docstring
+         * Removes the viewer from the container
+         *
+         * @param {bool} hideTrigger: whether to also hide the trigger
          */
         _removeWidget: function(hideTrigger) {
 
@@ -219,7 +224,7 @@
          */
         _bindEvents: function() {
 
-            var $el = $(this.element),
+            let $el = $(this.element),
                 ns = this.eventNamespace,
                 self = this;
 
@@ -227,7 +232,7 @@
                 self._showHistory();
             });
 
-            return true;
+            return this;
         },
 
         /**
@@ -235,18 +240,12 @@
          */
         _unbindEvents: function() {
 
-            var $el = $(this.element),
+            let $el = $(this.element),
                 ns = this.eventNamespace;
 
             $el.off(ns);
 
-            return true;
+            return this;
         }
     });
-
-    // TODO remove?
-    $(function() {
-        // Document-ready handler
-    });
-
 })(jQuery);

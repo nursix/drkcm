@@ -4126,6 +4126,7 @@
 'None (no such record)': 'Nichts (kein entsprechender Datensatz)',
 'None of the above': 'Keine(r) der oben genannten',
 'None': '-',
+'Nonexistent or invalid resource': 'Ressource nicht vorhanden oder ungültig',
 'Noodles': 'Nudeln',
 'Norfolk Island': 'Norfolkinsel',
 'Normal Address': 'Normale Adresse',
