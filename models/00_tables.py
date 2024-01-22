@@ -7,6 +7,7 @@
 #
 if s3.debug:
     # Explicit imports to have models reloaded automatically in debug mode
+    import s3db.act
     import s3db.asset
     import s3db.auth
     import s3db.br

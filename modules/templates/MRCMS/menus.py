@@ -77,6 +77,8 @@ class S3MainMenu(default.S3MainMenu):
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
+            # TODO Enable when ready:
+            #MM("Activities", c="act", f="activity"),
             org_menu,
             MM("Security", c="security", f="seized_item"),
             ]
@@ -181,6 +183,19 @@ class S3MainMenu(default.S3MainMenu):
 # =============================================================================
 class S3OptionsMenu(default.S3OptionsMenu):
     """ Custom Controller Menus """
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def act():
+
+        return M(c="act")(
+                    M("Activities", f="activity")(
+                        M("Create", m="create"),
+                        ),
+                    M("Administration", link=False, restrict=("ADMIN", "ORG_GROUP_ADMIN"))(
+                        M("Activity Types", f="activity_type"),
+                        ),
+                    )
 
     # -------------------------------------------------------------------------
     @classmethod

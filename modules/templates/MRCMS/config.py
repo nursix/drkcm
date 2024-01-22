@@ -551,6 +551,12 @@ def config(settings):
         #   restricted = True,
         #   module_type = 10,
         #)),
+        ("act", Storage(
+            name_nice = T("Activities"),
+            #description = "Management of Organization Activities",
+            restricted = True,
+            module_type = 10,
+        )),
         #("project", Storage(
         #   name_nice = T("Projects"),
         #   #description = "Tracking of Projects, Activities and Tasks",
