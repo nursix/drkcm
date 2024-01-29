@@ -117,23 +117,37 @@ class ActivityModel(DataModel):
                            label = T("Title"),
                            requires = IS_NOT_EMPTY(),
                            ),
-                     # TODO Alternatives: location_id, site_id
-                     Field("place",
-                           label = T("Place"),
-                           ),
+                     # TODO Description?
                      DateField(label = T("Start Date"),
                                empty = False,
                                default = "now",
                                ),
+                     # TODO Frequency (single occasion, regular activity)
                      DateField("end_date",
                                label = T("End Date"),
                                ),
-                     # TODO Time formula
+                     # TODO Alternatives: location_id, site_id?
+                     Field("place",
+                           label = T("Place"),
+                           ),
+                     # TODO Time formula? => when representable in organizer
+                     Field("time",
+                           label = T("Time"),
+                           ),
+                     # TODO Total Effort (Hours)
+                     # TODO Total Costs + Currency
+                     # TODO Link to financing sector
+                     # TODO Link to financing project/program?
                      CommentsField(),
                      )
 
         # Filter widgets
-        filter_widgets = [TextFilter(["place", "comments"]),
+        # TODO DateFilter
+        filter_widgets = [TextFilter(["name",
+                                      "place",
+                                      "time",
+                                      "comments",
+                                      ]),
                           OptionsFilter("type_id"),
                           ]
 

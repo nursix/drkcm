@@ -31,7 +31,7 @@
         <xsl:variable name="Name" select="col[@field='Type']/text()"/>
         <xsl:variable name="Code" select="col[@field='Code']/text()"/>
 
-        <resource name="act_activity">
+        <resource name="act_activity_type">
             <!-- Name and Code -->
             <data field="name"><xsl:value-of select="$Name"/></data>
             <data field="code"><xsl:value-of select="$Code"/></data>
