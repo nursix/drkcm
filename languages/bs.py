@@ -7214,7 +7214,7 @@
 'Skill Provision': 'Pružanje vještina',
 'Skill Provisions': 'Odredba Vještina',
 'Skill Status': 'Status vještina',
-'Skill TYpe': 'Vrsta vještine',
+'Skill Type': 'Vrsta vještine',
 'Skill Type Catalog': 'Katalog vrsta vještina',
 'Skill Type Details': 'Detalji tipa sposobnosti',
 'Skill Type added': 'Dodan tip vještine',

@@ -3347,7 +3347,7 @@
 'Skill Provision': 'Skill Предоставление',
 'Skill Provisions': 'Skill Положения',
 'Skill Status': 'Skill Состояние',
-'Skill TYpe': 'Skill Тип',
+'Skill Type': 'Skill Тип',
 'Skill Type Catalog': 'Skill Тип Каталога',
 'Skill Type Details': 'Skill сведения о типе',
 'Skill Type added': 'Skill добавлен тип',

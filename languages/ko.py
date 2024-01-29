@@ -3276,7 +3276,7 @@
 'Skill Provision': '기술 제공',
 'Skill Provisions': '기술 조항들',
 'Skill Status': '항목 상태',
-'Skill TYpe': '기술 유형',
+'Skill Type': '기술 유형',
 'Skill Type Catalog': '기술 유형 카탈로그',
 'Skill Type Details': '기술 유형 세부사항',
 'Skill Type added': '기술 유형 추가',

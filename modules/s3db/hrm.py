@@ -7872,7 +7872,6 @@ def hrm_group_controller():
             title_list = T("Teams"),
             title_update = T("Edit Team"),
             label_list_button = T("List Teams"),
-            label_search_button = T("Search Teams"),
             msg_record_created = T("Team added"),
             msg_record_modified = T("Team updated"),
             msg_record_deleted = T("Team deleted"),

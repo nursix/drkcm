@@ -5004,7 +5004,7 @@
 'Skill Provision': 'Disponibilità delle Capacità',
 'Skill Provisions': 'Disponibilità delle Capacità',
 'Skill Status': 'Stato della Capacità',
-'Skill TYpe': 'Tipo di Capacità',
+'Skill Type': 'Tipo di Capacità',
 'Skill Type Catalog': 'Catalogo del tipo di Capacità',
 'Skill Type Details': 'Dettagli tipo di Capacità',
 'Skill Type added': 'Tipo di Capacità aggiunto',
