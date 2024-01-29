@@ -274,6 +274,51 @@
     </xsl:template>
 
     <!-- ****************************************************************** -->
+    <!-- Helper for boolean fields
+
+         Args:
+             column: the column label
+             field: the field name
+             default: the value to use when the column value is empty
+
+         Notes:
+             - the field will only be imported of the column holds either
+               'true' or 'false' as value, or if the column is empty but
+               a default has been specified; all other cases will fall back
+               to the database default (which is the preferred behavior)
+    -->
+
+    <xsl:template name="Boolean">
+
+        <xsl:param name="column"/>
+        <xsl:param name="field"/>
+        <xsl:param name="default"/>
+
+        <xsl:variable name="value" select="normalize-space(col[@field=$column]/text())"/>
+        <xsl:if test="$value='true' or $value='false' or ($value='' and $default!='')">
+            <data>
+                <xsl:attribute name="field">
+                    <xsl:value-of select="$field"/>
+                </xsl:attribute>
+                <xsl:attribute name="value">
+                    <xsl:choose>
+                        <xsl:when test="$value='true'">
+                            <xsl:value-of select="'true'"/>
+                        </xsl:when>
+                        <xsl:when test="$value='false'">
+                            <xsl:value-of select="'false'"/>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <xsl:value-of select="$default"/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </xsl:attribute>
+            </data>
+        </xsl:if>
+
+    </xsl:template>
+
+    <!-- ****************************************************************** -->
     <!-- Create an organisation entry for the current row -->
 
     <xsl:template name="Organisation">
