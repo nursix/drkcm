@@ -289,7 +289,7 @@ def doc_document_controller(**attr):
 def doc_set_default_organisation(r, table=None):
     """
         Sets the correct default organisation_id for documents/images from
-        the upload context (e.g. organisation, shelter)
+        the upload context (e.g. activity, shelter, organisation)
 
         Args:
             r - the current CRUDRequest
@@ -302,8 +302,9 @@ def doc_set_default_organisation(r, table=None):
 
     record = r.record
     if record:
-        fields = {"org_organisation": "id",
+        fields = {"act_activity": "organisation_id",
                   "cr_shelter": "organisation_id",
+                  "org_organisation": "id",
                   }
         fieldname = fields.get(r.resource.tablename)
         if fieldname:

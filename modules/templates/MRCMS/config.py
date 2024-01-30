@@ -159,6 +159,16 @@ def config(settings):
     settings.customise_auth_user_resource = auth_user_resource
 
     # -------------------------------------------------------------------------
+    # ACT Settings and Customizations
+    from .customise.act import act_activity_resource, \
+                               act_activity_controller, \
+                               act_beneficiary_resource
+
+    settings.customise_act_activity_resource = act_activity_resource
+    settings.customise_act_activity_controller = act_activity_controller
+    settings.customise_act_beneficiary_resource = act_beneficiary_resource
+
+    # -------------------------------------------------------------------------
     # CMS Settings and Customizations
     #
     settings.cms.hide_index = True

@@ -137,6 +137,35 @@ def get_role_emails(role_uid, pe_id=None, organisation_id=None):
     return contacts if contacts else None
 
 # -----------------------------------------------------------------------------
+def permitted_orgs(permission, tablename):
+    """
+        Get the IDs of the organisations for which the user has
+        a certain permission for a certain table
+
+        Args:
+            permission: the permission name
+            tablename: the table name
+
+        Returns:
+            List of organisation IDs
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    permissions = auth.permission
+    permitted_realms = permissions.permitted_realms(tablename, permission)
+
+    otable = s3db.org_organisation
+    query = (otable.deleted == False)
+    if permitted_realms is not None:
+        query = (otable.pe_id.belongs(permitted_realms)) & query
+    orgs = db(query).select(otable.id)
+
+    return [o.id for o in orgs]
+
+# -----------------------------------------------------------------------------
 def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
     """
         Get organisations managed by the current user
@@ -351,26 +380,15 @@ def get_default_case_organisation():
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
         return None
 
-    permissions = auth.permission
-    permitted_realms = permissions.permitted_realms("dvr_case", "read")
-
-    db = current.db
-    s3db = current.s3db
-
-    table = s3db.org_organisation
-    query = (table.pe_id.belongs(permitted_realms)) & \
-            (table.deleted == False)
-    rows = db(query).select(table.id)
-    if not rows:
+    organisation_ids = permitted_orgs("read", "dvr_case")
+    if not organisation_ids:
         return None
-    if len(rows) == 1:
-        return rows.first().id
+    if len(organisation_ids) == 1:
+        return organisation_ids[0]
 
     site_org = get_current_site_organisation()
-    if site_org:
-        organisation_ids = [row.id for row in rows]
-        if site_org in organisation_ids:
-            return site_org
+    if site_org and site_org in organisation_ids:
+        return site_org
 
     return None
 

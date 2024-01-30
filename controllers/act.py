@@ -33,6 +33,6 @@ def activity_type():
 def activity():
     """ Activities: CRUD Controller """
 
-    return crud_controller()
+    return crud_controller(rheader=s3db.act_rheader)
 
 # END =========================================================================

@@ -808,6 +808,13 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
     resource = r.resource
 
+    # Autocomplete using alternative search method
+    search_fields = ("first_name", "last_name", "pe_label")
+    s3db.set_method("pr_person",
+                    method = "search_ac",
+                    action = s3db.pr_PersonSearchAutocomplete(search_fields),
+                    )
+
     from gluon import Field, IS_IN_SET, IS_NOT_EMPTY
 
     # Absence-days method, used in both list_fields and rheader

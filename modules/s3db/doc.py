@@ -30,6 +30,7 @@ __all__ = ("DocumentEntityModel",
            "DocumentTagModel",
            "DocumentCKEditorModel",
            "DocumentDataCardModel",
+           "doc_rheader",
            "doc_image_represent",
            "doc_document_list_layout",
            )
@@ -57,7 +58,8 @@ class DocumentEntityModel(DataModel):
         # ---------------------------------------------------------------------
         # Document-referencing entities
         #
-        entity_types = {"asset_asset": T("Asset"),
+        entity_types = {"act_activity": T("Activity"),
+                        "asset_asset": T("Asset"),
                         "cap_resource": T("CAP Resource"),
                         "cms_post": T("Post"),
                         "cr_shelter": T("Shelter"),
@@ -312,6 +314,7 @@ class DocumentModel(DataModel):
                            ),
                      Field("url",
                            label = T("URL"),
+                           represent = s3_url_represent,
                            requires = IS_EMPTY_OR(IS_URL()),
                            ),
 
@@ -552,6 +555,57 @@ class DocumentTagModel(DataModel):
 
         # Pass names back to global scope (s3.*)
         return None
+
+# =============================================================================
+def doc_rheader(r, tabs=None):
+    """ DOC resource headers """
+
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
+
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
+
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+
+        if tablename == "doc_document":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        ]
+            rheader_fields = [["organisation_id", "file"],
+                              ["person_id", "url"],
+                              ["date"],
+                              ]
+            rheader_title = "name"
+
+            rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+            rheader = rheader(r, table=resource.table, record=record)
+
+        elif tablename == "doc_image":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        ]
+            rheader_fields = [["type"],
+                              ["date"],
+                              ]
+            rheader_title = "name"
+
+        else:
+            return None
+
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
+
+    return rheader
 
 # =============================================================================
 def doc_image_represent(filename):

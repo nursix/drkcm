@@ -77,8 +77,7 @@ class S3MainMenu(default.S3MainMenu):
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
-            # TODO Enable when ready:
-            #MM("Activities", c="act", f="activity"),
+            MM("Activities", c="act", f="activity"),
             org_menu,
             MM("Security", c="security", f="seized_item"),
             ]
