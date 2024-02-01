@@ -7,7 +7,7 @@
 from gluon import current
 from gluon.storage import Storage
 
-from core import IS_ONE_OF
+from core import IS_ONE_OF, OptionsFilter
 
 # =============================================================================
 def act_beneficiary_resource(r, tablename):
@@ -95,8 +95,49 @@ def act_activity_resource(r, tablename):
 # -----------------------------------------------------------------------------
 def act_activity_controller(**attr):
 
-    # TODO if read permission for single org: hide organisation_id
-    #      otherwise: add org filter
+    s3 = current.response.s3
+
+    # Custom prep
+    standard_prep = s3.prep
+    def prep(r):
+
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        if not r.record:
+            resource = r.resource
+            table = resource.table
+
+            # Custom list fields
+            list_fields = ["name",
+                           "type_id",
+                           "date",
+                           "end_date",
+                           "time",
+                           "place",
+                           ]
+
+            from ..helpers import permitted_orgs
+            organisation_ids = permitted_orgs("read", "act_activity")
+            if len(organisation_ids) != 1:
+                # Include organisation_id in list_fields
+                list_fields.insert(0, "organisation_id")
+
+                # Add organisation filter
+                represent = table.organisation_id.represent
+                filter_opts = represent.bulk(organisation_ids)
+                filter_opts.pop(None, None)
+                org_filter = OptionsFilter("organisation_id",
+                                           options = filter_opts,
+                                           )
+                filter_widgets = resource.get_config("filter_widgets")
+                filter_widgets.insert(1, org_filter)
+
+            resource.configure(list_fields = list_fields,
+                               orderby = "act_activity.date desc",
+                               )
+        return result
+    s3.prep = prep
 
     # Custom rheader
     from ..rheaders import act_rheader

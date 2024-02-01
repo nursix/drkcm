@@ -106,10 +106,8 @@ class ActivityModel(DataModel):
                                          requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
                                                                   represent,
-                                                                  # Filter out obsolete types
-                                                                  # from reference selectors:
-                                                                  not_filterby = "obsolete",
-                                                                  not_filter_opts = (True,),
+                                                                  filterby = "obsolete",
+                                                                  filter_opts = (False,),
                                                                   )),
                                          sortby = "name",
                                          )

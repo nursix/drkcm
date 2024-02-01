@@ -77,7 +77,6 @@ class S3MainMenu(default.S3MainMenu):
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
-            MM("Activities", c="act", f="activity"),
             org_menu,
             MM("Security", c="security", f="seized_item"),
             ]
@@ -184,17 +183,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def act():
+    @classmethod
+    def act(cls):
 
-        return M(c="act")(
-                    M("Activities", f="activity")(
-                        M("Create", m="create"),
-                        ),
-                    M("Administration", link=False, restrict=("ADMIN", "ORG_GROUP_ADMIN"))(
-                        M("Activity Types", f="activity_type"),
-                        ),
-                    )
+        return cls.org()
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -391,15 +383,17 @@ class S3OptionsMenu(default.S3OptionsMenu):
         else:
             cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
 
-        return M(c=("org", "hrm"))(
+        return M(c=("org", "hrm", "act"))(
                     org_menu,
-                    cms_menu,
                     M("Organization Groups", f="group")(
                         M("Create", m="create"),
                         ),
+                    M("Activities", c="act", f="activity"),
                     M("Staff", c="hrm", f="staff"),
+                    cms_menu,
                     M("Administration", link=False, restrict=[ADMIN])(
                         M("Organization Types", c="org", f="organisation_type"),
+                        M("Activity Types", c="act", f="activity_type"),
                         M("Job Titles", c="hrm", f="job_title"),
                         ),
                     )
