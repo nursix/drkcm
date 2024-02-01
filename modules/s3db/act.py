@@ -30,6 +30,8 @@ __all__ = ("ActivityModel",
            "act_rheader",
            )
 
+import datetime
+
 from gluon import *
 from gluon.storage import Storage
 
@@ -66,7 +68,7 @@ class ActivityModel(DataModel):
                            ),
                      Field("code", length=64,
                            label = T("Code"),
-                           requires = IS_LENGTH(64),
+                           requires = IS_LENGTH(64, minsize=2),
                            ),
                      Field("obsolete", "boolean",
                            label = T("Obsolete"),
@@ -75,6 +77,11 @@ class ActivityModel(DataModel):
                            ),
                      CommentsField(),
                      )
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = S3Duplicate(primary = ("code",)),
+                  )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -151,18 +158,21 @@ class ActivityModel(DataModel):
                             )
 
         # Filter widgets
-        # TODO DateFilter
+        # TODO Custom DateFilter (needs special interval filter)
         filter_widgets = [TextFilter(["name",
                                       "place",
                                       "time",
                                       "comments",
-                                      ]),
+                                      ],
+                                     label = T("Search"),
+                                     ),
                           OptionsFilter("type_id"),
                           ]
 
         # Table configuration
         configure(tablename,
                   filter_widgets = filter_widgets,
+                  onvalidation = self.activity_onvalidation,
                   super_entity = ("doc_entity",)
                   )
 
@@ -208,6 +218,43 @@ class ActivityModel(DataModel):
         return {"act_activity_id": FieldTemplate.dummy("activity_id"),
                 }
 
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def activity_onvalidation(form):
+        """
+            Form validation of activity
+                - Date interval must include all registered beneficiaries
+        """
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.act_activity
+
+        record_id = get_form_record_id(form)
+        if record_id:
+            fields = ["date", "end_date"]
+            data = get_form_record_data(form, table, fields)
+
+            btable = s3db.act_beneficiary
+            base = (btable.activity_id == record_id) & \
+                   (btable.deleted == False)
+
+            start = data.get("date")
+            if start:
+                earliest = datetime.datetime.combine(start, datetime.time(0))
+                query = base & (btable.date < earliest)
+                if db(query).select(btable.id, limitby=(0, 1)).first():
+                    form.errors.date = T("There are beneficiaries registered before that date")
+
+            end = data.get("end_date")
+            if end:
+                latest = datetime.datetime.combine(end + datetime.timedelta(days=1), datetime.time(0))
+                query = base & (btable.date >= latest)
+                if db(query).select(btable.id, limitby=(0, 1)).first():
+                    form.errors.end_date = T("There are beneficiaries registered after that date")
+
 # =============================================================================
 class ActivityBeneficiaryModel(DataModel):
     """ Data Model to record beneficiaries of activities """
@@ -235,6 +282,7 @@ class ActivityBeneficiaryModel(DataModel):
                                                ),
                           DateTimeField(default = "now",
                                         empty = False,
+                                        future = 0,
                                         ),
                           CommentsField(),
                           )
@@ -247,11 +295,10 @@ class ActivityBeneficiaryModel(DataModel):
                        ]
 
         # Table configuration
-        # TODO onvalidation to check date against activity date interval
-        # TODO onaccept to trigger dvr_update_last_seen
         self.configure(tablename,
                        list_fields = list_fields,
                        orderby = "%s.date desc" % tablename,
+                       onvalidation = self.beneficiary_onvalidation,
                        )
 
         # CRUD Strings
@@ -272,6 +319,45 @@ class ActivityBeneficiaryModel(DataModel):
         # Pass names back to global scope (s3.*)
         #
         return None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def beneficiary_onvalidation(form):
+        """
+            Form validation of beneficiary
+                - Date must match activity date interval
+        """
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.act_beneficiary
+
+        fields = ["activity_id", "date"]
+        data = get_form_record_data(form, table, fields)
+
+        date = data.get("date")
+        activity_id = data.get("activity_id")
+
+        if date and activity_id:
+            # Verify that date matches activity date interval
+            error = None
+            date = date.date()
+            atable = s3db.act_activity
+            query = (atable.id == activity_id)
+            activity = db(query).select(atable.date,
+                                        atable.end_date,
+                                        limitby = (0, 1),
+                                        ).first()
+            if activity:
+                start, end = activity.date, activity.end_date
+                if start is not None and start > date:
+                    error = T("Activity started only after that date")
+                elif end is not None and end < date:
+                    error = T("Activity ended before that date")
+            if error:
+                form.errors.date = error
 
 # =============================================================================
 def act_rheader(r, tabs=None):
