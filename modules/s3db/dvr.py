@@ -615,8 +615,7 @@ class DVRCaseModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -4340,6 +4339,7 @@ class DVRCaseEventModel(DataModel):
 
         event_types_org_specific = settings.get_dvr_case_event_types_org_specific()
         close_appointments = settings.get_dvr_case_events_close_appointments()
+        register_activities = settings.get_dvr_case_events_register_activities()
 
         event_classes = {"A": T("Administrative"),
                          "C": T("Checkpoint"),
@@ -4422,6 +4422,13 @@ class DVRCaseEventModel(DataModel):
                             readable = close_appointments,
                             writable = close_appointments,
                             comment = T("The type of appointments which are completed with this type of event"),
+                            ),
+                     self.act_activity_id(
+                            label = T("Activity"),
+                            ondelete = "SET NULL",
+                            readable = register_activities,
+                            writable = register_activities,
+                            comment = T("The activity to register participation for with this type of event"),
                             ),
                      Field("min_interval", "double",
                            label = T("Minimum Interval (Hours)"),
@@ -4748,6 +4755,7 @@ class DVRCaseEventModel(DataModel):
                 (ttable.deleted == False)
         event_type = db(query).select(ttable.presence_required,
                                       ttable.appointment_type_id,
+                                      ttable.activity_id,
                                       limitby = (0, 1),
                                       ).first()
         if not event_type:
@@ -4757,10 +4765,9 @@ class DVRCaseEventModel(DataModel):
         if event_type.presence_required:
             dvr_update_last_seen(person_id)
 
-        # Close appointments
-        close_appointments = settings.get_dvr_case_events_close_appointments()
-        appointment_type_id = event_type.appointment_type_id
-        if close_appointments and appointment_type_id:
+        # Close appointment
+        if event_type.appointment_type_id and \
+           settings.get_dvr_case_events_close_appointments():
             try:
                 appointment_id = AppointmentEvent(record_id).close()
             except S3PermissionError:
@@ -4768,6 +4775,17 @@ class DVRCaseEventModel(DataModel):
             else:
                 if not appointment_id:
                     current.log.error("Could not close appointment for event %s" % record_id)
+
+        # Register activity
+        if event_type.activity_id and \
+           settings.get_dvr_case_events_register_activities():
+            try:
+                beneficiary_id = ActivityEvent(record_id).register()
+            except S3PermissionError:
+                current.log.error("Not permitted to register activity for event %s" % record_id)
+            else:
+                if not beneficiary_id:
+                    current.log.error("Could not register activity for event %s" % record_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -7399,6 +7417,159 @@ class AppointmentEvent:
         return (start, end - datetime.timedelta(seconds=1))
 
 # =============================================================================
+class ActivityEvent:
+    """ Activity (beneficiary) registration through a case event """
+
+    def __init__(self, event_id):
+        """
+            Args:
+                event_id: the dvr_case_event record ID
+        """
+
+        self.event_id = event_id
+
+        self._event = None
+        self._activity = None
+        self._beneficiary = None
+
+    # -------------------------------------------------------------------------
+    @property
+    def event(self):
+        """
+            The case event (lazy property)
+
+            Returns:
+                dvr_case_event Row
+        """
+
+        event = self._event
+        if event is None:
+            table = current.s3db.dvr_case_event
+            query = (table.id == self.event_id) & \
+                    (table.deleted == False)
+            event = self._event = current.db(query).select(table.id,
+                                                           table.type_id,
+                                                           table.person_id,
+                                                           table.date,
+                                                           limitby = (0, 1),
+                                                           ).first()
+        return event
+
+    # -------------------------------------------------------------------------
+    @property
+    def activity(self):
+        """
+            The target activity specified by the event type (lazy property)
+
+            Returns:
+                act_activity Row
+        """
+
+        activity, event = self._activity, self.event
+        if activity is None and event:
+            s3db = current.s3db
+            atable = s3db.act_activity
+            ttable = s3db.dvr_case_event_type
+
+            join = ttable.on((ttable.activity_id == atable.id) & \
+                             (ttable.id == event.type_id))
+            query = (atable.deleted == False)
+            event_date = event.date
+            if event_date:
+                event_date = event_date.date()
+                query = ((atable.date == None) |
+                         (atable.date <= event_date)) & \
+                        ((atable.end_date == None) |
+                         (atable.end_date >= event_date)) & \
+                        query
+
+            activity = current.db(query).select(atable.id,
+                                                atable.date,
+                                                atable.end_date,
+                                                join = join,
+                                                limitby = (0, 1),
+                                                ).first()
+            self._activity = activity
+
+        return activity
+
+    # -------------------------------------------------------------------------
+    @property
+    def beneficiary(self):
+        """
+            The act_beneficiary record matching the event (lazy property)
+
+            Returns:
+                act_beneficiary Row
+        """
+
+        beneficiary = self._beneficiary
+        if not beneficiary:
+            event, activity = self.event, self.activity
+            if not event or not activity:
+                return None
+
+            btable = current.s3db.act_beneficiary
+            query = (btable.person_id == event.person_id) & \
+                    (btable.activity_id == activity.id) & \
+                    (btable.date == event.date) & \
+                    (btable.deleted == False)
+            beneficiary = current.db(query).select(btable.id,
+                                                   limitby = (0, 1),
+                                                   ).first()
+            self._beneficiary = beneficiary
+        return beneficiary
+
+    # -------------------------------------------------------------------------
+    def register(self):
+        """
+            Registers the client as beneficiary of the activity
+
+            Returns:
+                act_beneficiary record ID
+        """
+
+        beneficiary = self.beneficiary
+        if not beneficiary:
+            event = self.event
+            if event and event.date and self.activity:
+                beneficiary_id = self._register()
+            else:
+                beneficiary_id = None
+        else:
+            beneficiary_id = beneficiary.id
+
+        return beneficiary_id
+
+    # -------------------------------------------------------------------------
+    def _register(self):
+        """
+            Beneficiary registration subroutine
+
+            Returns:
+                act_beneficiary record ID
+        """
+
+        s3db = current.s3db
+        auth = current.auth
+
+        btable = s3db.act_beneficiary
+
+        event = self.event
+        beneficiary = {"person_id": event.person_id,
+                       "activity_id": self.activity.id,
+                       "date": event.date,
+                       }
+        beneficiary_id = beneficiary["id"] = btable.insert(**beneficiary)
+        if beneficiary_id:
+            s3db.update_super(btable, beneficiary)
+            auth.s3_set_record_owner(btable, beneficiary_id)
+            auth.s3_make_session_owner(btable, beneficiary_id)
+            s3db.onaccept(btable, beneficiary, method="create")
+
+        return beneficiary_id
+
+# =============================================================================
 class DVRManageAppointments(CRUDMethod):
     """ Custom method to bulk-manage appointments """
 
@@ -7423,7 +7594,7 @@ class DVRManageAppointments(CRUDMethod):
 
             post_vars = r.post_vars
             if "selected" in post_vars and "mode" in post_vars and \
-               any([n in post_vars for n in ("completed", "cancelled")]):
+               any(n in post_vars for n in ("completed", "cancelled")):
 
                 selected = post_vars.selected
                 if selected:

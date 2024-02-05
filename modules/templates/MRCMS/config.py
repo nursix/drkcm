@@ -253,6 +253,8 @@ def config(settings):
     settings.dvr.event_registration_checkin_warning = True
     # Case events can close appointments
     settings.dvr.case_events_close_appointments = True
+    # Case events can register activities
+    settings.dvr.case_events_register_activities = True
     # Exclude FOOD and SURPLUS-MEALS events from event registration
     settings.dvr.event_registration_exclude_codes = ("FOOD*",)
 

@@ -3741,6 +3741,13 @@ class S3Config(Storage):
         """
         return self.dvr.get("case_events_close_appointments", False)
 
+    def get_dvr_case_events_register_activities(self):
+        """
+            Case events register beneficiaries for activities
+        """
+        return self.has_module("act") and \
+               self.dvr.get("case_events_register_activities", False)
+
     def get_dvr_event_registration_checkin_warning(self):
         """
             Warn during event registration when the person is currently
