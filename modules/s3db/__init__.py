@@ -1,5 +1,6 @@
 DEFAULT = lambda: None
 
+from . import act
 from . import asset
 from . import auth
 from . import br
