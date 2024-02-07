@@ -138,10 +138,12 @@ class ActivityModel(DataModel):
                      # TODO Time formula? Separate event table?
                      Field("time",
                            label = T("Time"),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
                      # TODO Alternatives: location_id, site_id?
                      Field("place",
                            label = T("Place"),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
                      # TODO Total Effort (Hours)
                      # TODO Total Costs + Currency
