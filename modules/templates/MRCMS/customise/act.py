@@ -59,13 +59,19 @@ def act_beneficiary_resource(r, tablename):
         msg_list_empty = T("No Participants currently registered"),
         )
 
-    # Custom list fields to include principal ref.no
+    # List fields
     list_fields = ["date",
                    (T("ID"), "person_id$pe_label"),
                    (T("Principal Ref.No."), "person_id$dvr_case.reference"),
                    "person_id",
                    "comments",
                    ]
+    if r.representation in ("xlsx", "xls", "pdf"):
+        # Include more person details in exports (to allow for statistical analysis)
+        list_fields[-1:-1] = ["person_id$date_of_birth",
+                              "person_id$gender",
+                              "person_id$person_details.nationality",
+                              ]
 
     # Filter widgets
     filter_widgets = [TextFilter(["person_id$pe_label",
