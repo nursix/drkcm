@@ -89,7 +89,7 @@ class ActivityModel(DataModel):
             title_display = T("Activity Type"),
             title_list = T("Activity Types"),
             title_update = T("Edit Activity Type"),
-            label_list_button = T("List ActivitY Types"),
+            label_list_button = T("List Activity Types"),
             label_delete_button = T("Delete Activity Type"),
             msg_record_created = T("Activity Type added"),
             msg_record_modified = T("Activity Type updated"),
