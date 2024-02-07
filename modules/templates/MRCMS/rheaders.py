@@ -37,9 +37,9 @@ def act_rheader(r, tabs=None):
                         (T("Participants"), "beneficiary"),
                         (T("Documents"), "document"),
                         ]
-            rheader_fields = [["type_id", "date"],
-                              ["place"],
-                              ["time"],
+            rheader_fields = [["type_id", "place"],
+                              ["date", "time"],
+                              ["end_date"],
                               ]
             rheader_title = "name"
 

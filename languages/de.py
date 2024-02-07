@@ -6118,6 +6118,7 @@
 'Time Out': 'Ausgangszeit',
 'Time Question': 'Zeit Frage',
 'Time of Day': 'Uhrzeit',
+'Time': 'Zeit',
 'Timeline Report': 'Bericht zum Zeitplan',
 'Timeline': 'Zeitplan',
 'Timestamp': 'Zeitstempel',

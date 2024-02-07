@@ -7,7 +7,8 @@
 from gluon import current
 from gluon.storage import Storage
 
-from core import IS_ONE_OF, OptionsFilter
+from core import IS_ONE_OF, S3PersonAutocompleteWidget, \
+                 DateFilter, OptionsFilter, TextFilter
 
 # =============================================================================
 def act_beneficiary_resource(r, tablename):
@@ -21,16 +22,15 @@ def act_beneficiary_resource(r, tablename):
     field = table.person_id
     field.label = T("Participant")
 
-    # Link to case file if permitted, include ID in representation
-    fmt = "[%(pe_label)s] %(last_name)s, %(first_name)s"
+    # Link name to case file if permitted
+    fmt = "%(last_name)s, %(first_name)s"
     linkto = current.auth.permission.accessible_url(c = "dvr",
                                                     f = "person",
                                                     t = "pr_person",
                                                     args = ["[id]"],
                                                     extension = "",
                                                     )
-    field.represent = s3db.pr_PersonRepresent(fields = ("pe_label",
-                                                        "last_name",
+    field.represent = s3db.pr_PersonRepresent(fields = ("last_name",
                                                         "first_name",
                                                         ),
                                               labels = fmt,
@@ -39,7 +39,6 @@ def act_beneficiary_resource(r, tablename):
                                               )
 
     # Autocomplete using dvr/person controller, adapt comment
-    from core import S3PersonAutocompleteWidget
     field.widget = S3PersonAutocompleteWidget(controller = "dvr",
                                               function = "person_search",
                                               )
@@ -59,6 +58,31 @@ def act_beneficiary_resource(r, tablename):
         msg_record_deleted = T("Participant deleted"),
         msg_list_empty = T("No Participants currently registered"),
         )
+
+    # Custom list fields to include principal ref.no
+    list_fields = ["date",
+                   (T("ID"), "person_id$pe_label"),
+                   (T("Principal Ref.No."), "person_id$dvr_case.reference"),
+                   "person_id",
+                   "comments",
+                   ]
+
+    # Filter widgets
+    filter_widgets = [TextFilter(["person_id$pe_label",
+                                  "person_id$last_name",
+                                  "person_id$first_name",
+                                  "person_id$dvr_case.reference",
+                                  "comments",
+                                  ],
+                                 label = T("Search"),
+                                 ),
+                      DateFilter("date"),
+                      ]
+
+    s3db.configure("act_beneficiary",
+                   filter_widgets = filter_widgets,
+                   list_fields = list_fields,
+                   )
 
 # =============================================================================
 def act_activity_resource(r, tablename):
@@ -142,6 +166,10 @@ def act_activity_controller(**attr):
     # Custom rheader
     from ..rheaders import act_rheader
     attr["rheader"] = act_rheader
+
+    # Activate filters on component tabs
+    attr["hide_filter"] = {"beneficiary": False,
+                           }
 
     return attr
 
