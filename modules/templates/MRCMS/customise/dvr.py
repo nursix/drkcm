@@ -517,7 +517,11 @@ def dvr_case_event_resource(r, tablename):
 
     s3db = current.s3db
 
-    from ..food import FoodDistribution
+    from ..checkpoints import ActivityParticipation, FoodDistribution
+    s3db.set_method("dvr_case_event",
+                    method = "register_activity",
+                    action = ActivityParticipation,
+                    )
     s3db.set_method("dvr_case_event",
                     method = "register_food",
                     action = FoodDistribution,
@@ -535,7 +539,7 @@ def dvr_case_event_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        if r.method in ("register", "register_food"):
+        if r.method in ("register", "register_food", "register_activity"):
             CustomController._view("MRCMS", "register_case_event.html")
         return output
     s3.postp = custom_postp

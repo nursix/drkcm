@@ -4342,6 +4342,7 @@ class DVRCaseEventModel(DataModel):
         register_activities = settings.get_dvr_case_events_register_activities()
 
         event_classes = {"A": T("Administrative"),
+                         "B": T("Activity"),
                          "C": T("Checkpoint"),
                          #"D": T("NFI Distribution"),
                          "F": T("Food Distribution"),
@@ -4699,26 +4700,32 @@ class DVRCaseEventModel(DataModel):
     def case_event_type_onaccept(form):
         """
             Onaccept routine for case event types:
-                - only one type can be the default
+                - only one type within the event class can be the default
 
             Args:
                 form: the FORM
         """
 
-        form_vars = form.vars
-        try:
-            record_id = form_vars.id
-        except AttributeError:
-            record_id = None
+        settings = current.deployment_settings
+
+        record_id = get_form_record_id(form)
         if not record_id:
             return
 
+        table = current.s3db.dvr_case_event_type
+        fields = ["organisation_id", "event_class"]
+        data = get_form_record_data(form, table, fields)
+
         # If this type is the default, then set is_default-flag
-        # for all other types to False:
+        # for all other types of the same event class to False:
+        form_vars = form.vars
         if "is_default" in form_vars and form_vars.is_default:
-            table = current.s3db.dvr_case_event_type
-            db = current.db
-            db(table.id != record_id).update(is_default = False)
+            query = (table.id != record_id) & \
+                    (table.event_class == data.get("event_class"))
+            if settings.get_dvr_case_event_types_org_specific():
+                # ...within the same organisation
+                query &= (table.organisation_id == data.get("organisation_id"))
+            current.db(query).update(is_default = False)
 
     # -------------------------------------------------------------------------
     @staticmethod

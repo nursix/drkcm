@@ -301,8 +301,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                     #  ),
                     ),
-                M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
-                M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                M("Registration", c="dvr", f="case_event", link=None)(
+                    M("Checkpoint", c="dvr", f="case_event", m="register", p="create"),
+                    M("Activity", c="dvr", f="case_event", m="register_activity", p="create"),
+                    M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                    ),
                 M("Statistics", link=False)(
                     M("Cases", c="dvr", f="person", m="report",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),

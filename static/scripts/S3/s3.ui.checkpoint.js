@@ -1149,7 +1149,7 @@
 
             if (numSelectable == 0) {
                 eventTypeHeader.addClass('empty').addClass('disabled');
-            } else if (numSelectable == 1) {
+            } else if (numSelectable == 1 && !!selected) {
                 eventTypeHeader.removeClass('empty').addClass('disabled');
             } else {
                 eventTypeHeader.removeClass('empty').removeClass('disabled');
@@ -1169,8 +1169,6 @@
          *                        }
          */
         _populateEventTypes: function(data) {
-
-            // data =
 
             let eventTypeSelect = this.eventTypeSelect.empty(),
                 eventTypes = data.types,
