@@ -11,7 +11,7 @@ from core import Checkpoint
 # =============================================================================
 class ActivityParticipation(Checkpoint):
 
-    EVENT_CLASSES = ("B",)
+    EVENT_CLASS = "B"
 
     @staticmethod
     def ajax_url(r):
@@ -54,7 +54,7 @@ class ActivityParticipation(Checkpoint):
 # =============================================================================
 class FoodDistribution(Checkpoint):
 
-    EVENT_CLASSES = ("F",)
+    EVENT_CLASS = "F"
 
     @staticmethod
     def ajax_url(r):

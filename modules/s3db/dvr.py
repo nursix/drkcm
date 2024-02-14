@@ -4341,7 +4341,7 @@ class DVRCaseEventModel(DataModel):
         close_appointments = settings.get_dvr_case_events_close_appointments()
         register_activities = settings.get_dvr_case_events_register_activities()
 
-        event_classes = {"A": T("Administrative"),
+        event_classes = {#"A": T("Administrative"),
                          "B": T("Activity"),
                          "C": T("Checkpoint"),
                          #"D": T("NFI Distribution"),
