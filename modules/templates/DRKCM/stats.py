@@ -402,7 +402,8 @@ class PerformanceIndicatorsRP(PerformanceIndicators):
             num_responses = ltable.action_id.count(distinct=True)
             need = ttable.need_id
 
-            query = ltable.action_id.belongs(dbset._select(table.id))
+            query = ltable.action_id.belongs(dbset._select(table.id)) & \
+                    ltable.theme_id.belongs(self.theme_ids())
             rows = db(query).select(need,
                                     groupby = need,
                                     orderby = ~num_responses,
