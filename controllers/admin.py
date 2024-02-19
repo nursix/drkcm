@@ -70,11 +70,7 @@ def user():
 
     auth.configure_user_fields(pe_ids)
 
-    # Now done in 00_tables.py
-    #s3db.add_components("auth_user",
-    #                    auth_membership = "user_id",
-    #                    )
-
+    # Configure list fields for user list
     list_fields = ["first_name",
                    "last_name",
                    "email",
@@ -118,102 +114,16 @@ def user():
                    #update_onaccept = lambda form: auth.s3_link_user(form.vars),
                    )
 
-    def disable_user(r, **args):
-        user_id = r.id
-        if not user_id:
-            session.error = T("Can only disable 1 record at a time!")
-            redirect(URL(args=[]))
-
-        if user_id == session.auth.user.id: # we're trying to disable ourself
-            session.error = T("Cannot disable your own account!")
-            redirect(URL(args=[]))
-
-        # Call Custom Hook, if present
-        ondisable = s3db.get_config("auth_user", "ondisable")
-        if callable(ondisable):
-            ondisable(user_id)
-
-        db(table.id == user_id).update(registration_key = "disabled")
-        session.confirmation = T("User Account has been Disabled")
-        redirect(URL(args=[]))
-
-    def enable_user(r, **args):
-        user_id = r.id
-        if not user_id:
-            session.error = T("Can only re-enable 1 record at a time!")
-            redirect(URL(args=[]))
-
-        query = (table.id == user_id)
-        row = db(query).select(table.id,
-                               table.registration_key,
-                               limitby = (0, 1),
-                               ).first()
-        if row and row.registration_key != "disabled":
-            session.error = T("User Account not Disabled")
-            redirect(URL(args=[]))
-
-        row.update_record(registration_key=None)
-        session.confirmation = T("User Account has been Re-enabled")
-        redirect(URL(args=[]))
-
-    def approve_user(r, **args):
-        if not r.id:
-            session.error = T("Can only approve 1 record at a time!")
-            redirect(URL(args=[]))
-
-        # Call Custom Hook, if present
-        approve_user = s3db.get_config("auth_user", "approve_user")
-        if callable(approve_user):
-            approve_user(r, **args)
-        else:
-            # Default Approval
-            user = db(table.id == r.id).select(limitby = (0, 1)
-                                               ).first()
-            auth.s3_approve_user(user)
-
-            session.confirmation = T("User Account has been Approved")
-            redirect(URL(args=[r.id, "roles"]))
-
-    def link_user(r, **args):
-        if not r.id:
-            session.error = T("Can only update 1 record at a time!")
-            redirect(URL(args=[]))
-
-        user = db(table.id == r.id).select(limitby = (0, 1)
-                                           ).first()
-        auth.s3_link_user(user)
-
-        session.confirmation = T("User has been (re)linked to Person and Human Resource record")
-        redirect(URL(args=[]))
-
-    # Custom Methods
+    # Configure methods for user accounts
     set_method = s3db.set_method
-    set_method("auth_user",
-               method = "roles",
-               action = s3base.S3RoleManager)
-
-    set_method("auth_user",
-               method = "disable",
-               action = disable_user)
-
-    set_method("auth_user",
-               method = "enable",
-               action = enable_user)
-
-    set_method("auth_user",
-               method = "approve",
-               action = approve_user)
-
-    set_method("auth_user",
-               method = "link",
-               action = link_user)
-
-    if UNAPPROVED:
-        title_list = T("Unapproved Users")
-    else:
-        title_list = T("Users")
+    set_method("auth_user", method="roles", action = s3base.S3RoleManager)
+    set_method("auth_user", method="disable", action=s3base.ManageUserAccount)
+    set_method("auth_user", method="enable", action=s3base.ManageUserAccount)
+    set_method("auth_user", method="approve", action=s3base.ManageUserAccount)
+    set_method("auth_user", method="link", action=s3base.ManageUserAccount)
 
     # CRUD Strings
+    title_list = T("Unapproved Users") if UNAPPROVED else T("Users")
     s3.crud_strings["auth_user"] = Storage(
         label_create = T("Create User"),
         title_display = T("User Details"),

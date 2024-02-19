@@ -199,6 +199,11 @@ No action is required."""
  - To edit your profile go to: %(url)s%(profile)s
 Thank you"""
 
+        # Log messages
+        messages.user_disabled_log = "User %(user_id)s disabled"
+        messages.user_enabled_log = "User %(user_id)s (re-)enabled"
+        messages.user_approved_log = "User %(user_id)s approved"
+
         # Optional log messages
         if log_failed_logins:
             messages.login_failed_log = "Login for user %%(%s)s failed" % settings.login_userfield
