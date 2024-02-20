@@ -761,6 +761,7 @@ def configure_case_reports(resource):
             "gender",
             "person_details.religion",
             "person_details.literacy",
+            (T("Flags"), "case_flag_case.flag_id"),
             #"shelter_registration.shelter_id",
             #"shelter_registration.shelter_unit_id",
             ]
