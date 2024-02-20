@@ -6,6 +6,53 @@
 
 from gluon import current
 
+from core import IS_ONE_OF
+
+# -------------------------------------------------------------------------
+def security_seized_item_depository_controller(**attr):
+
+    db = current.db
+    s3db = current.s3db
+
+    s3 = current.response.s3
+
+    standard_prep = s3.prep
+    def prep(r):
+
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        resource = r.resource
+        table = resource.table
+
+        # Configure organisation_id
+        field = table.organisation_id
+        field.readable = True
+        field.writable = False
+
+        from ..helpers import permitted_orgs
+        orgs = permitted_orgs("create", "security_seized_item_depository")
+        if not orgs:
+            resource.configure(insertable = False)
+        elif len(orgs) == 1:
+            field.default = orgs[0]
+        else:
+            otable = s3db.org_organisation
+            dbset = db(otable.id.belongs(orgs))
+            field.requires = IS_ONE_OF(dbset, "org_organisation.id",
+                                       field.represent,
+                                       )
+            field.writable = True
+
+        return result
+
+    s3.prep = prep
+
+    from ..rheaders import security_rheader
+    attr["rheader"] = security_rheader
+
+    return attr
+
 # -------------------------------------------------------------------------
 def security_seized_item_resource(r, tablename):
     """

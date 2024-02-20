@@ -47,12 +47,7 @@ def drk_person_anonymize():
                                   })
 
     # Cascade rule for case activities
-    activity_details = [("dvr_case_activity_need", {"key": "case_activity_id",
-                                                    "match": "id",
-                                                    "fields": {"comments": "remove",
-                                                               },
-                                                  }),
-                        ("dvr_case_activity_update", {"key": "case_activity_id",
+    activity_details = [("dvr_case_activity_update", {"key": "case_activity_id",
                                                       "match": "id",
                                                       "fields": {"comments": ("set", ANONYMOUS),
                                                                  },

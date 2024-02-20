@@ -455,9 +455,11 @@ def config(settings):
     # -------------------------------------------------------------------------
     # Security settings
     #
-    from .customise.security import security_seized_item_resource
+    from .customise.security import security_seized_item_resource, \
+                                    security_seized_item_depository_controller
 
     settings.customise_security_seized_item_resource = security_seized_item_resource
+    settings.customise_security_seized_item_depository_controller = security_seized_item_depository_controller
 
     # -------------------------------------------------------------------------
     # Comment/uncomment modules here to disable/enable them
