@@ -68,6 +68,44 @@ def case_default_org():
     return default_org, multiple_orgs
 
 # =============================================================================
+def response_theme_sectors():
+    """
+        Looks up the sectors of all organisations the user
+        can access response actions for; for sector-filter
+        in response action perspective
+
+        Returns:
+            a dict {sector_id: sector_name}
+    """
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    stable = s3db.org_sector
+    ltable = s3db.org_sector_organisation
+    otable = s3db.org_organisation
+
+    realms = auth.permission.permitted_realms("dvr_response_action", "read")
+    if realms:
+        query = (otable.pe_id.belongs(realms)) & \
+                (otable.deleted == False)
+        organisation_ids = db(query)._select(otable.id)
+        join = ltable.on((ltable.sector_id == stable.id) & \
+                         (ltable.organisation_id.belongs(organisation_ids)) & \
+                         (ltable.deleted == False))
+    else:
+        join = None
+
+    sectors = db(stable.deleted == False).select(stable.id,
+                                                 stable.name,
+                                                 join = join,
+                                                 )
+    return {s.id: T(s.name) for s in sectors}
+
+# =============================================================================
 def get_total_consultations(person):
     """
         Get number of consultations for person

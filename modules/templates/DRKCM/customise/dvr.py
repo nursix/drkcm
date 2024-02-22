@@ -1548,6 +1548,18 @@ def configure_response_action_filters(r,
         ]
 
     if use_theme:
+        settings = current.deployment_settings
+        themes_details = settings.get_dvr_response_themes_details()
+        themes_sectors = settings.get_dvr_response_themes_sectors()
+        if themes_details and themes_sectors:
+            from ..helpers import response_theme_sectors
+            filter_widgets.insert(-2,
+                OptionsFilter("response_action_theme.theme_id$sector_id",
+                              header = True,
+                              hidden = True,
+                              options = response_theme_sectors,
+                              ))
+
         filter_widgets.insert(-2,
             OptionsFilter("response_theme_ids",
                           header = True,
@@ -1557,6 +1569,8 @@ def configure_response_action_filters(r,
                                                        org_filter = True,
                                                        ),
                           ))
+
+
     if use_response_type:
         filter_widgets.insert(3,
             HierarchyFilter("response_type_id",
