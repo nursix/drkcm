@@ -745,7 +745,6 @@ class BudgetKitModel(DataModel):
             title_update = T("Edit Item"),
             label_list_button = T("List Items"),
             label_delete_button = T("Delete Item"),
-            label_search_button = T("Search Items"),
             msg_record_created = T("Item added"),
             msg_record_modified = T("Item updated"),
             msg_record_deleted = T("Item deleted"),

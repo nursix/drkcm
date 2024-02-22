@@ -626,10 +626,14 @@ var S3EnableNavigateAwayConfirm = function() {
             if (self.ignoreStatus.indexOf(httpStatus) != -1) {
                 // Status handled by caller => do not display alert
             } else {
-                var responseJSON = jqXHR.responseJSON;
+                var responseJSON = jqXHR.responseJSON,
+                    responseText = jqXHR.responseText;
                 if (responseJSON && responseJSON.message) {
                     // A json_message with a specific error text
                     S3.showAlert(responseJSON.message, 'error');
+                } else if (responseText) {
+                    // A clear-text error message
+                    S3.showAlert(responseText, 'error');
                 } else {
                     // HTTP status code only
                     S3.showAlert(i18n.ajax_dwn, 'error');

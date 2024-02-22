@@ -5,8 +5,9 @@
 """
 
 import datetime
+import json
 
-from gluon import current, URL, A, IS_EMPTY_OR, SPAN, TAG
+from gluon import current, URL, A, IS_EMPTY_OR, SPAN
 from gluon.storage import Storage
 
 from core import FS, IS_ONE_OF, s3_str
@@ -760,6 +761,7 @@ def configure_case_reports(resource):
             "gender",
             "person_details.religion",
             "person_details.literacy",
+            (T("Flags"), "case_flag_case.flag_id"),
             #"shelter_registration.shelter_id",
             #"shelter_registration.shelter_unit_id",
             ]
@@ -807,6 +809,13 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
     resource = r.resource
 
+    # Autocomplete using alternative search method
+    search_fields = ("first_name", "last_name", "pe_label")
+    s3db.set_method("pr_person",
+                    method = "search_ac",
+                    action = s3db.pr_PersonSearchAutocomplete(search_fields),
+                    )
+
     from gluon import Field, IS_IN_SET, IS_NOT_EMPTY
 
     # Absence-days method, used in both list_fields and rheader
@@ -830,6 +839,13 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
     if not r.component:
 
         configure_person_tags()
+
+        # Attach registration history method
+        from ..presence import RegistrationHistory
+        s3db.set_method("pr_person",
+                        method = "registration_history",
+                        action = RegistrationHistory,
+                        )
 
         # Determine available shelters and default
         if case_organisation:
@@ -1351,41 +1367,76 @@ def pr_person_controller(**attr):
 
         if r.record and isinstance(output, dict):
 
-            # Generate-ID button (required appropriate role)
+            from ..helpers import inject_button
+
+            component_name = r.component_name
+
+            # Generate-ID button (requires appropriate role)
             if r.controller == "dvr" and is_case_admin or \
                r.controller == "hrm" and is_org_admin:
-                id_btn = A(T("Generate ID"),
-                           _href = r.url(component = "identity",
-                                         method = "generate",
-                                         ),
-                          _class = "action-btn activity button",
-                          )
+                btn = A(T("Generate ID"),
+                        _href = r.url(component = "identity",
+                                      method = "generate",
+                                      ),
+                        _class = "action-btn activity button",
+                        )
                 if not r.component:
-                    if "buttons" not in output:
-                        buttons = output["buttons"] = {}
-                    else:
-                        buttons = output["buttons"]
-                    buttons["delete_btn"] = TAG[""](id_btn)
+                    inject_button(output, btn, before="delete_btn", alt=None)
                 elif r.component_name == "identity":
-                    showadd_btn = output.get("showadd_btn")
-                    if showadd_btn:
-                        output["showadd_btn"] = TAG[""](id_btn, showadd_btn)
-                    else:
-                        output["showadd_btn"] = id_btn
+                    inject_button(output, btn)
 
-            # Organizer-button for appointments
-            if r.component_name == "case_appointment":
-                oa_btn = A(T("Calendar"),
-                           _href = r.url(component = "case_appointment",
-                                         method = "organize",
+            # Organizer-button on appointments tab
+            if component_name == "case_appointment":
+                btn = A(T("Calendar"),
+                        _href = r.url(component = "case_appointment",
+                                      method = "organize",
+                                      ),
+                        _class = "action-btn activity button",
+                        )
+                inject_button(output, btn)
+
+            # Registration History button on presence tab
+            elif component_name == "site_presence_event":
+
+                widget_id = "rhist-btn"
+                label = T("Registration History")
+
+                btn = A(label,
+                        _id = widget_id,
+                        _class = "action-btn activity button",
+                        )
+                inject_button(output, btn)
+
+                # TODO move into function
+
+                # Inject JS
+                appname = current.request.application
+                script = "/%s/static/themes/JUH/js/rhist.js" % appname
+                if script not in s3.scripts:
+                    s3.scripts.append(script)
+
+                # Instantiate widget
+                opts = {"ajaxURL": r.url(component="",
+                                         method="registration_history",
+                                         representation="json",
                                          ),
-                           _class = "action-btn activity button",
-                           )
-                showadd_btn = output.get("showadd_btn")
-                if showadd_btn:
-                    output["showadd_btn"] = TAG[""](oa_btn, showadd_btn)
-                else:
-                    output["showadd_btn"] = oa_btn
+                        "container": "map",
+                        "labelTitle": s3_str(label),
+                        "labelShelter": s3_str(T("Shelter")),
+                        "labelPlanned": s3_str(T("Planned since")),
+                        "labelArrival": s3_str(T("Arrival")),
+                        "labelDeparture": s3_str(T("Departure")),
+                        "labelEmpty": s3_str(T("No data available")),
+                        "labelMissing": s3_str(T("Date not registered")),
+                        "labelClose": s3_str(T("Close")),
+                        }
+                from core import JSONSEPARATORS
+                script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
+                         {"selector": widget_id,
+                          "options": json.dumps(opts, separators=JSONSEPARATORS),
+                          }
+                s3.jquery_ready.append(script)
+
 
         return output
     s3.postp = postp

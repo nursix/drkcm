@@ -3352,7 +3352,7 @@
 'Skill Provision': '提供技能',
 'Skill Provisions': '规定技能',
 'Skill Status': '技能状态',
-'Skill TYpe': '技能类型',
+'Skill Type': '技能类型',
 'Skill Type Catalog': '技能类型目录',
 'Skill Type Details': '技能类型详细信息',
 'Skill Type added': '已添加技能类型',

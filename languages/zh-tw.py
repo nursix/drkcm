@@ -4452,7 +4452,7 @@
 'Skill Provision': '供應技能',
 'Skill Provisions': '技術條款',
 'Skill Status': '技能狀態',
-'Skill TYpe': '技術類型',
+'Skill Type': '技術類型',
 'Skill Type Catalog': '型錄技術類型',
 'Skill Type Details': '技術類型詳細資料',
 'Skill Type added': '添加技術類型',

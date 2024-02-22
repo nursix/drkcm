@@ -35,7 +35,7 @@ class S3OrgMenuLayout(S3NavigationItem):
 
         logo = IMG(_src = "/%s/static/themes/JUH/img/logo_smaller.png" % current.request.application,
                    _alt = name,
-                   _width = 50,
+                   _width = 49,
                    )
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]

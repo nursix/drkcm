@@ -184,6 +184,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
     # -------------------------------------------------------------------------
     @classmethod
+    def act(cls):
+
+        return cls.org()
+
+    # -------------------------------------------------------------------------
+    @classmethod
     def counsel(cls):
 
         sr = current.auth.get_system_roles()
@@ -295,8 +301,11 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                     #  ),
                     ),
-                M("Event Registration", c="dvr", f="case_event", m="register", p="create"),
-                M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                M("Registration", c="dvr", f="case_event", link=None)(
+                    M("Checkpoint", c="dvr", f="case_event", m="register", p="create"),
+                    M("Activity", c="dvr", f="case_event", m="register_activity", p="create"),
+                    M("Food Distribution", c="dvr", f="case_event", m="register_food", p="create"),
+                    ),
                 M("Statistics", link=False)(
                     M("Cases", c="dvr", f="person", m="report",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
@@ -377,15 +386,17 @@ class S3OptionsMenu(default.S3OptionsMenu):
         else:
             cms_menu = M(inbox_label, c="cms", f="read_newsletter", translate=False)
 
-        return M(c=("org", "hrm"))(
+        return M(c=("org", "hrm", "act"))(
                     org_menu,
-                    cms_menu,
                     M("Organization Groups", f="group")(
                         M("Create", m="create"),
                         ),
+                    M("Activities", c="act", f="activity"),
                     M("Staff", c="hrm", f="staff"),
+                    cms_menu,
                     M("Administration", link=False, restrict=[ADMIN])(
                         M("Organization Types", c="org", f="organisation_type"),
+                        M("Activity Types", c="act", f="activity_type"),
                         M("Job Titles", c="hrm", f="job_title"),
                         ),
                     )

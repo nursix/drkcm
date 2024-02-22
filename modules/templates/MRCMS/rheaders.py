@@ -11,6 +11,44 @@ from core import S3ResourceHeader, s3_fullname, s3_rheader_resource
 from .helpers import client_name_age, hr_details, last_seen_represent
 
 # =============================================================================
+def act_rheader(r, tabs=None):
+    """ Custom resource headers for ACT module """
+
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
+
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
+
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+
+        if tablename == "act_activity":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Participants"), "beneficiary"),
+                        (T("Documents"), "document"),
+                        ]
+            rheader_fields = [["type_id", "place"],
+                              ["date", "time"],
+                              ["end_date"],
+                              ]
+            rheader_title = "name"
+
+            rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+            rheader = rheader(r, table=resource.table, record=record)
+
+    return rheader
+
+# =============================================================================
 def dvr_rheader(r, tabs=None):
     """ Custom resource headers for DVR module """
 
@@ -411,6 +449,40 @@ def default_rheader(r, tabs=None):
                     ]
             rheader_fields = []
             rheader_title = s3_fullname
+
+            rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+            rheader = rheader(r, table=resource.table, record=record)
+
+    return rheader
+
+# -----------------------------------------------------------------------------
+def security_rheader(r, tabs=None):
+    """ Custom resource header for SECURITY module """
+
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
+
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
+
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+
+        if tablename == "security_seized_item_depository":
+            if not tabs:
+                tabs = [(T("Basic Details"), None),
+                        (T("Seized Items"), "seized_item"),
+                        ]
+            rheader_fields = []
+            rheader_title = "name"
 
             rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
             rheader = rheader(r, table=resource.table, record=record)

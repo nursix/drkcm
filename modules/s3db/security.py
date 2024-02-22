@@ -413,11 +413,22 @@ class SecuritySeizedItemsModel(DataModel):
         #
         tablename = "security_seized_item_depository"
         define_table(tablename,
+                     self.org_organisation_id(
+                         default = None,
+                         # Enable in template as required
+                         readable = False,
+                         writable = False,
+                         ),
                      Field("name",
                            requires = IS_NOT_EMPTY(),
                            ),
                      CommentsField(),
                      )
+
+        # Components
+        self.add_components(tablename,
+                            security_seized_item = "depository_id",
+                            )
 
         # CRUD Strings
         crud_strings[tablename] = Storage(
@@ -431,7 +442,7 @@ class SecuritySeizedItemsModel(DataModel):
             msg_record_modified = T("Depository updated"),
             msg_record_deleted = T("Depository deleted"),
             msg_list_empty = T("No Depositories currently registered"),
-        )
+            )
 
         # Reusable field
         represent = S3Represent(lookup=tablename)
@@ -495,6 +506,7 @@ class SecuritySeizedItemsModel(DataModel):
                                    ),
                      Field("status_comment",
                            label = T("Status Comment"),
+                           represent = lambda v, row=None: v if v else "-",
                            ),
                      # Returned-date and person responsible
                      DateField("returned_on",

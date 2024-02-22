@@ -53,6 +53,19 @@ def realm_entity(table, row):
         if organisation_id:
             realm_entity = s3db.pr_get_pe_id("org_organisation", organisation_id)
 
+    elif tablename == "act_activity_type":
+        # No realm entity
+        realm_entity = None
+
+    #elif tablename == "act_activity":
+    #    # Owned by the organisation registering them (default okay)
+    #    pass
+
+    elif tablename == "act_beneficiary":
+        # Inherit from person via person_id
+        table = s3db.table(tablename)
+        realm_entity = person_realm_entity(table, row, default=realm_entity)
+
     #elif tablename in ("dvr_case_flag",
     #                   "dvr_appointment_type",
     #                   "dvr_case_event_type",
@@ -113,6 +126,7 @@ def realm_entity(table, row):
                        "pr_person_tag",
                        "cr_shelter_registration",
                        "cr_shelter_registration_history",
+                       "security_seized_item",
                        ):
         # Inherit from person via person_id
         table = s3db.table(tablename)
@@ -183,6 +197,11 @@ def realm_entity(table, row):
     #                   "org_site_presence_event",
     #                   ):
     #    # Owned by the site, OU of managing organisation (default ok)
+    #    pass
+
+    #elif tablename == "security_seized_item_depository":
+    #
+    #    # Owned by the managing organisation (default ok)
     #    pass
 
     return realm_entity

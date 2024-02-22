@@ -137,6 +137,35 @@ def get_role_emails(role_uid, pe_id=None, organisation_id=None):
     return contacts if contacts else None
 
 # -----------------------------------------------------------------------------
+def permitted_orgs(permission, tablename):
+    """
+        Get the IDs of the organisations for which the user has
+        a certain permission for a certain table
+
+        Args:
+            permission: the permission name
+            tablename: the table name
+
+        Returns:
+            List of organisation IDs
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    permissions = auth.permission
+    permitted_realms = permissions.permitted_realms(tablename, permission)
+
+    otable = s3db.org_organisation
+    query = (otable.deleted == False)
+    if permitted_realms is not None:
+        query = (otable.pe_id.belongs(permitted_realms)) & query
+    orgs = db(query).select(otable.id)
+
+    return [o.id for o in orgs]
+
+# -----------------------------------------------------------------------------
 def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
     """
         Get organisations managed by the current user
@@ -318,9 +347,6 @@ def get_default_shelter():
         Returns:
             shelter ID
     """
-    # TODO refactor
-    #      - use default organisation instead of user orgs (i.e. no default
-    #        shelter without default organisation)
 
     auth = current.auth
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
@@ -349,33 +375,20 @@ def get_default_case_organisation():
         Returns:
             organisation ID
     """
-    # TODO parametrize permission
 
     auth = current.auth
     if not auth.s3_logged_in() or auth.s3_has_role("ADMIN"):
         return None
 
-    permissions = auth.permission
-    permitted_realms = permissions.permitted_realms("dvr_case", "read")
-
-    db = current.db
-    s3db = current.s3db
-
-    table = s3db.org_organisation
-    query = (table.pe_id.belongs(permitted_realms)) & \
-            (table.deleted == False)
-    rows = db(query).select(table.id)
-    if not rows:
+    organisation_ids = permitted_orgs("read", "dvr_case")
+    if not organisation_ids:
         return None
-    if len(rows) == 1:
-        return rows.first().id
+    if len(organisation_ids) == 1:
+        return organisation_ids[0]
 
-    # TODO remove this fallback?
     site_org = get_current_site_organisation()
-    if site_org:
-        organisation_ids = [row.id for row in rows]
-        if site_org in organisation_ids:
-            return site_org
+    if site_org and site_org in organisation_ids:
+        return site_org
 
     return None
 
@@ -474,6 +487,31 @@ def get_default_case_shelter(person_id):
     return shelter_id, unit_id
 
 # =============================================================================
+def inject_button(output, button, before="add_btn", alt="showadd_btn"):
+    """
+        Injects an additional action button into a CRUD view
+
+        Args:
+            output: the output dict
+            button: the button to inject
+            before: the output["buttons"] element to inject the button
+            alt: output element that overrides "before" if it is present
+    """
+
+    buttons = output.get("buttons")
+    btn = buttons.get(before) if buttons else None
+
+    alt_btn = output.get(alt) if alt else None
+    if alt_btn:
+        output[alt] = TAG[""](button, alt_btn) if alt_btn else button
+    else:
+        if not buttons:
+            buttons = output["buttons"] = {}
+        buttons[before] = TAG[""](button, btn) if btn else button
+
+# =============================================================================
+# Helpers for HRM rheader
+# =============================================================================
 def account_status(record, represent=True):
     """
         Checks the status of the user account for a person
@@ -515,70 +553,6 @@ def account_status(record, represent=True):
         status = represent(status)
 
     return status
-
-# -----------------------------------------------------------------------------
-def client_name_age(record):
-    """
-        Represent a client as name, gender and age; for case file rheader
-
-        Args:
-            record: the client record (pr_person)
-
-        Returns:
-            HTML
-    """
-
-    T = current.T
-
-    pr_age = current.s3db.pr_age
-
-    age = pr_age(record)
-    if age is None:
-        age = "?"
-        unit = T("years")
-    elif age == 0:
-        age = pr_age(record, months=True)
-        unit = T("months") if age != 1 else T("month")
-    else:
-        unit = T("years") if age != 1 else T("year")
-
-    icons = {2: "fa fa-venus",
-             3: "fa fa-mars",
-             4: "fa fa-transgender-alt",
-             }
-    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
-
-    client = TAG[""](s3_fullname(record, truncate=False),
-                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
-                     )
-    return client
-
-# -----------------------------------------------------------------------------
-def last_seen_represent(date, label):
-    """
-        Represent last-seen-on date as warning if more than 3/5 days back;
-        for case file rheader
-
-        Args:
-            date: the date (datetime.datetime)
-            label: the represented date
-
-        Returns:
-            HTML or label
-    """
-
-    if date:
-        days = relativedelta(datetime.datetime.utcnow(), date).days
-        if days > 5:
-            icon = I(_class="fa fa-exclamation-triangle")
-            title = "> %s %s" % (days, current.T("days"))
-            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
-        elif days > 3:
-            icon = I(_class="fa fa-exclamation-circle")
-            title = "> %s %s" % (days, current.T("days"))
-            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
-
-    return label
 
 # -----------------------------------------------------------------------------
 def hr_details(record):
@@ -646,6 +620,72 @@ def hr_details(record):
                                                ),
                                    )
     return output
+
+# =============================================================================
+# Helpers for DVR rheader
+# =============================================================================
+def client_name_age(record):
+    """
+        Represent a client as name, gender and age; for case file rheader
+
+        Args:
+            record: the client record (pr_person)
+
+        Returns:
+            HTML
+    """
+
+    T = current.T
+
+    pr_age = current.s3db.pr_age
+
+    age = pr_age(record)
+    if age is None:
+        age = "?"
+        unit = T("years")
+    elif age == 0:
+        age = pr_age(record, months=True)
+        unit = T("months") if age != 1 else T("month")
+    else:
+        unit = T("years") if age != 1 else T("year")
+
+    icons = {2: "fa fa-venus",
+             3: "fa fa-mars",
+             4: "fa fa-transgender-alt",
+             }
+    icon = I(_class=icons.get(record.gender, "fa fa-genderless"))
+
+    client = TAG[""](s3_fullname(record, truncate=False),
+                     SPAN(icon, "%s %s" % (age, unit), _class="client-gender-age"),
+                     )
+    return client
+
+# -----------------------------------------------------------------------------
+def last_seen_represent(date, label):
+    """
+        Represent last-seen-on date as warning if more than 3/5 days back;
+        for case file rheader
+
+        Args:
+            date: the date (datetime.datetime)
+            label: the represented date
+
+        Returns:
+            HTML or label
+    """
+
+    if date:
+        days = relativedelta(datetime.datetime.utcnow(), date).days
+        if days > 5:
+            icon = I(_class="fa fa-exclamation-triangle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-critical", _title=title)
+        elif days > 3:
+            icon = I(_class="fa fa-exclamation-circle")
+            title = "> %s %s" % (days, current.T("days"))
+            label = SPAN(label, icon, _class="last-seen-warning", _title=title)
+
+    return label
 
 # =============================================================================
 class AbsenceFilter(RangeFilter):

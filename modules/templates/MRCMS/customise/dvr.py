@@ -517,7 +517,11 @@ def dvr_case_event_resource(r, tablename):
 
     s3db = current.s3db
 
-    from ..food import FoodDistribution
+    from ..checkpoints import ActivityParticipation, FoodDistribution
+    s3db.set_method("dvr_case_event",
+                    method = "register_activity",
+                    action = ActivityParticipation,
+                    )
     s3db.set_method("dvr_case_event",
                     method = "register_food",
                     action = FoodDistribution,
@@ -535,7 +539,7 @@ def dvr_case_event_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        if r.method in ("register", "register_food"):
+        if r.method in ("register", "register_food", "register_activity"):
             CustomController._view("MRCMS", "register_case_event.html")
         return output
     s3.postp = custom_postp
@@ -619,16 +623,22 @@ def dvr_case_event_type_resource(r, tablename):
     # TODO filter case event exclusion to types of same org
     #      if we have a r.record, otherwise OptionsFilterS3?
 
-    crud_form = S3SQLCustomForm("organisation_id",
+    # Custom form
+    crud_form = S3SQLCustomForm(# --- Event Type ---
+                                "organisation_id",
                                 "event_class",
                                 "code",
                                 "name",
                                 "is_inactive",
                                 "is_default",
+                                # --- Process ---
+                                "appointment_type_id",
+                                "activity_id",
+                                "presence_required",
+                                # --- Restrictions ---
                                 "residents_only",
                                 "register_multiple",
                                 "role_required",
-                                "appointment_type_id",
                                 "min_interval",
                                 "max_per_day",
                                 S3SQLInlineLink("excluded_by",
@@ -636,11 +646,18 @@ def dvr_case_event_type_resource(r, tablename):
                                                 label = T("Not Combinable With"),
                                                 comment = T("Events that exclude registration of this event type on the same day"),
                                                 ),
-                                "presence_required",
                                 )
 
+    # Sub-headings for custom form
+    subheadings = {"organisation_id": T("Event Type"),
+                   "appointment_type_id": T("Documentation"),
+                   "residents_only": T("Restrictions"),
+                   }
+
+    # Reconfigure
     s3db.configure("dvr_case_event_type",
                    crud_form = crud_form,
+                   subheadings = subheadings,
                    )
 
 # -------------------------------------------------------------------------

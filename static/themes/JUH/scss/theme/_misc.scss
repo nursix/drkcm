@@ -477,4 +477,46 @@
     color: #bd5900;
 }
 
+.rhist {
+    border: 1px solid #ccc;
+    margin-bottom: 0.7rem;
+    padding: 0.5rem;
+    background-color: #fafafa;
+    table {
+        border: 1px solid #ccc;
+        border-collapse: collapse;
+        margin: 1rem 3rem;
+        th, td {
+            padding: 0.2rem 0.7rem;
+            border: 0;
+            cursor: default;
+        }
+        th {
+            font-size: 0.8rem;
+            font-weight: normal;
+            font-style: italic;
+            color: grey;
+            border-bottom: 1px solid #ccc;
+        }
+        td {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        td.rhist-planned {
+            font-size: 0.7rem;
+            font-weight: normal;
+            color: grey;
+        }
+        .rhist-headers {
+            background-color: #eee;
+        }
+        .rhist-current {
+            background-color: #dff4bf;
+        }
+    }
+    .empty {
+        margin: 0.7rem 1.4rem;
+    }
+}
+
 // END ========================================================================

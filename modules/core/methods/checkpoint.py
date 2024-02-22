@@ -52,8 +52,8 @@ class Checkpoint(CRUDMethod):
     # TODO extend with option to restrict event types per flag
     ACTION = "id-check"
 
-    # Event classes this method is intended for
-    EVENT_CLASSES = ("A", "C") # = Administrative + Checkpoint
+    # Event class this method is intended for
+    EVENT_CLASS = "C" # Checkpoint
 
     # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
@@ -270,8 +270,8 @@ class Checkpoint(CRUDMethod):
                 attr: controller parameters
 
             Returns:
-                - a JSON object {"types": [[code, name], ...],
-                                 "default": [code, name],
+                - a JSON object {"types": [[code, name, multiple], ...],
+                                 "default": [code, name, multiple],
                                  }
         """
 
@@ -297,7 +297,6 @@ class Checkpoint(CRUDMethod):
                 output["default"] = default
         else:
             output = {"types": [], "default": None}
-
 
         current.response.headers["Content-Type"] = "application/json"
         return json.dumps(output)
@@ -897,7 +896,17 @@ class Checkpoint(CRUDMethod):
     # -------------------------------------------------------------------------
     @staticmethod
     def is_resident(person_id, organisation_id):
-        # TODO docstring
+        """
+            Check if a person is a current resident of a shelter of
+            the organisation
+
+            Args:
+                person_id: the person ID
+                organisation_id: the organisation ID
+
+            Returns:
+                tuple (is_resident, site_id)
+        """
 
         db = current.db
         s3db = current.s3db
@@ -1275,7 +1284,7 @@ class Checkpoint(CRUDMethod):
             query = (table.is_default == True)
 
         query &= (table.organisation_id == organisation_id) & \
-                 (table.event_class.belongs(cls.EVENT_CLASSES)) & \
+                 (table.event_class == cls.EVENT_CLASS) & \
                  (table.is_inactive == False)
 
         # Roles required
@@ -1294,12 +1303,13 @@ class Checkpoint(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def get_event_types(cls, organisation_id=None):
+    def get_event_types(cls, organisation_id=None, type_filter=None):
         """
             Looks up all available event types for the organisation
 
             Args:
                 organisation_id: the organisation record ID
+                type_filter: a filter query for event type selection
 
             Returns:
                 a dict {event_type_id: event_type_row}
@@ -1312,7 +1322,9 @@ class Checkpoint(CRUDMethod):
         query = current.auth.s3_accessible_query("read", "dvr_case_event_type") & \
                 (table.organisation_id == organisation_id) & \
                 (table.is_inactive == False) & \
-                (table.event_class.belongs(cls.EVENT_CLASSES))
+                (table.event_class == cls.EVENT_CLASS)
+        if type_filter is not None:
+            query &= type_filter
 
         # Roles required
         sr = current.auth.get_system_roles()
@@ -1335,7 +1347,7 @@ class Checkpoint(CRUDMethod):
                                 )
         event_types = {row.id: row for row in rows}
         for row in rows:
-            if row.is_default:
+            if row.is_default or len(rows) == 1:
                 event_types["_default"] = row.id
                 break
 

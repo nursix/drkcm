@@ -690,8 +690,18 @@ class SpreadsheetImporter(CRUDMethod):
                                      **args)
 
         job_id = result.job_id
-        if not job_id and result.error:
-            raise ValueError(result.error)
+        if not job_id:
+            if result.error:
+                error = result.error
+            elif result.success:
+                # No importable data (i.e. of the correct type) found in source
+                # - does not produce an error, but doesn't yield a job either
+                # - must be caught here, because second pass cannot discriminate
+                #   the cause of the missing job ID (misleading error message)
+                error = current.T("Source contains no suitable data for import")
+            else:
+                error = current.T("Unknown error")
+            raise ValueError(error)
 
         return job_id
 
