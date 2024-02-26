@@ -191,7 +191,7 @@ class BudgetModel(DataModel):
         # Represent
         #budget_budget_represent = S3Represent(lookup=tablename, show_link=True)
 
-        # Reusable Field
+        # Foreign Key Template
         #budget_budget_id = FieldTemplate("budget_id", "reference %s" % tablename,
         #                                 label = T("Budget"),
         #                                 ondelete = "CASCADE",
@@ -299,7 +299,7 @@ class BudgetModel(DataModel):
         budget_location_represent = S3Represent(lookup=tablename,
                                                 fields=["code"])
 
-        # Reusable Field
+        # Foreign Key Template
         budget_location_id = FieldTemplate("location_id", "reference %s" % tablename,
                                            label = T("Location"),
                                            ondelete = "CASCADE",
@@ -382,7 +382,7 @@ class BudgetModel(DataModel):
         budget_staff_represent = S3Represent(lookup=tablename,
                                              fields=["name"])
 
-        # Reusable Field
+        # Foreign Key Template
         budget_staff_id = FieldTemplate("staff_id", "reference %s" % tablename,
                                         label = T("Staff"),
                                         ondelete = "RESTRICT",
@@ -629,7 +629,7 @@ class BudgetKitModel(DataModel):
         # Represent
         budget_kit_represent = S3Represent(lookup=tablename, fields=["code"])
 
-        # Reusable Field
+        # Foreign Key Template
         budget_kit_id = FieldTemplate("kit_id", "reference %s" % tablename,
                                       ondelete = "RESTRICT",
                                       label = T("Kit"),
@@ -755,7 +755,7 @@ class BudgetKitModel(DataModel):
         budget_item_represent = S3Represent(lookup=tablename,
                                             fields=["description"])
 
-        # Reusable Field
+        # Foreign Key Template
         budget_item_id = FieldTemplate("item_id", "reference %s" % tablename,
                                        label = T("Item"),
                                        ondelete = "RESTRICT",
@@ -1008,7 +1008,7 @@ class BudgetBundleModel(DataModel):
         budget_bundle_represent = S3Represent(lookup=tablename,
                                              fields=["name"])
 
-        # Reusable Field
+        # Foreign Key Template
         budget_bundle_id = FieldTemplate("bundle_id", "reference %s" % tablename,
                                          label = T("Bundle"),
                                          ondelete = "RESTRICT",

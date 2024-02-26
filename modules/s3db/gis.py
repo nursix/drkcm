@@ -313,7 +313,7 @@ class GISLocationModel(DataModel):
             msg_record_deleted = T("Location deleted"),
             msg_list_empty = T("No Locations currently available"))
 
-        # Reusable field to include in other table definitions
+        # Foreign Key Template to include in other table definitions
         location_id = FieldTemplate("location_id", "reference %s" % tablename,
                                     label = T("Location"),
                                     ondelete = "RESTRICT",
@@ -1702,7 +1702,7 @@ class GISConfigModel(DataModel):
             msg_record_deleted = T("Marker deleted"),
             msg_list_empty = T("No Markers currently available"))
 
-        # Reusable field to include in other table definitions
+        # Foreign Key Template to include in other table definitions
         # @ToDo: Widget to include icons in dropdown: http://jqueryui.com/selectmenu/#custom_render
         marker_represent = gis_MarkerRepresent()
         marker_id = FieldTemplate("marker_id", "reference %s" % tablename,
@@ -1798,7 +1798,7 @@ class GISConfigModel(DataModel):
             msg_record_deleted = T("Projection deleted"),
             msg_list_empty = T("No Projections currently defined"))
 
-        # Reusable field to include in other table definitions
+        # Foreign Key Template to include in other table definitions
         represent = S3Represent(lookup=tablename)
         projection_id = FieldTemplate("projection_id", "reference %s" % tablename,
                                       sortby="name",
@@ -1967,7 +1967,7 @@ class GISConfigModel(DataModel):
                            ),
                      )
 
-        # Reusable field - used by Events & Scenarios
+        # Foreign Key Template - used by Events & Scenarios
         represent = S3Represent(lookup=tablename)
         config_id = FieldTemplate("config_id", "reference %s" % tablename,
                                   label = T("Map Profile"),
@@ -2731,7 +2731,7 @@ class GISLayerEntityModel(DataModel):
                      #Field("sld", "text"),
                      )
 
-        # Reusable field
+        # Foreign Key Template
         #represent = S3Represent(lookup=tablename)
         #style_id = FieldTemplate("style_id", "reference %s" % tablename,
         #                         label = T("Map Style"),

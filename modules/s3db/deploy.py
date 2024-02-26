@@ -326,7 +326,7 @@ class DeployModel(DataModel):
             msg_record_deleted = T("Mission deleted"),
             msg_list_empty = T("No Missions currently registered"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 linkto = URL(f="mission",
                                              args=["[id]", "profile"]),
@@ -1000,7 +1000,7 @@ class DeployAlertModel(DataModel):
                         action = self.deploy_alert_send,
                         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
                                  label = T("Alert"),

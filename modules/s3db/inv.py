@@ -562,7 +562,7 @@ class InventoryModel(DataModel):
             msg_record_deleted = T("Stock removed from Warehouse"),
             msg_list_empty = T("No Stock currently registered in this Warehouse"))
 
-        # Reusable Field
+        # Foreign Key Template
         inv_item_represent = inv_InvItemRepresent()
         inv_item_id = FieldTemplate("inv_item_id", "reference %s" % tablename,
                                     label = INV_ITEM,
@@ -1230,7 +1230,7 @@ class InventoryTrackingModel(DataModel):
             msg_record_deleted = T("Sent Shipment canceled"),
             msg_list_empty = T("No Sent Shipments"))
 
-        # Reusable Field
+        # Foreign Key Template
         send_id = FieldTemplate("send_id", "reference %s" % tablename,
                                 label = T("Send Shipment"),
                                 ondelete = "RESTRICT",
@@ -1450,7 +1450,7 @@ class InventoryTrackingModel(DataModel):
         else:
             recv_id_label = T("Receive Shipment")
 
-        # Reusable Field
+        # Foreign Key Template
         inv_recv_represent = self.inv_recv_represent
         recv_id = FieldTemplate("recv_id", "reference %s" % tablename,
                                 label = recv_id_label,
@@ -3961,7 +3961,7 @@ class InventoryAdjustModel(DataModel):
                             inv_adj_item = "adj_id",
                             )
 
-        # Reusable Field
+        # Foreign Key Template
         adj_id = FieldTemplate("adj_id", "reference %s" % tablename,
                                label = T("Inventory Adjustment"),
                                ondelete = "RESTRICT",
@@ -4099,7 +4099,7 @@ class InventoryAdjustModel(DataModel):
                      CommentsField(),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         adj_item_id = FieldTemplate("adj_item_id", "reference %s" % tablename,
                                     label = T("Inventory Adjustment Item"),
                                     ondelete = "RESTRICT",

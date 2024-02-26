@@ -8,6 +8,6 @@ Implementing Data Models
    Basic Concepts <basics>
    Defining Tables <tables>
    Table Configuration <configure>
-   Reusable Fields <reusablefield>
+   Field Templates <fieldtemplate>
    Representation Methods <represent>
 

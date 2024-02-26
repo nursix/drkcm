@@ -1365,7 +1365,7 @@ class StatsImpactModel(DataModel):
                                         ),
                           ]
 
-        # Reusable Field
+        # Foreign Key Template
         impact_id = FieldTemplate("impact_id", "reference %s" % tablename,
                                   label = T("Impact"),
                                   ondelete = "CASCADE",

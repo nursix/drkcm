@@ -392,7 +392,7 @@ class SecuritySeizedItemsModel(DataModel):
             msg_list_empty = T("No Item Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         item_type_id = FieldTemplate("item_type_id", "reference %s" % tablename,
                                      label = T("Type"),
@@ -444,7 +444,7 @@ class SecuritySeizedItemsModel(DataModel):
             msg_list_empty = T("No Depositories currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         depository_id = FieldTemplate("depository_id", "reference %s" % tablename,
                                       label = T("Depository"),

@@ -271,7 +271,7 @@ class AssetModel(DataModel):
 
         asset_represent = asset_AssetRepresent(show_link=True)
 
-        # Reusable Field
+        # Foreign Key Template
         asset_id = FieldTemplate("asset_id", "reference %s" % tablename,
                                  label = T("Asset"),
                                  ondelete = "CASCADE",

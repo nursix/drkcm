@@ -895,12 +895,12 @@ class TranslateReadFiles:
                 elif hasattr(s3db, fieldname) is False:
                     continue
                 else:
-                    reusable_field = s3db.get(fieldname)
+                    field_template = s3db.get(fieldname)
                     # Excludes lambdas which are in defaults()
-                    # i.e. reusable fields in disabled modules
+                    # i.e. field templates in disabled modules
                     from ..model import FieldTemplate
-                    if reusable_field and isinstance(reusable_field, FieldTemplate):
-                        represent = reusable_field.attr.represent
+                    if field_template and isinstance(field_template, FieldTemplate):
+                        represent = field_template().represent
                         if hasattr(represent, "translate"):
                             translate = represent.translate
 

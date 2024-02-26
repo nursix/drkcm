@@ -216,7 +216,7 @@ class DVRCaseModel(DataModel):
                   onaccept = self.case_status_onaccept,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   label = T("Status"),
@@ -512,7 +512,7 @@ class DVRCaseModel(DataModel):
                   super_entity = ("doc_entity",),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, fields=("reference",))
         case_id = FieldTemplate("case_id", "reference %s" % tablename,
                                 label = label,
@@ -1036,7 +1036,7 @@ class DVRCaseFlagModel(DataModel):
             msg_list_empty = T("No Case Flags found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         flag_id = FieldTemplate("flag_id", "reference %s" % tablename,
                                 label = T("Case Flag"),
@@ -1159,7 +1159,7 @@ class DVRNeedsModel(DataModel):
             msg_list_empty = T("No Need Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         need_id = FieldTemplate("need_id", "reference %s" % tablename,
                                 label = T("Need Type"),
@@ -1258,7 +1258,7 @@ class DVRNotesModel(DataModel):
         #               deduplicate = S3Duplicate(),
         #               )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         note_type_id = FieldTemplate("note_type_id", "reference %s" % tablename,
                                      label = T("Note Type"),
@@ -1373,7 +1373,7 @@ class DVRReferralModel(DataModel):
             msg_list_empty = T("No Referral Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         referral_type_id = FieldTemplate("referral_type_id",
                                          "reference %s" % tablename,
@@ -1488,7 +1488,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Themes currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         themes_represent = dvr_ResponseThemeRepresent(multiple = True,
                                                       translate = True,
                                                       )
@@ -1589,7 +1589,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         response_type_id = FieldTemplate(
                                 "response_type_id",
@@ -1669,7 +1669,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         response_status_id = FieldTemplate(
                                 "status_id",
@@ -2605,7 +2605,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Provider Types currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         provider_type_id = FieldTemplate("provider_type_id", "reference %s" % tablename,
                                          label = T("Provider Type"),
@@ -2657,7 +2657,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Termination Types currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         termination_type_id = FieldTemplate("termination_type_id", "reference %s" % tablename,
                                             label = T("Termination Type"),
@@ -2714,7 +2714,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Activity Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         activity_status_id = FieldTemplate("status_id",
                                            "reference %s" % tablename,
@@ -3099,7 +3099,7 @@ class DVRCaseActivityModel(DataModel):
                 msg_list_empty = T("No Activities currently registered"),
                 )
 
-        # Reusable field
+        # Foreign Key Template
         represent = dvr_CaseActivityRepresent(show_link=True)
         case_activity_id = FieldTemplate("case_activity_id",
                                          "reference %s" % tablename,
@@ -3142,7 +3142,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Update Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         update_type_id = FieldTemplate("update_type_id",
                                        "reference %s" % tablename,
@@ -3605,7 +3605,7 @@ class DVRCaseAppointmentModel(DataModel):
             msg_list_empty = T("No Appointment Types currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         appointment_type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                             label = T("Appointment Type"),
@@ -3987,7 +3987,7 @@ class DVRResidenceStatusModel(DataModel):
             msg_list_empty = T("No Residence Status Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_type_id = FieldTemplate("status_type_id",
                                        "reference %s" % tablename,
@@ -4030,7 +4030,7 @@ class DVRResidenceStatusModel(DataModel):
             msg_list_empty = T("No Residence Permit Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         permit_type_id = FieldTemplate("permit_type_id",
                                        "reference %s" % tablename,
@@ -4500,7 +4500,7 @@ class DVRCaseEventModel(DataModel):
             msg_list_empty = T("No Event Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         event_type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                       label = T("Event Type"),
@@ -5158,7 +5158,7 @@ class DVRDiagnosisModel(DataModel):
             msg_list_empty = T("No Diagnoses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         diagnosis_id = FieldTemplate("diagnosis_id",
                                      "reference %s" % tablename,
@@ -5254,7 +5254,7 @@ class DVRServiceContactModel(DataModel):
             msg_list_empty = T("No Service Contact Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                 label = T("Service Contact Type"),

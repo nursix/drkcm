@@ -689,7 +689,7 @@ class TransportModel(DataModel):
                   list_fields = list_fields,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = transport_BorderCrossingRepresent(show_link=True)
         border_crossing_id = FieldTemplate("border_crossing_id", "reference %s" % tablename,
                                            label = T("Border Crossing"),

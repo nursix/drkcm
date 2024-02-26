@@ -151,7 +151,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Series deleted"),
             msg_list_empty = T("No series currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         translate = settings.get_L10n_translate_cms_series()
         represent = S3Represent(lookup=tablename, translate=translate)
         series_id = FieldTemplate("series_id", "reference %s" % tablename,
@@ -207,7 +207,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Status deleted"),
             msg_list_empty = T("No Statuses currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
                                 #none = T("Unknown"))
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
@@ -333,7 +333,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Post deleted"),
             msg_list_empty = T("No posts currently available"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         post_id = FieldTemplate("post_id", "reference %s" % tablename,
                                 label = T("Post"),
@@ -601,7 +601,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Tag deleted"),
             msg_list_empty = T("No tags currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         tag_id = FieldTemplate("tag_id", "reference %s" % tablename,
                                label = T("Tag"),

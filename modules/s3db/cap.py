@@ -718,7 +718,7 @@ $.filterOptionsS3({
                                       field_sep = " - ",
                                       )
 
-        # Reusable Field
+        # Foreign Key Template
         alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
                                  comment = T("The alert message containing this information"),
                                  label = T("Alert"),
@@ -1368,7 +1368,7 @@ $.filterOptionsS3({
                                      fields = ["language", "headline"],
                                      field_sep = " - ")
 
-        # Reusable Field
+        # Foreign Key Template
         info_id = FieldTemplate("info_id", "reference %s" % tablename,
                                 label = T("Information Segment"),
                                 ondelete = "CASCADE",
@@ -1940,7 +1940,7 @@ class CAPAreaModel(DataModel):
         # Reference Representation
         area_represent = cap_AreaRepresent(show_link=True)
 
-        # Reusable Field
+        # Foreign Key Template
         area_id = FieldTemplate("area_id", "reference %s" % tablename,
                                 label = T("Area"),
                                 ondelete = "CASCADE",
@@ -2719,7 +2719,7 @@ class CAPWarningPriorityModel(DataModel):
             msg_list_empty = T("No Warning Classifications currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         priority_id = FieldTemplate("priority", "reference %s" % tablename,
                                     label = T("Priority"),
@@ -3115,7 +3115,7 @@ class CAPHistoryModel(DataModel):
                                               field_sep = " - ",
                                               )
 
-        # Reusable Field
+        # Foreign Key Template
         alert_history_id = FieldTemplate("alert_history_id", "reference %s" % tablename,
                                          label = T("Alert History"),
                                          ondelete = "CASCADE",
@@ -3388,7 +3388,7 @@ class CAPHistoryModel(DataModel):
                                              field_sep = " - ",
                                              )
 
-        # Reusable Field
+        # Foreign Key Template
         info_history_id = FieldTemplate("info_history_id", "reference %s" % tablename,
                                         label = T("Information History Segment"),
                                         ondelete = "CASCADE",
@@ -3543,7 +3543,7 @@ class CAPHistoryModel(DataModel):
             msg_list_empty = T("No areas currently defined for this alert"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = cap_AreaRepresent(show_link=True)
         area_history_id = FieldTemplate("area_history_id", "reference %s" % tablename,
                                         label = T("Area"),
@@ -3854,7 +3854,7 @@ class CAPAlertingAuthorityModel(DataModel):
             msg_list_empty = T("No Alerting Authority available"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 fields = ["organisation_id", "oid"],
                                 field_sep = " - ",

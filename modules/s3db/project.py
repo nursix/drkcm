@@ -384,7 +384,7 @@ class ProjectModel(DataModel):
                   update_realm = True,
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         if use_codes:
             project_represent = S3Represent(lookup=tablename,
                                             field_sep = ": ",
@@ -1110,7 +1110,7 @@ class ProjectBeneficiaryModel(DataModel):
                   super_entity = "stats_data",
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         beneficiary_id = FieldTemplate("beneficiary_id", "reference %s" % tablename,
                                        label = T("Beneficiaries"),
                                        ondelete = "SET NULL",
@@ -1288,7 +1288,7 @@ class ProjectHazardModel(DataModel):
             msg_list_empty = T("No Hazards currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         hazard_id = FieldTemplate("hazard_id", "reference %s" % tablename,
                                   sortby = "name",
@@ -1677,7 +1677,7 @@ class ProjectLocationModel(DataModel):
                                         },
                       )
 
-        # Reusable Field
+        # Foreign Key Template
         project_location_represent = project_LocationRepresent()
         project_location_id = FieldTemplate("project_location_id", "reference %s" % tablename,
                                             label = LOCATION,
@@ -2178,7 +2178,7 @@ class ProjectStatusModel(DataModel):
             msg_list_empty = T("No Statuses currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   comment = S3PopupLink(title = ADD_STATUS,
@@ -2305,7 +2305,7 @@ class ProjectThemeModel(DataModel):
             msg_list_empty = T("No Themes currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         theme_id = FieldTemplate("theme_id", "reference %s" % tablename,
                                  label = T("Theme"),
@@ -2786,7 +2786,7 @@ class ProjectActivityModel(DataModel):
                   update_realm = True,
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
                                     comment = S3PopupLink(ADD_ACTIVITY,
                                                           c = "project",
@@ -3102,7 +3102,7 @@ class ProjectActivityTypeModel(DataModel):
             msg_list_empty = T("No Activity Types Found"),
             )
 
-        # Reusable Fields
+        # Foreign Key Templates
         represent = S3Represent(lookup=tablename, translate=True)
         activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
                                          label = T("Activity Type"),
@@ -3472,7 +3472,7 @@ class ProjectTaskModel(DataModel):
             msg_list_empty = T("No Milestones Found"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename,
                                 fields=["name", "date"],
                                 labels="%(name)s: %(date)s",
@@ -3830,7 +3830,7 @@ class ProjectTaskModel(DataModel):
                   update_onaccept = self.project_task_update_onaccept,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = project_TaskRepresent(show_link=True)
         task_id = FieldTemplate("task_id", "reference %s" % tablename,
                                 label = T("Task"),

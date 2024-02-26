@@ -389,7 +389,7 @@ class SyncRepositoryModel(DataModel):
                    action = sync_job_reset,
                    )
 
-        # Reusable Fields
+        # Foreign Key Templates
         sync_repository_represent = S3Represent(lookup = tablename)
         repository_id = FieldTemplate("repository_id", "reference %s" % tablename,
                                       comment = S3PopupLink(c = "sync",
@@ -659,7 +659,7 @@ class SyncDatasetModel(DataModel):
            msg_list_empty = T("No Public Data Sets currently registered"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, show_link=True)
         dataset_id = FieldTemplate("dataset_id", "reference %s" % tablename,
                                    label = T("Data Set"),
@@ -1165,7 +1165,7 @@ class SyncTaskModel(DataModel):
                                             ),
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         task_represent = self.sync_task_represent
         task_id = FieldTemplate("task_id", "reference %s" % tablename,
                                 label = T("Task"),

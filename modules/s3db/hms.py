@@ -365,7 +365,7 @@ class HospitalDataModel(DataModel):
                   super_entity = ("org_site", "doc_entity", "pr_pentity"),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         hms_hospital_id_comment = S3PopupLink(c = "hms",
                                               f = "hospital",
                                               label = ADD_HOSPITAL,

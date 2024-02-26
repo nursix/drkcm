@@ -2883,7 +2883,7 @@ class EventAlertModel(DataModel):
         #                method = "send",
         #                action = self.event_alert_send)
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
                                  label = T("Alert"),

@@ -542,7 +542,7 @@ class OrgOrganisationModel(DataModel):
         else:
             text_comment = T("You can search by name, acronym or comments")
 
-        # Reusable field
+        # Foreign Key Template
         organisation_comment = S3PopupLink(c = "org",
                                            f = "organisation",
                                            label = ADD_ORGANIZATION,
@@ -2398,7 +2398,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Service deleted"),
             msg_list_empty = T("No Services currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         service_id = FieldTemplate("service_id", "reference %s" % tablename,
                                    label = T("Services"),
                                    ondelete = "CASCADE",
@@ -2638,7 +2638,7 @@ class OrgServiceModel(DataModel):
                                            },
                             )
 
-        # Reusable field
+        # Foreign Key Template
         service_location_id = FieldTemplate("service_location_id",
                                             "reference %s" % tablename,
                                             ondelete = "CASCADE",
@@ -2693,7 +2693,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Booking Mode deleted"),
             msg_list_empty = T("No Booking Modes currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         booking_mode_id = FieldTemplate("booking_mode_id",
                                         "reference %s" % tablename,
@@ -2738,7 +2738,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Service Mode deleted"),
             msg_list_empty = T("No Service Modes currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         service_mode_id = FieldTemplate("service_mode_id",
                                         "reference %s" % tablename,
@@ -4927,7 +4927,7 @@ class OrgRoomModel(DataModel):
 })''')
                            )
 
-        # Reusable field for other tables to reference
+        # Foreign Key Template for other tables to reference
         represent = S3Represent(lookup=tablename)
         room_id = FieldTemplate("room_id", "reference %s" % tablename,
                                 label = T("Room"),

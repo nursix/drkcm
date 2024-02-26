@@ -119,7 +119,7 @@ class MsgChannelModel(DataModel):
                              ],
                           )
 
-        # Reusable Field
+        # Foreign Key Template
         channel_id = FieldTemplate("channel_id", "reference %s" % tablename,
                                    label = T("Channel"),
                                    ondelete = "SET NULL",
@@ -436,7 +436,7 @@ class MsgMessageModel(DataModel):
                                  ],
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         message_represent = S3Represent(lookup = tablename, fields = ["body"])
         message_id = FieldTemplate("message_id", "reference %s" % tablename,
                                    ondelete = "RESTRICT",
@@ -2301,7 +2301,7 @@ class MsgTwitterSearchModel(MsgChannelModel):
                                  ],
                   )
 
-        # Reusable Query ID
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, fields=["keywords"])
         search_id = FieldTemplate("search_id", "reference %s" % tablename,
                                   label = T("Search Query"),

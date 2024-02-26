@@ -148,7 +148,7 @@ class DVIModel(DataModel):
                                  "status"
                                  ])
 
-        # Reusable fields
+        # Foreign Key Template
         represent = S3Represent(lookup="dvi_recreq",
                                 fields = ["marker", "date", "bodies_found"],
                                 labels = T("[%(marker)s] %(date)s: %(bodies_found)s bodies"),
@@ -193,7 +193,7 @@ class DVIModel(DataModel):
                            ),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         morgue_id = FieldTemplate("morgue_id", "reference %s" % tablename,
                                   requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvi_morgue.id",

@@ -298,7 +298,7 @@ class PRPersonEntityModel(DataModel):
                        gis_config = pe_id,
                        )
 
-        # Reusable fields
+        # Foreign Key Template
         pr_pe_label = FieldTemplate("pe_label", length=128,
                                     label = T("ID Tag Number"),
                                     requires = IS_EMPTY_OR(
@@ -394,7 +394,7 @@ class PRPersonEntityModel(DataModel):
                        pr_affiliation = "role_id",
                        )
 
-        # Reusable fields
+        # Foreign Key Template
         pr_role_represent = pr_RoleRepresent()
         role_id = FieldTemplate("role_id", "reference %s" % tablename,
                                 label = T("Role"),
@@ -2263,7 +2263,7 @@ class PRGroupModel(DataModel):
                                             ),
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   comment = S3PopupLink(c = "pr",
@@ -2376,7 +2376,7 @@ class PRGroupModel(DataModel):
                                   ),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         if current.request.controller in ("hrm", "vol") and \
            current.deployment_settings.get_hrm_teams() == "Teams":
             label = T("Team")
@@ -2526,7 +2526,7 @@ class PRGroupModel(DataModel):
                                             ),
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         role_id = FieldTemplate("role_id", "reference %s" % tablename,
                                 comment = S3PopupLink(c = "pr",
@@ -2959,7 +2959,7 @@ class PRForumModel(DataModel):
                   super_entity = ("pr_pentity"),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         forum_id = FieldTemplate("forum_id", "reference %s" % tablename,
                                  sortby = "name",
@@ -5425,7 +5425,7 @@ class PROccupationModel(DataModel):
             msg_list_empty = T("No Occupation Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 translate = True,
                                 )

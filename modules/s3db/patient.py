@@ -109,7 +109,7 @@ class PatientModel(DataModel):
 
         patient_represent = patient_PatientRepresent(lookup = "patient_patient")
 
-        # Reusable Field for Component Link
+        # Foreign Key Template for Component Link
         patient_id = FieldTemplate("patient_id", "reference %s" % tablename,
                                    ondelete = "RESTRICT",
                                    represent = patient_represent,

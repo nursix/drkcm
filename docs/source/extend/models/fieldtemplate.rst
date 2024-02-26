@@ -1,4 +1,4 @@
-Reusable Fields
+Field Templates
 ===============
 
 Common Field Functions
@@ -7,5 +7,5 @@ Common Field Functions
 Meta-Fields
 -----------
 
-Implementing Reusable Fields
+Implementing Field Templates
 ----------------------------

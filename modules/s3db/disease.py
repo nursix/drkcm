@@ -252,7 +252,7 @@ class DiseaseDataModel(DataModel):
             msg_list_empty = T("No Testing Devices currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         device_id = FieldTemplate("device_id", "reference %s" % tablename,
                                   label = T("Testing Device"),
@@ -423,7 +423,7 @@ class DiseaseMonitoringModel(DataModel):
             msg_list_empty = T("No Demographics currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         demographic_id = FieldTemplate("demographic_id", "reference %s" % tablename,
                                        label = T("Demographic"),
@@ -1064,7 +1064,7 @@ class DiseaseCaseTrackingModel(DataModel):
                      CommentsField(),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = disease_CaseRepresent()
         case_id = FieldTemplate("case_id", "reference %s" % tablename,
                                 label = T("Case"),

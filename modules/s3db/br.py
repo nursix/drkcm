@@ -184,7 +184,7 @@ class BRCaseModel(DataModel):
                   orderby = "%s.workflow_position" % tablename,
                   )
 
-        # Reusable field
+        #  Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   label = T("Case Status"),
@@ -551,7 +551,7 @@ class BRCaseActivityModel(DataModel):
             msg_list_empty = T("No Activity Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id",
                                   "reference %s" % tablename,
@@ -799,7 +799,7 @@ class BRCaseActivityModel(DataModel):
             msg_list_empty = T("No Activities currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         if case_activity_subject:
             label = T("Subject")
             show_as = "subject"
@@ -867,7 +867,7 @@ class BRCaseActivityModel(DataModel):
             msg_list_empty = T("No Update Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         update_type_id = FieldTemplate("update_type_id",
                                        "reference %s" % tablename,
@@ -1067,7 +1067,7 @@ class BRAppointmentModel(DataModel):
             msg_list_empty = T("No Appointment Types currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         appointment_type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                             label = T("Appointment Type"),
@@ -1241,7 +1241,7 @@ class BRNeedsModel(DataModel):
             msg_list_empty = T("No Need Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         need_id = FieldTemplate("need_id", "reference %s" % tablename,
                                 label = T("Need Type"),
@@ -1344,7 +1344,7 @@ class BRAssistanceModel(DataModel):
         # CRUD strings
         crud_strings[tablename] = br_crud_strings(tablename)
 
-        # Reusable field
+        # Foreign Key Template
         themes_represent = br_AssistanceThemeRepresent(multiple=True)
         requires = IS_ONE_OF(db, "%s.id" % tablename,
                              themes_represent,
@@ -1397,7 +1397,7 @@ class BRAssistanceModel(DataModel):
             msg_list_empty = T("No Types of Assistance currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         assistance_type_id = FieldTemplate(
                                 "assistance_type_id",
@@ -1463,7 +1463,7 @@ class BRAssistanceModel(DataModel):
             msg_list_empty = T("No Assistance Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         assistance_status_id = FieldTemplate(
                                 "status_id",
@@ -2280,7 +2280,7 @@ class BRAssistanceOfferModel(DataModel):
             msg_list_empty = T("No Assistance Offers currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         if refno:
             represent = S3Represent(lookup=tablename,
                                     fields = ["refno", "name"],
@@ -2606,7 +2606,7 @@ class BRServiceContactModel(DataModel):
             msg_list_empty = T("No Service Contact Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         contact_type_id = FieldTemplate("contact_type_id", "reference %s" % tablename,
                                         label = T("Contact Type"),
@@ -2752,7 +2752,7 @@ class BRNotesModel(DataModel):
             msg_list_empty = T("No Note Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         note_type_id = FieldTemplate("note_type_id", "reference %s" % tablename,
                                      label = T("Note Type"),

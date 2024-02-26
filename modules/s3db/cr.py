@@ -432,7 +432,7 @@ class CRShelterModel(DataModel):
             msg_list_empty = T("No Shelters currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         shelter_id = FieldTemplate("shelter_id", "reference %s" % tablename,
                                    label = SHELTER_LABEL,
@@ -878,7 +878,7 @@ class CRShelterUnitModel(DataModel):
             msg_list_empty = T("No Housing Units currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup="cr_shelter_unit")
         shelter_unit_id = FieldTemplate("shelter_unit_id", "reference cr_shelter_unit",
                                         label = T("Housing Unit"),
@@ -1357,7 +1357,7 @@ class CRShelterInspectionModel(DataModel):
             msg_list_empty = T("No Shelter Flags currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         flag_id = FieldTemplate("flag_id", "reference %s" % tablename,
                                 label = T("Shelter Flag"),

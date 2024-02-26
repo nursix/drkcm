@@ -155,7 +155,7 @@ class SupplyModel(DataModel):
             msg_record_deleted = T("Brand deleted"),
             msg_list_empty = T("No Brands currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         brand_id = FieldTemplate("brand_id", "reference %s" % tablename,
                                  label = T("Brand"),
@@ -208,7 +208,7 @@ class SupplyModel(DataModel):
             msg_record_deleted = T("Catalog deleted"),
             msg_list_empty = T("No Catalogs currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         catalog_multi = settings.get_supply_catalog_multi()
         if catalog_multi:
             comment = S3PopupLink(c = "supply",
@@ -329,7 +329,7 @@ class SupplyModel(DataModel):
             msg_record_deleted = T("Item Category deleted"),
             msg_list_empty = T("No Item Categories currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         item_category_comment = S3PopupLink(c = "supply",
                                             f = "item_category",
                                             label = ADD_ITEM_CATEGORY,
@@ -494,7 +494,7 @@ $.filterOptionsS3({
         supply_item_represent = supply_ItemRepresent(show_link = True,
                                                      translate = translate)
 
-        # Reusable Field
+        # Foreign Key Template
         supply_item_tooltip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
         supply_item_id = FieldTemplate("item_id",
                                        "reference %s" % tablename, # 'item_id' for backwards-compatibility
@@ -737,7 +737,7 @@ $.filterOptionsS3({
             msg_list_empty = T("No Item Packs currently registered"))
 
         # ---------------------------------------------------------------------
-        # Reusable Field
+        # Foreign Key Template
         item_pack_represent = supply_ItemPackRepresent(lookup = "supply_item_pack",
                                                        translate = translate)
         item_pack_id = FieldTemplate("item_pack_id", "reference %s" % tablename,
@@ -893,7 +893,7 @@ $.filterOptionsS3({
                                 ),
                           *MetaFields.owner_meta_fields())
 
-        # Reusable Field
+        # Foreign Key Template
         item_id = lambda: super_link("item_entity_id", "supply_item_entity",
                                      #writable = True,
                                      #readable = True,
@@ -1404,7 +1404,7 @@ class SupplyDistributionModel(DataModel):
             msg_list_empty = T("No Distributions Found")
         )
 
-        # Reusable Field
+        # Foreign Key Template
         #represent = S3Represent(lookup=tablename,
         #                        field_sep = " ",
         #                        fields=["value", "parameter_id"])
@@ -1821,7 +1821,7 @@ class SupplyPersonModel(DataModel):
             msg_list_empty = T("No Statuses currently defined")
         )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   label = T("Status"),

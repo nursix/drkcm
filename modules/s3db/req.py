@@ -589,7 +589,7 @@ class RequestModel(DataModel):
         # @ToDo: id gets stripped in _select_field
         fact_fields = report_fields + [(T("Requests"), "id")]
 
-        # Reusable Field
+        # Foreign Key Template
         represent = self.req_represent
         req_id = FieldTemplate("req_id", "reference %s" % tablename,
                                label = T("Request"),
@@ -1837,7 +1837,7 @@ class RequestItemModel(DataModel):
             msg_record_deleted = T("Item(s) deleted from Request"),
             msg_list_empty = T("No Items currently requested"))
 
-        # Reusable Field
+        # Foreign Key Template
         req_item_represent = req_ReqItemRepresent()
         req_item_id = FieldTemplate("req_item_id", "reference %s" % tablename,
                                     label = T("Request Item"),
@@ -3592,7 +3592,7 @@ class CommitModel(DataModel):
             msg_record_deleted = T("Commitment Canceled"),
             msg_list_empty = T("No Commitments"))
 
-        # Reusable Field
+        # Foreign Key Template
         commit_represent = req_CommitRepresent()
         commit_id = FieldTemplate("commit_id", "reference %s" % tablename,
                                   label = T("Commitment"),

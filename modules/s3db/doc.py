@@ -247,7 +247,7 @@ class DocumentModel(DataModel):
                   super_entity = "stats_source",
                   )
 
-        # Reusable field (e.g. for link tables)
+        # Foreign Key Template (e.g. for link tables)
         represent = doc_DocumentRepresent(lookup = tablename,
                                           fields = ("name", "file", "url"),
                                           labels = "%(name)s",
