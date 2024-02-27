@@ -8,26 +8,7 @@ from uuid import uuid4
 
 from gluon import current
 
-# -----------------------------------------------------------------------------
-def rlp_obscure_dob(record_id, field, value):
-    """
-        Helper to obscure a date of birth; maps to the first day of
-        the quarter, thus retaining the approximate age for statistics
-
-        Args:
-            record_id: the record ID
-            field: the Field
-            value: the field value
-
-        Returns:
-            the new field value
-    """
-
-    if value:
-        month = int((value.month - 1) / 3) * 3 + 1
-        value = value.replace(month=month, day=1)
-
-    return value
+from core import anonymous_address, obscure_dob
 
 # -----------------------------------------------------------------------------
 def rlp_decline_delegation(record_id, field, value):
@@ -93,7 +74,7 @@ def rlp_volunteer_anonymize():
               "fields": {"first_name": ("set", ANONYMOUS),
                          "last_name": ("set", ANONYMOUS),
                          "pe_label": anonymous_id,
-                         "date_of_birth": rlp_obscure_dob,
+                         "date_of_birth": obscure_dob,
                          "comments": "remove",
                          },
               "cascade": [("pr_contact", {"key": "pe_id",
@@ -115,7 +96,7 @@ def rlp_volunteer_anonymize():
                                                     }),
                           ("pr_address", {"key": "pe_id",
                                           "match": "pe_id",
-                                          "fields": {"location_id": current.s3db.pr_address_anonymise,
+                                          "fields": {"location_id": anonymous_address,
                                                      "comments": "remove",
                                                      },
                                           }),

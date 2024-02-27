@@ -1239,6 +1239,7 @@
 'Cost per Megabyte': 'Kosten pro Megabyte',
 'Cost per Minute': 'Kosten pro Minute',
 'Could not send invitation (%(reason)s)': 'Einladung konnte nicht verschickt werden (%(reason)s)',
+'Counseling Details, Appointments, Notes': 'Beratungsdetails, Termine, Notizen',
 'Counseling Reason Details': 'Details zum Beratungsgrund',
 'Counseling Reason added': 'Beratungsgrund hinzugefügt',
 'Counseling Reason created': 'Beratungsgrund angelegt',

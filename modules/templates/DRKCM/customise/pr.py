@@ -803,8 +803,6 @@ def pr_person_controller(**attr):
             else:
                 buttons = output["buttons"]
 
-
-
             if not r.component and r.method in (None, "update", "read"):
 
                 # Anonymize-button

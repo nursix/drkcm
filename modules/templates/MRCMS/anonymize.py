@@ -1,5 +1,5 @@
 """
-    Anonymizer rules for DRKCM
+    Anonymizer rules for MRCMS
 
     License: MIT
 """
@@ -7,7 +7,7 @@
 from core import anonymous_address, obscure_dob
 
 # =============================================================================
-def drk_person_anonymize():
+def anonymize_rules():
     """ Rules to anonymize a case file """
 
     ANONYMOUS = "-"
@@ -15,7 +15,15 @@ def drk_person_anonymize():
     # Helper to produce an anonymous ID (pe_label)
     anonymous_id = lambda record_id, f, v: "NN%06d" % int(record_id)
 
-    # General rule for attachments
+    # Identity documents
+    identity_documents = ("pr_identity_document", {"key": "identity_id",
+                                                   "match": "id",
+                                                   "fields": {"file": "remove",
+                                                              },
+                                                   "delete": True,
+                                                   })
+
+    # Attached documents
     documents = ("doc_document", {"key": "doc_id",
                                   "match": "doc_id",
                                   "fields": {"name": ("set", ANONYMOUS),
@@ -25,41 +33,51 @@ def drk_person_anonymize():
                                   "delete": True,
                                   })
 
-    # Cascade rule for case activities
-    activity_details = [("dvr_case_activity_update", {"key": "case_activity_id",
+    # Case activity updates
+    activity_updates = ("dvr_case_activity_update", {"key": "case_activity_id",
+                                                     "match": "id",
+                                                     "fields": {"comments": ("set", ANONYMOUS),
+                                                                },
+                                                     "delete": True,
+                                                     })
+
+    # Response theme details
+    response_details = ("dvr_response_action_theme", {"key": "action_id",
                                                       "match": "id",
                                                       "fields": {"comments": ("set", ANONYMOUS),
                                                                  },
-                                                      }),
-                        ]
-
-    # Cascade rule for response actions
-    response_details = [("dvr_response_action_theme", {"key": "action_id",
-                                                       "match": "id",
-                                                       "fields": {"comments": ("set", ANONYMOUS),
-                                                                  },
-                                                       }),
-                        ]
+                                                      })
 
     rules = [# Remove identity of beneficiary
              {"name": "default",
               "title": "Names, IDs, Reference Numbers, Contact Information, Addresses",
+
               "fields": {"first_name": ("set", ANONYMOUS),
+                         "middle_name": "remove",
                          "last_name": ("set", ANONYMOUS),
                          "pe_label": anonymous_id,
                          "date_of_birth": obscure_dob,
                          "comments": "remove",
                          },
+
               "cascade": [("dvr_case", {"key": "person_id",
                                         "match": "id",
                                         "fields": {"comments": "remove",
+                                                   "reference": "remove",
                                                    },
                                         }),
-                          ("dvr_case_details", {"key": "person_id",
-                                                "match": "id",
-                                                "fields": {"lodging": "remove",
-                                                           },
-                                                }),
+                          ("pr_person_tag", {"key": "person_id",
+                                             "match": "id",
+                                             "fields": {"value": ("set", ANONYMOUS),
+                                                        },
+                                             "delete": True,
+                                             }),
+                          ("pr_person_details", {"key": "person_id",
+                                                 "match": "id",
+                                                 "fields": {"education": "remove",
+                                                            "occupation": "remove",
+                                                            },
+                                                 }),
                           ("pr_contact", {"key": "pe_id",
                                           "match": "pe_id",
                                           "fields": {"contact_description": "remove",
@@ -83,18 +101,17 @@ def drk_person_anonymize():
                                                      "comments": "remove",
                                                      },
                                           }),
-                          ("pr_person_details", {"key": "person_id",
-                                                 "match": "id",
-                                                 "fields": {"education": "remove",
-                                                            "occupation": "remove",
-                                                            },
-                                                 }),
-                          ("pr_person_tag", {"key": "person_id",
-                                             "match": "id",
-                                             "fields": {"value": ("set", ANONYMOUS),
-                                                        },
-                                             "delete": True,
-                                             }),
+                          ("pr_identity", {"key": "person_id",
+                                           "match": "id",
+                                           "fields": {"value": ("set", ANONYMOUS),
+                                                      "description": "remove",
+                                                      "image": "remove",
+                                                      "vhash": "remove",
+                                                      "comments": "remove"
+                                                      },
+                                           "cascade": [identity_documents],
+                                           "delete": True,
+                                           }),
                           ("dvr_residence_status", {"key": "person_id",
                                                     "match": "id",
                                                     "fields": {"reference": ("set", ANONYMOUS),
@@ -103,19 +120,21 @@ def drk_person_anonymize():
                                                     }),
                           ("dvr_service_contact", {"key": "person_id",
                                                    "match": "id",
-                                                   "fields": {"reference": "remove",
+                                                   "fields": {"organisation": "remove",
+                                                              "reference": "remove",
                                                               "contact": "remove",
                                                               "phone": "remove",
                                                               "email": "remove",
                                                               "comments": "remove",
                                                               },
+                                                   "delete": True,
                                                    }),
                           ],
               },
 
              # Remove activity details, appointments and notes
              {"name": "activities",
-              "title": "Activity Details, Appointments, Notes",
+              "title": "Counseling Details, Appointments, Notes",
               "cascade": [("dvr_case_language", {"key": "person_id",
                                                  "match": "id",
                                                  "fields": {"comments": "remove",
@@ -126,20 +145,28 @@ def drk_person_anonymize():
                                                     "fields": {"comments": "remove",
                                                                },
                                                     }),
+                          ("dvr_case_event", {"key": "person_id",
+                                              "match": "id",
+                                              "fields": {"comments": "remove",
+                                                         },
+                                              }),
                           ("dvr_case_activity", {"key": "person_id",
                                                  "match": "id",
                                                  "fields": {"subject": ("set", ANONYMOUS),
                                                             "need_details": "remove",
                                                             "outcome": "remove",
+                                                            "achievement": "remove",
+                                                            "activity_details": "remove",
+                                                            "outside_support": "remove",
                                                             "comments": "remove",
                                                             },
-                                                 "cascade": activity_details,
+                                                 "cascade": [activity_updates],
                                                  }),
                           ("dvr_response_action", {"key": "person_id",
                                                    "match": "id",
                                                    "fields": {"comments": "remove",
                                                               },
-                                                   "cascade": response_details,
+                                                   "cascade": [response_details],
                                                    }),
                           ("dvr_vulnerability", {"key": "person_id",
                                                  "match": "id",
@@ -161,13 +188,11 @@ def drk_person_anonymize():
               "title": "Photos and Documents",
               "cascade": [("dvr_case", {"key": "person_id",
                                         "match": "id",
-                                        "cascade": [documents,
-                                                    ],
+                                        "cascade": [documents],
                                         }),
                           ("dvr_case_activity", {"key": "person_id",
                                                  "match": "id",
-                                                 "cascade": [documents,
-                                                             ],
+                                                 "cascade": [documents],
                                                  }),
                           ("pr_image", {"key": "pe_id",
                                         "match": "pe_id",
@@ -179,9 +204,6 @@ def drk_person_anonymize():
                                         }),
                           ],
               },
-
-              # TODO family membership
-
              ]
 
     return rules

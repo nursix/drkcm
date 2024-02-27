@@ -152,39 +152,52 @@ def pr_person_resource(r, tablename):
 
     has_permission = auth.s3_has_permission
 
-    # Users who can not register new residents also have
-    # only limited write-access to basic details of residents
-    if r.controller == "dvr" and not has_permission("create", "pr_person"):
+    if r.controller == "dvr":
 
-        # Cannot modify any fields in main person record
-        ptable = s3db.pr_person
-        for field in ptable:
-            field.writable = False
+        # Users who can not register new residents also have only
+        # limited write-access to basic details of residents
+        if not has_permission("create", "pr_person"):
 
-        # Cannot modify certain details
-        dtable = s3db.pr_person_details
-        for fn in ("nationality", "marital_status"):
-            dtable[fn].writable = False
-
-        # Can not add or modify contact or identity information,
-        # images, tags or residence status
-        for tn in ("pr_contact",
-                   "pr_identity",
-                   "pr_image",
-                   "pr_person_tag",
-                   "dvr_residence_status",
-                   ):
-            s3db.configure(tn,
-                           insertable = False,
-                           editable = False,
-                           deletable = False,
-                           )
-
-        # Can not update shelter registration (except housing unit)
-        rtable = s3db.cr_shelter_registration
-        for field in rtable:
-            if field.name != "shelter_unit_id":
+            # Cannot modify any fields in main person record
+            ptable = s3db.pr_person
+            for field in ptable:
                 field.writable = False
+
+            # Cannot modify certain details
+            dtable = s3db.pr_person_details
+            for fn in ("nationality", "marital_status"):
+                dtable[fn].writable = False
+
+            # Can not add or modify contact or identity information,
+            # images, tags or residence status
+            for tn in ("pr_contact",
+                       "pr_identity",
+                       "pr_image",
+                       "pr_person_tag",
+                       "dvr_residence_status",
+                       ):
+                s3db.configure(tn,
+                               insertable = False,
+                               editable = False,
+                               deletable = False,
+                               )
+
+            # Can not update shelter registration (except housing unit)
+            rtable = s3db.cr_shelter_registration
+            for field in rtable:
+                if field.name != "shelter_unit_id":
+                    field.writable = False
+
+        resource = r.resource
+        if not r.component and resource.tablename == "pr_person":
+
+            # Configure anonymize-method
+            from core import S3Anonymize
+            s3db.set_method("pr_person", method="anonymize", action=S3Anonymize)
+
+            # Configure anonymize-rules
+            from ..anonymize import anonymize_rules
+            resource.configure(anonymize=anonymize_rules())
 
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case
@@ -194,6 +207,7 @@ def pr_person_resource(r, tablename):
     # Configure components to inherit realm_entity from the person
     # record upon forced realm update
     s3db.configure("pr_person",
+                   deletable = False,
                    realm_components = ("address",
                                        "case_activity",
                                        "case_details",
@@ -1356,13 +1370,14 @@ def pr_person_controller(**attr):
 
         if QUARTERMASTER:
             # Add Action Button to assign Housing Unit to the Resident
-            s3.actions = [dict(label=s3_str(T("Assign Shelter")),
-                               _class="action-btn",
-                               url=URL(c="cr",
-                                       f="shelter_registration",
-                                       args=["assign"],
-                                       vars={"person_id": "[id]"},
-                                       )),
+            s3.actions = [{"label": s3_str(T("Assign Shelter")),
+                           "url": URL(c = "cr",
+                                      f = "shelter_registration",
+                                      args = ["assign"],
+                                      vars = {"person_id": "[id]"},
+                                      ),
+                           "_class": "action-btn",
+                           },
                           ]
 
         if r.record and isinstance(output, dict):
@@ -1370,6 +1385,12 @@ def pr_person_controller(**attr):
             from ..helpers import inject_button
 
             component_name = r.component_name
+
+            # Anonymize-button
+            if r.controller == "dvr" and is_case_admin and r.record and not r.component:
+                from core import S3AnonymizeWidget
+                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                inject_button(output, anonymize, before="delete_btn", alt=None)
 
             # Generate-ID button (requires appropriate role)
             if r.controller == "dvr" and is_case_admin or \

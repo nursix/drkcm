@@ -40,6 +40,8 @@ __all__ = ("S3Anonymize",
            "S3AnonymizeWidget",
            "S3AnonymizeBulk",
            "S3AnonymizeBulkWidget",
+           "anonymous_address",
+           "obscure_dob",
            )
 
 # =============================================================================
@@ -853,5 +855,78 @@ $('input[name="anonymize_confirm"]').off('.anonymize').on('click.anonymize',func
         current.response.s3.jquery_ready.append(script)
 
         return form
+
+# =============================================================================
+def anonymous_address(record_id, field, value):
+    """
+        Helper to anonymize a pr_address location; removes street and
+        postcode details, but retains Lx ancestry for statistics
+
+        Args:
+            record_id: the pr_address record ID
+            field: the location_id Field
+            value: the location_id
+
+        Returns:
+            the location_id
+
+        Example:
+            Use like this in anonymise rules:
+            ("pr_address", {"key": "pe_id",
+                            "match": "pe_id",
+                            "fields": {"location_id": anonymize_address,
+                                       "comments": "remove",
+                                       },
+                            }),
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    # Get the location
+    if value:
+        ltable = s3db.gis_location
+        row = db(ltable.id == value).select(ltable.id,
+                                            ltable.level,
+                                            limitby = (0, 1),
+                                            ).first()
+        if not row.level:
+            # Specific location => remove address details
+            data = {"addr_street": None,
+                    "addr_postcode": None,
+                    "gis_feature_type": 0,
+                    "lat": None,
+                    "lon": None,
+                    "wkt": None,
+                    }
+            # Doesn't work - PyDAL doesn't detect the None value:
+            #if "the_geom" in ltable.fields:
+            #    data["the_geom"] = None
+            row.update_record(**data)
+            if "the_geom" in ltable.fields:
+                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
+
+    return value
+
+# =============================================================================
+def obscure_dob(record_id, field, value):
+    """
+        Helper to obscure a date of birth; maps to the first day of
+        the quarter, thus retaining the approximate age for statistics
+
+        Args:
+            record_id: the record ID
+            field: the Field
+            value: the field value
+
+        Returns:
+            the new field value
+    """
+
+    if value:
+        month = int((value.month - 1) / 3) * 3 + 1
+        value = value.replace(month=month, day=1)
+
+    return value
 
 # END =========================================================================

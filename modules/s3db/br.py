@@ -4343,8 +4343,7 @@ def br_person_anonymize():
     ANONYMOUS = "-"
 
     # Standard anonymizers
-    from s3db.pr import pr_address_anonymise as anonymous_address, \
-                        pr_person_obscure_dob as obscure_dob
+    from core import anonymous_address, obscure_dob
 
     # Helper to produce an anonymous ID (pe_label)
     anonymous_id = lambda record_id, f, v: "NN%06d" % int(record_id)
