@@ -1,5 +1,5 @@
 """
-    Custom rheaders for BRCMS/RLP
+    Custom rheaders for GIMS
 
     License: MIT
 """
