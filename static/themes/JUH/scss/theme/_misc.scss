@@ -333,19 +333,167 @@
     h4 {
         //text-align: center;
         border-top: 1px solid #ccc;
-        padding: 0.5rem;
+        padding: 0.5rem 0;
         margin-top: 0.75rem;
         font-size: 1.1rem;
         font-weight: bold;
     }
-    .residents-list { /* table */
-        //margin-left: auto;
-        //margin-right: auto;
+    .units-actions {
+        .units-search, .units-expand {
+            display: inline-block;
+            margin-bottom: 0.6rem;
+        }
+        .units-search {
+            margin-right: 5%;
+            input {
+                margin-left: 0.6rem;
+                margin-right: 0;
+                &.filtered {
+                    border: 1px solid black;
+                    background-color: #e5ffe5;
+                }
+            }
+            .clear-search {
+                padding: 0 0.3rem;
+                line-height: inherit;
+                font-size: 0.9rem;
+                margin: 0;
+                border: 1px solid #ccc;
+                cursor: pointer;
+                vertical-align: top;
+                color: #666;
+                background-color: #ccc;
+            }
+        }
+        .units-expand {
+            .action-lnk {
+                margin-right: 0.6rem;
+            }
+        }
+    }
+    .units-list { /* table */
+
         min-width: 71%;
-        tr {
-            border-left: 2px solid #AAA;
-            border-right: 2px solid #AAA;
-            &.residents-list-spacer {
+
+        .unit { /* tbody */
+
+            tr {
+                border-left: 2px solid #AAA;
+                border-right: 2px solid #AAA;
+            }
+
+            .unit-expand {
+                text-align: right;
+                padding-right: 1rem;
+                .expand {
+                    display: none;
+                }
+                .collapse {
+                    display: block;
+                }
+            }
+            &.collapsed {
+                .details {
+                    visibility: collapse;
+                }
+                .unit-expand {
+                    .expand {
+                        display: block;
+                    }
+                    .collapse {
+                        display: none;
+                    }
+                }
+            }
+
+            .unit-header { /* tr unit header */
+                padding: 0;
+                background-color: #DDD;
+                border-top: 3px solid #AAA;
+                border-collapse: separate;
+                .unit-label  { /* div */
+                    padding: 0.3rem 0.1rem;
+                    font-size: 1.1rem;
+                    font-weight: bold;
+                }
+                .unit-link {
+                    i.fa {
+                        margin-right: 1.2rem;
+                        &.fa-ban {
+                            color: #d71919;
+                        }
+                        &.fa-check {
+                            color: #070;
+                        }
+                    }
+                }
+            }
+
+            .resident-header { /* tr residents header */
+                th {
+                    font-size: 0.9rem;
+                    color: #777;
+                    padding: 0.2rem 0.5rem
+                }
+            }
+
+            .resident { /* tr resident */
+                td {
+                    padding: 0.2rem 0.5rem;
+                    font-size: 0.9rem;
+                    color: #333;
+                    &.resident-name {
+                        font-weight: bold;
+                    }
+                    &.resident-presence {
+                        text-align: center;
+                    }
+                }
+                &.checked-in {
+
+                }
+                &.planned {
+                    td {
+                        font-style: italic;
+                        color: #888;
+                        a {
+                            color: #888;
+                        }
+                    }
+                }
+                &.group-even {
+                    background-color: #fdfdfd
+                }
+                &.group-odd {
+                    background-color: #f9f9f9;
+                }
+            }
+
+            .capacity-free { /* tr free capacity */
+                td {
+                    padding: 0.2rem 0.5rem;
+                    font-size: 0.9rem;
+                }
+                background-color: #b9ffb9;
+            }
+            .capacity-blocked { /* tr blocked capacity */
+                td {
+                    padding: 0.2rem 0.5rem;
+                    font-size: 0.9rem;
+                }
+                background-color: #ffced5;
+            }
+
+            .unit-subheader { /* subheader tr */
+                border-top: 2px solid #AAA;
+                .residents-planned { /* div */
+                    font-size: 0.7rem;
+                    padding: 0.2rem;
+                    color: #666;
+                }
+            }
+
+            .unit-spacer { /* tr spacer */
                 border: none;
                 border-top: 3px solid #AAA;
                 td {
@@ -353,88 +501,6 @@
                     min-height: 0.5rem;
                 }
             }
-        }
-        .residents-unit { /* tr unit header */
-            padding: 0;
-            background-color: #DDD;
-            border-top: 3px solid #AAA;
-            border-collapse: separate;
-            .residents-unit-header  { /* div */
-                padding: 0.3rem 0.1rem;
-                font-size: 1.1rem;
-                font-weight: bold;
-            }
-            .residents-unit-link {
-                i.fa {
-                    margin-right: 1.2rem;
-                    &.fa-ban {
-                        color: #d71919;
-                    }
-                    &.fa-check {
-                        color: #070;
-                    }
-                }
-            }
-        }
-        .residents-status { /* subheader tr */
-            border-top: 2px solid #AAA;
-            .residents-status-header.residents-planned { /* div */
-                font-size: 0.7rem;
-                padding: 0.2rem;
-                color: #666;
-            }
-        }
-        .residents-header {
-            th {
-                font-size: 0.9rem;
-                color: #777;
-                padding: 0.2rem 0.5rem
-            }
-        }
-        .resident-data { /* tr */
-            td {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.9rem;
-                color: #333;
-                &.resident-name {
-                    font-weight: bold;
-                }
-                &.resident-presence {
-                    text-align: center;
-                }
-            }
-            &.resident-checked-in {
-
-            }
-            &.resident-planned {
-                td {
-                    font-style: italic;
-                    color: #888;
-                    a {
-                        color: #888;
-                    }
-                }
-            }
-            &.group-even {
-                background-color: #fdfdfd
-            }
-            &.group-odd {
-                background-color: #f9f9f9;
-            }
-        }
-        .capacity-free { /* tr */
-            td {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.9rem;
-            }
-            background-color: #b9ffb9;
-        }
-        .capacity-blocked { /* tr */
-            td {
-                padding: 0.2rem 0.5rem;
-                font-size: 0.9rem;
-            }
-            background-color: #ffced5;
         }
     }
 }

@@ -5,16 +5,18 @@
 """
 
 import datetime
+import json
 
 from dateutil.relativedelta import relativedelta
 
 from gluon import current, URL, \
-                  A, DIV, H4, H5, I, IMG, TABLE, TD, TR, TH
+                  A, DIV, H4, H5, I, IMG, INPUT, LABEL, TABLE, TBODY, TD, TH, TR
 from gluon.contenttype import contenttype
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from core import BooleanRepresent, CRUDMethod, CustomController, XLSXWriter, \
-                 PresenceRegistration, s3_format_fullname, s3_str
+from core import BooleanRepresent, CRUDMethod, CustomController, ICON, \
+                 JSONSEPARATORS, PresenceRegistration, XLSXWriter, \
+                 s3_format_fullname, s3_str
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -325,13 +327,39 @@ class ResidentsList:
                 TABLE.residents-list
         """
 
+        T = current.T
+
         # TODO verify user is permitted to read cases of the shelter org
         # TODO if not permitted to read cases, show anonymous
         # TODO show_links always true if permitted
         show_links = current.auth.s3_has_permission("read", "pr_person", c="dvr", f="person")
 
-        # Generate residents list
-        residents_list = TABLE(_class="residents-list")
+        # Widget ID (to attach script)
+        widget_id = "residents-overview"
+
+        # Actions
+        search = DIV(LABEL("%s:" % T("Filter"),
+                           INPUT(_type = "text",
+                                 _length = "20",
+                                 ),
+                           ICON("fa fa-times", _class="clear-search"),
+                           ),
+                     _class = "units-search",
+                     )
+        expand = DIV(A(T("Collapse All"),
+                       _class = "action-lnk collapse-all",
+                       ),
+                     "|",
+                     A(T("Expand All"),
+                       _class = "action-lnk expand-all",
+                       ),
+                     _class = "units-expand",
+                     )
+
+        actions = DIV(search, expand, _class = "units-actions")
+
+        # Units list
+        residents_list = TABLE(_class="units-list")
 
         residents = self.residents
         units = self.units
@@ -339,35 +367,75 @@ class ResidentsList:
             unit_residents = residents.get(unit.id)
             if unit.status == 3 and not unit_residents:
                 continue
-            self.add_residents(residents_list, unit, unit_residents, show_links=show_links)
+            section = self.unit_section(unit, unit_residents, show_links=show_links)
+            residents_list.append(section)
 
         # Append residents not assigned to any housing unit
         unassigned = residents.get(None)
         if unassigned:
-            self.add_residents(residents_list, None, unassigned, show_links=show_links)
+            section = self.unit_section(None, unassigned, show_links=show_links)
+            residents_list.append(section)
 
-        return residents_list
+        # Inject script
+        self.inject_script(widget_id, {})
+
+        return DIV(actions, residents_list, _id=widget_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inject_script(widget_id, options):
+        """
+            Inject the necessary JavaScript for the widget
+
+            Args:
+                widget_id: the widget ID (=element ID of the person_id field)
+                options: JSON-serializable dict of widget options
+        """
+
+        s3 = current.response.s3
+
+        # Static script
+        script = "/%s/static/themes/JUH/js/residents.js" % current.request.application
+        scripts = s3.scripts
+        if script not in scripts:
+            scripts.append(script)
+
+        # Widget options
+        opts = {}
+        if options:
+            opts.update(options)
+
+        # Widget instantiation
+        script = '''$('#%(widget_id)s').residentsList(%(options)s)''' % \
+                 {"widget_id": widget_id,
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
+                  }
+        jquery_ready = s3.jquery_ready
+        if script not in jquery_ready:
+            jquery_ready.append(script)
 
     # -------------------------------------------------------------------------
     @classmethod
-    def add_residents(cls, overview, unit, residents, show_links=False):
+    def unit_section(cls, unit, residents, show_links=False):
         """
-            Adds the residents rows to a housing unit section in the
-            residents table
+            Builds a table section with resident data of a housing unit
 
             Args:
-                overview: the residents table
                 unit: the housing unit, cr_shelter_unit Row
                 residents: the residents, joined Rows
                 show_links: whether to show residents names as links to
                             their case files
 
             Returns:
-                the extended residents table (TODO why?)
+                the table section (TBODY.unit)
         """
 
-        unit_header = cls.unit_header(unit)
-        overview.append(unit_header)
+        T = current.T
+
+        unit_section = TBODY(cls.unit_header(unit),
+                             data = {"name": unit.name if unit else T("Not assigned")},
+                             _class = "unit",
+                             )
 
         c, p = [], []
         if residents:
@@ -383,17 +451,15 @@ class ResidentsList:
 
         for i, persons in enumerate((c, p)):
 
-            T = current.T
-
             if i == 0:
                 # Checked-in residents
-                css = "resident-checked-in"
-                overview.append(cls.resident_header())
+                css = "checked-in"
+                unit_section.append(cls.resident_header())
             elif persons:
                 # Planned residents
-                css = "resident-planned"
-                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="residents-planned")
-                overview.append(subheader)
+                css = "planned"
+                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="details residents-planned")
+                unit_section.append(subheader)
 
             group_id = None
             even, odd = "group-even", "group-odd"
@@ -402,8 +468,8 @@ class ResidentsList:
                 if not gid or gid != group_id:
                     group_id = gid
                     even, odd = odd, even
-                overview.append(cls.resident(person,
-                                             css = "resident-data %s %s" % (css, even),
+                unit_section.append(cls.resident(person,
+                                             css = "resident %s %s" % (css, even),
                                              show_link = show_links,
                                              presence_repr = presence_repr,
                                              ))
@@ -429,18 +495,19 @@ class ResidentsList:
                 for _ in range(free):
                     empty = TR(TD(I(_class="fa fa-bed")),
                                TD(T("Allocable##shelter"), _colspan = 6),
-                               _class = "capacity-free",
+                               _class = "details capacity-free",
                                )
-                    overview.append(empty)
+                    unit_section.append(empty)
                 for _ in range(blocked):
                     empty = TR(TD(I(_class="fa fa-times-circle")),
                                TD(T("Not allocable"), _colspan = 6),
-                               _class = "capacity-blocked",
+                               _class = "details capacity-blocked",
                                )
-                    overview.append(empty)
+                    unit_section.append(empty)
 
-        overview.append(TR(TD(_colspan=8),_class="residents-list-spacer"))
-        return overview
+        unit_section.append(TR(TD(_colspan=8), _class="unit-spacer"))
+
+        return unit_section
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -473,13 +540,17 @@ class ResidentsList:
                                 f = "shelter",
                                 args = [unit.shelter_id, "shelter_unit", unit.id],
                                 ),
-                      _class = "residents-unit-link",
+                      _class = "unit-link",
                       )
 
-        header = DIV(label, _class="residents-unit-header")
+        header = DIV(label, _class="unit-label")
 
-        return TR(TD(header, _colspan=7),
-                  _class = "residents-unit",
+        return TR(TD(header, _colspan=6),
+                  TD(ICON("fa fa-caret-down expand"),
+                     ICON("fa fa-caret-up collapse"),
+                     _class="unit-expand",
+                     ),
+                  _class = "unit-header",
                   )
 
     # -------------------------------------------------------------------------
@@ -496,21 +567,16 @@ class ResidentsList:
                 a TR element
         """
 
-        # TODO Lookup status label inline
         s3db = current.s3db
         rtable = s3db.cr_shelter_registration
 
         status_label = rtable.registration_status.represent(status)
 
-        css_class = "residents-status-header"
-        if css:
-            css_class = "%s %s" % (css_class, css)
-
         header = DIV("%s: %s" % (status_label, number),
-                     _class = css_class,
+                     _class = css,
                      )
 
-        return TR(TD(header, _colspan=7), _class="residents-status")
+        return TR(TD(header, _colspan=7), _class="details unit-subheader")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -532,7 +598,7 @@ class ResidentsList:
                   TH(T("Age")),
                   TH(T("Nationality")),
                   TH(T("Presence")),
-                  _class = "residents-header",
+                  _class = "details resident-header",
                   )
 
     # -------------------------------------------------------------------------
@@ -603,7 +669,7 @@ class ResidentsList:
                   TD(age),
                   TD(nationality),
                   TD(p, _class="resident-presence"),
-                  _class = css,
+                  _class = "details " + css,
                   )
 
     # -------------------------------------------------------------------------
