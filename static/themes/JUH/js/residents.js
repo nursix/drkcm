@@ -59,7 +59,87 @@
          */
         refresh: function() {
 
-            this._unbindEvents()._bindEvents();
+            this._unbindEvents();
+
+            this._renderCapacity();
+
+            this._bindEvents();
+        },
+
+        /**
+         * Render capacity visualization for all units
+         *
+         * TODO pass in icons as options
+         * TODO render onhover tooltip? (possibly too much DOM tree manipulation)
+         * TODO move the outer each() into refresh()
+         */
+        _renderCapacity: function() {
+
+            $('.unit', $(this.element)).each(function() {
+                let $this = $(this),
+                    capacity = $this.data('capacity');
+
+                // [total, occupied, free, blocked, planned]
+                if (typeof capacity === 'string') {
+                    capacity = JSON.parse(capacity);
+                } else if (!capacity) {
+                    return;
+                }
+
+                let info = $('<div class="capacity">'),
+                    item,
+                    icon;
+
+                let occupied = capacity[1];
+                item = $('<span class="c-occupied">').appendTo(info);
+                icon = $('<i class="fa fa-bed">').appendTo(item);
+                if (!occupied) {
+                    item.addClass('c-zero');
+                }
+                if (occupied === null) {
+                    occupied = "-";
+                }
+                item.append(occupied);
+
+                let total = capacity[0],
+                    free = capacity[2],
+                    blocked = capacity[3];
+                if (total !== null) {
+                    if (free === null && blocked === null) {
+                        item = $('<span class="c-total">').appendTo(info);
+                        if (!total) {
+                            item.addClass('c-zero');
+                        }
+                        item.append('/ ' + total);
+                    }
+                    if (free !== null) {
+                        item = $('<span class="c-free">').appendTo(info);
+                        icon = $('<i class="fa fa-circle-o">').appendTo(item);
+                        if (!free) {
+                            item.addClass('c-zero');
+                        }
+                        item.append(free);
+                    }
+                    if (blocked !== null) {
+                        item = $('<span class="c-blocked">').appendTo(info);
+                        icon = $('<i class="fa fa-ban">').appendTo(item);
+                        if (!blocked) {
+                            item.addClass('c-zero');
+                        }
+                        item.append(blocked);
+                    }
+                }
+                let planned = capacity[4];
+                item = $('<span class="c-planned">').appendTo(info);
+                icon = $('<i class="fa fa-suitcase">').appendTo(item);
+                if (!planned) {
+                    item.addClass('c-zero');
+                    planned = 0;
+                }
+                item.append(planned);
+
+                $('.unit-data', $this).append(info);
+            });
         },
 
         /**
@@ -121,14 +201,32 @@
                 ns = this.eventNamespace,
                 self = this;
 
+            // Search field key events
+            this.searchField.on('keyup' + ns, function(e) {
+                switch (e.which) {
+                    case 27:
+                        // Abort filtering (=remove the timer)
+                        let timer = $(this).data('filterTimeout');
+                        if (timer) {
+                            clearTimeout(timer);
+                        }
+                        // Clear search
+                        self.searchField.val('').removeClass('filtered');
+                        $('tbody.unit', $el).show();
+                        break;
+                    default:
+                        // Ignore
+                        break;
+                }
+            });
+
+            // Search field input event
             this.searchField.on('input' + ns, function() {
                 let $this = $(this),
                     searchString = $this.val();
-
                 if (searchString) {
                     searchString = searchString.trim().toLocaleLowerCase();
                 }
-
                 let timer = $this.data('filterTimeout');
                 if (timer) {
                     clearTimeout(timer);

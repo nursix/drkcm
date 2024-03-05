@@ -10,7 +10,7 @@ import json
 from dateutil.relativedelta import relativedelta
 
 from gluon import current, URL, \
-                  A, DIV, H4, H5, I, IMG, INPUT, LABEL, TABLE, TBODY, TD, TH, TR
+                  A, DIV, H4, H5, I, IMG, INPUT, LABEL, SPAN, TABLE, TBODY, TD, TH, TR
 from gluon.contenttype import contenttype
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
@@ -433,7 +433,6 @@ class ResidentsList:
         T = current.T
 
         unit_section = TBODY(cls.unit_header(unit),
-                             data = {"name": unit.name if unit else T("Not assigned")},
                              _class = "unit",
                              )
 
@@ -449,14 +448,18 @@ class ResidentsList:
         # Representation method for presence status
         presence_repr = BooleanRepresent(labels=False, icons=True, colors=True)
 
+        total, occupied, free, blocked, planned = None, None, None, None, None
+
         for i, persons in enumerate((c, p)):
 
             if i == 0:
                 # Checked-in residents
+                occupied = len(persons)
                 css = "checked-in"
                 unit_section.append(cls.resident_header())
             elif persons:
                 # Planned residents
+                planned = len(persons)
                 css = "planned"
                 subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="details residents-planned")
                 unit_section.append(subheader)
@@ -475,12 +478,12 @@ class ResidentsList:
                                              ))
 
             # Render placeholder rows for unoccupied capacity
+            total = unit.capacity if unit else None
             if i == 0 and unit and not unit.transitory:
                 # Total and free capacity
-                total = unit.capacity
                 if total is None:
                     total = 0
-                free = max(total - len(persons), 0)
+                free = max(total - occupied, 0)
 
                 # Blocked capacity (can be at most all free capacity)
                 blocked = min(free, unit.blocked_capacity)
@@ -489,21 +492,29 @@ class ResidentsList:
                 if unit.status == 1:
                     free = free - blocked
                 else:
-                    blocked = 0
-                    free = 0
+                    free = blocked = 0
 
                 for _ in range(free):
-                    empty = TR(TD(I(_class="fa fa-bed")),
+                    empty = TR(TD(I(_class="fa fa-circle-o")),
                                TD(T("Allocable##shelter"), _colspan = 6),
                                _class = "details capacity-free",
                                )
                     unit_section.append(empty)
                 for _ in range(blocked):
-                    empty = TR(TD(I(_class="fa fa-times-circle")),
+                    empty = TR(TD(I(_class="fa fa-ban")),
                                TD(T("Not allocable"), _colspan = 6),
                                _class = "details capacity-blocked",
                                )
                     unit_section.append(empty)
+
+        unit_section["data"] = {"name": unit.name if unit else T("Not assigned"),
+                                "capacity": json.dumps([total,
+                                                        occupied,
+                                                        free,
+                                                        blocked,
+                                                        planned,
+                                                        ]),
+                                }
 
         unit_section.append(TR(TD(_colspan=8), _class="unit-spacer"))
 
@@ -545,10 +556,12 @@ class ResidentsList:
 
         header = DIV(label, _class="unit-label")
 
-        return TR(TD(header, _colspan=6),
-                  TD(ICON("fa fa-caret-down expand"),
-                     ICON("fa fa-caret-up collapse"),
-                     _class="unit-expand",
+        return TR(TD(header,
+                     SPAN(ICON("fa fa-caret-down expand"),
+                          ICON("fa fa-caret-up collapse"),
+                          _class="unit-expand",
+                          ),
+                     _colspan=7, _class="unit-data",
                      ),
                   _class = "unit-header",
                   )

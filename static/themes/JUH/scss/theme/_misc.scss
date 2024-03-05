@@ -377,21 +377,58 @@
 
         .unit { /* tbody */
 
+            .unit-data {
+                position: relative;
+                .capacity {
+                    position: absolute;
+                    top: 0.4rem;
+                    right: 6rem;
+                    padding: 0.2rem 0.5rem;
+                    border: 1px solid #aaa;
+                    box-shadow: 2px 2px 2px #aaa;
+                    span {
+                        font-size: 0.9rem;
+                        margin-right: 0.3rem;
+                        &.c-free,
+                        &.c-blocked,
+                        &.c-planned {
+                            margin-left: 0.7rem;
+                        }
+                        &.c-free {
+                            color: green;
+                        }
+                        &.c-blocked {
+                            color: red;
+                        }
+                        &.c-zero {
+                            color: #aaa;
+                        }
+                        &.c-total {
+                            font-size: 0.7rem;
+                        }
+                        .fa {
+                            margin-right: 0.3rem;
+                        }
+                    }
+                }
+                .unit-expand {
+                    position: absolute;
+                    top: 0.8rem;
+                    right: 1.5rem;
+                    .expand {
+                        display: none;
+                    }
+                    .collapse {
+                        display: block;
+                    }
+                }
+            }
+
             tr {
                 border-left: 2px solid #AAA;
                 border-right: 2px solid #AAA;
             }
 
-            .unit-expand {
-                text-align: right;
-                padding-right: 1rem;
-                .expand {
-                    display: none;
-                }
-                .collapse {
-                    display: block;
-                }
-            }
             &.collapsed {
                 .details {
                     visibility: collapse;
