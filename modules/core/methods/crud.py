@@ -1262,6 +1262,13 @@ class S3CRUD(CRUDMethod):
                                          _id = "%s-filter-form" % target
                                          )
                 fresource = current.s3db.resource(resource.tablename) # Use a clean resource
+                if resource.parent and r.record:
+                    # We're on a component tab: filter by primary record so that
+                    # option lookups are limited to relevant component entries
+                    pkey = resource.parent.table._id
+                    join = (pkey == r.record[pkey]) & resource.get_join(reverse=True)
+                    fresource.add_filter(join)
+
                 alias = resource.alias if r.component else None
                 output["list_filter_form"] = filter_form.html(fresource,
                                                               get_vars,

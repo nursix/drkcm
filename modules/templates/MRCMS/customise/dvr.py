@@ -343,10 +343,18 @@ def dvr_response_action_resource(r, tablename):
                                      label = T("Search"),
                                      ),
                           DateFilter("start_date",
+                                     hide_time = True,
                                      hidden = True,
                                      ),
-                          # TODO theme filter
-                          # TODO sector filter
+                          OptionsFilter("response_type_id",
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("response_action_theme.theme_id$sector_id",
+                                        hidden = True,
+                                        ),
+                          OptionsFilter("response_action_theme.theme_id",
+                                        hidden = True,
+                                        ),
                           ]
         s3db.configure("dvr_response_action",
                        filter_widgets = filter_widgets,

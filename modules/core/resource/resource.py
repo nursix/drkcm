@@ -2329,16 +2329,16 @@ class CRUDResource:
             return join
 
     # -------------------------------------------------------------------------
-    def get_join(self):
+    def get_join(self, reverse=False):
         """ Get join for this component """
 
-        return self._join(implicit=True)
+        return self._join(implicit=True, reverse=reverse)
 
     # -------------------------------------------------------------------------
-    def get_left_join(self):
+    def get_left_join(self, reverse=False):
         """ Get a left join for this component """
 
-        return self._join()
+        return self._join(reverse=reverse)
 
     # -------------------------------------------------------------------------
     def link_id(self, master_id, component_id):
