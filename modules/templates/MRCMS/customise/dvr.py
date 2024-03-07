@@ -120,16 +120,35 @@ def dvr_case_resource(r, tablename):
                 field.writable = False
 
 # -------------------------------------------------------------------------
+def note_date_dt_orderby(field, direction, orderby, left_joins):
+    """
+        When sorting notes by date, use created_on to maintain
+        consistent order of multiple notes on the same date
+    """
+
+    sorting = {"table": field.tablename,
+               "direction": direction,
+               }
+    orderby.append("%(table)s.date%(direction)s,%(table)s.created_on%(direction)s" % sorting)
+
+# -------------------------------------------------------------------------
 def dvr_note_resource(r, tablename):
-    # TODO review + refactor
 
     T = current.T
+
+    db = current.db
+    s3db = current.s3db
     auth = current.auth
 
-    if not auth.s3_has_role("ADMIN"):
+    table = s3db.dvr_note
 
-        db = current.db
-        s3db = current.s3db
+    # Consistent ordering of notes (newest on top)
+    field = table.date
+    field.represent.dt_orderby = note_date_dt_orderby
+
+    type_id = "note_type_id"
+
+    if not auth.s3_has_role("ADMIN"):
 
         # Restrict access by note type
         GENERAL = "General"
@@ -143,16 +162,14 @@ def dvr_note_resource(r, tablename):
             has_roles = auth.s3_has_roles
 
             # Roles permitted to access "Security" type notes
-            SECURITY_ROLES = ("ADMIN_HEAD",
-                              "SECURITY_HEAD",
-                              "POLICE",
-                              "MEDICAL",
+            SECURITY_ROLES = ("CASE_ADMIN",
+                              "SECURITY",
                               )
             if has_roles(SECURITY_ROLES):
                 permitted_note_types.append(SECURITY)
 
             # Roles permitted to access "Health" type notes
-            MEDICAL_ROLES = ("ADMIN_HEAD",
+            MEDICAL_ROLES = ("CASE_ADMIN",
                              "MEDICAL",
                              )
             if has_roles(MEDICAL_ROLES):
@@ -165,23 +182,47 @@ def dvr_note_resource(r, tablename):
         else:
             r.resource.add_component_filter("case_note", query)
 
-        # Filter note type selector to permitted note types
-        ttable = s3db.dvr_note_type
-        query = ttable.name.belongs(permitted_note_types)
-        rows = db(query).select(ttable.id)
-        note_type_ids = [row.id for row in rows]
+        # Filter note-type selector
+        ttable = current.s3db.dvr_note_type
+        dbset = db((ttable.is_task == False) & \
+                   (ttable.name.belongs(permitted_note_types)))
 
-        table = s3db.dvr_note
         field = table.note_type_id
-        field.label = T("Category")
-
-        if len(note_type_ids) == 1:
-            field.default = note_type_ids[0]
-            field.writable = False
-
-        field.requires = IS_ONE_OF(db(query), "dvr_note_type.id",
+        field.label = T("Confidentiality")
+        field.comment = T("Restricts access to this entry (e.g. medical notes are only accessible for medical team)")
+        field.requires = IS_ONE_OF(dbset, "dvr_note_type.id",
                                    field.represent,
                                    )
+
+        # Hide note type selector if only one choice
+        note_types = dbset.select(ttable.id, ttable.name)
+        if len(note_types) == 1:
+            field.default = note_types.first().id
+            field.readable = field.writable = False
+            type_id = None # hide from list
+        else:
+            general = note_types.find(lambda row: row.name == GENERAL)
+            if general:
+                field.default = general.first().id
+
+        if field.default:
+            field.requires.zero = None
+
+    # Make author visible
+    field = table.created_by
+    field.label = T("Author")
+    field.readable = True
+
+    form_fields = ["date", "note", type_id, "created_by"]
+    list_fields = ["date", "note", type_id, "created_by"]
+    s3db.configure("dvr_note",
+                   crud_form = S3SQLCustomForm(*form_fields),
+                   list_fields = list_fields,
+                   orderby = "%(tn)s.date desc,%(tn)s.created_on desc" % \
+                             {"tn": table._tablename},
+                   pdf_format = "list",
+                   pdf_fields = list_fields,
+                   )
 
 # -------------------------------------------------------------------------
 def dvr_case_activity_resource(r, tablename):
