@@ -1471,6 +1471,10 @@ def pr_person_controller(**attr):
     elif current.request.controller == "default":
         attr["rheader"] = default_rheader
 
+    # Activate filters on component tabs
+    attr["hide_filter"] = {"response_action": False,
+                           }
+
     return attr
 
 # -------------------------------------------------------------------------

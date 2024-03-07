@@ -116,18 +116,13 @@
 }
 
 /* line 144, ../scss/theme/_buttons.scss */
-#delete-btn {
-  margin-bottom: 0.5rem;
-}
-
-/* line 151, ../scss/theme/_buttons.scss */
 .map_home .gis_fullscreen_map-btn {
   font-weight: normal;
   font-size: 0.8rem;
   padding: 0.2rem;
 }
 
-/* line 160, ../scss/theme/_buttons.scss */
+/* line 153, ../scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
   background-color: #000548;
@@ -136,12 +131,12 @@ button.toggle-text {
   line-height: 1.0;
   padding: 0.2rem 0.3rem;
 }
-/* line 165, ../scss/theme/_buttons.scss */
+/* line 158, ../scss/theme/_buttons.scss */
 [dir=rtl] button.toggle-text {
   margin: 0 0.7rem 0 0;
 }
 
-/* line 175, ../scss/theme/_buttons.scss */
+/* line 168, ../scss/theme/_buttons.scss */
 .pr-contacts-editable button {
   display: inline-block;
   margin: 0.15rem;
@@ -159,7 +154,7 @@ button.toggle-text {
   margin: 2px;
 }
 
-/* line 186, ../scss/theme/_buttons.scss */
+/* line 179, ../scss/theme/_buttons.scss */
 #footer button.btn {
   display: inline-block;
   margin: 0.15rem;
@@ -175,13 +170,13 @@ button.toggle-text {
   color: #fefefe;
   background: #dddddd;
 }
-/* line 191, ../scss/theme/_buttons.scss */
+/* line 184, ../scss/theme/_buttons.scss */
 #footer button.btn:hover {
   color: #fefefe;
   background: #a0a0a0;
 }
 
-/* line 200, ../scss/theme/_buttons.scss */
+/* line 193, ../scss/theme/_buttons.scss */
 .caret {
   display: inline-block;
   width: 0;

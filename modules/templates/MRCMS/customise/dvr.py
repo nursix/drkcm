@@ -255,6 +255,63 @@ def dvr_case_activity_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
+def dvr_response_action_resource(r, tablename):
+
+    T = current.T
+
+    s3db = current.s3db
+
+    on_tab = r.controller == "counsel" and r.resource.tablename == "pr_person"
+
+    if on_tab and r.representation in ("html", "aadata", "pdf"):
+        # Show details per theme in interactive view and PDF exports
+        ltable = s3db.dvr_response_action_theme
+        ltable.id.represent = s3db.dvr_ResponseActionThemeRepresent(paragraph = True,
+                                                                    details = True,
+                                                                    )
+        themes = (T("Themes"), "response_action_theme.id")
+    else:
+        # Show just list of themes
+        themes = (T("Themes"), "response_action_theme.theme_id")
+
+    # List fields
+    list_fields = ["start_date",
+                   "response_type_id",
+                   themes,
+                   "human_resource_id",
+                   "hours",
+                   "status_id",
+                   ]
+    pdf_fields = ["start_date",
+                  "response_type_id",
+                  themes,
+                  "human_resource_id",
+                  ]
+
+    s3db.configure("dvr_response_action",
+                   list_fields = list_fields,
+                   pdf_format = "list",
+                   pdf_fields = pdf_fields,
+                   orderby = "dvr_response_action.start_date desc, dvr_response_action.created_on desc",
+                   )
+
+    # Filter widgets for tab
+    if on_tab:
+        filter_widgets = [TextFilter(["response_action_theme.comments",
+                                      ],
+                                     label = T("Search"),
+                                     ),
+                          DateFilter("start_date",
+                                     hidden = True,
+                                     ),
+                          # TODO theme filter
+                          # TODO sector filter
+                          ]
+        s3db.configure("dvr_response_action",
+                       filter_widgets = filter_widgets,
+                       )
+
+# -------------------------------------------------------------------------
 def dvr_case_appointment_resource(r, tablename):
 
     T = current.T

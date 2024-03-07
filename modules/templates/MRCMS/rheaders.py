@@ -215,7 +215,7 @@ def dvr_rheader(r, tabs=None):
                      has_permission("read", "pr_person", c="dvr", f="person", record_id=record.id):
                     icon = "arrow-circle-left"
                     link = A(T("Manage"), _href=URL(c="dvr", f="person", args=[record.id]))
-                if link:
+                if link and r.interactive:
                     # TODO move CSS into theme
                     link.insert(0, I(_class = "fa fa-%s" % icon,
                                      _style = "margin-right:0.3rem;vertical-align:middle;",
