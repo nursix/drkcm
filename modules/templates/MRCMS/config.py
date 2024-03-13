@@ -223,6 +223,22 @@ def config(settings):
     # -------------------------------------------------------------------------
     # DOC Settings and Customizations
     #
+    from .helpers import user_mailmerge_fields, shelter_mailmerge_fields
+
+    settings.doc.mailmerge_fields = {"ID": "pe_label",
+                                     "Vorname": "first_name",
+                                     "Name": "last_name",
+                                     "Geburtsdatum": "date_of_birth",
+                                     "Land": "person_details.nationality",
+                                     "Registrierungsdatum": "dvr_case.date",
+                                     "Organisation": "dvr_case.organisation_id$name",
+                                     "BAMF-Az": "bamf.value",
+                                     "Auftraggeber-Az": "dvr_case.reference",
+                                     "Unterkunft": shelter_mailmerge_fields,
+                                     "Benutzername": "current_user.name",
+                                     "Benutzer": user_mailmerge_fields,
+                                     }
+
     from .customise.doc import doc_document_resource, \
                                doc_document_controller, \
                                doc_image_resource

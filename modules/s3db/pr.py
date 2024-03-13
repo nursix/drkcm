@@ -7756,12 +7756,9 @@ class pr_Contacts(CRUDMethod):
 # =============================================================================
 class pr_Templates(CRUDMethod):
     """
-        Custom Method to select a Word Template to merge Person data into
-
-        - used by DRKCM
+        Method to select a Word Document Template to merge Person data into
     """
 
-    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Applies the method (controller entry point).
@@ -7779,17 +7776,7 @@ class pr_Templates(CRUDMethod):
                 T = current.T
                 output["title"] = "" #"%s:" % T("Select Template")
 
-                s3db = current.s3db
-
-                root_org = s3db.org_root_organisation(current.auth.user.organisation_id)
-                table = s3db.doc_document
-                query = (table.organisation_id == root_org) & \
-                        (table.is_template == True) & \
-                        (table.deleted == False)
-                templates = current.db(query).select(table.id,
-                                                     table.name,
-                                                     orderby = table.name,
-                                                     )
+                templates = self.get_templates(r)
                 if not templates:
                     buttons = P(T("No document templates found"))
                 else:
@@ -7815,15 +7802,46 @@ class pr_Templates(CRUDMethod):
 
         return output
 
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_templates(r):
+        """
+            Looks up any applicable document templates for the user
+
+            Args:
+                r - the context CRUDRequest
+
+            Returns:
+                doc_document Rows (id, name)
+        """
+
+        s3db = current.s3db
+        auth = current.auth
+
+        if auth.user:
+            user_organisation = auth.user.organisation_id
+        else:
+            return None
+
+        root_org = s3db.org_root_organisation(user_organisation)
+
+        table = s3db.doc_document
+        query = (table.organisation_id == root_org) & \
+                (table.is_template == True) & \
+                (table.deleted == False)
+        templates = current.db(query).select(table.id,
+                                             table.name,
+                                             orderby = table.name,
+                                             )
+
+        return templates
+
 # =============================================================================
 class pr_Template(CRUDMethod):
     """
-        Custom Method to merge Person data into a Word Template
-
-        - used by DRKCM
+        Method to merge Person data into a Word Document Template
     """
 
-    # -------------------------------------------------------------------------
     def apply_method(self, r, **attr):
         """
             Applies the method (controller entry point).
@@ -7867,10 +7885,13 @@ class pr_Template(CRUDMethod):
                 # Extract Data
                 resource = r.resource
                 mailmerge_fields = current.deployment_settings.get_doc_mailmerge_fields()
-                data = resource.select(list(mailmerge_fields.values()),
-                                       represent = True,
-                                       show_links = False,
-                                       )
+                selectors = list(mailmerge_fields.values())
+
+                # Always include the primary key of the resource
+                if resource._id.name not in selectors:
+                    selectors = [resource._id.name] + selectors
+
+                data = resource.select(selectors, represent=True, show_links=False)
                 record = data.rows[0]
                 rfields = {rfield.selector: rfield for rfield in data.rfields}
 

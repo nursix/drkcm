@@ -8,6 +8,8 @@ from gluon import current, IS_NOT_EMPTY
 
 from core import represent_file, IS_ONE_OF, FS
 
+from s3db.pr import pr_Templates
+
 # -------------------------------------------------------------------------
 def doc_image_resource(r, tablename):
 
@@ -57,12 +59,18 @@ def document_onaccept(form):
             row.update_record(name=name)
 
 # -------------------------------------------------------------------------
-def doc_document_resource(r, tablename):
+def doc_customise_documents(r, table):
 
     T = current.T
 
-    s3db = current.s3db
-    table = s3db.doc_document
+    s3 = current.response.s3
+
+    if r.component_name == "template":
+        #table.is_template.default = True
+        s3.crud_strings["doc_document"].label_create = T("Add Document Template")
+    else:
+        #table.is_template.default = False
+        s3.crud_strings["doc_document"].label_create = T("Add Document")
 
     # Custom label for date-field, default not writable
     field = table.date
@@ -84,6 +92,14 @@ def doc_document_resource(r, tablename):
 
     # Set default organisation_id
     doc_set_default_organisation(r, table=table)
+
+# -------------------------------------------------------------------------
+def doc_document_resource(r, tablename):
+
+    s3db = current.s3db
+    table = s3db.doc_document
+
+    doc_customise_documents(r, table)
 
     # List fields
     list_fields = ["name",
@@ -312,5 +328,36 @@ def doc_set_default_organisation(r, table=None):
 
     if organisation_id:
         table.organisation_id.default = organisation_id
+
+# -------------------------------------------------------------------------
+class CaseDocumentTemplates(pr_Templates):
+    """
+        Custom version of pr_Templates that uses the case organisation
+        rather than the user organisation for template lookup
+    """
+
+    @staticmethod
+    def get_templates(r):
+
+        person = r.record
+
+        if r.tablename != "pr_person" or not person:
+            return super().get_templates(r)
+
+        s3db = current.s3db
+
+        # Look up the case organisation
+        organisation_id = s3db.dvr_case_organisation(person.id)
+
+        table = s3db.doc_document
+        query = (table.organisation_id == organisation_id) & \
+                (table.is_template == True) & \
+                (table.deleted == False)
+        templates = current.db(query).select(table.id,
+                                             table.name,
+                                             orderby = table.name,
+                                             )
+
+        return templates
 
 # END =========================================================================

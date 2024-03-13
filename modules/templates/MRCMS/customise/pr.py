@@ -199,6 +199,17 @@ def pr_person_resource(r, tablename):
             from ..anonymize import anonymize_rules
             resource.configure(anonymize=anonymize_rules())
 
+            # Configure case document template methods
+            from .doc import CaseDocumentTemplates
+            s3db.set_method("pr_person",
+                            method = "templates",
+                            action = CaseDocumentTemplates,
+                            )
+            s3db.set_method("pr_person",
+                            method = "template",
+                            action = s3db.pr_Template,
+                            )
+
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case
     field = table.organisation_id
@@ -1283,6 +1294,109 @@ def configure_hrm_person_controller(r):
                                   )
 
 # -------------------------------------------------------------------------
+def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False):
+    """
+        Configure additional action buttons for the case/staff file
+
+        Args:
+            r: the context CRUDRequest
+            output: the output of the request
+            is_case_admin: whether the user has the CASE_ADMIN role
+            is_org_admin: whether the user has the ORG_ADMIN role
+    """
+
+    T = current.T
+    s3 = current.response.s3
+
+    from ..helpers import inject_button
+
+    component_name = r.component_name
+
+    controller = r.controller
+    if controller == "dvr":
+
+        if not r.component:
+
+            if is_case_admin:
+
+                # Anonymize-button
+                from core import S3AnonymizeWidget
+                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                inject_button(output, anonymize, before="delete_btn", alt=None)
+
+                # Doc-From-Template-button (requires appropriate role)
+                doc_from_template = A(T("Document from Template"),
+                                      _class = "action-btn activity button s3_modal",
+                                      _title = T("Generate Document from Template"),
+                                      _href = URL(args=[r.id, "templates"]),
+                                      )
+                inject_button(output, doc_from_template, before="delete_btn", alt=None)
+
+        elif component_name == "case_appointment":
+            # Organizer-button on appointments tab
+            btn = A(T("Calendar"),
+                    _href = r.url(component = "case_appointment",
+                                    method = "organize",
+                                    ),
+                    _class = "action-btn activity button",
+                    )
+            inject_button(output, btn)
+
+        elif component_name == "site_presence_event":
+
+            # Registration History button on presence tab
+            widget_id = "rhist-btn"
+            label = T("Registration History")
+
+            btn = A(label,
+                    _id = widget_id,
+                    _class = "action-btn activity button",
+                    )
+            inject_button(output, btn)
+
+            # Inject JS
+            appname = current.request.application
+            script = "/%s/static/themes/JUH/js/rhist.js" % appname
+            if script not in s3.scripts:
+                s3.scripts.append(script)
+
+            # Instantiate widget
+            opts = {"ajaxURL": r.url(component="",
+                                     method="registration_history",
+                                     representation="json",
+                                     ),
+                    "container": "map",
+                    "labelTitle": s3_str(label),
+                    "labelShelter": s3_str(T("Shelter")),
+                    "labelPlanned": s3_str(T("Planned since")),
+                    "labelArrival": s3_str(T("Arrival")),
+                    "labelDeparture": s3_str(T("Departure")),
+                    "labelEmpty": s3_str(T("No data available")),
+                    "labelMissing": s3_str(T("Date not registered")),
+                    "labelClose": s3_str(T("Close")),
+                    }
+            from core import JSONSEPARATORS
+            script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
+                        {"selector": widget_id,
+                         "options": json.dumps(opts, separators=JSONSEPARATORS),
+                         }
+            s3.jquery_ready.append(script)
+
+    # Generate-ID button
+    if controller == "dvr" and is_case_admin or \
+       controller == "hrm" and is_org_admin:
+        btn = A(T("Generate ID"),
+                _href = r.url(component = "identity",
+                              method = "generate",
+                              ),
+                _class = "action-btn activity button",
+                )
+        if not r.component:
+            inject_button(output, btn, before="delete_btn", alt=None)
+        elif r.component_name == "identity":
+            inject_button(output, btn)
+
+# -------------------------------------------------------------------------
 def pr_person_controller(**attr):
 
     T = current.T
@@ -1381,84 +1495,12 @@ def pr_person_controller(**attr):
                           ]
 
         if r.record and isinstance(output, dict):
-
-            from ..helpers import inject_button
-
-            component_name = r.component_name
-
-            # Anonymize-button
-            if r.controller == "dvr" and is_case_admin and r.record and not r.component:
-                from core import S3AnonymizeWidget
-                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
-                inject_button(output, anonymize, before="delete_btn", alt=None)
-
-            # Generate-ID button (requires appropriate role)
-            if r.controller == "dvr" and is_case_admin or \
-               r.controller == "hrm" and is_org_admin:
-                btn = A(T("Generate ID"),
-                        _href = r.url(component = "identity",
-                                      method = "generate",
-                                      ),
-                        _class = "action-btn activity button",
-                        )
-                if not r.component:
-                    inject_button(output, btn, before="delete_btn", alt=None)
-                elif r.component_name == "identity":
-                    inject_button(output, btn)
-
-            # Organizer-button on appointments tab
-            if component_name == "case_appointment":
-                btn = A(T("Calendar"),
-                        _href = r.url(component = "case_appointment",
-                                      method = "organize",
-                                      ),
-                        _class = "action-btn activity button",
-                        )
-                inject_button(output, btn)
-
-            # Registration History button on presence tab
-            elif component_name == "site_presence_event":
-
-                widget_id = "rhist-btn"
-                label = T("Registration History")
-
-                btn = A(label,
-                        _id = widget_id,
-                        _class = "action-btn activity button",
-                        )
-                inject_button(output, btn)
-
-                # TODO move into function
-
-                # Inject JS
-                appname = current.request.application
-                script = "/%s/static/themes/JUH/js/rhist.js" % appname
-                if script not in s3.scripts:
-                    s3.scripts.append(script)
-
-                # Instantiate widget
-                opts = {"ajaxURL": r.url(component="",
-                                         method="registration_history",
-                                         representation="json",
-                                         ),
-                        "container": "map",
-                        "labelTitle": s3_str(label),
-                        "labelShelter": s3_str(T("Shelter")),
-                        "labelPlanned": s3_str(T("Planned since")),
-                        "labelArrival": s3_str(T("Arrival")),
-                        "labelDeparture": s3_str(T("Departure")),
-                        "labelEmpty": s3_str(T("No data available")),
-                        "labelMissing": s3_str(T("Date not registered")),
-                        "labelClose": s3_str(T("Close")),
-                        }
-                from core import JSONSEPARATORS
-                script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
-                         {"selector": widget_id,
-                          "options": json.dumps(opts, separators=JSONSEPARATORS),
-                          }
-                s3.jquery_ready.append(script)
-
-
+            # Add custom actions
+            configure_custom_actions(r,
+                                     output,
+                                     is_case_admin = is_case_admin,
+                                     is_org_admin = is_org_admin,
+                                     )
         return output
     s3.postp = postp
 
@@ -1527,7 +1569,7 @@ def pr_group_membership_controller(**attr):
             rtable.shelter_id.default = shelter_id
             rtable.shelter_unit_id.default = unit_id
 
-            ROLE = T("Role")
+            ROLE = T("Dependency")
 
             if r.interactive:
                 table = resource.table
@@ -1553,7 +1595,7 @@ def pr_group_membership_controller(**attr):
                 field = table.role_id
                 field.readable = field.writable = True
                 field.label = ROLE
-                field.comment = None
+                field.comment = T("The type of dependency from the rest of the family/household (leave empty for independent adults). Use the comments field to elaborate if required.")
                 field.requires = IS_EMPTY_OR(
                                     IS_ONE_OF(current.db, "pr_group_member_role.id",
                                               field.represent,
@@ -1563,6 +1605,9 @@ def pr_group_membership_controller(**attr):
 
                 field = table.group_head
                 field.label = T("Head of Family")
+
+                field = table.comments
+                field.comment = T("Use this field for details about position or relationships of the family member")
 
                 # Custom CRUD strings for this perspective
                 s3.crud_strings["pr_group_membership"] = Storage(
@@ -1584,6 +1629,7 @@ def pr_group_membership_controller(**attr):
                            "person_id$gender",
                            "group_head",
                            (ROLE, "role_id"),
+                           "comments",
                            (T("Case Status"), "person_id$dvr_case.status_id"),
                            ]
             # Retain group_id in list_fields if added in standard prep

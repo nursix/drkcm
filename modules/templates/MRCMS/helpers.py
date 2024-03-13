@@ -622,6 +622,158 @@ def hr_details(record):
     return output
 
 # =============================================================================
+def user_mailmerge_fields(resource, record):
+    """
+        Lookup mailmerge-data about the current user
+
+        Args:
+            resource: the context resource (pr_person)
+            record: the context record (beneficiary)
+    """
+
+    user = current.auth.user
+    if not user:
+        return {}
+
+    fname = user.first_name
+    lname = user.last_name
+
+    data = {"Unterschrift": " ".join(n for n in (fname, lname) if n)
+            }
+    if fname:
+        data["Vorname"] = fname
+    if lname:
+        data["Nachname"] = lname
+
+    db = current.db
+    s3db = current.s3db
+
+    # Look up the user organisation
+    otable = s3db.org_organisation
+    query = (otable.id == user.organisation_id)
+    org = db(query).select(otable.id,
+                           otable.name,
+                           limitby = (0, 1),
+                           ).first()
+    if org:
+        data["Organisation"] = org.name
+
+        # Look up the team the user belongs to
+        ltable = s3db.org_organisation_team
+        gtable = s3db.pr_group
+        mtable = s3db.pr_group_membership
+        ptable = s3db.pr_person
+        join = [gtable.on(gtable.id == ltable.group_id),
+                mtable.on((mtable.group_id == gtable.id) & (mtable.deleted == False)),
+                ptable.on(ptable.id == mtable.person_id),
+                ]
+        query = (ltable.organisation_id == org.id) & \
+                (ltable.deleted == False) & \
+                (ptable.pe_id == user.pe_id)
+        row = db(query).select(gtable.name,
+                               join = join,
+                               limitby = (0, 1),
+                               orderby = ~(mtable.modified_on),
+                               ).first()
+        if row:
+            data["Team"] = row.name
+
+    # Look up contact information
+    ctable = s3db.pr_contact
+    query = (ctable.pe_id == user.pe_id) & \
+            (ctable.contact_method == "EMAIL") & \
+            (ctable.deleted == False)
+    row = db(query).select(ctable.value,
+                           limitby = (0, 1),
+                           orderby = (ctable.priority, ~(ctable.modified_on)),
+                           ).first()
+    if row:
+        data["Email"] = row.value
+
+    priority = {"SMS": 1, "WORK_PHONE": 2, "HOME_PHONE": 3}
+    query = (ctable.pe_id == user.pe_id) & \
+            (ctable.contact_method.belongs(list(priority.keys()))) & \
+            (ctable.deleted == False)
+    rows = db(query).select(ctable.priority,
+                            ctable.contact_method,
+                            ctable.value,
+                            orderby = (ctable.priority, ~(ctable.modified_on)),
+                            )
+    if rows:
+        rank = lambda row: row.priority * 10 + priority[row.contact_method]
+        numbers = sorted(((row.value, rank(row)) for row in rows), key = lambda i: i[1])
+        data["Telefon"] = numbers[0][0]
+
+    return data
+
+# =============================================================================
+def shelter_mailmerge_fields(resource, record):
+    """
+        Lookup mailmerge-data about the current user
+
+        Args:
+            resource: the context resource (pr_person)
+            record: the context record (beneficiary)
+
+        Returns:
+            Shelter registration details as dict
+            {Name, Wohneinheit, Adresse, PLZ, Ort}
+    """
+
+    db = current.db
+    s3db = current.s3db
+
+    person_id = record.get("pr_person.id")
+
+    # Look up the shelter registration for person_id
+    rtable = s3db.cr_shelter_registration
+    stable = s3db.cr_shelter
+    utable = s3db.cr_shelter_unit
+    ltable = s3db.gis_location
+
+    left = [stable.on(stable.id == rtable.shelter_id),
+            utable.on(utable.id == rtable.shelter_unit_id),
+            ltable.on(ltable.id == stable.location_id),
+            ]
+
+    query = (rtable.person_id == person_id) & \
+            (rtable.registration_status.belongs((1, 2))) & \
+            (rtable.deleted == False)
+
+    row = db(query).select(rtable.id,
+                           stable.id,
+                           stable.name,
+                           ltable.id,
+                           ltable.addr_street,
+                           ltable.addr_postcode,
+                           ltable.L4,
+                           ltable.L3,
+                           utable.id,
+                           utable.name,
+                           left = left,
+                           limitby = (0, 1),
+                           ).first()
+    data = {}
+    if row:
+        shelter = row.cr_shelter
+        if shelter.id:
+            data["Name"] = shelter.name
+
+        unit = row.cr_shelter_unit
+        if unit.id:
+            data["Wohneinheit"] = unit.name
+
+        location = row.gis_location
+        if location.id:
+            data["Ort"] = location.L4 or location.L3
+            if location.addr_street:
+                data["Adresse"] = location.addr_street
+            if location.addr_postcode:
+                data["PLZ"] = location.addr_postcode
+
+    return data
+
+# =============================================================================
 # Helpers for DVR rheader
 # =============================================================================
 def client_name_age(record):

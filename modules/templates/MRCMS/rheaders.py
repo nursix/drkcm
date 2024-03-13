@@ -290,9 +290,10 @@ def org_rheader(r, tabs=None):
                         #(T("Offices"), "office"),
                         #(T("Staff"), "human_resource"),
                         (T("Documents"), "document"),
+                        (T("Templates"), "template"),
                         ]
                 if auth.s3_has_permission("read", "pr_person", c="hrm", f="person"):
-                    tabs.insert(-1, (T("Staff"), "human_resource"))
+                    tabs.insert(-2, (T("Staff"), "human_resource"))
 
             rheader_fields = []
             rheader_title = "name"

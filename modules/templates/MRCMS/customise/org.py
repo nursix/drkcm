@@ -6,8 +6,6 @@
 
 from gluon import current
 
-from core import FS
-
 # -------------------------------------------------------------------------
 def org_group_controller(**attr):
 
@@ -98,6 +96,28 @@ def org_organisation_filter_widgets(is_org_group_admin=False):
     return filter_widgets
 
 # -------------------------------------------------------------------------
+def configure_org_components():
+
+    s3db = current.s3db
+
+    # Configure filtered components document/template
+    s3db.add_components("org_organisation",
+                        doc_document = ({"name": "document",
+                                         "joinby": "organisation_id",
+                                         "filterby": {"is_template": False,
+                                                      "doc_id": None,
+                                                      },
+                                         },
+                                        {"name": "template",
+                                         "joinby": "organisation_id",
+                                         "filterby": {"is_template": True,
+                                                      "doc_id": None,
+                                                      },
+                                         },
+                                        ),
+                        )
+
+# -------------------------------------------------------------------------
 def org_organisation_controller(**attr):
 
     T = current.T
@@ -105,6 +125,8 @@ def org_organisation_controller(**attr):
 
     s3 = current.response.s3
     settings = current.deployment_settings
+
+    configure_org_components()
 
     is_org_group_admin = auth.s3_has_role("ORG_GROUP_ADMIN")
 
@@ -228,8 +250,10 @@ def org_organisation_controller(**attr):
                            ]
             r.component.configure(list_fields=list_fields)
 
-        elif r.component_name == "document":
-            r.component.add_filter(FS("doc_id") == None)
+        elif r.component_name in ("document", "template"):
+
+            from .doc import doc_customise_documents
+            doc_customise_documents(r, r.component.table)
 
         return result
     s3.prep = prep
