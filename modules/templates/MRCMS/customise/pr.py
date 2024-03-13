@@ -152,7 +152,8 @@ def pr_person_resource(r, tablename):
 
     has_permission = auth.s3_has_permission
 
-    if r.controller == "dvr":
+    controller = r.controller
+    if controller in ("dvr", "counsel"):
 
         # Users who can not register new residents also have only
         # limited write-access to basic details of residents
@@ -191,13 +192,14 @@ def pr_person_resource(r, tablename):
         resource = r.resource
         if not r.component and resource.tablename == "pr_person":
 
-            # Configure anonymize-method
-            from core import S3Anonymize
-            s3db.set_method("pr_person", method="anonymize", action=S3Anonymize)
+            if controller == "dvr":
+                # Configure anonymize-method
+                from core import S3Anonymize
+                s3db.set_method("pr_person", method="anonymize", action=S3Anonymize)
 
-            # Configure anonymize-rules
-            from ..anonymize import anonymize_rules
-            resource.configure(anonymize=anonymize_rules())
+                # Configure anonymize-rules
+                from ..anonymize import anonymize_rules
+                resource.configure(anonymize=anonymize_rules())
 
             # Configure case document template methods
             from .doc import CaseDocumentTemplates
@@ -1313,16 +1315,17 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
     component_name = r.component_name
 
     controller = r.controller
-    if controller == "dvr":
+    if controller in ("dvr", "counsel"):
 
         if not r.component:
 
             if is_case_admin:
 
                 # Anonymize-button
-                from core import S3AnonymizeWidget
-                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
-                inject_button(output, anonymize, before="delete_btn", alt=None)
+                if controller == "dvr":
+                    from core import S3AnonymizeWidget
+                    anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                    inject_button(output, anonymize, before="delete_btn", alt=None)
 
                 # Doc-From-Template-button (requires appropriate role)
                 doc_from_template = A(T("Document from Template"),
