@@ -429,7 +429,7 @@ class OrgOrganisationModel(DataModel):
                      Field("logo", "upload",
                            label = T("Logo"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("org_organisation", "logo"),
                            requires = IS_EMPTY_OR(IS_IMAGE(
                                             maxsize = (400, 400),
                                             error_message = T("Upload an image file (png or jpeg), max. 400x400 pixels!"),

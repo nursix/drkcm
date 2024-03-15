@@ -2369,7 +2369,7 @@ class CAPResourceModel(DataModel):
                      Field("image", "upload",
                            label = T("Image"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("cap_resource", "image"),
                            requires = IS_EMPTY_OR(IS_IMAGE(maxsize=(800, 800),
                                                            error_message=\
 T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
@@ -3626,7 +3626,7 @@ class CAPHistoryModel(DataModel):
                      Field("image", "upload",
                            label = T("Image"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("cap_resource_history", "image"),
                            requires = IS_EMPTY_OR(
                                         IS_IMAGE(maxsize = (800, 800),
                                                  error_message = T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"),

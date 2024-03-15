@@ -44,6 +44,7 @@ __all__ = ("BooleanRepresent",
            "s3_url_represent",
            "s3_yes_no_represent",
            "represent_file",
+           "represent_image",
            "represent_option",
            )
 
@@ -1017,7 +1018,11 @@ def represent_file(tablename="doc_document", fieldname="file"):
         icon = ICON(icon_type)
 
         output = A(icon,
-                   _href = URL(c="default", f="download", args=[value]),
+                   _href = URL(c = "default",
+                               f = "download",
+                               args = [value],
+                               vars = {"otn": tablename},
+                               ),
                    _title = name,
                    _class = "file-repr",
                    )
@@ -1034,6 +1039,40 @@ def represent_file(tablename="doc_document", fieldname="file"):
             output.append(SPAN(fsize, _class="file-size"))
 
         return output
+
+    return represent
+
+# -----------------------------------------------------------------------------
+def represent_image(tablename="doc_image", fieldname="file"):
+
+    def represent(value, row=None):
+        """
+            Represent an image as a clickable thumbnail
+
+            Args:
+                value: name of the image file
+                row: unused, for API compatibility
+
+            Returns:
+                representation (DIV-type)
+        """
+
+        if not value:
+            return current.messages["NONE"]
+
+        link = URL(c = "default",
+                   f = "download",
+                   args = value,
+                   vars = {"otn": tablename},
+                   )
+
+        return DIV(A(IMG(_src = link,
+                         _class = "img-preview",
+                         ),
+                     _class = "zoom",
+                     _href = link,
+                     ),
+                   )
 
     return represent
 

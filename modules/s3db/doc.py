@@ -31,7 +31,6 @@ __all__ = ("DocumentEntityModel",
            "DocumentCKEditorModel",
            "DocumentDataCardModel",
            "doc_rheader",
-           "doc_image_represent",
            "doc_document_list_layout",
            )
 
@@ -297,7 +296,7 @@ class DocumentModel(DataModel):
                            autodelete = True,
                            label = T("File"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = doc_image_represent,
+                           represent = represent_image(),
                            requires = IS_EMPTY_OR(
                                         IS_IMAGE(extensions = (s3.IMAGE_EXTENSIONS)),
                                         # Distinguish from prepop
@@ -403,7 +402,12 @@ class DocumentModel(DataModel):
                 return current.T("File not found")
             else:
                 return A(origname,
-                         _href=URL(c="default", f="download", args=[filename]))
+                         _href=URL(c = "default",
+                                   f = "download",
+                                   args = [filename],
+                                   vars = {"otn": "doc_document"},
+                                   ),
+                         )
         else:
             return current.messages["NONE"]
 
@@ -606,29 +610,6 @@ def doc_rheader(r, tabs=None):
         rheader = rheader(r, table=resource.table, record=record)
 
     return rheader
-
-# =============================================================================
-def doc_image_represent(filename):
-    """
-        Represent an image as a clickable thumbnail
-
-        Args:
-            filename: name of the image file
-    """
-
-    if not filename:
-        return current.messages["NONE"]
-
-    return DIV(A(IMG(_src = URL(c="default", f="download", args=filename),
-                     # handled by CSS:
-                     #_height = 80,
-                     #_width = 120,
-                     _class = "img-preview",
-                     ),
-                 _class = "zoom",
-                 _href = URL(c="default", f="download", args=filename),
-                 ),
-               )
 
 # =============================================================================
 def doc_checksum(docstr):
@@ -908,7 +889,7 @@ class DocumentDataCardModel(DataModel):
                                 label = T("Signature"),
                                 autodelete = True,
                                 length = current.MAX_FILENAME_LENGTH,
-                                represent = doc_image_represent,
+                                represent = represent_image("doc_card_config", "signature"),
                                 requires = IS_EMPTY_OR(IS_IMAGE(extensions=(s3.IMAGE_EXTENSIONS)),
                                                        # Distinguish from prepop
                                                        null = "",

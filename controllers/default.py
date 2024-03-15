@@ -341,8 +341,17 @@ def download():
     # Check Permissions
     tablename = filename.split(".", 1)[0]
     if "_" in tablename:
-        # Load the Model
-        table = s3db.table(tablename)
+        # Load the Model, deal with aliased tables
+        otn = request.vars.get("otn")
+        if otn and tablename != otn:
+            alias, tablename = tablename, otn
+            table = s3db.table(tablename)
+            if table:
+                table = table.with_alias(alias)
+        else:
+            alias = tablename
+            table = s3db.table(tablename)
+
         if table and not auth.s3_has_permission("read", tablename):
             auth.permission.fail()
 

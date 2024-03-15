@@ -102,6 +102,8 @@ def alert():
 
     tablename = "cap_alert"
 
+    from core import represent_image
+
     def prep(r):
         from core import OptionsFilter
         resource = r.resource
@@ -684,7 +686,7 @@ def alert():
                                       ),
                             component("Attached Image",
                                       info["cap_resource.image"],
-                                      represent = s3db.doc_image_represent,
+                                      represent = represent_image(tablename="cap_resource", fieldname="image"),
                                       resource_segment = True,
                                       ),
                             component("Attached Document",
