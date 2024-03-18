@@ -389,6 +389,7 @@ class CRShelterModel(DataModel):
                                            )
                         ),
                   super_entity = ("org_site", "doc_entity", "pr_pentity"),
+                  update_realm = True,
                   )
 
         # Custom method to assign HRs
