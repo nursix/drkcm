@@ -137,13 +137,13 @@ def cms_post_resource(r, tablename):
                      s3_text_represent
 
     field = table.body
+    field.label = T("Content")
     field.represent = lambda v, row=None: \
-                        s3_text_represent(v, lines=20, _class = "cms-item-body")
+                             s3_text_represent(v, lines=20, _class = "cms-item-body")
 
     record = r.record
     if r.tablename == "cms_series" and \
         record and record.name == "Announcements":
-        table = s3db.cms_post
         field = table.priority
         field.readable = field.writable = True
 
@@ -206,19 +206,25 @@ def cms_post_controller(**attr):
         result = standard_prep(r) if callable(standard_prep) else True
 
         table = r.table
-        context = r.get_vars.get("resource")
-        if context == "Privacy":
-            page = URL(c="default", f="index", args=["privacy"])
-            r.resource.configure(create_next = page,
-                                 update_next = page,
-                                 )
-            table.name.default = "Privacy Notice"
-        elif context == "Legal":
-            page = URL(c="default", f="index", args=["legal"])
-            r.resource.configure(create_next = page,
-                                 update_next = page,
-                                 )
-            table.name.default = "Legal Notice"
+
+        get_vars = r.get_vars
+        module, context = get_vars.get("module"), get_vars.get("resource")
+
+        if module == "default":
+            if context == "Contact":
+                page, name = "contact", "Contact Information"
+            elif context == "Privacy":
+                page, name = "privacy", "Privacy Notice"
+            elif context == "Legal":
+                page, name = "legal", "Legal Notice"
+            else:
+                page, name = None, None
+            if page and name:
+                url = URL(c="default", f="index", args=[page])
+                r.resource.configure(create_next=url, update_next=url)
+                table.name.default = name
+
+
         return result
     s3.prep = prep
 

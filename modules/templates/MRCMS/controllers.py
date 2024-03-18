@@ -9,7 +9,7 @@ from gluon.html import DIV, H3, H4, I, LI, TAG, UL, XML
 
 from core import CustomController
 
-THEME = "MRCMS"
+from s3db.cms import CustomPage
 
 # =============================================================================
 class index(CustomController):
@@ -103,5 +103,23 @@ class index(CustomController):
         self._view(settings.get_theme_layouts(), "index.html")
 
         return output
+
+# =============================================================================
+class contact(CustomPage):
+    """ Custom page for contact information """
+
+    context = ("default", "Contact")
+
+# =============================================================================
+class privacy(CustomPage):
+    """ Custom page for privacy notice """
+
+    context = ("default", "Privacy")
+
+# =============================================================================
+class legal(CustomPage):
+    """ Custom page for legal notice """
+
+    context = ("default", "Legal")
 
 # END =========================================================================

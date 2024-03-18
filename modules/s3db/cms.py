@@ -34,6 +34,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "CMSNewsletterModel",
+           "CustomPage",
            "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
@@ -776,6 +777,7 @@ class CMSContentModel(DataModel):
                 record = None
                 query &= ((table.resource == None) | \
                           (table.resource == "index"))
+            query &= (table.deleted == False)
             result = db(query).update(post_id=post_id)
             if not result:
                 table.insert(post_id=post_id,
@@ -1658,6 +1660,73 @@ class CMSNewsletterModel(DataModel):
             if record_id in cms_unread_newsletters(count=False):
                 status = SPAN(current.T("new"), _class="prio prio-amber")
         return status
+
+# =============================================================================
+class CustomPage(CustomController):
+    """
+        A custom controller to render a page with user-editable
+        contents from CMS
+    """
+
+    context = ("default", "custom")
+    template = "cmspage.html"
+
+    def __call__(self):
+
+        T = current.T
+        s3db = current.s3db
+
+        output = {}
+
+        # Allow editing of page content from browser using CMS module
+        ADMIN = current.auth.s3_has_role("ADMIN")
+
+        table = s3db.cms_post
+        ltable = s3db.cms_post_module
+
+        module, resource = self.context
+
+        query = (ltable.module == module) & \
+                (ltable.resource == resource) & \
+                (ltable.post_id == table.id) & \
+                (table.deleted != True)
+        item = current.db(query).select(table.body,
+                                        table.id,
+                                        limitby = (0, 1)
+                                        ).first()
+        if item:
+            if ADMIN:
+                content = DIV(XML(item.body),
+                              BR(),
+                              A(T("Edit"),
+                                _href = URL(c="cms", f="post",
+                                            args = [item.id, "update"],
+                                            vars = {"module": module,
+                                                    "resource": resource,
+                                                    },
+                                            ),
+                                _class="action-btn",
+                                ),
+                              )
+            else:
+                content = DIV(XML(item.body))
+        elif ADMIN:
+            content = A(T("Edit"),
+                        _href = URL(c="cms", f="post", args="create",
+                                    vars = {"module": module,
+                                            "resource": resource,
+                                            },
+                                    ),
+                        _class="action-btn cms-edit",
+                        )
+        else:
+            content = ""
+
+        output["item"] = content
+
+        self._view(current.deployment_settings.get_theme_layouts(), self.template)
+
+        return output
 
 # =============================================================================
 class cms_NewsletterDetails:
