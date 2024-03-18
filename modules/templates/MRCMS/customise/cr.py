@@ -6,7 +6,7 @@
 
 from collections import OrderedDict
 
-from gluon import current, URL, DIV, H4, P, TAG
+from gluon import current, URL, DIV, H4, P, TAG, IS_EMPTY_OR
 
 from core import S3CRUD, FS, IS_ONE_OF, \
                  LocationSelector, PresenceRegistration, S3SQLCustomForm, \
@@ -284,7 +284,7 @@ def cr_shelter_resource(r, tablename):
 
     table = s3db.cr_shelter
 
-    # Configure fields
+    # Configure location selector
     field = table.location_id
     field.widget = LocationSelector(levels = ("L1", "L2", "L3", "L4"),
                                     required_levels = ("L1", "L2", "L3"),
@@ -296,8 +296,16 @@ def cr_shelter_resource(r, tablename):
                                     )
     field.represent = s3db.gis_LocationRepresent(show_link = False)
 
+    # Custom label for obsolete-flag
     field = table.obsolete
     field.label = T("Defunct")
+
+    # Organisation is required, + cannot be created from here
+    field = table.organisation_id
+    requires = field.requires
+    if isinstance(requires, IS_EMPTY_OR):
+        field.requires = requires.other
+    field.comment = None
 
     # Custom form
     crud_fields = ["name",
@@ -369,6 +377,10 @@ def cr_shelter_controller(**attr):
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
 
+        # Restrict organisation selector
+        s3db = current.s3db
+        s3db.org_restrict_for_organisations(r.resource)
+
         if is_org_group_admin and r.component_name != "shelter_note":
             # Show all records by default
             settings.ui.datatables_pagelength = -1
@@ -385,7 +397,6 @@ def cr_shelter_controller(**attr):
         else:
             if r.record and r.method == "profile":
                 # Add PoI layer to the Map
-                s3db = current.s3db
                 ftable = s3db.gis_layer_feature
                 query = (ftable.controller == "gis") & \
                         (ftable.function == "poi")
@@ -701,7 +712,6 @@ def cr_shelter_registration_resource(r, tablename):
 
     if r.controller == "cr":
         # Filter to available housing units
-        from gluon import IS_EMPTY_OR
         field.requires = IS_EMPTY_OR(IS_ONE_OF(current.db, "cr_shelter_unit.id",
                                                field.represent,
                                                filterby = "status",
