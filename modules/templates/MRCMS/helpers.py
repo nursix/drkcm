@@ -367,6 +367,32 @@ def get_default_shelter():
     return shelter_id
 
 # =============================================================================
+def get_case_organisations(permission="read"):
+    """
+        Checks if the user has access to cases of more than one org
+
+        Args:
+            permission: the required permission for access
+
+        Returns:
+            tuple (multiple_orgs, org_ids)
+    """
+
+    realms = current.auth.permission.permitted_realms("dvr_case", permission)
+    if realms is None:
+        multiple_orgs = True
+        org_ids = []
+    else:
+        otable = current.s3db.org_organisation
+        query = (otable.pe_id.belongs(realms)) & \
+                (otable.deleted == False)
+        rows = current.db(query).select(otable.id)
+        multiple_orgs = len(rows) > 1
+        org_ids = [row.id for row in rows]
+
+    return multiple_orgs, org_ids
+
+# =============================================================================
 def get_default_case_organisation():
     """
         The organisation the user can access case files for (if only one
@@ -485,6 +511,44 @@ def get_default_case_shelter(person_id):
                 shelter_id = available_shelters[0]
 
     return shelter_id, unit_id
+
+# =============================================================================
+def get_response_theme_sectors():
+    """
+        Looks up the sectors of all organisations the user can access
+        response actions for; for sector-filter in response action
+        perspective
+
+        Returns:
+            a dict {sector_id: sector_name}
+    """
+
+    T = current.T
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    stable = s3db.org_sector
+    ltable = s3db.org_sector_organisation
+    otable = s3db.org_organisation
+
+    realms = auth.permission.permitted_realms("dvr_response_action", "read")
+    if realms:
+        query = (otable.pe_id.belongs(realms)) & \
+                (otable.deleted == False)
+        organisation_ids = db(query)._select(otable.id)
+        join = ltable.on((ltable.sector_id == stable.id) & \
+                         (ltable.organisation_id.belongs(organisation_ids)) & \
+                         (ltable.deleted == False))
+    else:
+        join = None
+
+    sectors = db(stable.deleted == False).select(stable.id,
+                                                 stable.name,
+                                                 join = join,
+                                                 )
+    return {s.id: T(s.name) for s in sectors}
 
 # =============================================================================
 def inject_button(output, button, before="add_btn", alt="showadd_btn"):

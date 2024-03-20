@@ -2784,7 +2784,7 @@ class CRUDResource:
                 seen(selector)
                 append(f)
 
-        if id_column == 0:
+        if id_column is not False and id_column == 0:
             fields.insert(0, id_field)
 
         return fields

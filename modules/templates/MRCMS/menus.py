@@ -200,6 +200,10 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         return M(c="counsel")(
                     M("Current Cases", c=("counsel", "pr"), f="person"),
+                    M("Actions", c="counsel", f="response_action")(
+                        M("Overview"),
+                        M("Statistic", m="report"),
+                        ),
                     M("Administration", link=False, restrict=(ADMIN, ORG_GROUP_ADMIN))(
                         # Global types
                         M("Need Types", f="need"),

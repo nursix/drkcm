@@ -1818,28 +1818,6 @@ class DVRResponseModel(DataModel):
             list_fields.insert(-3, "date_due")
 
         # Filter widgets
-        if use_response_types:
-            if hierarchical_response_types:
-                response_type_filter = HierarchyFilter(
-                                            "response_type_id",
-                                            lookup = "dvr_response_type",
-                                            hidden = True,
-                                            )
-            else:
-                response_type_filter = OptionsFilter(
-                                            "response_type_id",
-                                            options = lambda: \
-                                                      get_filter_options("dvr_response_type"),
-                                            hidden = True,
-                                            )
-        else:
-            response_type_filter = None
-
-        if use_due_date:
-            due_filter = DateFilter("date_due")
-        else:
-            due_filter = None
-
         filter_widgets = [TextFilter(["case_activity_id$person_id$pe_label",
                                       "case_activity_id$person_id$first_name",
                                       "case_activity_id$person_id$middle_name",
@@ -1854,9 +1832,27 @@ class DVRResponseModel(DataModel):
                                         cols = 3,
                                         translate = True,
                                         ),
-                          due_filter,
-                          response_type_filter,
+                          #due_filter,
+                          #response_type_filter,
                           ]
+        if use_due_date:
+            filter_widgets.append(DateFilter("date_due"))
+
+        if use_response_types:
+            if hierarchical_response_types:
+                response_type_filter = HierarchyFilter(
+                                            "response_type_id",
+                                            lookup = "dvr_response_type",
+                                            hidden = True,
+                                            )
+            else:
+                response_type_filter = OptionsFilter(
+                                            "response_type_id",
+                                            options = lambda: \
+                                                      get_filter_options("dvr_response_type"),
+                                            hidden = True,
+                                            )
+            filter_widgets.append(response_type_filter)
 
         # CRUD Form
         type_field = "response_type_id" if use_response_types else None

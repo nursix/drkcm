@@ -1129,7 +1129,7 @@ def represent_hours(colon=False):
                 formatted.append("%dmin" % minutes)
             title = " ".join(formatted) if formatted else None
 
-        return SPAN("%s" % value, _title=title, _class="hours-formatted")
+        return SPAN("%s" % round(value, 2), _title=title, _class="hours-formatted")
 
     return represent
 

@@ -885,11 +885,13 @@ class FilterForm:
         filter_widgets = resource.get_config("filter_widgets")
         for filter_widget in filter_widgets:
 
-            widget_opts = filter_widget.opts
+            if not filter_widget:
+                continue
 
             # Do not apply defaults of hidden widgets because they are
             # not visible to the user
-            if not filter_widget or widget_opts.get("hidden"):
+            widget_opts = filter_widget.opts
+            if widget_opts.get("hidden"):
                 continue
 
             # Skip widget if there are no defaults

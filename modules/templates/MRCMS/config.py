@@ -33,6 +33,7 @@ def config(settings):
                                       ("counsel", "group_membership"): ("pr", "group_membership"),
                                       ("counsel", "document"): ("doc", "document"),
                                       ("counsel", "need"): ("dvr", "need"),
+                                      ("counsel", "response_action"): ("dvr", "response_action"),
                                       ("counsel", "response_type"): ("dvr", "response_type"),
                                       ("counsel", "response_theme"): ("dvr", "response_theme"),
                                       ("counsel", "vulnerability_type"): ("dvr", "vulnerability_type"),
@@ -348,6 +349,7 @@ def config(settings):
                                dvr_case_activity_resource, \
                                dvr_case_activity_controller, \
                                dvr_response_action_resource, \
+                               dvr_response_action_controller, \
                                dvr_case_appointment_resource, \
                                dvr_case_appointment_controller, \
                                dvr_case_event_resource, \
@@ -364,6 +366,7 @@ def config(settings):
     settings.customise_dvr_case_activity_resource = dvr_case_activity_resource
     settings.customise_dvr_case_activity_controller = dvr_case_activity_controller
     settings.customise_dvr_response_action_resource = dvr_response_action_resource
+    settings.customise_dvr_response_action_controller = dvr_response_action_controller
     settings.customise_dvr_case_appointment_resource = dvr_case_appointment_resource
     settings.customise_dvr_case_appointment_controller = dvr_case_appointment_controller
     settings.customise_dvr_case_event_resource = dvr_case_event_resource
