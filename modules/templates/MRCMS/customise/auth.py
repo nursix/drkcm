@@ -235,6 +235,10 @@ def doc_realm_entity(table, row):
     document = row[table]
     instance_type = row.doc_entity.instance_type
 
+    # Newsletter attachments do not belong to any realm
+    if instance_type == "cms_newsletter":
+        return None
+
     # Inherit the realm entity from instance, if available
     if document.doc_id and instance_type and instance_type != "pr_group":
         itable = s3db.table(instance_type)
