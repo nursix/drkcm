@@ -992,7 +992,7 @@ class PerformanceIndicatorExport(CRUDMethod):
     """ REST Method to produce a response statistics data sheet """
 
     # Custom Performance Indicator Sets
-    PISETS = {None: PerformanceIndicators,
+    PISETS = {"default": PerformanceIndicators,
               "bamf": PerformanceIndicatorsBAMF,
               }
 

@@ -299,7 +299,14 @@ def dvr_case_activity_controller(**attr):
 def configure_response_action_reports(r,
                                       multiple_orgs = False,
                                       ):
-    # TODO docstring
+    """
+        Configures pivot report options for response actions
+
+        Args:
+            r: the CRUDRequest
+            multiple_orgs: user has permission to read response actions
+                           for multiple organisations (boolean)
+    """
 
     T = current.T
 
@@ -560,27 +567,31 @@ def dvr_response_action_controller(**attr):
         # Call standard prep
         result = standard_prep(r) if callable(standard_prep) else True
 
-        # Exclude archived (invalid) cases
-        r.resource.add_filter(FS("person_id$dvr_case.archived") == False)
+        resource = r.resource
 
-        from ..helpers import get_case_organisations
-        multiple_orgs, organisation_ids = get_case_organisations()
+        if not r.record:
+            # Exclude archived (invalid) cases
+            query = (FS("person_id$dvr_case.archived") == False) | \
+                    (FS("person_id$dvr_case.archived") == None)
+            resource.add_filter(query)
 
-        configure_response_action_filters(r,
-                                          on_tab = False,
-                                          multiple_orgs = multiple_orgs,
-                                          organisation_ids = organisation_ids,
-                                          )
-        configure_response_action_reports(r,
-                                          multiple_orgs = multiple_orgs,
-                                          )
+            from ..helpers import get_case_organisations
+            multiple_orgs, organisation_ids = get_case_organisations()
 
-        if not r.id:
+            configure_response_action_filters(r,
+                                              on_tab = False,
+                                              multiple_orgs = multiple_orgs,
+                                              organisation_ids = organisation_ids,
+                                              )
+            configure_response_action_reports(r,
+                                              multiple_orgs = multiple_orgs,
+                                              )
+
             # pisets = {pitype: (method, icon, title)}
-            pisets = {None: ("indicators",
-                             "line-chart",
-                             T("Performance Indicators"),
-                             ),
+            pisets = {"default": ("indicators",
+                                  "line-chart",
+                                  T("Performance Indicators"),
+                                  ),
                       "bamf": ("indicators_bamf",
                                "tachometer",
                                "%s %s" % (T("Performance Indicators"), "BAMF"),
@@ -588,7 +599,7 @@ def dvr_response_action_controller(**attr):
                       }
 
             from ..stats import PerformanceIndicatorExport
-            for pitype in ("bamf", None):
+            for pitype in ("bamf", "default"):
                 piset = pisets.get(pitype)
                 if not piset:
                     continue
