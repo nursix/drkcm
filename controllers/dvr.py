@@ -852,6 +852,7 @@ def response_action():
 
         resource = r.resource
         table = resource.table
+        record = r.record
 
         # Beneficiary is required and must have a case file
         ptable = s3db.pr_person
@@ -872,43 +873,41 @@ def response_action():
 
         person_id = None
 
-        get_vars = r.get_vars
-        if "viewing" in get_vars:
-            try:
-                vtablename, record_id = get_vars["viewing"].split(".")
-            except ValueError:
-                return False
+        viewing = r.viewing
+        if viewing:
+            vtablename, person_id = viewing
+            if vtablename != "pr_person":
+                # Not supported
+                return None
 
-            has_permission = auth.s3_has_permission
-            if vtablename == "pr_person":
-                person_id = record_id
-                if not has_permission("read", "pr_person", record_id):
-                    r.unauthorised()
-                query = (FS("person_id") == record_id)
-                resource.add_filter(query)
+            # Must be permitted to read the person record
+            if not auth.s3_has_permission("read", "pr_person", person_id):
+                r.unauthorised()
 
-                field = r.table.case_activity_id
-                field.readable = field.writable = True
+            # Filter to case viewed
+            resource.add_filter(FS("person_id") == person_id)
 
-                if record_id:
-                    # Restrict case activity selection to the case viewed
-                    atable = s3db.dvr_case_activity
-                    field.requires = IS_ONE_OF(db(atable.person_id == record_id),
-                                               "dvr_case_activity.id",
-                                               field.represent,
-                                               )
-            else:
-                return False
+            # Enable case activity selection
+            field = table.case_activity_id
+            field.readable = field.writable = True
 
+            # Restrict case activity selection to the case viewed
+            atable = s3db.dvr_case_activity
+            field.requires = IS_ONE_OF(db(atable.person_id == person_id),
+                                       "dvr_case_activity.id",
+                                       field.represent,
+                                       )
+
+            # Can create and delete records in this perspective
             insertable = deletable = True
 
-        elif not r.record:
+        elif record:
+            person_id = record.person_id
+
+        else:
             # Filter out response actions of archived cases
             query = (FS("person_id$dvr_case.archived") == False)
             resource.add_filter(query)
-
-        else:
-            person_id = r.record.person_id
 
         if person_id and settings.get_dvr_vulnerabilities():
             # Limit selectable vulnerabilities to case
