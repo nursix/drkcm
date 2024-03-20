@@ -551,6 +551,38 @@ def dvr_response_action_resource(r, tablename):
                    )
 
 # -------------------------------------------------------------------------
+def dvr_response_action_prep(r):
+
+    db = current.db
+    s3db = current.s3db
+    settings = current.deployment_settings
+
+    resource = r.resource
+    table = resource.table
+
+    # Beneficiary is required and must have a case file
+    ptable = s3db.pr_person
+    ctable = s3db.dvr_case
+    dbset = db((ptable.id == ctable.person_id) & \
+               (ctable.archived == False) & \
+               (ctable.deleted == False))
+    field = table.person_id
+    field.requires = IS_ONE_OF(dbset, "pr_person.id", field.represent)
+
+    # Set defaults
+    s3db.dvr_set_response_action_defaults()
+
+    if r.record and settings.get_dvr_vulnerabilities():
+        # Limit selectable vulnerabilities to case
+        s3db.dvr_configure_case_vulnerabilities(r.record.person_id)
+
+    # Create/delete requires context perspective
+    resource.configure(insertable = False,
+                       deletable = False,
+                       )
+    return True
+
+# -------------------------------------------------------------------------
 def dvr_response_action_controller(**attr):
 
     T = current.T
@@ -561,7 +593,7 @@ def dvr_response_action_controller(**attr):
 
     settings.base.bigtable = True
 
-    standard_prep = s3.prep
+    standard_prep = dvr_response_action_prep
     def prep(r):
 
         # Call standard prep

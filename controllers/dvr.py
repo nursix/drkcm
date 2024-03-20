@@ -870,6 +870,8 @@ def response_action():
         # Create/delete requires context perspective
         insertable = deletable = False
 
+        person_id = None
+
         get_vars = r.get_vars
         if "viewing" in get_vars:
             try:
@@ -879,6 +881,7 @@ def response_action():
 
             has_permission = auth.s3_has_permission
             if vtablename == "pr_person":
+                person_id = record_id
                 if not has_permission("read", "pr_person", record_id):
                     r.unauthorised()
                 query = (FS("person_id") == record_id)
@@ -900,10 +903,16 @@ def response_action():
             insertable = deletable = True
 
         elif not r.record:
-
             # Filter out response actions of archived cases
             query = (FS("person_id$dvr_case.archived") == False)
             resource.add_filter(query)
+
+        else:
+            person_id = r.record.person_id
+
+        if person_id and settings.get_dvr_vulnerabilities():
+            # Limit selectable vulnerabilities to case
+            s3db.dvr_configure_case_vulnerabilities(person_id)
 
         # Filter for "mine"
         mine = r.get_vars.get("mine")

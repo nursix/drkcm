@@ -94,7 +94,7 @@ CASE_MANAGER,Case Manager / Counselor,,,counsel,case_activity,,CREATE|READ|UPDAT
 CASE_MANAGER,Case Manager / Counselor,,,counsel,document,,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,counsel,group_membership,,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,counsel,person,,CREATE|READ|UPDATE|DELETE,,,
-CASE_MANAGER,Case Manager / Counselor,,,counsel,response_action,,READ|UPDATE,,,
+CASE_MANAGER,Case Manager / Counselor,,,counsel,response_action,,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,counsel,,,READ,,,
 CASE_MANAGER,Case Manager / Counselor,,,dvr,case_activity,,CREATE|READ|UPDATE|DELETE,,,
 CASE_MANAGER,Case Manager / Counselor,,,dvr,case_appointment,,READ|UPDATE,,,
