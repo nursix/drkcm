@@ -6524,6 +6524,7 @@
 'Voucher updated': 'Gutschein aktualisiert',
 'Voucher': 'Gutschein',
 'Vouchers': 'Gutscheine',
+'Vulnerabilities addressed by this action': 'Vulnerabilitäten für die diese Maßnahme relevant ist',
 'Vulnerabilities': 'Vulnerabilitäten',
 'Vulnerability Details': 'Details zur Vulnerabilität',
 'Vulnerability Type Details': 'Details zum Vulnerabilitätstyp',
