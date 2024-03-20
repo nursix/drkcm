@@ -46,6 +46,7 @@ __all__ = ("BooleanRepresent",
            "represent_file",
            "represent_image",
            "represent_option",
+           "represent_hours",
            )
 
 import os
@@ -1091,6 +1092,45 @@ def represent_option(options, default="-"):
 
     def represent(value, row=None):
         return options.get(value, default)
+    return represent
+
+# =============================================================================
+def represent_hours(colon=False):
+    """
+        Representation function for hours (duration), adding an
+        onhover-hint with alternative formatting (0h 0min, or 0:00)
+
+        Args:
+            colon: use colon-notation 0:00 for hint
+
+        Returns:
+            function: the representation function
+    """
+
+    def represent(value, row=None):
+
+        if value is None:
+            return ""
+        try:
+            value = float(value)
+        except (ValueError, TypeError):
+            value = 0
+
+        hours = int(value)
+        minutes = round((value - hours) * 60)
+
+        if colon:
+            title = "%d:%02d" % (hours, minutes)
+        else:
+            formatted = []
+            if hours:
+                formatted.append("%dh" % hours)
+            if minutes:
+                formatted.append("%dmin" % minutes)
+            title = " ".join(formatted) if formatted else None
+
+        return SPAN("%s" % value, _title=title, _class="hours-formatted")
+
     return represent
 
 # =============================================================================

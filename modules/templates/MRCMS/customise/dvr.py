@@ -11,10 +11,10 @@ from gluon.storage import Storage
 
 from s3dal import Field
 from core import CRUDRequest, CustomController, FS, IS_ONE_OF, \
-                 S3SQLCustomForm, S3SQLInlineLink, \
+                 S3HoursWidget, S3SQLCustomForm, S3SQLInlineLink, \
                  DateFilter, OptionsFilter, TextFilter, \
                  get_form_record_id, s3_redirect_default, \
-                 set_default_filter, s3_fullname
+                 represent_hours, set_default_filter, s3_fullname
 
 from .pr import configure_person_tags
 
@@ -302,11 +302,13 @@ def dvr_response_action_resource(r, tablename):
 
     s3db = current.s3db
 
+    atable = s3db.dvr_response_action
+    ltable = s3db.dvr_response_action_theme
+
     on_tab = r.controller == "counsel" and r.resource.tablename == "pr_person"
 
     if on_tab and r.representation in ("html", "aadata", "pdf"):
         # Show details per theme in interactive view and PDF exports
-        ltable = s3db.dvr_response_action_theme
         ltable.id.represent = s3db.dvr_ResponseActionThemeRepresent(paragraph = True,
                                                                     details = True,
                                                                     )
@@ -314,6 +316,14 @@ def dvr_response_action_resource(r, tablename):
     else:
         # Show just list of themes
         themes = (T("Themes"), "response_action_theme.theme_id")
+
+    # Configure hours-fields for both total and per-theme efforts
+    for field in (ltable.hours, atable.hours):
+        field.widget = S3HoursWidget(precision = 2,
+                                    placeholder = "HH:MM",
+                                    explicit_above = 3,
+                                    )
+        field.represent = represent_hours()
 
     # List fields
     list_fields = ["start_date",

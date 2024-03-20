@@ -1194,7 +1194,7 @@ class S3HoursWidget(EdenFormWidget):
     PARTS = re.compile(r"((?:[+-]{0,1}\s*)(?:[0-9,.:]+)\s*(?:[^0-9,.:+-]*))")
     TOKEN = re.compile(r"([+-]{0,1}\s*)([0-9,.:]+)([^0-9,.:+-]*)")
 
-    def __init__(self, interval=None, precision=2, explicit_above=None):
+    def __init__(self, interval=None, precision=2, explicit_above=None, placeholder=None):
         """
             Args:
                 interval: standard interval to round up to (minutes),
@@ -1202,12 +1202,14 @@ class S3HoursWidget(EdenFormWidget):
                 precision: number of decimal places to keep
                 explicit_above: require explicit time unit or colon notation
                                 for value fragments above this limit
+                placeholder: placeholder for input
         """
 
         self.interval = interval
         self.precision = precision
 
         self.explicit_above = explicit_above
+        self.placeholder = placeholder
 
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
@@ -1225,6 +1227,9 @@ class S3HoursWidget(EdenFormWidget):
 
         attr["requires"] = self.validate
         attr["_title"] = current.T("In hours, or formatted like 1h10min, 15min, 0:45...")
+
+        if self.placeholder:
+            attr["_placeholder"] = self.placeholder
 
         widget = INPUT(**attr)
         widget.add_class("hours")
