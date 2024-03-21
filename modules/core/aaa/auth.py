@@ -28,6 +28,7 @@
 __all__ = ("AuthS3",
            )
 
+import binascii
 import json
 import time
 
@@ -3801,14 +3802,13 @@ Please go to %(url)s to approve this user."""
                     return success
 
             # Basic Auth (default)
-            basic = self.basic()
             try:
-                return basic[2]
-            except TypeError:
-                # old web2py
-                return basic
-            except:
+                basic = self.basic()
+            except binascii.Error:
+                # Credentials present but encoded incorrectly
                 return False
+
+            return basic[2] # accepted True|False
 
         return True
 
