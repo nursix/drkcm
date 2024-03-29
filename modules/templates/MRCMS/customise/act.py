@@ -143,7 +143,7 @@ def act_activity_controller(**attr):
                            "type_id",
                            "date",
                            "end_date",
-                           "time",
+                           "time_info",
                            "place",
                            ]
 

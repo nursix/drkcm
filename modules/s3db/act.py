@@ -136,7 +136,7 @@ class ActivityModel(DataModel):
                                set_max = "#act_activity_date",
                                ),
                      # TODO Time formula? Separate event table?
-                     Field("time",
+                     Field("time_info",
                            label = T("Time"),
                            represent = lambda v, row=None: v if v else "-",
                            ),
@@ -161,7 +161,7 @@ class ActivityModel(DataModel):
         # TODO Custom DateFilter (needs special interval filter)
         filter_widgets = [TextFilter(["name",
                                       "place",
-                                      "time",
+                                      "time_info",
                                       "comments",
                                       ],
                                      label = T("Search"),
@@ -177,7 +177,7 @@ class ActivityModel(DataModel):
                   )
 
         # Field Template
-        # TODO represent including date? place? time? sector?
+        # TODO represent including date? place? time_info? sector?
         represent = S3Represent(lookup="act_activity")
         activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
                                     label = T("Activity"),
@@ -211,8 +211,7 @@ class ActivityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"act_activity_id": FieldTemplate.dummy("activity_id"),
@@ -388,7 +387,7 @@ def act_rheader(r, tabs=None):
                         ]
             rheader_fields = [["type_id", "date"],
                               ["place"],
-                              ["time"],
+                              ["time_info"],
                               ]
             rheader_title = "name"
 
