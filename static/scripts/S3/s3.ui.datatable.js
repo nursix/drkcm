@@ -317,6 +317,10 @@
 
             this._unbindEvents();
 
+            // Do not (re-)submit these to server
+            $(this.selector + '_dataTable_cache').prop('disabled', true);
+            $(this.selector + '_configurations').prop('disabled', true);
+
             // Parse the table config
             var tableConfig = this._parseConfig();
             if (tableConfig === undefined) {
