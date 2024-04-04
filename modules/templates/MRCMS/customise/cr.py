@@ -478,7 +478,7 @@ def cr_shelter_controller(**attr):
 
         record = r.record
 
-        if is_admin and not record and not r.component:
+        if is_admin and not record and not r.component and r.method != "deduplicate":
 
             # Default action buttons (except delete)
             S3CRUD.action_buttons(r, deletable =False)
