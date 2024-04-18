@@ -35,7 +35,6 @@ from . import sit
 from . import stats
 from . import supply
 from . import sync
-from . import translate
 from . import transport
 from . import vehicle
 from . import vol

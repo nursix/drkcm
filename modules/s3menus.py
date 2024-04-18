@@ -296,7 +296,6 @@ class S3OptionsMenu:
         settings = current.deployment_settings
         consent_tracking = lambda i: settings.get_auth_consent_tracking()
         is_data_repository = lambda i: settings.get_sync_data_repository()
-        #translate = settings.has_module("translate")
 
         # NB: Do not specify a controller for the main menu to allow
         #     re-use of this menu by other controllers
@@ -330,17 +329,6 @@ class S3OptionsMenu:
                         M("Public Data Sets", f="dataset", check=is_data_repository),
                         M("Log", f="log"),
                     ),
-                    # TODO setting to enable:
-                    #M("Translation", c="admin", f="translate", check=translate)(
-                    #   M("Select Modules for translation", c="admin", f="translate",
-                    #     m="create", vars={"opt": "1"}),
-                    #   M("Upload translated files", c="admin", f="translate",
-                    #     m="create", vars={"opt": "2"}),
-                    #   M("View Translation Percentage", c="admin", f="translate",
-                    #     m="create", vars={"opt": "3"}),
-                    #   M("Add strings manually", c="admin", f="translate",
-                    #     m="create", vars={"opt": "4"})
-                    #),
                 )
 
     # -------------------------------------------------------------------------
