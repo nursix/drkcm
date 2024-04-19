@@ -61,7 +61,6 @@ __all__ = ("JSONSEPARATORS",
            "version_info",
            )
 
-import collections
 import copy
 import os
 import platform
@@ -763,8 +762,10 @@ def s3_get_foreign_key(field, m2m=True):
 def s3_flatlist(nested):
     """ Iterator to flatten mixed iterables of arbitrary depth """
 
+    import collections.abc
+
     for item in nested:
-        if isinstance(item, collections.Iterable) and \
+        if isinstance(item, collections.abc.Iterable) and \
            not isinstance(item, str):
             for sub in s3_flatlist(item):
                 yield sub
@@ -1173,7 +1174,7 @@ class MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):
-        super(MarkupStripper, self).__init__()
+        super().__init__()
         #self.reset() # Included in super-init
         self.result = []
 
@@ -1275,7 +1276,7 @@ class FormKey:
         keys = current.session.get(keyname, [])
         if not formkey or formkey not in keys:
             return False
-        elif invalidate:
+        if invalidate:
             keys.remove(formkey)
 
         return True
