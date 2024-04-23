@@ -32,7 +32,7 @@ __all__ = ("SecurityZonesModel",
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class SecurityZonesModel(DataModel):
@@ -178,11 +178,11 @@ class SecurityZonesModel(DataModel):
                                         IS_ONE_OF(db, "security_zone_type.id",
                                                   zone_type_represent,
                                                   sort=True)),
-                           comment = S3PopupLink(c = "security",
-                                                 f = "zone_type",
-                                                 label = ADD_ZONE_TYPE,
-                                                 tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
-                                                 ),
+                           comment = PopupLink(c = "security",
+                                               f = "zone_type",
+                                               label = ADD_ZONE_TYPE,
+                                               tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
+                                               ),
                            ),
                      location_id(
                         widget = LocationSelector(catalog_layers = True,
@@ -251,11 +251,11 @@ class SecurityZonesModel(DataModel):
                                                   staff_type_represent,
                                                   sort=True,
                                                   multiple=True)),
-                           comment = S3PopupLink(c = "security",
-                                                 f = "staff_type",
-                                                 label = ADD_STAFF,
-                                                 tooltip = T("Select a Staff Type from the list or click 'Add Staff Type'"),
-                                                 ),
+                           comment = PopupLink(c = "security",
+                                               f = "staff_type",
+                                               label = ADD_STAFF,
+                                               tooltip = T("Select a Staff Type from the list or click 'Add Staff Type'"),
+                                               ),
                            ),
                      Field("zone_id", db.security_zone,
                            label = T("Zone"),
@@ -264,11 +264,11 @@ class SecurityZonesModel(DataModel):
                                         IS_ONE_OF(db, "security_zone.id",
                                                   zone_represent,
                                                   sort=True)),
-                           comment = S3PopupLink(c = "security",
-                                                 f = "zone",
-                                                 label = ADD_ZONE,
-                                                 tooltip = T("For wardens, select a Zone from the list or click 'Add Zone'"),
-                                                 ),
+                           comment = PopupLink(c = "security",
+                                               f = "zone",
+                                               label = ADD_ZONE,
+                                               tooltip = T("For wardens, select a Zone from the list or click 'Add Zone'"),
+                                               ),
                            ),
                      self.super_link("site_id", "org_site",
                                      label = T("Facility"),
@@ -402,10 +402,10 @@ class SecuritySeizedItemsModel(DataModel):
                                                               represent,
                                                               )),
                                      sortby = "name",
-                                     comment = S3PopupLink(c = "security",
-                                                           f = "seized_item_type",
-                                                           tooltip = T("Create new item type"),
-                                                           ),
+                                     comment = PopupLink(c = "security",
+                                                         f = "seized_item_type",
+                                                         tooltip = T("Create new item type"),
+                                                         ),
                                      )
 
         # ---------------------------------------------------------------------
@@ -594,8 +594,7 @@ class SecuritySeizedItemsModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"security_seized_item_status_opts": {},

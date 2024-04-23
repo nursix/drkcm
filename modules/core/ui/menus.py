@@ -26,8 +26,8 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3MainMenu",
-           "S3OptionsMenu",
+__all__ = ("MainMenu",
+           "OptionsMenu",
            )
 
 import re
@@ -35,11 +35,11 @@ import re
 from gluon import current, URL
 from gluon.storage import Storage
 
-from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import M, MM, MP, ML, MA, OM, MOA, S3BreadcrumbsLayout
+from ..tools import IS_ISO639_2_LANGUAGE_CODE
+from .layouts import M, MM, MP, ML, MA, OM, MOA, BreadcrumbsLayout
 
 # =============================================================================
-class S3MainMenu:
+class MainMenu:
     """ The default configurations for the main application menu """
 
     # -------------------------------------------------------------------------
@@ -257,7 +257,7 @@ class S3MainMenu:
                 )
 
 # =============================================================================
-class S3OptionsMenu:
+class OptionsMenu:
     """
         The default configurations for options menus
 
@@ -1685,7 +1685,7 @@ class S3OptionsMenu:
         """ Breadcrumbs from the current options menu """
 
         # Configure the layout:
-        layout = S3BreadcrumbsLayout
+        layout = BreadcrumbsLayout
 
         request = current.request
         controller = request.controller

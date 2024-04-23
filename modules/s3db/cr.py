@@ -45,7 +45,6 @@ from gluon.storage import Storage
 from ..core import *
 
 from s3dal import Row
-from s3layouts import S3PopupLink
 
 # =============================================================================
 def shelter_status_opts():
@@ -444,14 +443,14 @@ class CRShelterModel(DataModel):
                                                               represent,
                                                               sort = True,
                                                               )),
-                                   comment = S3PopupLink(c = "cr",
-                                                         f = "shelter",
-                                                         label = ADD_SHELTER,
-                                                         title = SHELTER_LABEL,
-                                                         tooltip = "%s (%s)." % (SHELTER_HELP,
-                                                                                 T("optional"),
-                                                                                 ),
-                                                         ),
+                                   comment = PopupLink(c = "cr",
+                                                       f = "shelter",
+                                                       label = ADD_SHELTER,
+                                                       title = SHELTER_LABEL,
+                                                       tooltip = "%s (%s)." % (SHELTER_HELP,
+                                                                               T("optional"),
+                                                                               ),
+                                                       ),
                                    widget = S3AutocompleteWidget("cr", "shelter")
                                    )
 
@@ -1183,10 +1182,10 @@ class CRShelterServiceModel(DataModel):
                                                               service_represent,
                                                               )),
                                    sortby = "name",
-                                   comment = S3PopupLink(c = "cr",
-                                                         f = "shelter_service",
-                                                         label = ADD_SHELTER_SERVICE,
-                                                         ),
+                                   comment = PopupLink(c = "cr",
+                                                       f = "shelter_service",
+                                                       label = ADD_SHELTER_SERVICE,
+                                                       ),
                                    )
         self.configure(tablename,
                        deduplicate = S3Duplicate(),

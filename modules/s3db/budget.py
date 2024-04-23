@@ -39,7 +39,6 @@ from gluon.storage import Storage
 
 from ..core import *
 from s3dal import Row
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class BudgetModel(DataModel):
@@ -199,7 +198,7 @@ class BudgetModel(DataModel):
         #                                 requires = IS_ONE_OF(db, "budget_budget.id",
         #                                                      budget_budget_represent,
         #                                                      ),
-        #                                 comment = S3PopupLink(
+        #                                 comment = PopupLink(
         #                                    c = "budget",
         #                                    f = "budget",
         #                                    label = ADD_BUDGET,
@@ -307,7 +306,7 @@ class BudgetModel(DataModel):
                                            requires = IS_ONE_OF(db, "budget_location.id",
                                                                 budget_location_represent,
                                                                 ),
-                                           comment = S3PopupLink(
+                                           comment = PopupLink(
                                                 c = "budget",
                                                 f = "location",
                                                 label = ADD_LOCATION,
@@ -390,7 +389,7 @@ class BudgetModel(DataModel):
                                         requires = IS_ONE_OF(db, "budget_staff.id",
                                                             budget_staff_represent,
                                                             ),
-                                        comment = S3PopupLink(
+                                        comment = PopupLink(
                                             c = "budget",
                                             f = "staff",
                                             label = ADD_STAFF_TYPE,
@@ -637,7 +636,7 @@ class BudgetKitModel(DataModel):
                                       requires = IS_ONE_OF(db, "budget_kit.id",
                                                            budget_kit_represent,
                                                            ),
-                                      comment = S3PopupLink(
+                                      comment = PopupLink(
                                             c = "budget",
                                             f = "kit",
                                             label = ADD_KIT,
@@ -763,7 +762,7 @@ class BudgetKitModel(DataModel):
                                        requires = IS_ONE_OF(db, "budget_item.id",
                                                             budget_item_represent,
                                                             ),
-                                       comment = S3PopupLink(
+                                       comment = PopupLink(
                                             c = "budget",
                                             f = "item",
                                             label = ADD_ITEM,
@@ -1016,7 +1015,7 @@ class BudgetBundleModel(DataModel):
                                          requires = IS_ONE_OF(db, "budget_bundle.id",
                                                               budget_bundle_represent,
                                                               ),
-                                         comment = S3PopupLink(
+                                         comment = PopupLink(
                                             c = "budget",
                                             f = "bundle",
                                             label = ADD_BUNDLE,
@@ -1670,17 +1669,17 @@ class budget_CostItemRepresent(S3Represent):
 
     def __init__(self, show_link=False):
 
-        super(budget_CostItemRepresent, self).__init__(lookup="budget_cost_item",
-                                                       key="cost_item_id",
-                                                       show_link=show_link,
-                                                       )
+        super().__init__(lookup = "budget_cost_item",
+                         key = "cost_item_id",
+                         show_link = show_link,
+                         )
 
         s3db = current.s3db
         self.represent = {
             "asset_id": s3db.asset_AssetRepresent(show_link=False),
             "site_id": s3db.org_SiteRepresent(show_link=False),
             "human_resource_id": s3db.hrm_HumanResourceRepresent(show_link=False),
-        }
+            }
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):

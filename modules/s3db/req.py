@@ -71,7 +71,7 @@ from gluon import *
 from gluon.sqlhtml import StringWidget
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 from .pr import OU
 
@@ -240,19 +240,19 @@ class RequestModel(DataModel):
         # Dropdown or Autocomplete for Requesting Site?
         if settings.get_org_site_autocomplete():
             site_widget = S3SiteAutocompleteWidget()
-            site_comment = S3PopupLink(c = "org",
-                                       f = "facility",
-                                       vars = {"child":"site_id"},
-                                       title = T("Create Facility"),
-                                       tooltip = AUTOCOMPLETE_HELP,
-                                       )
+            site_comment = PopupLink(c = "org",
+                                     f = "facility",
+                                     vars = {"child":"site_id"},
+                                     title = T("Create Facility"),
+                                     tooltip = AUTOCOMPLETE_HELP,
+                                     )
         else:
             site_widget = None
-            site_comment = S3PopupLink(c = "org",
-                                       f = "facility",
-                                       vars = {"child": "site_id"},
-                                       title = T("Create Facility"),
-                                       )
+            site_comment = PopupLink(c = "org",
+                                     f = "facility",
+                                     vars = {"child": "site_id"},
+                                     title = T("Create Facility"),
+                                     )
 
         # Workflow options
         workflow_opts = {1: T("Draft"),
@@ -366,14 +366,14 @@ class RequestModel(DataModel):
                                     label = requester_label,
                                     represent = req_RequesterRepresent(),
                                     #writable = False,
-                                    comment = S3PopupLink(c = "pr",
-                                                          f = "person",
-                                                          vars = {"child": "requester_id",
-                                                                  "parent": "req",
-                                                                  },
-                                                          title = crud_strings["pr_person"].label_create,
-                                                          tooltip = AUTOCOMPLETE_HELP,
-                                                          ),
+                                    comment = PopupLink(c = "pr",
+                                                        f = "person",
+                                                        vars = {"child": "requester_id",
+                                                                "parent": "req",
+                                                                },
+                                                        title = crud_strings["pr_person"].label_create,
+                                                        tooltip = AUTOCOMPLETE_HELP,
+                                                        ),
                                     ),
                           person_id("assigned_to_id", # This field should be in req_commit, but that complicates the UI
                                     label = T("Assigned To"),
@@ -2725,11 +2725,11 @@ class RequestNeedsDemographicsModel(DataModel):
         #
         if current.s3db.table("stats_demographic"):
             title = current.response.s3.crud_strings["stats_demographic"].label_create
-            parameter_id_comment = S3PopupLink(c = "stats",
-                                               f = "demographic",
-                                               vars = {"child": "parameter_id"},
-                                               title = title,
-                                               )
+            parameter_id_comment = PopupLink(c = "stats",
+                                             f = "demographic",
+                                             vars = {"child": "parameter_id"},
+                                             title = title,
+                                             )
         else:
             parameter_id_comment = None
 
@@ -2923,12 +2923,12 @@ class RequestNeedsSkillsModel(DataModel):
         tablename = "req_need_skill"
         self.define_table(tablename,
                           self.req_need_id(empty = False),
-                          skill_id(comment = S3PopupLink(c = "hrm",
-                                                         f = "skill",
-                                                         label = CREATE_SKILL,
-                                                         tooltip = None,
-                                                         vars = {"prefix": "req"},
-                                                         ),
+                          skill_id(comment = PopupLink(c = "hrm",
+                                                       f = "skill",
+                                                       label = CREATE_SKILL,
+                                                       tooltip = None,
+                                                       vars = {"prefix": "req"},
+                                                       ),
                                    empty = False,
                                    ),
                           Field("quantity", "double",
@@ -2994,12 +2994,12 @@ class RequestNeedsOrganisationModel(DataModel):
         tablename = "req_need_organisation"
         self.define_table(tablename,
                           self.req_need_id(empty = False),
-                          organisation_id(comment = S3PopupLink(c = "org",
-                                                                f = "organisation",
-                                                                label = CREATE,
-                                                                tooltip = None,
-                                                                vars = {"prefix": "req"},
-                                                                ),
+                          organisation_id(comment = PopupLink(c = "org",
+                                                              f = "organisation",
+                                                              label = CREATE,
+                                                              tooltip = None,
+                                                              vars = {"prefix": "req"},
+                                                              ),
                                           empty = False,
                                           ),
                           CommentsField(),
@@ -4556,23 +4556,24 @@ def req_rheader(r, check_page=False):
         else:
             # Hide these if no Items/Skills on one of these requests yet
             auth = current.auth
+            user = auth.user
+            organisation_id = user.organisation_id if user else None
+
             req_id = record.id
             if items:
-                user = auth.user
                 user_site_id = user.site_id if user else None
                 ritable = s3db.req_req_item
                 possibly_complete = db(ritable.req_id == req_id).select(ritable.id,
                                                                         limitby = (0, 1)
                                                                         )
             elif people:
-                user = auth.user
-                organisation_id = user.organisation_id if user else None
                 rstable = s3db.req_req_skill
                 possibly_complete = db(rstable.req_id == req_id).select(rstable.id,
                                                                         limitby = (0, 1)
                                                                         )
             else:
                 possibly_complete = True
+
             if possibly_complete:
                 if use_commit:
                     tabs.append((T("Commitments"), "commit"))
@@ -5857,13 +5858,13 @@ def req_create_form_mods():
     if settings.get_req_requester_from_site():
         # Filter the list of Contacts to those for the site
         table.requester_id.widget = None
-        table.requester_id.comment = S3PopupLink(c = "pr",
-                                                 f = "person",
-                                                 vars = {"child": "requester_id",
-                                                         "parent": "req",
-                                                         },
-                                                 title = s3.crud_strings["pr_person"].label_create,
-                                                 )
+        table.requester_id.comment = PopupLink(c = "pr",
+                                               f = "person",
+                                               vars = {"child": "requester_id",
+                                                       "parent": "req",
+                                                       },
+                                               title = s3.crud_strings["pr_person"].label_create,
+                                               )
         s3.jquery_ready.append('''
 $.filterOptionsS3({
 'trigger':'site_id',
@@ -6011,13 +6012,13 @@ $.filterOptionsS3({
 
                 # Popup link to allow adding a contact (...for the site)
                 table.requester_id.widget = None
-                table.requester_id.comment = S3PopupLink(c = "pr",
-                                                         f = "person",
-                                                         vars = {"child": "requester_id",
-                                                                 "parent": "req",
-                                                                 },
-                                                         title = s3.crud_strings["pr_person"].label_create,
-                                                         )
+                table.requester_id.comment = PopupLink(c = "pr",
+                                                       f = "person",
+                                                       vars = {"child": "requester_id",
+                                                               "parent": "req",
+                                                               },
+                                                       title = s3.crud_strings["pr_person"].label_create,
+                                                       )
 
                 # Link to user profile to allow setting this site
                 # as their current default site, so that they appear
@@ -6099,13 +6100,13 @@ $.filterOptionsS3({
             if settings.get_req_requester_from_site():
                 # Filter the list of Contacts to those for the site
                 table.requester_id.widget = None
-                table.requester_id.comment = S3PopupLink(c = "pr",
-                                                         f = "person",
-                                                         vars = {"child": "requester_id",
-                                                                 "parent": "req",
-                                                                 },
-                                                         title = s3.crud_strings["pr_person"].label_create,
-                                                         )
+                table.requester_id.comment = PopupLink(c = "pr",
+                                                       f = "person",
+                                                       vars = {"child": "requester_id",
+                                                               "parent": "req",
+                                                               },
+                                                       title = s3.crud_strings["pr_person"].label_create,
+                                                       )
                 s3.jquery_ready.append('''
 $.filterOptionsS3({
 'trigger':'site_id',

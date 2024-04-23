@@ -42,7 +42,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -166,11 +166,11 @@ class VolunteerActivityModel(DataModel):
             msg_record_deleted = T("Activity Type deleted"),
             msg_list_empty = T("No Activity Types found"))
 
-        comment = S3PopupLink(c = "vol",
-                              f = "activity_type",
-                              label = crud_strings[tablename].label_create,
-                              title = T("Activity Type"),
-                              )
+        comment = PopupLink(c = "vol",
+                            f = "activity_type",
+                            label = crud_strings[tablename].label_create,
+                            title = T("Activity Type"),
+                            )
 
         represent = S3Represent(lookup=tablename, translate=True)
         activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
@@ -642,11 +642,11 @@ class VolunteerAwardModel(DataModel):
             msg_record_deleted = T("Award deleted"),
             msg_list_empty = T("No Awards found"))
 
-        comment = S3PopupLink(c = "vol",
-                              f = "award",
-                              label = crud_strings[tablename].label_create,
-                              title = T("Award"),
-                              )
+        comment = PopupLink(c = "vol",
+                            f = "award",
+                            label = crud_strings[tablename].label_create,
+                            title = T("Award"),
+                            )
 
         represent = S3Represent(lookup=tablename)
         award_id = FieldTemplate("award_id", "reference %s" % tablename,
@@ -782,14 +782,14 @@ class VolunteerClusterModel(DataModel):
             msg_record_deleted = T("Volunteer Cluster Type deleted"),
             msg_list_empty = T("No Volunteer Cluster Types"))
 
-        comment = S3PopupLink(c = "vol",
-                              f = "cluster_type",
-                              vars = {"child": "vol_cluster_type_id",
-                                      "parent": "volunteer_cluster",
-                                      },
-                              label = crud_strings[tablename].label_create,
-                              title = T("Volunteer Cluster Type"),
-                              )
+        comment = PopupLink(c = "vol",
+                            f = "cluster_type",
+                            vars = {"child": "vol_cluster_type_id",
+                                    "parent": "volunteer_cluster",
+                                    },
+                            label = crud_strings[tablename].label_create,
+                            title = T("Volunteer Cluster Type"),
+                            )
 
         represent = S3Represent(lookup=tablename)
         vol_cluster_type_id = FieldTemplate("vol_cluster_type_id", "reference %s" % tablename,
@@ -829,14 +829,14 @@ class VolunteerClusterModel(DataModel):
             msg_record_deleted = T("Volunteer Cluster deleted"),
             msg_list_empty = T("No Volunteer Clusters"))
 
-        comment = S3PopupLink(c = "vol",
-                              f = "cluster",
-                              vars = {"child": "vol_cluster_id",
-                                      "parent": "volunteer_cluster",
-                                      },
-                              label = crud_strings[tablename].label_create,
-                              title = T("Volunteer Cluster"),
-                              )
+        comment = PopupLink(c = "vol",
+                            f = "cluster",
+                            vars = {"child": "vol_cluster_id",
+                                    "parent": "volunteer_cluster",
+                                    },
+                            label = crud_strings[tablename].label_create,
+                            title = T("Volunteer Cluster"),
+                            )
 
         represent = S3Represent(lookup=tablename)
         vol_cluster_id = FieldTemplate("vol_cluster_id", "reference %s" % tablename,
@@ -876,14 +876,14 @@ class VolunteerClusterModel(DataModel):
             msg_record_deleted = T("Volunteer Cluster Position deleted"),
             msg_list_empty = T("No Volunteer Cluster Positions"))
 
-        comment = S3PopupLink(c = "vol",
-                              f = "cluster_position",
-                              vars = {"child": "vol_cluster_position_id",
-                                      "parent": "volunteer_cluster",
-                                      },
-                              label = crud_strings[tablename].label_create,
-                              title = T("Volunteer Cluster Position"),
-                              )
+        comment = PopupLink(c = "vol",
+                            f = "cluster_position",
+                            vars = {"child": "vol_cluster_position_id",
+                                    "parent": "volunteer_cluster",
+                                    },
+                            label = crud_strings[tablename].label_create,
+                            title = T("Volunteer Cluster Position"),
+                            )
 
         represent = S3Represent(lookup=tablename)
         vol_cluster_position_id = FieldTemplate("vol_cluster_position_id", "reference %s" % tablename,
@@ -924,8 +924,7 @@ $.filterOptionsS3({
                 }
 
     # =====================================================================
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults for model globals, this will be called instead
             of model() in case the model has been deactivated in
@@ -1530,10 +1529,9 @@ def vol_person_controller():
     table.type.default = 2
     get_vars["xsltmode"] = "volunteer"
     if hr_id:
-        hr = db(table.id == hr_id).select(table.type,
-                                          limitby=(0, 1)).first()
+        hr = db(table.id == hr_id).select(table.type, limitby=(0, 1)).first()
         if hr:
-            group = hr.type == 2 and "volunteer" or "staff"
+            group = "volunteer" if hr.type == 2 else "staff"
             # Also inform the back-end of this finding
             get_vars["group"] = group
 

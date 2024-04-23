@@ -36,7 +36,6 @@ from gluon.storage import Storage
 
 from ..core import *
 from s3dal import Row
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class HospitalDataModel(DataModel):
@@ -366,12 +365,12 @@ class HospitalDataModel(DataModel):
                   )
 
         # Foreign Key Template
-        hms_hospital_id_comment = S3PopupLink(c = "hms",
-                                              f = "hospital",
-                                              label = ADD_HOSPITAL,
-                                              title = T("Hospital"),
-                                              tooltip = T("If you don't see the Hospital in the list, you can add a new one by clicking link 'Create Hospital'."),
-                                              )
+        hms_hospital_id_comment = PopupLink(c = "hms",
+                                            f = "hospital",
+                                            label = ADD_HOSPITAL,
+                                            title = T("Hospital"),
+                                            tooltip = T("If you don't see the Hospital in the list, you can add a new one by clicking link 'Create Hospital'."),
+                                            )
 
         represent = S3Represent(lookup=tablename)
         hospital_id = FieldTemplate("hospital_id", "reference %s" % tablename,

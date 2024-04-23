@@ -55,7 +55,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -1716,16 +1715,16 @@ class GISConfigModel(DataModel):
                                                           )),
                                   sortby = "name",
                                   widget = S3SelectWidget(icons=self.gis_marker_options),
-                                  comment=S3PopupLink(c = "gis",
-                                                      f = "marker",
-                                                      #vars = {"child": "marker_id",
-                                                      #        "parent": "symbology"},
-                                                      label = ADD_MARKER,
-                                                      title = T("Marker"),
-                                                      tooltip = "%s|%s|%s" % (T("Defines the icon used for display of features on interactive map & KML exports."),
-                                                                              T("A Marker assigned to an individual Location is set if there is a need to override the Marker assigned to the Feature Class."),
-                                                                              T("If neither are defined, then the Default Marker is used.")),
-                                                      ),
+                                  comment=PopupLink(c = "gis",
+                                                    f = "marker",
+                                                    #vars = {"child": "marker_id",
+                                                    #        "parent": "symbology"},
+                                                    label = ADD_MARKER,
+                                                    title = T("Marker"),
+                                                    tooltip = "%s|%s|%s" % (T("Defines the icon used for display of features on interactive map & KML exports."),
+                                                                            T("A Marker assigned to an individual Location is set if there is a need to override the Marker assigned to the Feature Class."),
+                                                                            T("If neither are defined, then the Default Marker is used.")),
+                                                    ),
                                   )
 
         # Components
@@ -1808,14 +1807,14 @@ class GISConfigModel(DataModel):
                                                               )),
                                       represent = represent,
                                       label = T("Projection"),
-                                      comment=S3PopupLink(c = "gis",
-                                                          f = "projection",
-                                                          label = ADD_PROJECTION,
-                                                          title = T("Projection"),
-                                                          tooltip = "%s|%s|%s" % (T("The system supports 2 projections by default:"),
-                                                                                  T("Spherical Mercator (900913) is needed to use OpenStreetMap/Google/Bing base layers."),
-                                                                                  T("WGS84 (EPSG 4236) is required for many WMS servers.")),
-                                                          ),
+                                      comment=PopupLink(c = "gis",
+                                                        f = "projection",
+                                                        label = ADD_PROJECTION,
+                                                        title = T("Projection"),
+                                                        tooltip = "%s|%s|%s" % (T("The system supports 2 projections by default:"),
+                                                                                T("Spherical Mercator (900913) is needed to use OpenStreetMap/Google/Bing base layers."),
+                                                                                T("WGS84 (EPSG 4236) is required for many WMS servers.")),
+                                                        ),
                                       ondelete = "RESTRICT",
                                       )
 
@@ -2389,10 +2388,10 @@ class GISConfigModel(DataModel):
             except ImportError:
                 # Native Python version
                 native = True
-                import struct
 
         if native:
             # Fallbacks
+            import struct
             width = height = -1
             stream = image.file
             if extension == "bmp":
@@ -5468,7 +5467,6 @@ class gis_LocationRepresent(S3Represent):
                 represent = "%s (%s)" % (name, current.messages.COUNTRY)
             elif level in ("L1", "L2", "L3", "L4", "L5"):
                 # Lookup the hierarchy for labels
-                s3db = current.s3db
                 L0_name = row.L0
                 if L0_name:
                     if row.path:
@@ -5641,7 +5639,7 @@ def gis_marker_retrieve_file_properties(filename, path=None):
         if len(_path) > 1:
             _path, filename = _path
         else:
-            _path, filename = "", filename
+            _path = ""
         path = os.path.join(path, _path)
     return {"path": path, "filename": filename}
 

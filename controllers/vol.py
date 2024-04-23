@@ -465,7 +465,7 @@ def award():
 # -----------------------------------------------------------------------------
 def volunteer_award():
     """
-        Used for returning options to the S3PopupLink PopUp
+        Used for returning options to the PopupLink PopUp
     """
 
     # We use component form instead
@@ -502,7 +502,7 @@ def cluster_position():
 
 # -----------------------------------------------------------------------------
 def volunteer_cluster():
-    """ ONLY FOR RETURNING options to the S3PopupLink PopUp """
+    """ ONLY FOR RETURNING options to the PopupLink PopUp """
 
     return crud_controller()
 

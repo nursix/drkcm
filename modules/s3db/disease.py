@@ -45,7 +45,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Monitoring upgrades {new_level:previous_levels}
 MONITORING_UPGRADE = {"OBSERVATION": ("NONE",
@@ -114,9 +113,9 @@ class DiseaseDataModel(DataModel):
                                                         represent,
                                                         ),
                                    sortby = "name",
-                                   comment = S3PopupLink(f = "disease",
-                                                         tooltip = T("Add a new disease to the catalog"),
-                                                         ),
+                                   comment = PopupLink(f = "disease",
+                                                       tooltip = T("Add a new disease to the catalog"),
+                                                       ),
                                    )
 
         self.add_components(tablename,
@@ -1073,9 +1072,9 @@ class DiseaseCaseTrackingModel(DataModel):
                                                 IS_ONE_OF(db, "disease_case.id",
                                                           represent,
                                                           )),
-                                comment = S3PopupLink(f = "case",
-                                                      tooltip = T("Add a new case"),
-                                                      ),
+                                comment = PopupLink(f = "case",
+                                                    tooltip = T("Add a new case"),
+                                                    ),
                                 )
 
         # Components
@@ -1777,9 +1776,9 @@ class DiseaseContactTracingModel(DataModel):
                                                               represent,
                                                               )),
                                    sortby = "date",
-                                   comment = S3PopupLink(f = "tracing",
-                                                         tooltip = T("Add a new contact tracing information"),
-                                                         ),
+                                   comment = PopupLink(f = "tracing",
+                                                       tooltip = T("Add a new contact tracing information"),
+                                                       ),
                                    )
 
         self.add_components(tablename,
@@ -2158,11 +2157,11 @@ class DiseaseStatsModel(DataModel):
                                 readable = True,
                                 writable = True,
                                 empty = False,
-                                comment = S3PopupLink(c = "disease",
-                                                      f = "statistic",
-                                                      vars = {"child": "parameter_id"},
-                                                      title = ADD_STATISTIC,
-                                                      ),
+                                comment = PopupLink(c = "disease",
+                                                    f = "statistic",
+                                                    vars = {"child": "parameter_id"},
+                                                    title = ADD_STATISTIC,
+                                                    ),
                                 ),
                      location_id(
                          requires = IS_LOCATION(),

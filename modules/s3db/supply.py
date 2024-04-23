@@ -51,7 +51,7 @@ from gluon.storage import Storage
 
 from ..core import *
 from s3dal import Row
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # @ToDo: Put the most common patterns at the top to optimise
 um_patterns = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
@@ -167,12 +167,12 @@ class SupplyModel(DataModel):
                                                           sort = True,
                                                           )),
                                   sortby = "name",
-                                  comment = S3PopupLink(c = "supply",
-                                                        f = "brand",
-                                                        label = ADD_BRAND,
-                                                        title = T("Brand"),
-                                                        tooltip = T("The list of Brands are maintained by the Administrators."),
-                                                        ),
+                                  comment = PopupLink(c = "supply",
+                                                      f = "brand",
+                                                      label = ADD_BRAND,
+                                                      title = T("Brand"),
+                                                      tooltip = T("The list of Brands are maintained by the Administrators."),
+                                                      ),
                                   )
 
         # =====================================================================
@@ -211,12 +211,12 @@ class SupplyModel(DataModel):
         # Foreign Key Template
         catalog_multi = settings.get_supply_catalog_multi()
         if catalog_multi:
-            comment = S3PopupLink(c = "supply",
-                                  f = "catalog",
-                                  label = ADD_CATALOG,
-                                  title = T("Catalog"),
-                                  tooltip = T("The list of Catalogs are maintained by the Administrators."),
-                                  )
+            comment = PopupLink(c = "supply",
+                                f = "catalog",
+                                label = ADD_CATALOG,
+                                title = T("Catalog"),
+                                tooltip = T("The list of Catalogs are maintained by the Administrators."),
+                                )
         else:
             comment = None
 
@@ -330,12 +330,12 @@ class SupplyModel(DataModel):
             msg_list_empty = T("No Item Categories currently registered"))
 
         # Foreign Key Template
-        item_category_comment = S3PopupLink(c = "supply",
-                                            f = "item_category",
-                                            label = ADD_ITEM_CATEGORY,
-                                            title = T("Item Category"),
-                                            tooltip = ADD_ITEM_CATEGORY,
-                                            )
+        item_category_comment = PopupLink(c = "supply",
+                                          f = "item_category",
+                                          label = ADD_ITEM_CATEGORY,
+                                          title = T("Item Category"),
+                                          tooltip = ADD_ITEM_CATEGORY,
+                                          )
 
         item_category_id = FieldTemplate("item_category_id", "reference %s" % tablename,
                                          comment = item_category_comment,
@@ -507,12 +507,12 @@ $.filterOptionsS3({
                                                             ),
                                        sortby = "name",
                                        widget = S3AutocompleteWidget("supply", "item"),
-                                       comment = S3PopupLink(c = "supply",
-                                                             f = "item",
-                                                             label = ADD_ITEM,
-                                                             title = T("Item"),
-                                                             tooltip = supply_item_tooltip,
-                                                             ),
+                                       comment = PopupLink(c = "supply",
+                                                           f = "item",
+                                                           label = ADD_ITEM,
+                                                           title = T("Item"),
+                                                           tooltip = supply_item_tooltip,
+                                                           ),
                                        )
 
         # ---------------------------------------------------------------------
@@ -765,12 +765,12 @@ $.filterOptionsS3({
  'fncRepresent':S3.supply.fncRepresentItem
 })''',
                                      sortby = "name",
-                                     #comment=S3PopupLink(c = "supply",
-                                     #                    f = "item_pack",
-                                     #                    label = ADD_ITEM_PACK,
-                                     #                    title = T("Item Packs"),
-                                     #                    tooltip = T("The way in which an item is normally distributed"),
-                                     #                    ),
+                                     #comment=PopupLink(c = "supply",
+                                     #                  f = "item_pack",
+                                     #                  label = ADD_ITEM_PACK,
+                                     #                  title = T("Item Packs"),
+                                     #                  tooltip = T("The way in which an item is normally distributed"),
+                                     #                  ),
                                      )
 
         configure(tablename,
@@ -842,14 +842,14 @@ $.filterOptionsS3({
                            ),
                      supply_item_id("alt_item_id",
                                     notnull=True,
-                                    comment = S3PopupLink(c = "supply",
-                                                          f = "item",
-                                                          label = ADD_ITEM,
-                                                          title = T("Item"),
-                                                          tooltip = supply_item_tooltip,
-                                                          vars = {"child": "alt_item_id"
-                                                                  },
-                                                          ),
+                                    comment = PopupLink(c = "supply",
+                                                        f = "item",
+                                                        label = ADD_ITEM,
+                                                        title = T("Item"),
+                                                        tooltip = supply_item_tooltip,
+                                                        vars = {"child": "alt_item_id"
+                                                                },
+                                                        ),
                                     ),
                      CommentsField(),
                      )
@@ -950,8 +950,7 @@ $.filterOptionsS3({
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Return safe defaults for names in case the model is disabled """
 
         dummy = FieldTemplate.dummy
@@ -1036,7 +1035,7 @@ $.filterOptionsS3({
                     (rtable.id == itable.recv_id)
             eta = db(query).select(rtable.eta,
                                    limitby=(0, 1)).first().eta
-            item_str = T("Due %(date)s") % dict(date=eta)
+            item_str = T("Due %(date)s") % {"date": eta}
         else:
             return current.messages.UNKNOWN_OPT
 
@@ -1357,12 +1356,12 @@ class SupplyDistributionModel(DataModel):
                                 readable = True,
                                 writable = True,
                                 empty = False,
-                                comment = S3PopupLink(c = "supply",
-                                                      f = "distribution_item",
-                                                      vars = {"prefix": "supply",
-                                                              "child": "parameter_id"},
-                                                      title = ADD_ITEM,
-                                                      ),
+                                comment = PopupLink(c = "supply",
+                                                    f = "distribution_item",
+                                                    vars = {"prefix": "supply",
+                                                            "child": "parameter_id"},
+                                                    title = ADD_ITEM,
+                                                    ),
                                 ),
                      self.gis_location_id(),
                      # @ToDo: (Optionally) Populate this value based on the # Beneficiaries
@@ -1905,12 +1904,12 @@ class supply_ItemRepresent(S3Represent):
         if show_um:
             fields.append("supply_item.um")
 
-        super(supply_ItemRepresent,
-              self).__init__(lookup = "supply_item",
-                             fields = fields,
-                             show_link = show_link,
-                             translate = translate,
-                             multiple = multiple)
+        super().__init__(lookup = "supply_item",
+                         fields = fields,
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -2077,12 +2076,12 @@ class supply_ItemCategoryRepresent(S3Represent):
         if show_catalog:
             fields.append("supply_catalog.name")
 
-        super(supply_ItemCategoryRepresent,
-              self).__init__(lookup = "supply_item_category",
-                             fields = fields,
-                             show_link = show_link,
-                             translate = translate,
-                             multiple = multiple)
+        super().__init__(lookup = "supply_item_category",
+                         fields = fields,
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -2636,8 +2635,7 @@ def supply_item_entity_status(row):
         if record:
             T = current.T
             if record.expiry_date:
-                status = T("Stock Expires %(date)s") % \
-                          dict(date=record.expiry_date)
+                status = T("Stock Expires %(date)s") % {"date": record.expiry_date}
             else:
                 status = T("In Stock")
 
@@ -2652,7 +2650,7 @@ def supply_item_entity_status(row):
         if record:
             T = current.T
             if record.eta:
-                status = T("Planned %(date)s") % dict(date=record.eta)
+                status = T("Planned %(date)s") % {"date": record.eta}
             else:
                 status = T("Planned Procurement")
 
@@ -2666,7 +2664,7 @@ def supply_item_entity_status(row):
         if record:
             T = current.T
             if record.eta:
-                status = T("Order Due %(date)s") % dict(date=record.eta)
+                status = T("Order Due %(date)s") % {"date": record.eta}
             else:
                 status = T("On Order")
 
@@ -2721,13 +2719,13 @@ def supply_item_controller():
             f.requires = f.requires.other
             # Need to tell Item Category controller that new categories must be 'Can be Assets'
             ADD_ITEM_CATEGORY = s3.crud_strings["supply_item_category"].label_create
-            f.comment = S3PopupLink(c = "supply",
-                                    f = "item_category",
-                                    vars = {"assets": 1},
-                                    label = ADD_ITEM_CATEGORY,
-                                    title = current.T("Item Category"),
-                                    tooltip = ADD_ITEM_CATEGORY,
-                                    )
+            f.comment = PopupLink(c = "supply",
+                                  f = "item_category",
+                                  vars = {"assets": 1},
+                                  label = ADD_ITEM_CATEGORY,
+                                  title = current.T("Item Category"),
+                                  tooltip = ADD_ITEM_CATEGORY,
+                                  )
 
         elif r.representation in ("xlsx", "xls"):
             # Use full Category names in XLS output

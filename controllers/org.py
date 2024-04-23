@@ -260,7 +260,7 @@ def room():
         if r.representation == "popup":
             site_id = r.get_vars.get("site_id")
             if site_id:
-                # Coming from dynamically filtered AddResourceLink
+                # Coming from dynamically filtered PopupLink
                 field.default = site_id
                 field.writable = False
 

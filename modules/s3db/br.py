@@ -65,7 +65,6 @@ from gluon import *
 from gluon.storage import Messages, Storage
 
 from ..core import *
-#from s3layouts import S3PopupLink
 
 CASE_GROUP = 7
 
@@ -1251,11 +1250,11 @@ class BRNeedsModel(DataModel):
                                                 IS_ONE_OF(db, "%s.id" % tablename,
                                                           represent,
                                                           )),
-                                #comment = S3PopupLink(c = "br",
-                                #                      f = "need",
-                                #                      title = ADD_NEED,
-                                #                      tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
-                                #                      ),
+                                #comment = PopupLink(c = "br",
+                                #                    f = "need",
+                                #                    title = ADD_NEED,
+                                #                    tooltip = T("Choose the need type from the drop-down, or click the link to create a new type"),
+                                #                    ),
                                 widget = widget,
                                 )
 

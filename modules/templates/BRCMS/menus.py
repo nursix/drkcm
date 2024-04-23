@@ -6,15 +6,15 @@
 
 from gluon import current, URL
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M
+from core.ui.layouts import MM, M
 try:
     from .layouts import *
 except ImportError:
     pass
-import s3menus as default
+import core.ui.menus as default
 
 # =============================================================================
-class S3MainMenu(default.S3MainMenu):
+class MainMenu(default.MainMenu):
     """ Custom Application Main Menu """
 
     # -------------------------------------------------------------------------
@@ -68,12 +68,12 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        OM = S3OrgMenuLayout
+        OM = OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
     @classmethod
-    def menu_lang(cls):
+    def menu_lang(cls, **attr):
         """ Language Selector """
 
         languages = current.deployment_settings.get_L10n_languages()
@@ -164,7 +164,7 @@ class S3MainMenu(default.S3MainMenu):
         return menu_about
 
 # =============================================================================
-class S3OptionsMenu(default.S3OptionsMenu):
+class OptionsMenu(default.OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------

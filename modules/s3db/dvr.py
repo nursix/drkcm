@@ -81,7 +81,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 DEFAULT = lambda: None
 
@@ -1046,11 +1045,11 @@ class DVRCaseFlagModel(DataModel):
                                                 IS_ONE_OF(db, "dvr_case_flag.id",
                                                           represent,
                                                           )),
-                                comment=S3PopupLink(c = "dvr",
-                                                    f = "case_flag",
-                                                    title = ADD_FLAG,
-                                                    tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
-                                                    ),
+                                comment=PopupLink(c = "dvr",
+                                                  f = "case_flag",
+                                                  title = ADD_FLAG,
+                                                  tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
+                                                  ),
                                 )
 
         # ---------------------------------------------------------------------
@@ -1081,8 +1080,7 @@ class DVRCaseFlagModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_case_flag_id": FieldTemplate.dummy("flag_id"),
@@ -1191,8 +1189,7 @@ class DVRNeedsModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_need_id": FieldTemplate.dummy("need_id"),
@@ -1394,8 +1391,7 @@ class DVRReferralModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_referral_type_id": FieldTemplate.dummy("referral_type_id"),
@@ -1993,8 +1989,7 @@ class DVRResponseModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -3179,8 +3174,7 @@ class DVRCaseActivityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -3413,8 +3407,7 @@ class DVRCaseEffortModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -3717,8 +3710,7 @@ class DVRCaseAppointmentModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_appointment_status_opts": {},
@@ -4082,8 +4074,7 @@ class DVRResidenceStatusModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -4213,8 +4204,7 @@ class DVRCaseAllowanceModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_allowance_status_opts": {},
@@ -4506,10 +4496,10 @@ class DVRCaseEventModel(DataModel):
                                                            represent,
                                                            ),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "dvr",
-                                                            f = "case_event_type",
-                                                            tooltip = T("Create a new event type"),
-                                                            ),
+                                      comment = PopupLink(c = "dvr",
+                                                          f = "case_event_type",
+                                                          tooltip = T("Create a new event type"),
+                                                          ),
                                       )
 
         # ---------------------------------------------------------------------
@@ -4647,8 +4637,7 @@ class DVRCaseEventModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -5050,8 +5039,7 @@ class DVRVulnerabilityModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -5326,8 +5314,7 @@ class DVRServiceContactModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -5441,8 +5428,7 @@ class DVRSiteActivityModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -7753,10 +7739,10 @@ class DVRManageAppointments(CRUDMethod):
                 else:
                     ff = ""
 
-                output = dict(items = items,
-                              title = T("Manage Appointments"),
-                              list_filter_form = ff,
-                              )
+                output = {"items": items,
+                          "title": T("Manage Appointments"),
+                          "list_filter_form": ff,
+                          }
 
                 response.view = "list_filter.html"
                 return output
@@ -8812,8 +8798,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
             for excluded_by_id in excluded_by_ids:
                 if excluded_by_id in seen:
                     continue
-                else:
-                    seen.add(excluded_by_id)
+                seen.add(excluded_by_id)
                 excluded_by_type = event_types.get(excluded_by_id)
                 if not excluded_by_type:
                     continue
@@ -9486,7 +9471,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
                                "t": s3_str(date),
                                "h": payments,
                                }
-                output["u"] = True if payments else False
+                output["u"] = bool(payments)
             else:
                 if not permitted:
                     alert = T("Payment registration not permitted")

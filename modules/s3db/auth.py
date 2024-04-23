@@ -39,7 +39,6 @@ from gluon.storage import Storage
 
 from ..core import *
 from ..s3dal import original_tablename
-from ..s3layouts import S3PopupLink
 
 # =============================================================================
 class AuthDomainApproverModel(DataModel):
@@ -238,14 +237,14 @@ class AuthConsentModel(DataModel):
                                                 type_represent,
                                                 ),
                            ondelete = "RESTRICT",
-                           comment = S3PopupLink(c = "admin",
-                                                 f = "processing_type",
-                                                 title = ADD_TYPE,
-                                                 tooltip = T("Choose a type from the drop-down, or click the link to create a new type"),
-                                                 vars = {"parent": "consent_option",
-                                                         "child": "type_id",
-                                                         },
-                                                 ),
+                           comment = PopupLink(c = "admin",
+                                               f = "processing_type",
+                                               title = ADD_TYPE,
+                                               tooltip = T("Choose a type from the drop-down, or click the link to create a new type"),
+                                               vars = {"parent": "consent_option",
+                                                       "child": "type_id",
+                                                       },
+                                               ),
                            ),
                      Field("name",
                            label = T("Short Description"),

@@ -8,7 +8,7 @@ from core import *
 # - you will need to restart web2py after making changes to this file
 
 # =============================================================================
-#class S3MainMenuLayout(S3NavigationItem):
+#class MainMenuLayout(S3NavigationItem):
 #    """
 #        Application Main Menu Layout
 #
@@ -92,7 +92,7 @@ from core import *
 #                        # Submenu item
 #                        if isinstance(item.label, dict):
 #                            if "id" in item.label:
-#                                return S3MainMenuDefaultLayout.checkbox_item(item)
+#                                return MainMenuDefaultLayout.checkbox_item(item)
 #                            elif "name" in item.label:
 #                                label = item.label["name"]
 #                            else:
@@ -216,7 +216,7 @@ from core import *
 #                  )
 #
 # =============================================================================
-#class S3OptionsMenuLayout(S3NavigationItem):
+#class OptionsMenuLayout(S3NavigationItem):
 #    """ Controller Options Menu Layout """
 #
 #    @staticmethod
@@ -276,7 +276,7 @@ from core import *
 #            return None
 #
 # =============================================================================
-#class S3MenuSeparatorLayout(S3NavigationItem):
+#class MenuSeparatorLayout(S3NavigationItem):
 #    """ Simple menu separator """
 #
 #    @staticmethod

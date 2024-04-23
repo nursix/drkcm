@@ -1,12 +1,12 @@
 # Layouts Unit Tests
 #
 # To run this script use:
-# python web2py.py -S eden -M -R applications/eden/modules/unit_tests/modules/s3layouts_tests.py
+# python web2py.py -S eden -M -R applications/eden/modules/unit_tests/modules/core.ui.layouts_tests.py
 #
 import unittest
 
 from gluon import current
-from s3layouts import *
+from core.ui.layouts import *
 
 from unit_tests import run_suite
 
@@ -31,12 +31,12 @@ class LayoutTests(unittest.TestCase):
 
     # -------------------------------------------------------------------------
     def testPopupLink(self):
-        """ Test S3PopupLink """
+        """ Test PopupLink """
 
         auth = current.auth
         deployment_settings = current.deployment_settings
 
-        comment = S3PopupLink(c="pr", f="person")
+        comment = PopupLink(c="pr", f="person")
 
         # If the module is active, the comment should always be active
         self.assertEqual(comment.check_active(),
@@ -49,7 +49,7 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual(comment.label, crud_string)
 
         if "inv" in deployment_settings.modules:
-            comment = S3PopupLink(c="inv", f="inv_item")
+            comment = PopupLink(c="inv", f="inv_item")
             # Deactivate module
             inv = deployment_settings.modules["inv"]
             del deployment_settings.modules["inv"]

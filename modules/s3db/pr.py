@@ -124,7 +124,7 @@ from gluon.sqlhtml import RadioWidget
 
 from ..core import *
 from s3dal import Field, Row
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 OU = 1 # role type which indicates hierarchy, see role_types
 OTHER_ROLE = 9
@@ -1629,8 +1629,7 @@ class PRPersonModel(DataModel):
 
             if check in duplicates:
                 continue
-            else:
-                duplicates[check] = row
+            duplicates[check] = row
 
         if len(duplicates):
             best_match = max(duplicates.keys())
@@ -2264,12 +2263,12 @@ class PRGroupModel(DataModel):
         # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
-                                  comment = S3PopupLink(c = "pr",
-                                                        f = "group_status",
-                                                        label = CREATE_STATUS,
-                                                        title = CREATE_STATUS,
-                                                        vars = {"child": "status_id"},
-                                                        ),
+                                  comment = PopupLink(c = "pr",
+                                                      f = "group_status",
+                                                      label = CREATE_STATUS,
+                                                      title = CREATE_STATUS,
+                                                      vars = {"child": "status_id"},
+                                                      ),
                                   label = T("Status"),
                                   ondelete = "SET NULL",
                                   represent = represent,
@@ -2390,12 +2389,12 @@ class PRGroupModel(DataModel):
         represent = pr_GroupRepresent()
         group_id = FieldTemplate("group_id", "reference %s" % tablename,
                                  sortby = "name",
-                                 comment = S3PopupLink(#c = "pr",
-                                                       f = "group",
-                                                       label = add_label,
-                                                       title = title,
-                                                       tooltip = tooltip,
-                                                       ),
+                                 comment = PopupLink(#c = "pr",
+                                                     f = "group",
+                                                     label = add_label,
+                                                     title = title,
+                                                     tooltip = tooltip,
+                                                     ),
                                  label = label,
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -2527,13 +2526,13 @@ class PRGroupModel(DataModel):
         # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         role_id = FieldTemplate("role_id", "reference %s" % tablename,
-                                comment = S3PopupLink(c = "pr",
-                                                      f = "group_member_role",
-                                                      label = CREATE_ROLE,
-                                                      title = CREATE_ROLE,
-                                                      tooltip = T("The role of the member in the group"),
-                                                      vars = {"child": "role_id"},
-                                                      ),
+                                comment = PopupLink(c = "pr",
+                                                    f = "group_member_role",
+                                                    label = CREATE_ROLE,
+                                                    title = CREATE_ROLE,
+                                                    tooltip = T("The role of the member in the group"),
+                                                    vars = {"child": "role_id"},
+                                                    ),
                                 label = T("Group Member Role"),
                                 ondelete = "RESTRICT",
                                 represent = represent,
@@ -2961,12 +2960,12 @@ class PRForumModel(DataModel):
         represent = S3Represent(lookup=tablename)
         forum_id = FieldTemplate("forum_id", "reference %s" % tablename,
                                  sortby = "name",
-                                 comment = S3PopupLink(c = "pr",
-                                                       f = "forum",
-                                                       label = T("Create Forum"),
-                                                       title = T("Create Forum"),
-                                                       tooltip = T("Create a new Forum"),
-                                                       ),
+                                 comment = PopupLink(c = "pr",
+                                                     f = "forum",
+                                                     label = T("Create Forum"),
+                                                     title = T("Create Forum"),
+                                                     tooltip = T("Create a new Forum"),
+                                                     ),
                                  label = T("Forum"),
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -3113,7 +3112,7 @@ class PRForumModel(DataModel):
                     data = json.loads(exists.deleted_fk)
                     data["deleted"] = False
                 else:
-                    data = dict(deleted=False)
+                    data = {"deleted": False}
                 db(ltable.id == link_id).update(**data)
         else:
             link_id = ltable.insert(forum_id = forum_id,
@@ -3230,8 +3229,8 @@ class PRForumModel(DataModel):
             translations = {}
             languages = list({a["auth_user.language"] for a in admins})
             for l in languages:
-                translations[l] = {"s": s3_str(T(subject, language = l)) % dict(forum_name = forum_name),
-                                   "b": s3_str(T(body, language = l)) % dict(url = url),
+                translations[l] = {"s": s3_str(T(subject, language = l)) % {"forum_name": forum_name},
+                                   "b": s3_str(T(body, language = l)) % {"url": url},
                                    }
             send_email = current.msg.send_by_pe_id
             for a in admins:
@@ -4161,10 +4160,10 @@ class PRAvailabilityModel(DataModel):
                                                 IS_ONE_OF(db, "pr_slot.id",
                                                           represent,
                                                           )),
-                                #comment=S3PopupLink(c = "pr",
-                                #                    f = "slot",
-                                #                    label = ADD_SLOT,
-                                #                    ),
+                                #comment=PopupLink(c = "pr",
+                                #                  f = "slot",
+                                #                  label = ADD_SLOT,
+                                #                  ),
                                 )
 
         # ---------------------------------------------------------------------
@@ -4424,8 +4423,7 @@ class PRAvailabilityModel(DataModel):
 
                     # Interval
                     interv = rule.get("i", 1)
-                    if interv < 0:
-                        interv = 0 # = do not repeat
+                    interv = max(interv, 0) # = do not repeat
 
                     if freq == "DAILY":
                         dow = all_week
@@ -5020,10 +5018,10 @@ class PREducationModel(DataModel):
 
         represent = S3Represent(lookup=tablename, translate=True)
         level_id = FieldTemplate("level_id", "reference %s" % tablename,
-                                 comment = S3PopupLink(c = "pr",
-                                                       f = "education_level",
-                                                       label = ADD_EDUCATION_LEVEL,
-                                                       ),
+                                 comment = PopupLink(c = "pr",
+                                                     f = "education_level",
+                                                     label = ADD_EDUCATION_LEVEL,
+                                                     ),
                                  label = T("Level of Award"),
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -5435,10 +5433,10 @@ class PROccupationModel(DataModel):
                                                                 represent,
                                                                 ),
                                            sortby = "name",
-                                           comment = S3PopupLink(c = "pr",
-                                                                 f = "occupation_type",
-                                                                 tooltip = T("Create a new occupation type"),
-                                                                 ),
+                                           comment = PopupLink(c = "pr",
+                                                               f = "occupation_type",
+                                                               tooltip = T("Create a new occupation type"),
+                                                               ),
                                            )
 
         # ---------------------------------------------------------------------
@@ -6759,12 +6757,12 @@ def pr_person_comment(title=None, comment=None, caller=None, child=None):
     get_vars = {"child": child}
     if caller:
         get_vars["caller"] = caller
-    return S3PopupLink(c = "pr",
-                       f = "person",
-                       vars = get_vars,
-                       title = current.messages.ADD_PERSON,
-                       tooltip = "%s|%s" % (title, comment),
-                       )
+    return PopupLink(c = "pr",
+                     f = "person",
+                     vars = get_vars,
+                     title = current.messages.ADD_PERSON,
+                     tooltip = "%s|%s" % (title, comment),
+                     )
 
 # =============================================================================
 def pr_rheader(r, tabs=None):
@@ -7048,7 +7046,7 @@ class pr_AssignMethod(CRUDMethod):
         if r.http == "POST":
             added = 0
             post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
 
                 selected = post_vars.selected
                 if selected:

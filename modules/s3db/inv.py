@@ -57,7 +57,6 @@ from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -199,12 +198,12 @@ class InvWarehouseModel(DataModel):
                                                                   sort=True
                                                                   )),
                                           sortby = "name",
-                                          comment = S3PopupLink(c = "inv",
-                                                                f = "warehouse_type",
-                                                                label = ADD_WAREHOUSE_TYPE,
-                                                                title = T("Warehouse Type"),
-                                                                tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
-                                                                ),
+                                          comment = PopupLink(c = "inv",
+                                                              f = "warehouse_type",
+                                                              label = ADD_WAREHOUSE_TYPE,
+                                                              title = T("Warehouse Type"),
+                                                              tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
+                                                              ),
                                           )
 
         configure(tablename,
@@ -1602,12 +1601,12 @@ class InventoryTrackingModel(DataModel):
                              widget = S3AutocompleteWidget("supply", "item",
                                                            filter = "item.kit=1"),
                              # Needs better workflow as no way to add the Kit Items
-                             #comment = S3PopupLink(c = "supply",
-                             #                      f = "item",
-                             #                      label = T("Create Kit"),
-                             #                      title = T("Kit"),
-                             #                      tooltip = T("Type the name of an existing catalog kit OR Click 'Create Kit' to add a kit which is not in the catalog."),
-                             #                      ),
+                             #comment = PopupLink(c = "supply",
+                             #                    f = "item",
+                             #                    label = T("Create Kit"),
+                             #                    title = T("Kit"),
+                             #                    tooltip = T("Type the name of an existing catalog kit OR Click 'Create Kit' to add a kit which is not in the catalog."),
+                             #                    ),
                              comment = DIV(_class="tooltip",
                                            _title="%s|%s" % (T("Kit"),
                                                              T("Type the name of an existing catalog kit"))),
@@ -4481,8 +4480,7 @@ def inv_stock_movements(resource, selectors, orderby):
             if raw["inv_recv.date"] > latest:
                 item_data["quantity_in_after"] += quantity_in
                 continue
-            else:
-                item_data["quantity_in"] += quantity_in
+            item_data["quantity_in"] += quantity_in
         # Origin sites
         sites = item_data["sites"]
         from_site = raw["inv_recv.from_site_id"]
@@ -4524,8 +4522,7 @@ def inv_stock_movements(resource, selectors, orderby):
             if send_date and send_date > latest:
                 item_data["quantity_out_after"] += quantity_in
                 continue
-            else:
-                item_data["quantity_out"] += quantity_in
+            item_data["quantity_out"] += quantity_in
         # Destination sites
         sites = item_data["sites"]
         to_site = raw["inv_send.to_site_id"]
@@ -5157,7 +5154,7 @@ class inv_InvItemRepresent(S3Represent):
 
     def __init__(self):
 
-        super(inv_InvItemRepresent, self).__init__(lookup = "inv_inv_item")
+        super().__init__(lookup = "inv_inv_item")
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):

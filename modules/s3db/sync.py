@@ -42,7 +42,7 @@ from gluon.storage import Storage
 
 from s3dal import Row
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class SyncConfigModel(DataModel):
@@ -392,12 +392,12 @@ class SyncRepositoryModel(DataModel):
         # Foreign Key Templates
         sync_repository_represent = S3Represent(lookup = tablename)
         repository_id = FieldTemplate("repository_id", "reference %s" % tablename,
-                                      comment = S3PopupLink(c = "sync",
-                                                            f = "repository",
-                                                            label = ADD_REPOSITORY,
-                                                            title = ADD_REPOSITORY,
-                                                            tooltip = ADD_REPOSITORY,
-                                                            ),
+                                      comment = PopupLink(c = "sync",
+                                                          f = "repository",
+                                                          label = ADD_REPOSITORY,
+                                                          title = ADD_REPOSITORY,
+                                                          tooltip = ADD_REPOSITORY,
+                                                          ),
                                       label = T("Repository"),
                                       represent = sync_repository_represent,
                                       requires = IS_ONE_OF(db, "sync_repository.id",

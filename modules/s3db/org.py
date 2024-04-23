@@ -88,7 +88,7 @@ from gluon import *
 
 from ..core import *
 from s3dal import Row
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class OrgOrganisationModel(DataModel):
@@ -208,12 +208,12 @@ class OrgOrganisationModel(DataModel):
                                                                       )),
                                               sortby = "name",
                                               widget = organisation_type_widget,
-                                              comment = S3PopupLink(c = "org",
-                                                                    f = "organisation_type",
-                                                                    label = T("Create Organization Type"),
-                                                                    title = T("Organization Type"),
-                                                                    tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
-                                                                    ),
+                                              comment = PopupLink(c = "org",
+                                                                  f = "organisation_type",
+                                                                  label = T("Create Organization Type"),
+                                                                  title = T("Organization Type"),
+                                                                  tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
+                                                                  ),
                                               )
 
         configure(tablename,
@@ -308,12 +308,12 @@ class OrgOrganisationModel(DataModel):
                                                               not_filter_opts = opts_filter[1],
                                                               )),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "org",
-                                                            f = "region",
-                                                            label = T("Add Region"),
-                                                            title = T("Region"),
-                                                            tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
-                                                            ),
+                                      comment = PopupLink(c = "org",
+                                                          f = "region",
+                                                          label = T("Add Region"),
+                                                          title = T("Region"),
+                                                          tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
+                                                          ),
                                       )
 
             configure(tablename,
@@ -543,12 +543,12 @@ class OrgOrganisationModel(DataModel):
             text_comment = T("You can search by name, acronym or comments")
 
         # Foreign Key Template
-        organisation_comment = S3PopupLink(c = "org",
-                                           f = "organisation",
-                                           label = ADD_ORGANIZATION,
-                                           title = ADD_ORGANIZATION,
-                                           tooltip = tooltip,
-                                           )
+        organisation_comment = PopupLink(c = "org",
+                                         f = "organisation",
+                                         label = ADD_ORGANIZATION,
+                                         title = ADD_ORGANIZATION,
+                                         tooltip = tooltip,
+                                         )
         auth = current.auth
         organisation_id = FieldTemplate("organisation_id", "reference %s" % tablename,
                                         comment = organisation_comment,
@@ -1996,11 +1996,11 @@ class OrgOrganisationResourceModel(DataModel):
                                      readable = True,
                                      writable = True,
                                      empty = False,
-                                     comment = S3PopupLink(c = "org",
-                                                           f = "resource_type",
-                                                           vars = {"child": "parameter_id"},
-                                                           title = ADD_RESOURCE_TYPE,
-                                                           ),
+                                     comment = PopupLink(c = "org",
+                                                         f = "resource_type",
+                                                         vars = {"child": "parameter_id"},
+                                                         title = ADD_RESOURCE_TYPE,
+                                                         ),
                                      ),
                           Field("value", "integer",
                                 label = T("Quantity"),
@@ -4315,12 +4315,12 @@ class OrgFacilityModel(DataModel):
                                                               sort = True,
                                                               ),
                                          sortby = "name",
-                                         comment = S3PopupLink(c = "org",
-                                                               f = "facility_type",
-                                                               label = ADD_FAC,
-                                                               title = T("Facility Type"),
-                                                               tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
-                                                               ),
+                                         comment = PopupLink(c = "org",
+                                                             f = "facility_type",
+                                                             label = ADD_FAC,
+                                                             title = T("Facility Type"),
+                                                             tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
+                                                             ),
                                          )
 
         configure(tablename,
@@ -4912,11 +4912,11 @@ class OrgRoomModel(DataModel):
             msg_list_empty = T("No Rooms currently registered"))
 
         room_comment = DIV(
-                           S3PopupLink(c = "org",
-                                       f = "room",
-                                       label = ADD_ROOM,
-                                       tooltip = T("Select a Room from the list or click 'Create Room'"),
-                                       ),
+                           PopupLink(c = "org",
+                                     f = "room",
+                                     label = ADD_ROOM,
+                                     tooltip = T("Select a Room from the list or click 'Create Room'"),
+                                     ),
                            # Filters Room based on site
                            SCRIPT(
 '''$.filterOptionsS3({
@@ -5033,12 +5033,12 @@ class OrgOfficeModel(DataModel):
                                                               filter_opts=filter_opts,
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = "org",
-                                                             f = "office_type",
-                                                             label = ADD_OFFICE_TYPE,
-                                                             title = T("Office Type"),
-                                                             tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
-                                                             ),
+                                       comment = PopupLink(c = "org",
+                                                           f = "office_type",
+                                                           label = ADD_OFFICE_TYPE,
+                                                           title = T("Office Type"),
+                                                           tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
+                                                           ),
                                        )
 
         configure(tablename,
@@ -7093,7 +7093,7 @@ def org_organisation_controller():
                 # Non-default function name (e.g. project/partners)
                 # => use same function for options lookup after popup-create
                 popup_link = otable.region_id.comment
-                if popup_link and isinstance(popup_link, S3PopupLink):
+                if popup_link and isinstance(popup_link, PopupLink):
                     popup_link.vars["parent"] = f
 
             method = r.method
@@ -8578,7 +8578,7 @@ class org_AssignMethod(CRUDMethod):
         if r.http == "POST":
             added = 0
             post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
                 fkey = component.fkey
                 record = r.record
                 if fkey in record:

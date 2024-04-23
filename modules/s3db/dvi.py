@@ -31,7 +31,6 @@ __all__ = ("DVIModel",
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class DVIModel(DataModel):
@@ -481,12 +480,12 @@ class DVIModel(DataModel):
         c_comment = T("Type the first few characters of one of the Person's names.")
 
         ADD_PERSON = T("Add Person")
-        return S3PopupLink(c = "pr",
-                           f = "person",
-                           vars = {"child": fieldname},
-                           label = ADD_PERSON,
-                           title = c_title,
-                           tooltip = c_comment,
-                           )
+        return PopupLink(c = "pr",
+                         f = "person",
+                         vars = {"child": fieldname},
+                         label = ADD_PERSON,
+                         title = c_title,
+                         tooltip = c_comment,
+                         )
 
 # END =========================================================================

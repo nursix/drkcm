@@ -13,7 +13,7 @@ def index():
     auth.settings.register_onvalidation = _register_validation
     auth.configure_user_fields()
 
-    current.menu.oauth = S3MainMenu.menu_oauth()
+    current.menu.oauth = MainMenu.menu_oauth()
 
     page = None
     if len(request.args):
@@ -1038,7 +1038,7 @@ def user():
     self_registration = settings.get_security_self_registration()
     login_form = register_form = None
 
-    current.menu.oauth = S3MainMenu.menu_oauth()
+    current.menu.oauth = MainMenu.menu_oauth()
 
     if not settings.get_auth_password_changes():
         # Block Password changes as these are managed externally (OpenID / SMTP / LDAP)

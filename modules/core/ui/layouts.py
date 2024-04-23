@@ -29,41 +29,42 @@
            - render "selected" (flag in item)
 """
 
-__all__ = ("S3MainMenuDefaultLayout",
+__all__ = ("MainMenuDefaultLayout",
            "MM",
-           "S3PersonalMenuDefaultLayout",
+           "PersonalMenuDefaultLayout",
            "MP",
-           "S3AboutMenuDefaultLayout",
+           "AboutMenuDefaultLayout",
            "MA",
-           "S3LanguageMenuDefaultLayout",
+           "LanguageMenuDefaultLayout",
            "ML",
-           "S3OrgMenuDefaultLayout",
+           "OrgMenuDefaultLayout",
            "OM",
-           "S3OptionsMenuDefaultLayout",
+           "OptionsMenuDefaultLayout",
            "M",
-           "S3OAuthMenuDefaultLayout",
+           "OAuthMenuDefaultLayout",
            "MOA",
-           "S3MenuSeparatorDefaultLayout",
+           "MenuSeparatorDefaultLayout",
            "SEP",
-           "S3BreadcrumbsLayout",
-           "S3PopupLink",
-           "S3AddResourceLink",
+           "BreadcrumbsLayout",
+           "PopupLink",
            "homepage",
            )
 
 from gluon import current, URL, \
                   A, BUTTON, DIV, FORM, H3, IMG, INPUT, LABEL, LI, OPTION, SELECT, SPAN, TAG, UL
 
-from core import S3NavigationItem, ICON, get_crud_string
 from s3theme import NAV, SECTION
+from ..tools import get_crud_string
+from .icons import ICON
+from .navigation import S3NavigationItem
 
 # =============================================================================
-class S3MainMenuDefaultLayout(S3NavigationItem):
+class MainMenuDefaultLayout(S3NavigationItem):
     """ Application Main Menu Layout """
 
     # Use the layout method of this class in templates/<theme>/layouts.py
     # if it is available at runtime (otherwise fallback to this layout):
-    OVERRIDE = "S3MainMenuLayout"
+    OVERRIDE = "MainMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -155,8 +156,8 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
             right.reverse()
 
             T = current.T
-            data_options = {"back": T("Back"),
-                            }
+#            data_options = {"back": T("Back"),
+#                            }
 
             # Title area:
             #   - toggle the menu on small screens
@@ -240,9 +241,9 @@ class S3MainMenuDefaultLayout(S3NavigationItem):
                   )
 
 # =============================================================================
-class S3PersonalMenuDefaultLayout(S3NavigationItem):
+class PersonalMenuDefaultLayout(S3NavigationItem):
 
-    OVERRIDE = "S3PersonalMenuLayout"
+    OVERRIDE = "PersonalMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -263,12 +264,12 @@ class S3PersonalMenuDefaultLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-MP = S3PersonalMenuDefaultLayout
+MP = PersonalMenuDefaultLayout
 
 # =============================================================================
-class S3AboutMenuDefaultLayout(S3NavigationItem):
+class AboutMenuDefaultLayout(S3NavigationItem):
 
-    OVERRIDE = "S3AboutMenuLayout"
+    OVERRIDE = "AboutMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -289,12 +290,12 @@ class S3AboutMenuDefaultLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-MA = S3AboutMenuDefaultLayout
+MA = AboutMenuDefaultLayout
 
 # =============================================================================
-class S3LanguageMenuDefaultLayout(S3NavigationItem):
+class LanguageMenuDefaultLayout(S3NavigationItem):
 
-    OVERRIDE = "S3LanguageMenuLayout"
+    OVERRIDE = "LanguageMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -342,13 +343,13 @@ class S3LanguageMenuDefaultLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-ML = S3LanguageMenuDefaultLayout
+ML = LanguageMenuDefaultLayout
 
 # =============================================================================
-class S3OrgMenuDefaultLayout(S3NavigationItem):
+class OrgMenuDefaultLayout(S3NavigationItem):
     """ Layout for the organisation-specific menu """
 
-    OVERRIDE = "S3OrgMenuLayout"
+    OVERRIDE = "OrgMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -379,15 +380,15 @@ class S3OrgMenuDefaultLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-OM = S3OrgMenuDefaultLayout
+OM = OrgMenuDefaultLayout
 
 # =============================================================================
-class S3OptionsMenuDefaultLayout(S3NavigationItem):
+class OptionsMenuDefaultLayout(S3NavigationItem):
     """ Controller Options Menu Layout """
 
     # Use the layout method of this class in templates/<theme>/layouts.py
     # if it is available at runtime (otherwise fallback to this layout):
-    OVERRIDE = "S3OptionsMenuLayout"
+    OVERRIDE = "OptionsMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -464,12 +465,12 @@ class S3OptionsMenuDefaultLayout(S3NavigationItem):
             return None
 
 # =============================================================================
-class S3OAuthMenuDefaultLayout(S3NavigationItem):
+class OAuthMenuDefaultLayout(S3NavigationItem):
     """ OAuth Menu Layout """
 
     # Use the layout method of this class in templates/<theme>/layouts.py
     # if it is available at runtime (otherwise fallback to this layout):
-    OVERRIDE = "S3OAuthMenuLayout"
+    OVERRIDE = "OAuthMenuLayout"
 
     @staticmethod
     def layout(item):
@@ -496,12 +497,12 @@ class S3OAuthMenuDefaultLayout(S3NavigationItem):
         return output
 
 # =============================================================================
-class S3MenuSeparatorDefaultLayout(S3NavigationItem):
+class MenuSeparatorDefaultLayout(S3NavigationItem):
     """ Simple menu separator """
 
     # Use the layout method of this class in templates/<theme>/layouts.py
     # if it is available at runtime (otherwise fallback to this layout):
-    OVERRIDE = "S3MenuSeparatorLayout"
+    OVERRIDE = "MenuSeparatorLayout"
 
     @staticmethod
     def layout(item):
@@ -515,13 +516,13 @@ class S3MenuSeparatorDefaultLayout(S3NavigationItem):
 # =============================================================================
 # Import menu layouts from template (if present)
 #
-MM = S3MainMenuDefaultLayout
-M = S3OptionsMenuDefaultLayout
-MOA = S3OAuthMenuDefaultLayout
-SEP = S3MenuSeparatorDefaultLayout
+MM = MainMenuDefaultLayout
+M = OptionsMenuDefaultLayout
+MOA = OAuthMenuDefaultLayout
+SEP = MenuSeparatorDefaultLayout
 
 # =============================================================================
-class S3BreadcrumbsLayout(S3NavigationItem):
+class BreadcrumbsLayout(S3NavigationItem):
     """ Breadcrumbs layout """
 
     @staticmethod
@@ -538,7 +539,7 @@ class S3BreadcrumbsLayout(S3NavigationItem):
             return LI(A(item.label, _href=item.url(), _class=_class))
 
 # =============================================================================
-class S3HomepageMenuLayout(S3NavigationItem):
+class HomepageMenuLayout(S3NavigationItem):
     """
         Layout for homepage menus
     """
@@ -607,7 +608,7 @@ class S3HomepageMenuLayout(S3NavigationItem):
             return None
 
 # =============================================================================
-class S3PopupLink(S3NavigationItem):
+class PopupLink(S3NavigationItem):
     """
         Links in form fields comments to show a form for adding
         a new foreign key record.
@@ -626,18 +627,17 @@ class S3PopupLink(S3NavigationItem):
                  tooltip = None,
                  ):
         """
-            Constructor
-
-            @param c: the target controller
-            @param f: the target function
-            @param t: the target table (defaults to c_f)
-            @param m: the URL method (will be appended to args)
-            @param args: the argument list
-            @param vars: the request vars (format="popup" will be added automatically)
-            @param label: the link label (falls back to label_create)
-            @param info: hover-title for the label
-            @param title: the tooltip title
-            @param tooltip: the tooltip text
+            Args:
+                c: the target controller
+                f: the target function
+                t: the target table (defaults to c_f)
+                m: the URL method (will be appended to args)
+                args: the argument list
+                vars: the request vars (format="popup" will be added automatically)
+                label: the link label (falls back to label_create)
+                info: hover-title for the label
+                title: the tooltip title
+                tooltip: the tooltip text
         """
 
         if label is None:
@@ -659,15 +659,15 @@ class S3PopupLink(S3NavigationItem):
                 # Fall back to label_update
                 label = get_crud_string(t, "label_update")
 
-        super(S3PopupLink, self).__init__(label,
-                                          c=c, f=f, t=t,
-                                          m=m,
-                                          args=args,
-                                          vars=vars,
-                                          info=info,
-                                          title=title,
-                                          tooltip=tooltip,
-                                          mandatory=True)
+        super().__init__(label,
+                         c=c, f=f, t=t,
+                         m=m,
+                         args=args,
+                         vars=vars,
+                         info=info,
+                         title=title,
+                         tooltip=tooltip,
+                         mandatory=True)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -718,44 +718,36 @@ class S3PopupLink(S3NavigationItem):
         return DIV(popup_link, _class="s3_inline_add_resource_link")
 
 # =============================================================================
-# Maintained for backward compatibility
-#
-S3AddResourceLink = S3PopupLink
-
-# =============================================================================
-def homepage(module=None, *match, **attr):
+def homepage(*modules, **attr):
     """
-        Shortcut for module homepage menu items using the MM layout,
-        retrieves the module's nice name.
+        Shortcut for module homepage menu items using MainMenuDefaultLayout,
+        retrieves the module's nice name
 
-        @param module: the module's prefix (controller)
-        @param match: additional prefixes
-        @param attr: attributes for the navigation item
+        Args:
+            modules: prefixes of modules to match (primary controller first)
+            attr: attributes for the navigation item
+
+        Returns:
+            a menu entry
     """
 
-    settings = current.deployment_settings
-    all_modules = settings.modules
+    if not modules:
+        c, module = [None], "default"
+    else:
+        c, module = modules, modules[0]
 
-    layout = S3MainMenuDefaultLayout
-    c = [module] + list(match)
+    layout = MainMenuDefaultLayout
 
     if "name" in attr:
-        name = attr["name"]
-        attr.pop("name")
+        name = attr.pop("name")
     else:
-        if module is None:
-            module = "default"
+        all_modules = current.deployment_settings.modules
         if module in all_modules:
-            m = all_modules[module]
-            name = m.name_nice
+            name = all_modules[module].name_nice
         else:
             name = module
 
-    if "f" in attr:
-        f = attr["f"]
-        del attr["f"]
-    else:
-        f = "index"
+    f = attr.pop("f") if "f" in attr else "index"
 
     return layout(name, c=c, f=f, **attr)
 

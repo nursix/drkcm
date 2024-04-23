@@ -4,7 +4,7 @@
     License: MIT
 """
 
-__all__ = ("S3OrgMenuLayout",
+__all__ = ("OrgMenuLayout",
            "OM",
            )
 
@@ -12,7 +12,7 @@ from gluon import current, IMG
 from core import S3NavigationItem
 
 # =============================================================================
-class S3OrgMenuLayout(S3NavigationItem):
+class OrgMenuLayout(S3NavigationItem):
     """ Layout for the organisation-specific menu """
 
     @staticmethod
@@ -43,6 +43,6 @@ class S3OrgMenuLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-OM = S3OrgMenuLayout
+OM = OrgMenuLayout
 
 # END =========================================================================

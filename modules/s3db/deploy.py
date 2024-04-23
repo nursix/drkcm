@@ -41,7 +41,6 @@ from gluon.html import *
 from gluon.tools import callback
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class DeployOrganisationModel(DataModel):
@@ -341,10 +340,10 @@ class DeployModel(DataModel):
                                                         "deploy_mission.id",
                                                         represent,
                                                         ),
-                                   comment = S3PopupLink(c = "deploy",
-                                                         f = "mission",
-                                                         label = label_create,
-                                                         ),
+                                   comment = PopupLink(c = "deploy",
+                                                       f = "mission",
+                                                       label = label_create,
+                                                       ),
                                    )
 
         # ---------------------------------------------------------------------

@@ -33,7 +33,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class FireModel(DataModel):
@@ -103,11 +102,11 @@ class FireModel(DataModel):
                                                    zone_type_represent,
                                                    sort=True)),
                            represent = zone_type_represent,
-                           comment = S3PopupLink(c = "fire",
-                                                 f = "zone_type",
-                                                 label = ADD_ZONE_TYPE,
-                                                 tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
-                                                 ),
+                           comment = PopupLink(c = "fire",
+                                               f = "zone_type",
+                                               label = ADD_ZONE_TYPE,
+                                               tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
+                                               ),
                            label=T("Type")),
                      self.gis_location_id(
                        widget = LocationSelector(catalog_layers = True,

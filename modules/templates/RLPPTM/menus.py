@@ -6,17 +6,17 @@
 
 from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M, ML, MP, MA
+from core.ui.layouts import MM, M, ML, MP, MA
 try:
     from ..RLP.layouts import OM
 except ImportError:
     pass
-import s3menus as default
+import core.ui.menus as default
 
 from .requests import get_managed_requester_orgs
 
 # =============================================================================
-class S3MainMenu(default.S3MainMenu):
+class MainMenu(default.MainMenu):
     """ Custom Application Main Menu """
 
     # -------------------------------------------------------------------------
@@ -127,7 +127,7 @@ class S3MainMenu(default.S3MainMenu):
     def menu_org(cls):
         """ Organisation Logo and Name """
 
-        #OM = S3OrgMenuLayout
+        #OM = OrgMenuLayout
         return OM()
 
     # -------------------------------------------------------------------------
@@ -222,7 +222,7 @@ class S3MainMenu(default.S3MainMenu):
         return menu_about
 
 # =============================================================================
-class S3OptionsMenu(default.S3OptionsMenu):
+class OptionsMenu(default.OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------

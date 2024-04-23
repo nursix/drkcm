@@ -1,17 +1,17 @@
-from gluon import *
-from core import *
-from s3layouts import *
-try:
-    from .layouts import *
-except ImportError:
-    pass
-import s3menus as default
+#from gluon import *
+#from core import *
+#from core.ui.layouts import *
+#try:
+#    from .layouts import *
+#except ImportError:
+#    pass
+#import core.ui.menus as default
 
 # Below is an example which you can base your own template's menus.py on
 # - there are also other examples in the other templates folders
 
 # =============================================================================
-#class S3MainMenu(default.S3MainMenu):
+#class MainMenu(default.MainMenu):
     #"""
         #Custom Application Main Menu:
 
@@ -78,7 +78,7 @@ import s3menus as default
         #]
 
 # =============================================================================
-#class S3OptionsMenu(default.S3OptionsMenu):
+#class OptionsMenu(default.OptionsMenu):
     #"""
         #Custom Controller Menus
 

@@ -50,7 +50,7 @@ import datetime
 import os
 
 from collections import OrderedDict
-from io import StringIO
+from io import BytesIO
 from urllib import request as urllib2
 from urllib.error import HTTPError, URLError
 from uuid import uuid4
@@ -59,7 +59,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 OIDPATTERN = r"^[^,<&\s]+$"
 
@@ -779,8 +778,7 @@ $.filterOptionsS3({
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -1413,8 +1411,7 @@ $.filterOptionsS3({
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -2073,8 +2070,7 @@ class CAPAreaModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -2499,8 +2495,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -2535,7 +2530,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                 import base64
 
                 image = Storage(filename = uuid4().hex + filename)
-                image.file = stream = StringIO(base64.decodestring(encoded_file))
+                image.file = stream = BytesIO(base64.b64decode(encoded_file))
 
                 form_vars.image = image
 
@@ -2736,8 +2731,7 @@ class CAPWarningPriorityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3729,8 +3723,7 @@ class CAPHistoryModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3776,11 +3769,11 @@ class CAPAlertingAuthorityModel(DataModel):
                      self.org_organisation_id(
                         empty = False,
                         widget = None, # Use simple drop-down
-                        comment = S3PopupLink(c = "org",
-                                              f = "organisation",
-                                              label = T("Create Organization"),
-                                              title = messages.ORGANISATION,
-                                              ),
+                        comment = PopupLink(c = "org",
+                                            f = "organisation",
+                                            label = T("Create Organization"),
+                                            title = messages.ORGANISATION,
+                                            ),
                         ),
                      Field("country", length=2,
                            label = T("Country"),
@@ -3900,8 +3893,7 @@ class CAPAlertingAuthorityModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3936,8 +3928,7 @@ class CAPMessageModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -4561,11 +4552,11 @@ class cap_AreaRepresent(S3Represent):
             if language == settings.get_L10n_default_language():
                 translate = False
 
-        super(cap_AreaRepresent, self).__init__(lookup = "cap_area",
-                                                show_link = show_link,
-                                                translate = translate,
-                                                multiple = multiple,
-                                                )
+        super().__init__(lookup = "cap_area",
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -5019,7 +5010,7 @@ class cap_AssignArea(CRUDMethod):
             added = 0
             post_vars = r.post_vars
 
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
 
                 selected = post_vars.selected
                 if selected:

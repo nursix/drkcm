@@ -4,14 +4,14 @@
     License: MIT
 """
 
-__all__ = ("S3MainMenuLayout",
-           "S3AboutMenuLayout",
+__all__ = ("MainMenuLayout",
+           "AboutMenuLayout",
            "MA",
-           "S3LanguageMenuLayout",
+           "LanguageMenuLayout",
            "ML",
-           "S3OrgMenuLayout",
+           "OrgMenuLayout",
            "OM",
-           "S3PersonalMenuLayout",
+           "PersonalMenuLayout",
            "MP",
            )
 from gluon import current, URL, \
@@ -20,7 +20,7 @@ from core import S3NavigationItem
 from s3theme import NAV, SECTION
 
 # =============================================================================
-class S3MainMenuLayout(S3NavigationItem):
+class MainMenuLayout(S3NavigationItem):
     """ Custom Main Menu Layout """
 
     @staticmethod
@@ -100,12 +100,12 @@ class S3MainMenuLayout(S3NavigationItem):
 
                 right = []
                 left = []
-                for item in items:
-                    if "menu-right" in item["_class"]:
-                        item.remove_class("menu-right")
-                        right.append(item)
+                for i in items:
+                    if "menu-right" in i["_class"]:
+                        i.remove_class("menu-right")
+                        right.append(i)
                     else:
-                        left.append(item)
+                        left.append(i)
                 right.reverse()
                 if current.response.s3.direction == "rtl":
                     right, left = left, right
@@ -179,7 +179,7 @@ class S3MainMenuLayout(S3NavigationItem):
                   )
 
 # =============================================================================
-class S3PersonalMenuLayout(S3NavigationItem):
+class PersonalMenuLayout(S3NavigationItem):
 
     @staticmethod
     def layout(item):
@@ -200,10 +200,10 @@ class S3PersonalMenuLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-MP = S3PersonalMenuLayout
+MP = PersonalMenuLayout
 
 # =============================================================================
-class S3AboutMenuLayout(S3NavigationItem):
+class AboutMenuLayout(S3NavigationItem):
 
     @staticmethod
     def layout(item):
@@ -224,10 +224,10 @@ class S3AboutMenuLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-MA = S3AboutMenuLayout
+MA = AboutMenuLayout
 
 # =============================================================================
-class S3LanguageMenuLayout(S3NavigationItem):
+class LanguageMenuLayout(S3NavigationItem):
 
     @staticmethod
     def layout(item):
@@ -270,10 +270,10 @@ class S3LanguageMenuLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-ML = S3LanguageMenuLayout
+ML = LanguageMenuLayout
 
 # =============================================================================
-class S3OrgMenuLayout(S3NavigationItem):
+class OrgMenuLayout(S3NavigationItem):
     """ Layout for the organisation-specific menu """
 
     @staticmethod
@@ -308,6 +308,6 @@ class S3OrgMenuLayout(S3NavigationItem):
 
 # -----------------------------------------------------------------------------
 # Shortcut
-OM = S3OrgMenuLayout
+OM = OrgMenuLayout
 
 # END =========================================================================

@@ -63,7 +63,6 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -221,10 +220,10 @@ class CMSContentModel(DataModel):
                                                           sort = True,
                                                           )),
                                   sortby = "name",
-                                  comment = S3PopupLink(title = ADD_STATUS,
-                                                        c = "cms",
-                                                        f = "status",
-                                                        ),
+                                  comment = PopupLink(title = ADD_STATUS,
+                                                      c = "cms",
+                                                      f = "status",
+                                                      ),
                                   )
 
         # ---------------------------------------------------------------------
@@ -345,11 +344,11 @@ class CMSContentModel(DataModel):
                                                           represent,
                                                           )),
                                 sortby = "name",
-                                comment = S3PopupLink(c = "cms",
-                                                      f = "post",
-                                                      title = ADD_POST,
-                                                      tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
-                                                      ),
+                                comment = PopupLink(c = "cms",
+                                                    f = "post",
+                                                    title = ADD_POST,
+                                                    tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
+                                                    ),
                                 )
 
         list_fields = ["post_module.module",
@@ -2366,7 +2365,7 @@ def cms_unread_newsletters(count=True, cached=True):
             pass
 
     now = datetime.datetime.utcnow()
-    if expire and expire > now and False:
+    if expire and expire > now:
         return number if count else record_ids
 
     if auth.user:
@@ -2645,8 +2644,8 @@ def cms_index(module,
         try:
             # Pass view as file not str to work in compiled mode
             response.view = open(view, "rb")
-        except IOError:
-            raise HTTP(404, "Unable to open Custom View: %s" % view)
+        except IOError as e:
+            raise HTTP(404, "Unable to open Custom View: %s" % view) from e
     else:
         response.view = "index.html"
 
@@ -2809,15 +2808,17 @@ class S3CMS(CRUDMethod):
         r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
-    def widget(self, r, method="cms", widget_id=None, **attr):
+    def widget(self, r, method="cms", widget_id=None, visible=True, **attr):
         """
             Render a Rich Text widget suitable for use in a page such as
             S3Summary
 
             Args:
-                method: the widget method
                 r: the CRUDRequest
-                attr: controller attributes
+                method: the widget method
+                widget_id: the widget ID
+                visible: whether the widget is initially visible
+                attr: dictionary of parameters for the method handler
 
             TODO Support comments
         """

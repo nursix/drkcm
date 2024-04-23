@@ -35,7 +35,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -954,11 +953,11 @@ class IRSResponseModel(DataModel):
                      asset_id(label = T("Vehicle"),
                               # Limit Vehicles to those which are not already assigned to an Incident
                               requires = self.irs_vehicle_requires,
-                              comment = S3PopupLink(c = "vehicle",
-                                                    f = "vehicle",
-                                                    label = T("Add Vehicle"),
-                                                    tooltip = T("If you don't see the vehicle in the list, you can add a new one by clicking link 'Add Vehicle'."),
-                                                    ),
+                              comment = PopupLink(c = "vehicle",
+                                                  f = "vehicle",
+                                                  label = T("Add Vehicle"),
+                                                  tooltip = T("If you don't see the vehicle in the list, you can add a new one by clicking link 'Add Vehicle'."),
+                                                  ),
                               ),
                      DateTimeField("datetime",
                                    default = "now",
@@ -1004,11 +1003,11 @@ class IRSResponseModel(DataModel):
                                                       filterby="type",
                                                       filter_opts=(1,),
                                                       sort=True)),
-                              comment = S3PopupLink(c = "vehicle",
-                                                    f = "vehicle",
-                                                    label = T("Add Vehicle"),
-                                                    tooltip = T("If you don't see the vehicle in the list, you can add a new one by clicking link 'Add Vehicle'."),
-                                                    ),
+                              comment = PopupLink(c = "vehicle",
+                                                  f = "vehicle",
+                                                  label = T("Add Vehicle"),
+                                                  tooltip = T("If you don't see the vehicle in the list, you can add a new one by clicking link 'Add Vehicle'."),
+                                                  ),
                               ),
                      Field("closed",
                            # @ToDo: Close all assignments when Incident closed

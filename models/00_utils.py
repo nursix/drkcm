@@ -28,20 +28,20 @@ s3base.s3_get_tzinfo()
 # -----------------------------------------------------------------------------
 # Menus
 #
-from s3layouts import *
-import s3menus as default_menus
+from core.ui.layouts import *
+import core.ui.menus as default_menus
 
-S3MainMenu = default_menus.S3MainMenu
-S3OptionsMenu = default_menus.S3OptionsMenu
+MainMenu = default_menus.MainMenu
+OptionsMenu = default_menus.OptionsMenu
 
 current.menu = Storage(oauth="", options=None, override={})
 if auth.permission.format in ("html"):
 
     # NB cascading templates:
     #
-    # - uses the last of S3MainMenu/S3OptionsMenu definition in the
+    # - uses the last of MainMenu/OptionsMenu definition in the
     #   template cascade
-    # - templates can override just one of S3MainMenu/S3OptionsMenu,
+    # - templates can override just one of MainMenu/OptionsMenu,
     #   while "inheriting" the other one from the cascade
     # - final fallback is the default menu
     # - layouts.py is always loaded from the *theme* location, so that
@@ -49,13 +49,13 @@ if auth.permission.format in ("html"):
     #
     # Example:
     #
-    # - have an S3MainMenu in templates/MY/SUB/menus.py
+    # - have an MainMenu in templates/MY/SUB/menus.py
     # - settings.template = ["MY", "MY.SUB"]
     # - settings.theme = "MY"
     # => will use:
     # - Layouts from templates/MYTEMPLATE/layouts.py
-    # - S3MainMenu from templates/MY/SUB/menus.py
-    # - S3OptionsMenu from templates/MY/menus.py
+    # - MainMenu from templates/MY/SUB/menus.py
+    # - OptionsMenu from templates/MY/menus.py
 
     menu_locations = []
     template = settings.get_template()
@@ -74,8 +74,8 @@ if auth.permission.format in ("html"):
                 continue
             try:
                 deployment_menus = __import__(package % name,
-                                              fromlist=["S3MainMenu",
-                                                        "S3OptionsMenu",
+                                              fromlist=["MainMenu",
+                                                        "OptionsMenu",
                                                         ],
                                               )
             except ImportError:
@@ -83,18 +83,18 @@ if auth.permission.format in ("html"):
                 continue
             else:
                 if not custom_main_menu and \
-                   hasattr(deployment_menus, "S3MainMenu"):
-                    S3MainMenu = deployment_menus.S3MainMenu
+                   hasattr(deployment_menus, "MainMenu"):
+                    MainMenu = deployment_menus.MainMenu
                     custom_main_menu = True
                 if not custom_options_menu and \
-                   hasattr(deployment_menus, "S3OptionsMenu"):
-                    S3OptionsMenu = deployment_menus.S3OptionsMenu
+                   hasattr(deployment_menus, "OptionsMenu"):
+                    OptionsMenu = deployment_menus.OptionsMenu
                     custom_options_menu = True
                 if custom_main_menu and custom_options_menu:
                     break
 
     # Instantiate main menu
-    main = S3MainMenu.menu()
+    main = MainMenu.menu()
 else:
     main = None
 

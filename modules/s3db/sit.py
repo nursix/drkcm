@@ -31,7 +31,7 @@ __all__ = ("SituationModel",
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-#from s3layouts import S3PopupLink
+#from core.ui.layouts import PopupLink
 
 # =============================================================================
 class SituationModel(DataModel):

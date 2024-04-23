@@ -1958,13 +1958,13 @@ $('form.auth_consent').submit(S3ClearNavigateAwayConfirm);''')
                 organisation_id.requires = IS_EMPTY_OR(requires)
 
             if deployment_settings.get_auth_registration_organisation_link_create():
-                from s3layouts import S3PopupLink
+                from core.ui.layouts import PopupLink
                 org_crud_strings = s3db.crud_strings["org_organisation"]
-                organisation_id.comment = S3PopupLink(c = "org",
-                                                      f = "organisation",
-                                                      label = org_crud_strings.label_create,
-                                                      title = org_crud_strings.title_list,
-                                                      )
+                organisation_id.comment = PopupLink(c = "org",
+                                                    f = "organisation",
+                                                    label = org_crud_strings.label_create,
+                                                    title = org_crud_strings.title_list,
+                                                    )
                 #from ..ui import S3OrganisationAutocompleteWidget
                 #organisation_id.widget = S3OrganisationAutocompleteWidget()
                 #organisation_id.comment = DIV(_class="tooltip",
@@ -1992,13 +1992,13 @@ $('form.auth_consent').submit(S3ClearNavigateAwayConfirm);''')
                 org_group_id.requires = requires
             else:
                 org_group_id.requires = IS_EMPTY_OR(requires)
-            #from s3layouts import S3PopupLink
+            #from core.ui.layouts import PopupLink
             #ogroup_crud_strings = s3db.crud_strings["org_group"]
-            #org_group_id.comment = S3PopupLink(c = "org",
-            #                                   f = "group",
-            #                                   label = ogroup_crud_strings.label_create,
-            #                                   title = ogroup_crud_strings.title_list,
-            #                                   )
+            #org_group_id.comment = PopupLink(c = "org",
+            #                                 f = "group",
+            #                                 label = ogroup_crud_strings.label_create,
+            #                                 title = ogroup_crud_strings.title_list,
+            #                                 )
             if multiselect_widget:
                 org_group_id.widget = S3MultiSelectWidget(multiple=False)
 
@@ -5119,8 +5119,7 @@ Please go to %(url)s to approve this user."""
         if fields_missing:
             fields_to_load = [table._id] + [table[f] for f in fields_in_table]
             query = (table._id == record_id)
-            row = current.db(query).select(limitby=(0, 1),
-                                           *fields_to_load).first()
+            row = current.db(query).select(*fields_to_load, limitby=(0, 1)).first()
         else:
             row = record
         if not row:
@@ -5180,12 +5179,8 @@ Please go to %(url)s to approve this user."""
             if REALM in row and row[REALM] and not force_update:
                 pass
             else:
-                if REALM in fields:
-                    entity = fields[REALM]
-                else:
-                    entity = 0
-                realm_entity = self.get_realm_entity(table, row,
-                                                     entity=entity)
+                entity = fields.get(REALM, 0)
+                realm_entity = self.get_realm_entity(table, row, entity=entity)
                 data[REALM] = realm_entity
 
         self.s3_update_record_owner(table, row, update=force_update, **data)
@@ -5382,12 +5377,12 @@ Please go to %(url)s to approve this user."""
         for se in super_entities:
             supertable = load(se)
             if not supertable or \
-               not any([f in supertable.fields for f in data]):
+               not any(f in supertable.fields for f in data):
                 continue
             tables[super_key(supertable)] = supertable
 
         if not isinstance(record, (Row, dict)) or \
-           any([f not in record for f in tables]):
+           any(f not in record for f in tables):
             if isinstance(record, Query):
                 query = record
                 limitby = None
