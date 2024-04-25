@@ -53,7 +53,7 @@ class PresenceList(CRUDMethod):
             r.error(400, current.ERROR.BAD_RECORD)
 
         shelter_name = record.name
-        data = self.lookup(record.site_id)
+        data = self.lookup(record)
 
         fmt = r.representation
         if fmt == "xlsx":
