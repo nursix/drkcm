@@ -192,7 +192,7 @@ def pr_person_resource(r, tablename):
         resource = r.resource
         if not r.component and resource.tablename == "pr_person":
 
-            if controller == "dvr":
+            if controller == "dvr" and auth.s3_has_role("ADMIN"):
                 # Configure anonymize-method
                 from core import S3Anonymize
                 s3db.set_method("pr_person", method="anonymize", action=S3Anonymize)
@@ -201,16 +201,17 @@ def pr_person_resource(r, tablename):
                 from ..anonymize import anonymize_rules
                 resource.configure(anonymize=anonymize_rules())
 
-            # Configure case document template methods
-            from .doc import CaseDocumentTemplates
-            s3db.set_method("pr_person",
-                            method = "templates",
-                            action = CaseDocumentTemplates,
-                            )
-            s3db.set_method("pr_person",
-                            method = "template",
-                            action = s3db.pr_Template,
-                            )
+            # Disabled due to requirement for skills to create templates:
+            ## Configure case document template methods
+            #from .doc import CaseDocumentTemplates
+            #s3db.set_method("pr_person",
+            #                method = "templates",
+            #                action = CaseDocumentTemplates,
+            #                )
+            #s3db.set_method("pr_person",
+            #                method = "template",
+            #                action = s3db.pr_Template,
+            #                )
 
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case
@@ -1319,21 +1320,21 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
 
         if not r.component:
 
-            if is_case_admin:
-
+            if controller == "dvr" and current.auth.s3_has_role("ADMIN"):
                 # Anonymize-button
-                if controller == "dvr":
-                    from core import S3AnonymizeWidget
-                    anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
-                    inject_button(output, anonymize, before="delete_btn", alt=None)
+                from core import S3AnonymizeWidget
+                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                inject_button(output, anonymize, before="delete_btn", alt=None)
 
-                # Doc-From-Template-button (requires appropriate role)
-                doc_from_template = A(T("Document from Template"),
-                                      _class = "action-btn activity button s3_modal",
-                                      _title = T("Generate Document from Template"),
-                                      _href = URL(args=[r.id, "templates"]),
-                                      )
-                inject_button(output, doc_from_template, before="delete_btn", alt=None)
+            # Disabled due to requirement for skills to create templates
+            #if is_case_admin:
+            #    # Doc-From-Template-button (requires appropriate role)
+            #    doc_from_template = A(T("Document from Template"),
+            #                          _class = "action-btn activity button s3_modal",
+            #                          _title = T("Generate Document from Template"),
+            #                          _href = URL(args=[r.id, "templates"]),
+            #                          )
+            #    inject_button(output, doc_from_template, before="delete_btn", alt=None)
 
         elif component_name == "case_appointment":
             # Organizer-button on appointments tab
