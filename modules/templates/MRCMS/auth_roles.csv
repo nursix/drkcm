@@ -81,7 +81,7 @@ CASE_ADMIN,Case Administrator,,,,,pr_contact_emergency,CREATE|READ|UPDATE|DELETE
 CASE_ADMIN,Case Administrator,,,,,pr_group_membership,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,,,pr_identity,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,,,pr_image,CREATE|READ|UPDATE|DELETE,,,
-CASE_ADMIN,Case Administrator,,,,,pr_person,CREATE|READ|UPDATE|DELETE,,,
+CASE_ADMIN,Case Administrator,,,,,pr_person,CREATE|READ|UPDATE,,,
 CASE_ADMIN,Case Administrator,,,,,pr_person_details,CREATE|READ|UPDATE,,,
 CASE_ADMIN,Case Administrator,,,,,pr_person_tag,CREATE|READ|UPDATE|DELETE,,,
 CASE_ADMIN,Case Administrator,,,,,security_seized_item,READ,,,
