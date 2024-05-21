@@ -286,14 +286,19 @@ def org_rheader(r, tabs=None):
         elif tablename == "org_organisation":
 
             if not tabs:
+                # General tabs
                 tabs = [(T("Basic Details"), None),
                         #(T("Offices"), "office"),
-                        #(T("Staff"), "human_resource"),
-                        (T("Documents"), "document"),
-                        (T("Templates"), "template"),
                         ]
+
+                # Role/permission-dependent tabs
                 if auth.s3_has_permission("read", "pr_person", c="hrm", f="person"):
-                    tabs.insert(-2, (T("Staff"), "human_resource"))
+                    tabs.append((T("Staff"), "human_resource"))
+
+                # Documents tabs
+                tabs += [(T("Documents"), "document"),
+                         #(T("Templates"), "template"),
+                         ]
 
             rheader_fields = []
             rheader_title = "name"
