@@ -111,18 +111,13 @@
 }
 
 /* line 137, ../../default/scss/theme/_buttons.scss */
-#delete-btn {
-  margin-bottom: 0.5rem;
-}
-
-/* line 144, ../../default/scss/theme/_buttons.scss */
 .map_home .gis_fullscreen_map-btn {
   font-weight: normal;
   font-size: 0.8rem;
   padding: 0.2rem;
 }
 
-/* line 153, ../../default/scss/theme/_buttons.scss */
+/* line 146, ../../default/scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
   background-color: #871D33;
@@ -131,12 +126,12 @@ button.toggle-text {
   line-height: 1.0;
   padding: 0.2rem 0.3rem;
 }
-/* line 158, ../../default/scss/theme/_buttons.scss */
+/* line 151, ../../default/scss/theme/_buttons.scss */
 [dir=rtl] button.toggle-text {
   margin: 0 0.7rem 0 0;
 }
 
-/* line 168, ../../default/scss/theme/_buttons.scss */
+/* line 161, ../../default/scss/theme/_buttons.scss */
 .pr-contacts-editable button {
   display: inline-block;
   margin: 0.15rem;
@@ -154,7 +149,7 @@ button.toggle-text {
   margin: 2px;
 }
 
-/* line 179, ../../default/scss/theme/_buttons.scss */
+/* line 172, ../../default/scss/theme/_buttons.scss */
 #footer button.btn {
   display: inline-block;
   margin: 0.15rem;
@@ -170,13 +165,13 @@ button.toggle-text {
   color: #fefefe;
   background: #dddddd;
 }
-/* line 184, ../../default/scss/theme/_buttons.scss */
+/* line 177, ../../default/scss/theme/_buttons.scss */
 #footer button.btn:hover {
   color: #fefefe;
   background: #a0a0a0;
 }
 
-/* line 193, ../../default/scss/theme/_buttons.scss */
+/* line 186, ../../default/scss/theme/_buttons.scss */
 .caret {
   display: inline-block;
   width: 0;
@@ -207,6 +202,11 @@ button.toggle-text {
 }
 
 /* line 29, ../../default/scss/theme/_represent.scss */
+.hours-formatted {
+  cursor: pointer;
+}
+
+/* line 36, ../../default/scss/theme/_represent.scss */
 .avatar {
   background: none repeat scroll 0 0 #fff;
   border-bottom: 1px solid #d7d7d7;
@@ -217,66 +217,66 @@ button.toggle-text {
   padding: 4px;
   width: 55px;
 }
-/* line 38, ../../default/scss/theme/_represent.scss */
+/* line 45, ../../default/scss/theme/_represent.scss */
 [dir=rtl] .avatar {
   float: right;
 }
 
-/* line 46, ../../default/scss/theme/_represent.scss */
+/* line 53, ../../default/scss/theme/_represent.scss */
 .text-body {
   white-space: pre-wrap;
 }
 
 /* Truncated Texts */
-/* line 51, ../../default/scss/theme/_represent.scss */
+/* line 58, ../../default/scss/theme/_represent.scss */
 .s3-truncate-more,
 .s3-truncate-less {
   font-style: italic;
 }
 
-/* line 55, ../../default/scss/theme/_represent.scss */
+/* line 62, ../../default/scss/theme/_represent.scss */
 .s3-truncate-more:before,
 .s3-truncate-less:before {
   font-style: italic;
   content: "...";
 }
 
-/* line 65, ../../default/scss/theme/_represent.scss */
+/* line 72, ../../default/scss/theme/_represent.scss */
 .controls .bool {
   margin-left: 0.5rem;
 }
-/* line 67, ../../default/scss/theme/_represent.scss */
+/* line 74, ../../default/scss/theme/_represent.scss */
 [dir=rtl] .controls .bool {
   margin-left: 0;
   margin-right: 0.5rem;
 }
-/* line 72, ../../default/scss/theme/_represent.scss */
+/* line 79, ../../default/scss/theme/_represent.scss */
 .bool i {
   margin-right: 0.2rem;
 }
-/* line 74, ../../default/scss/theme/_represent.scss */
+/* line 81, ../../default/scss/theme/_represent.scss */
 [dir=rtl] .bool i {
   margin-right: 0;
   margin-left: 0.2rem;
 }
-/* line 79, ../../default/scss/theme/_represent.scss */
+/* line 86, ../../default/scss/theme/_represent.scss */
 .bool.bool-red {
   color: #d01717;
 }
-/* line 82, ../../default/scss/theme/_represent.scss */
+/* line 89, ../../default/scss/theme/_represent.scss */
 .bool.bool-green {
   color: #018801;
 }
-/* line 85, ../../default/scss/theme/_represent.scss */
+/* line 92, ../../default/scss/theme/_represent.scss */
 .bool.bool-blue {
   color: #1754b3;
 }
-/* line 88, ../../default/scss/theme/_represent.scss */
+/* line 95, ../../default/scss/theme/_represent.scss */
 .bool.bool-grey {
   color: #7f7f7f;
 }
 
-/* line 96, ../../default/scss/theme/_represent.scss */
+/* line 103, ../../default/scss/theme/_represent.scss */
 .prio {
   padding: 0 0.4rem;
   border: 1px solid #333;
@@ -286,68 +286,68 @@ button.toggle-text {
   white-space: pre;
 }
 
-/* line 104, ../../default/scss/theme/_represent.scss */
+/* line 111, ../../default/scss/theme/_represent.scss */
 .prio-red {
   color: #E0E0E0;
   background-color: #d10000;
 }
 
-/* line 108, ../../default/scss/theme/_represent.scss */
+/* line 115, ../../default/scss/theme/_represent.scss */
 .prio-amber {
   background-color: #ffaa00;
 }
 
-/* line 111, ../../default/scss/theme/_represent.scss */
+/* line 118, ../../default/scss/theme/_represent.scss */
 .prio-lightgreen {
   background-color: #a0d7a0;
 }
 
-/* line 114, ../../default/scss/theme/_represent.scss */
+/* line 121, ../../default/scss/theme/_represent.scss */
 .prio-green {
   color: #E0E0E0;
   background-color: #006100;
 }
 
-/* line 118, ../../default/scss/theme/_represent.scss */
+/* line 125, ../../default/scss/theme/_represent.scss */
 .prio-blue {
   color: white;
   background-color: #10427b;
 }
 
-/* line 122, ../../default/scss/theme/_represent.scss */
+/* line 129, ../../default/scss/theme/_represent.scss */
 .prio-lightblue {
   background-color: #b7ddff;
 }
 
-/* line 125, ../../default/scss/theme/_represent.scss */
+/* line 132, ../../default/scss/theme/_represent.scss */
 .prio-grey {
   background-color: silver;
 }
 
-/* line 128, ../../default/scss/theme/_represent.scss */
+/* line 135, ../../default/scss/theme/_represent.scss */
 .prio-black {
   color: #E0E0E0;
   background-color: #1f1f1f;
 }
 
-/* line 136, ../../default/scss/theme/_represent.scss */
+/* line 143, ../../default/scss/theme/_represent.scss */
 .wh-schedule {
   list-style: none;
   white-space: pre;
   margin: 0;
   font-size: 0.7rem;
 }
-/* line 141, ../../default/scss/theme/_represent.scss */
+/* line 148, ../../default/scss/theme/_represent.scss */
 .wh-schedule .wh-dayname {
   width: 1.5rem;
   display: inline-block;
 }
-/* line 145, ../../default/scss/theme/_represent.scss */
+/* line 152, ../../default/scss/theme/_represent.scss */
 .wh-schedule .wh-dayname::after {
   content: ":";
 }
 
-/* line 153, ../../default/scss/theme/_represent.scss */
+/* line 160, ../../default/scss/theme/_represent.scss */
 .showall {
   display: none;
   position: absolute;
@@ -357,7 +357,7 @@ button.toggle-text {
   margin: 0 20px 0 -50px;
 }
 
-/* line 165, ../../default/scss/theme/_represent.scss */
+/* line 172, ../../default/scss/theme/_represent.scss */
 .newsletter-text {
   white-space: pre-line;
   background: #fcfcfc;
@@ -370,84 +370,84 @@ button.toggle-text {
   font-size: 0.85rem;
 }
 
-/* line 181, ../../default/scss/theme/_represent.scss */
+/* line 188, ../../default/scss/theme/_represent.scss */
 .file-repr i.fa {
   font-size: 1.1rem;
 }
-/* line 184, ../../default/scss/theme/_represent.scss */
+/* line 191, ../../default/scss/theme/_represent.scss */
 .file-repr .file-size {
   padding: 0 0.4rem;
   font-size: 0.7rem;
 }
 
-/* line 190, ../../default/scss/theme/_represent.scss */
+/* line 197, ../../default/scss/theme/_represent.scss */
 .img-preview {
   max-width: 120px;
   max-height: 80px;
 }
 
-/* line 198, ../../default/scss/theme/_represent.scss */
+/* line 205, ../../default/scss/theme/_represent.scss */
 .contact-repr {
   background-color: #FFF0C1;
   border: 1px solid #E0E0E0;
   padding: 0.25rem 0.5rem;
 }
-/* line 202, ../../default/scss/theme/_represent.scss */
+/* line 209, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-name {
   display: block;
   font-weight: bold;
   margin-bottom: 0.2rem;
 }
-/* line 207, ../../default/scss/theme/_represent.scss */
+/* line 214, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-info {
   white-space: nowrap;
   font-size: 0.8rem;
 }
-/* line 210, ../../default/scss/theme/_represent.scss */
+/* line 217, ../../default/scss/theme/_represent.scss */
 .contact-repr .contact-info .fa {
   padding-right: 0.4rem;
 }
 
-/* line 219, ../../default/scss/theme/_represent.scss */
+/* line 226, ../../default/scss/theme/_represent.scss */
 .workflow-options {
   white-space: pre;
 }
-/* line 221, ../../default/scss/theme/_represent.scss */
+/* line 228, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-grey {
   color: #555;
 }
-/* line 224, ../../default/scss/theme/_represent.scss */
+/* line 231, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-red {
   color: #c42626;
 }
-/* line 227, ../../default/scss/theme/_represent.scss */
+/* line 234, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-amber {
   color: #ec8d27;
 }
-/* line 230, ../../default/scss/theme/_represent.scss */
+/* line 237, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-green {
   color: green;
 }
-/* line 233, ../../default/scss/theme/_represent.scss */
+/* line 240, ../../default/scss/theme/_represent.scss */
 .workflow-options.workflow-advice {
   border: 1px solid #c42626;
   background-color: #ffdede;
   padding: 0.3rem 0.7rem;
 }
-/* line 238, ../../default/scss/theme/_represent.scss */
+/* line 245, ../../default/scss/theme/_represent.scss */
 .workflow-options .fa {
   margin-right: 0.2rem;
 }
-/* line 240, ../../default/scss/theme/_represent.scss */
+/* line 247, ../../default/scss/theme/_represent.scss */
 [dir=rtl] .workflow-options .fa {
   margin-right: 0;
   margin-left: 0.2rem;
 }
-/* line 245, ../../default/scss/theme/_represent.scss */
+/* line 252, ../../default/scss/theme/_represent.scss */
 .controls .workflow-options {
   margin-left: 0.5rem;
 }
-/* line 247, ../../default/scss/theme/_represent.scss */
+/* line 254, ../../default/scss/theme/_represent.scss */
 [dir=rtl] .controls .workflow-options {
   margin-left: 0;
   margin-right: 0.5rem;
@@ -3032,252 +3032,252 @@ table.dataTable thead th, table.dataTable thead td, table.dataTable tbody th, ta
 [dir=rtl] table.dataTable thead th, [dir=rtl] table.dataTable thead td, [dir=rtl] table.dataTable tbody th, [dir=rtl] table.dataTable tbody td, [dir=rtl] table.dataTable tfoot th, [dir=rtl] table.dataTable tfoot td {
   padding: 0.2rem 0.5rem 0.2rem 1.5rem;
 }
-/* line 66, ../../default/scss/theme/_tables.scss */
+/* line 65, ../../default/scss/theme/_tables.scss */
+table.dataTable thead th.dt-bulk, table.dataTable thead td.dt-bulk, table.dataTable tbody th.dt-bulk, table.dataTable tbody td.dt-bulk, table.dataTable tfoot th.dt-bulk, table.dataTable tfoot td.dt-bulk {
+  padding: 0.2rem;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 3rem;
+}
+/* line 71, ../../default/scss/theme/_tables.scss */
+table.dataTable thead th.dt-actions, table.dataTable thead td.dt-actions, table.dataTable tbody th.dt-actions, table.dataTable tbody td.dt-actions, table.dataTable tfoot th.dt-actions, table.dataTable tfoot td.dt-actions {
+  white-space: nowrap;
+}
+/* line 75, ../../default/scss/theme/_tables.scss */
 table.dataTable thead th, table.dataTable tbody th, table.dataTable tfoot th {
   text-align: center;
 }
-/* line 71, ../../default/scss/theme/_tables.scss */
+/* line 80, ../../default/scss/theme/_tables.scss */
 table.dataTable thead {
   background-color: #ffffff;
 }
-/* line 73, ../../default/scss/theme/_tables.scss */
+/* line 82, ../../default/scss/theme/_tables.scss */
 table.dataTable thead th {
   border-bottom: 1px solid #cccccc;
 }
-/* line 77, ../../default/scss/theme/_tables.scss */
+/* line 86, ../../default/scss/theme/_tables.scss */
 [dir=rtl] table.dataTable thead th.sorting, [dir=rtl] table.dataTable thead th.sorting_asc, [dir=rtl] table.dataTable thead th.sorting_desc {
   background-position-x: left;
 }
-/* line 86, ../../default/scss/theme/_tables.scss */
+/* line 95, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.even {
   background-color: #ffffff;
 }
-/* line 88, ../../default/scss/theme/_tables.scss */
+/* line 97, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.even td.sorting_1 {
   background-color: #fafafa;
 }
-/* line 92, ../../default/scss/theme/_tables.scss */
+/* line 101, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.odd {
   background-color: #f7f8f9;
 }
-/* line 94, ../../default/scss/theme/_tables.scss */
+/* line 103, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.odd td.sorting_1 {
   background-color: #f0f1f2;
 }
-/* line 99, ../../default/scss/theme/_tables.scss */
+/* line 108, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.even {
   background-color: #ffffa0;
 }
-/* line 101, ../../default/scss/theme/_tables.scss */
+/* line 110, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.even td.sorting_1 {
   background-color: #fffff0;
 }
-/* line 103, ../../default/scss/theme/_tables.scss */
+/* line 112, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.odd {
   background-color: #ffffc0;
 }
-/* line 105, ../../default/scss/theme/_tables.scss */
+/* line 114, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtalert.odd td.sorting_1 {
   background-color: #ffffb0;
 }
-/* line 109, ../../default/scss/theme/_tables.scss */
+/* line 118, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.even {
   background-color: #ffa6a6;
 }
-/* line 111, ../../default/scss/theme/_tables.scss */
+/* line 120, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.even td.sorting_1 {
   background-color: #ff8383;
 }
-/* line 113, ../../default/scss/theme/_tables.scss */
+/* line 122, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.odd {
   background-color: #ffd9d9;
 }
-/* line 115, ../../default/scss/theme/_tables.scss */
+/* line 124, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtwarning.odd td.sorting_1 {
   background-color: #ffb6b6;
 }
-/* line 119, ../../default/scss/theme/_tables.scss */
+/* line 128, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.odd {
   background-color: #40fa8d;
 }
-/* line 121, ../../default/scss/theme/_tables.scss */
+/* line 130, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.odd td.sorting_1 {
   background-color: #20f0ad;
 }
-/* line 123, ../../default/scss/theme/_tables.scss */
+/* line 132, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.even {
   background-color: #60f6ad;
 }
-/* line 125, ../../default/scss/theme/_tables.scss */
+/* line 134, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.row_selected.even td.sorting_1 {
   background-color: #40fa8d;
 }
-/* line 128, ../../default/scss/theme/_tables.scss */
+/* line 137, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group {
   background-color: #ddd;
   border: 1px solid #aaa;
 }
-/* line 131, ../../default/scss/theme/_tables.scss */
+/* line 140, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1 {
   background-color: #999;
   color: #def;
 }
-/* line 134, ../../default/scss/theme/_tables.scss */
+/* line 143, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1.activeRow {
   background-color: #1d70cf;
 }
-/* line 137, ../../default/scss/theme/_tables.scss */
+/* line 146, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_1 a {
   color: #def;
 }
-/* line 141, ../../default/scss/theme/_tables.scss */
+/* line 150, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2 {
   background-color: #ddd;
   color: #248;
 }
-/* line 144, ../../default/scss/theme/_tables.scss */
+/* line 153, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2.activeRow {
   background-color: #528dd1;
 }
-/* line 147, ../../default/scss/theme/_tables.scss */
+/* line 156, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group.level_2 a {
   color: #248;
 }
-/* line 151, ../../default/scss/theme/_tables.scss */
+/* line 160, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group span.ui-icon {
   display: inline-block;
 }
-/* line 154, ../../default/scss/theme/_tables.scss */
+/* line 163, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-indent {
   width: 10px;
 }
-/* line 157, ../../default/scss/theme/_tables.scss */
+/* line 166, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-opened,
 table.dataTable tbody tr.group .group-closed {
   padding: 0.2rem;
 }
-/* line 161, ../../default/scss/theme/_tables.scss */
+/* line 170, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.group .group-collapse,
 table.dataTable tbody tr.group .group-expand {
   cursor: pointer;
   float: right;
 }
-/* line 167, ../../default/scss/theme/_tables.scss */
+/* line 176, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr.dtdisable {
   text-shadow: #ccc 1px 1px 1px;
   color: #888;
 }
-/* line 171, ../../default/scss/theme/_tables.scss */
+/* line 180, ../../default/scss/theme/_tables.scss */
 table.dataTable tbody tr td {
   vertical-align: top;
 }
-/* line 177, ../../default/scss/theme/_tables.scss */
+/* line 186, ../../default/scss/theme/_tables.scss */
 table.dataTable tfoot th, table.dataTable tfoot td {
   background-color: #f7f8f9;
   border-top: 2px solid #cccccc;
   padding: 0.5em;
 }
-/* line 185, ../../default/scss/theme/_tables.scss */
-table.dataTable .selected-action {
-  margin: 0.35rem 0.2rem;
-}
-/* line 188, ../../default/scss/theme/_tables.scss */
-table.dataTable .bulk-select-options {
-  font-size: 0.7rem;
-  font-weight: normal;
-}
-/* line 191, ../../default/scss/theme/_tables.scss */
+/* line 198, ../../default/scss/theme/_tables.scss */
 table.dataTable .bulk-select-options input[type=checkbox] {
-  margin-bottom: 0.2rem;
-  margin-right: 0.5rem;
-  vertical-align: middle;
+  margin-bottom: 0;
 }
-/* line 197, ../../default/scss/theme/_tables.scss */
-table.dataTable input.bulkcheckbox[type=checkbox] {
-  position: relative;
-  left: 50%;
-  margin-top: 0.5rem;
-}
-/* line 205, ../../default/scss/theme/_tables.scss */
+/* line 207, ../../default/scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody th:first-child::before {
   top: 0.4rem;
   background-color: #871D33;
 }
-/* line 211, ../../default/scss/theme/_tables.scss */
+/* line 213, ../../default/scss/theme/_tables.scss */
 table.dataTable.dtr-inline.collapsed tbody tr.parent td:first-child::before,
 table.dataTable.dtr-inline.collapsed tbody tr.parent th:first-child::before {
   background-color: #D92C20;
 }
-/* line 218, ../../default/scss/theme/_tables.scss */
+/* line 220, ../../default/scss/theme/_tables.scss */
 table.dataTable table.import-item-details {
   display: none;
 }
 
-/* line 224, ../../default/scss/theme/_tables.scss */
-.dataTables_wrapper .dataTables_filter {
-  float: left;
-  text-align: left;
-  margin-right: 3rem;
-}
-/* line 228, ../../default/scss/theme/_tables.scss */
-.dataTables_wrapper .dataTables_filter label {
-  margin-left: 0.3rem;
-  font-size: 0.75rem;
-  font-weight: normal;
-}
-/* line 233, ../../default/scss/theme/_tables.scss */
-.dataTables_wrapper .dataTables_filter input[type="search"] {
-  margin-left: 0.3rem;
-}
-/* line 236, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dataTables_wrapper .dataTables_filter {
-  float: right;
-  text-align: right;
-  margin-right: 0;
-  margin-left: 3rem;
-}
-/* line 241, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dataTables_wrapper .dataTables_filter label,
-[dir=rtl] .dataTables_wrapper .dataTables_filter input[type="search"] {
-  margin-left: 0rem;
-  margin-right: 0.3rem;
-}
-/* line 248, ../../default/scss/theme/_tables.scss */
+/* line 227, ../../default/scss/theme/_tables.scss */
+.dataTables_wrapper .dataTables_bulk,
+.dataTables_wrapper .dataTables_filter,
 .dataTables_wrapper .dataTables_length {
   float: left;
-  margin-bottom: 4px;
-}
-/* line 251, ../../default/scss/theme/_tables.scss */
-.dataTables_wrapper .dataTables_length label {
+  text-align: left !important;
+  margin: 0 3rem 4px 0;
   font-size: 0.75rem;
   font-weight: normal;
   white-space: nowrap;
-  margin: 0 10rem 0.3rem 0.3rem;
 }
-/* line 257, ../../default/scss/theme/_tables.scss */
+/* line 236, ../../default/scss/theme/_tables.scss */
+.dataTables_wrapper .dataTables_bulk select,
+.dataTables_wrapper .dataTables_filter select,
 .dataTables_wrapper .dataTables_length select {
   font-size: 0.75rem;
   text-align: center;
   height: auto;
-  padding: 0.2rem 1.2rem 0.2rem 0;
+  padding: 0.2rem 1.2rem 0.2rem 0.2rem;
   border-radius: 0;
   margin: 0 0.2rem;
   min-width: 3rem;
 }
-/* line 266, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dataTables_wrapper .dataTables_length {
+/* line 245, ../../default/scss/theme/_tables.scss */
+.dataTables_wrapper .dataTables_bulk label,
+.dataTables_wrapper .dataTables_filter label,
+.dataTables_wrapper .dataTables_length label {
+  font-size: 0.75rem;
+  font-weight: normal;
+  white-space: nowrap;
+  margin: 0 10rem 0.3rem 0;
+  display: inline-block;
+}
+/* line 252, ../../default/scss/theme/_tables.scss */
+.dataTables_wrapper .dataTables_bulk input[type="search"],
+.dataTables_wrapper .dataTables_filter input[type="search"],
+.dataTables_wrapper .dataTables_length input[type="search"] {
+  margin-left: 0.3rem;
+  margin-right: 0rem;
+}
+/* line 256, ../../default/scss/theme/_tables.scss */
+[dir=rtl] .dataTables_wrapper .dataTables_bulk, [dir=rtl]
+.dataTables_wrapper .dataTables_filter, [dir=rtl]
+.dataTables_wrapper .dataTables_length {
   float: right;
+  text-align: right !important;
+  margin-left: 3rem;
+  margin-right: 0;
+}
+/* line 261, ../../default/scss/theme/_tables.scss */
+[dir=rtl] .dataTables_wrapper .dataTables_bulk select, [dir=rtl]
+.dataTables_wrapper .dataTables_filter select, [dir=rtl]
+.dataTables_wrapper .dataTables_length select {
+  padding: 0.2rem 0.2rem 0.2rem 1.2rem;
+}
+/* line 264, ../../default/scss/theme/_tables.scss */
+[dir=rtl] .dataTables_wrapper .dataTables_bulk label, [dir=rtl]
+.dataTables_wrapper .dataTables_filter label, [dir=rtl]
+.dataTables_wrapper .dataTables_length label {
+  margin-left: 10rem;
+  margin-right: 0rem;
 }
 /* line 268, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dataTables_wrapper .dataTables_length label {
-  margin: 0 0.3rem 0.3rem 10rem;
+[dir=rtl] .dataTables_wrapper .dataTables_bulk input[type="search"], [dir=rtl]
+.dataTables_wrapper .dataTables_filter input[type="search"], [dir=rtl]
+.dataTables_wrapper .dataTables_length input[type="search"] {
+  margin-left: 0rem;
+  margin-right: 0.3rem;
 }
-/* line 271, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dataTables_wrapper .dataTables_length select {
-  padding: 0.2rem 0 0.2rem 1.1rem !important;
-}
-/* line 276, ../../default/scss/theme/_tables.scss */
+/* line 275, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_processing {
   padding: 1rem 0 2rem;
   top: 2.5rem;
@@ -3286,89 +3286,89 @@ table.dataTable table.import-item-details {
   color: #737373;
   border-color: #737373;
 }
-/* line 283, ../../default/scss/theme/_tables.scss */
+/* line 282, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_processing {
   left: unset;
   right: 30%;
 }
-/* line 288, ../../default/scss/theme/_tables.scss */
+/* line 287, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info {
   float: right;
   clear: none;
   margin: 0.5rem 0;
   padding-top: 0.3rem;
 }
-/* line 290, ../../default/scss/theme/_tables.scss */
+/* line 289, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info {
   float: left;
 }
-/* line 293, ../../default/scss/theme/_tables.scss */
+/* line 292, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info:last-of-type {
   float: left;
 }
-/* line 295, ../../default/scss/theme/_tables.scss */
+/* line 294, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info:last-of-type {
   float: right;
 }
-/* line 303, ../../default/scss/theme/_tables.scss */
+/* line 302, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate {
   float: right;
   margin: 0.3rem 0 0.3rem 0.7rem;
   padding-top: 0.3rem;
 }
-/* line 307, ../../default/scss/theme/_tables.scss */
+/* line 306, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_paginate {
   float: left;
   margin: 0.3rem 0.7rem 0.3rem 0;
 }
-/* line 312, ../../default/scss/theme/_tables.scss */
+/* line 311, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate.paging_full_numbers {
   width: auto;
 }
-/* line 315, ../../default/scss/theme/_tables.scss */
+/* line 314, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button,
 .dataTables_wrapper .dataTables_paginate .paginate_active {
   padding: 0.1rem 0.5rem !important;
   font-size: 0.8rem;
 }
-/* line 319, ../../default/scss/theme/_tables.scss */
+/* line 318, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button a,
 .dataTables_wrapper .dataTables_paginate .paginate_active a {
   text-decoration: none;
   color: #333 !important;
 }
-/* line 323, ../../default/scss/theme/_tables.scss */
+/* line 322, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:hover a {
   color: #eee !important;
 }
-/* line 326, ../../default/scss/theme/_tables.scss */
+/* line 325, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:active a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:active a {
   color: rgba(0, 0, 0, 0.5) !important;
 }
-/* line 329, ../../default/scss/theme/_tables.scss */
+/* line 328, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.disabled a {
   color: #666 !important;
 }
-/* line 332, ../../default/scss/theme/_tables.scss */
+/* line 331, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.current a {
   color: #333 !important;
 }
 
-/* line 342, ../../default/scss/theme/_tables.scss */
+/* line 341, ../../default/scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 345, ../../default/scss/theme/_tables.scss */
+/* line 344, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 348, ../../default/scss/theme/_tables.scss */
+/* line 347, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   float: right;
   margin: 0 0.1rem;
@@ -3378,58 +3378,58 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 356, ../../default/scss/theme/_tables.scss */
+/* line 355, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 361, ../../default/scss/theme/_tables.scss */
+/* line 360, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 364, ../../default/scss/theme/_tables.scss */
+/* line 363, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 367, ../../default/scss/theme/_tables.scss */
+/* line 366, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 370, ../../default/scss/theme/_tables.scss */
+/* line 369, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 373, ../../default/scss/theme/_tables.scss */
+/* line 372, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 376, ../../default/scss/theme/_tables.scss */
+/* line 375, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 379, ../../default/scss/theme/_tables.scss */
+/* line 378, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 382, ../../default/scss/theme/_tables.scss */
+/* line 381, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 385, ../../default/scss/theme/_tables.scss */
+/* line 384, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 390, ../../default/scss/theme/_tables.scss */
+/* line 389, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 392, ../../default/scss/theme/_tables.scss */
+/* line 391, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options .dt-export {
   float: left;
 }
 
-/* line 401, ../../default/scss/theme/_tables.scss */
+/* line 400, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

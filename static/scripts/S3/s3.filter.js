@@ -14,7 +14,7 @@ S3.search = {};
      *
      * @param {object} s - the Ajax options dict
      */
-    var searchRewriteAjaxOptions = function(s, method) {
+    var searchRewriteAjaxOptions = function(s, method, action) {
 
         // Rewrite only GET
         if (s.type != 'GET') {
@@ -101,7 +101,12 @@ S3.search = {};
         s.processData = false;
 
         // Construct new Ajax URL
+        delete queryDict['$search'];
         var ajaxURL = path + '?$search=' + method;
+        if (action) {
+            delete queryDict['$action'];
+            ajaxURL = ajaxURL + '&$action=' + action;
+        }
 
         // Stringify and append queryDict
         var queryString = S3.queryString.stringify(queryDict);

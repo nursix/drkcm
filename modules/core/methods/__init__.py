@@ -17,6 +17,7 @@ from .profile import *
 from .report import *
 from .rest import *
 from .rolemgr import *
+from .select import Select
 from .ssi import SpreadsheetImporter
 from .summary import *
 from .timeplot import *

@@ -347,9 +347,10 @@ class CRUDRequest:
         content_type = self.env.get("content_type") or ""
 
         mode = get_vars.get("$search")
+        action = get_vars.get("$action")
 
-        # Override request method
-        if mode:
+        # Override request method (unless marked as submit-action)
+        if mode and action != "submit":
             self.http = "GET"
 
         # Retrieve filters from request body
@@ -426,7 +427,7 @@ class CRUDRequest:
             from .methods import RESTful, S3Filter, S3GroupedItemsReport, \
                                  S3HierarchyCRUD, S3Map, S3Merge, S3MobileCRUD, \
                                  S3Organizer, S3Profile, S3Report, S3Summary, \
-                                 TimePlot, S3XForms, SpreadsheetImporter
+                                 S3XForms, Select, SpreadsheetImporter, TimePlot
 
             methods = {"deduplicate": S3Merge,
                        "fields": RESTful,
@@ -440,6 +441,7 @@ class CRUDRequest:
                        "organize": S3Organizer,
                        "profile": S3Profile,
                        "report": S3Report,
+                       "select": Select,
                        "summary": S3Summary,
                        "sync": current.sync,
                        "timeplot": TimePlot,
@@ -735,22 +737,21 @@ class CRUDRequest:
                 tree: the tree causing the error
         """
 
-        if self.representation == "html":
+        if self.ajax or self.representation != "html":
+            headers = {"Content-Type":"application/json"}
+            current.log.error(message)
+            body = current.xml.json_message(success = False,
+                                            statuscode = status,
+                                            message = message,
+                                            tree = tree,
+                                            )
+            raise HTTP(status, body=body, web2py_error=message, **headers)
+        else:
             current.session.error = message
             if next is not None:
                 redirect(next)
             else:
                 redirect(URL(r=self, f="index"))
-        else:
-            headers = {"Content-Type":"application/json"}
-            current.log.error(message)
-            raise HTTP(status,
-                       body = current.xml.json_message(success = False,
-                                                       statuscode = status,
-                                                       message = message,
-                                                       tree = tree),
-                       web2py_error = message,
-                       **headers)
 
     # -------------------------------------------------------------------------
     def url(self,
@@ -1227,7 +1228,7 @@ def crud_controller(prefix=None, resourcename=None, **attr):
     r.customise_resource()
 
     # List of methods rendering datatables with default action buttons
-    dt_methods = (None, "datatable", "datatable_f", "summary", "list")
+    dt_methods = (None, "datatable", "datatable_f", "select", "summary", "list")
 
     # List of methods rendering datatables with custom action buttons,
     # => for these, s3.actions must not be touched, see below
@@ -1236,6 +1237,7 @@ def crud_controller(prefix=None, resourcename=None, **attr):
                          "review",
                          "approve",
                          "reject",
+                         "select",
                          "deduplicate",
                          )
 

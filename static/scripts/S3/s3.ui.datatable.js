@@ -266,12 +266,9 @@
          * @property {boolean} destroy - destroy any existing table matching
          *                               the selector and replace with the new
          *                               options
-         * @property {boolean} deselectedIndicator - show the number of de-selected
-         *                                           records in exclusion-mode (bulk-select)
          */
         options: {
             destroy: false,
-            deselectedIndicator: false
         },
 
         /**
@@ -295,6 +292,7 @@
 
             this.tableID = tableID;
             this.selector = '#' + tableID;
+            this.outerForm = el.closest('form.dt-wrapper');
 
             this.refresh();
         },
@@ -342,8 +340,8 @@
                 processing = false;
             }
 
-            // Render bulk-actions
-            this._renderBulkActions();
+            // Restore previous bulk selection
+            this._bulkSelectRestore();
 
             // Initialize dataTable
             el.dataTable({
@@ -398,7 +396,8 @@
 
                 // Custom initComplete
                 // - can e.g. be used to reposition elements like export_formats
-                'initComplete': S3.dataTables.initComplete
+                'initComplete': S3.dataTables.initComplete,
+
             });
 
             this._bindEvents();
@@ -444,13 +443,20 @@
             if (tableConfig.rowActions.length > 0) {
                 columnConfig[tableConfig.actionCol] = {
                     'sTitle': ' ',
-                    'bSortable': false
+                    'bSortable': false,
+                    'className': 'dt-actions actions'
                 };
             }
             if (tableConfig.bulkActions) {
+                // Select-All checkbox in header (not for bulkSingle)
+                let bulkSelectHeader = ' ';
+                if (!tableConfig.bulkSingle) {
+                    bulkSelectHeader = '<div class="bulk-select-options"><input class="bulk-select-all" type="checkbox" title="' + i18n.selectAll + '"></input></div>';
+                }
                 columnConfig[tableConfig.bulkCol] = {
-                    'sTitle': '<div class="bulk-select-options"><input class="bulk-select-all" type="checkbox">' + i18n.selectAll + '</input></div>',
-                    'bSortable': false
+                    'sTitle': bulkSelectHeader,
+                    'bSortable': false,
+                    'className': 'dt-bulk'
                 };
             }
             if (tableConfig.colWidths) {
@@ -830,7 +836,7 @@
                     //if ((tableConfig.group.length) && (tableConfig.group[0][0] < actionCol)) {
                     //    actionCol -= 1;
                     //}
-                    $('td:eq(' + actionCol + ')', nRow).addClass('actions').html(buttons.join(''));
+                    $('td:eq(' + actionCol + ')', nRow).html(buttons.join(''));
                 }
 
                 // Mark selected rows
@@ -872,16 +878,18 @@
 
                 var el = $(self.element),
                     selector = self.selector,
-                    wrapper = el.closest('.dt-wrapper');
+                    outerForm = self.outerForm;
 
                 // Update permalink
                 var ajaxSource = self.ajaxUrl;
                 if (ajaxSource) {
-                    wrapper.find('a.permalink').each(function() {
+                    outerForm.find('a.permalink').each(function() {
                         var $this = $(this);
                         $this.attr('href', updateUrlQuery($this.attr('href'), ajaxSource));
                     });
                 }
+
+                self._renderBulkActions();
 
                 var numrows = oSettings.fnRecordsDisplay();
 
@@ -896,10 +904,10 @@
                 // Show/hide export options depending on whether there are data in the table
                 if (numrows === 0) {
                     // Hide the export options (table is empty)
-                    wrapper.find('.dt-export-options').hide();
+                    outerForm.find('.dt-export-options').hide();
                 } else {
                     // Show the export options (table has data)
-                    wrapper.find('.dt-export-options').show();
+                    outerForm.find('.dt-export-options').show();
                 }
 
                 // Add modals if necessary
@@ -1065,7 +1073,8 @@
          */
         ajaxAction: function(confirmation) {
 
-            var el = $(this.element);
+            var el = $(this.element),
+                outerForm = this.outerForm;
 
             return function(event) {
 
@@ -1077,7 +1086,7 @@
                         recordID = $this.attr('db_id'),
                         ajaxURL = $this.data('url'),
                         data = {},
-                        formKey = el.closest('.dt-wrapper').find('input[name="_formkey"]').first().val();
+                        formKey = $('input[name="_formkey"]', outerForm).first().val();
 
                     if (formKey !== undefined) {
                         data._formkey = formKey;
@@ -1169,47 +1178,479 @@
         // BULK ACTION METHODS
 
         /**
-         * Render the bulk action controls (action buttons) and determine
-         * previously selected rows and selection mode
+         * Renders the bulk action selector
          */
         _renderBulkActions: function() {
+
+            let tableConfig = this.tableConfig,
+                bulkActions = tableConfig.bulkActions,
+                selector = $('<select class="bulk-action-select">'),
+                renderSelector = false;
+
+            if (bulkActions) {
+
+                // Render a challenge if more than one action selectable
+                let selectDefault = true;
+                if (bulkActions.length != 1) {
+                    selectDefault = false;
+                    $('<option>').text(i18n.selectAction)
+                                 .prop({disabled: true, selected: true})
+                                 .appendTo(selector);
+                }
+
+                bulkActions.forEach(function(actionConfig) {
+
+                    let option = $('<option>'),
+                        config = {min: 1, max: null},
+                        label,
+                        name;
+
+                    if (actionConfig.hasOwnProperty('label')) {
+                        // New style bulkAction config
+                        label = '' + actionConfig.label;
+                        name = label;
+                        if (!label) {
+                            return;
+                        }
+                        $.extend(config, {name: name, value: label}, actionConfig);
+                    } else {
+                        // Old syle bulkAction config
+                        if (actionConfig.constructor === Array) {
+                            label = '' + actionConfig[0];
+                            name = '' + actionConfig[1];
+                            if (actionConfig.length > 2) {
+                                let css = actionConfig[2];
+                                option.addClass(css);
+                                if (css == 'pair-action') {
+                                    config.min = config.max = 2;
+                                }
+                            }
+                        } else if (typeof actionConfig == 'string') {
+                            label = '' + actionConfig;
+                            name = label;
+                        } else {
+                            return;
+                        }
+                        $.extend(config, {mode: 'submit', name: name, value: label});
+                    }
+
+                    if (!label) {
+                        return;
+                    }
+                    option.text(label);
+                    option.attr('value', config.value);
+                    option.data('action', config);
+                    if (selectDefault) {
+                        selectDefault = false;
+                        option.prop('selected', true);
+                    }
+                    selector.append(option);
+                    renderSelector = true;
+                });
+            }
+
+            if (renderSelector) {
+                let outerForm = this.outerForm,
+                    container = $('.dataTables_wrapper', outerForm);
+                if (!$('.dataTables_bulk', container).length) {
+
+                    let label = $('<label class="dataTables_bulk">'),
+                        executeBtn = $('<button class="action-btn btn bulk-action-execute" type="button">');
+
+                    // Button to start bulk action
+                    executeBtn.text(i18n.executeBulkAction).prop('disabled', true);
+
+                    // Render bulk action form
+                    label.text(i18n.selectedRecords + ':')
+                         .append(selector)
+                         .append(executeBtn)
+                         .prependTo(container);
+
+                    this._bulkActionSelect(selector);
+                }
+            }
+        },
+
+        /**
+         * Handles a change of selected bulkAction / selected rows
+         *
+         * @param {jQuery} selector: the selector node
+         */
+        _bulkActionSelect: function(selector) {
+
+            // TODO called once per Row (from rowCallback): can this be optimized?
+            let selected = $(':selected', $(selector)),
+                action = selected.data('action'),
+                executeBtn = $('.bulk-action-execute', this.outerForm);
+
+            if (action) {
+                let min = action.min,
+                    max = action.max,
+                    totalRecords = this.totalRecords;
+
+                // Get number of selected records
+                var numActive = this.selectedRows.length;
+                if (this.selectionMode == 'Exclusive') {
+                    numActive = totalRecords - numActive;
+                }
+
+                if (numActive == 0 || min && numActive < min || max && numActive > max) {
+                    executeBtn.prop('disabled', true);
+                } else {
+                    executeBtn.prop('disabled', false);
+                }
+            } else {
+                executeBtn.prop('disabled', true);
+            }
+        },
+
+        /**
+         * Executes the selected action; as click-callback for the bulkAction button
+         *
+         * @param {jQuery} button: the bulkAction button
+         */
+        _bulkActionExecute: function(button) {
+
+            let $button = $(button),
+                bulkAction = $.Deferred();
+
+            // Disable the button (prevent further clicks)
+            $button.prop('disabled', true);
+
+            // Get the selected action
+            let selector = $('.bulk-action-select', $button.closest('.dataTables_bulk')),
+                selected = $(':selected', selector);
+            if (selected.length) {
+
+                let action = selected.data('action'),
+                    mode = action.mode;
+
+                // Verify min/max selected
+                let numActive = this.selectedRows.length;
+                if (this.selectionMode == 'Exclusive') {
+                    numActive = this.totalRecords - numActive;
+                }
+                if (action.min && numActive < action.min ||
+                    action.max && numActive > action.max) {
+                    $button.prop('disabled', false);
+                    return;
+                }
+
+                switch(mode) {
+                    case 'ajax':
+                        // Ajax-mode
+                        bulkAction = this._bulkActionAjax(action);
+                        break;
+                    default:
+                        // Submit-mode
+                        bulkAction = this._bulkActionSubmit(action);
+                        break;
+                }
+            } else {
+                bulkAction.resolve();
+            }
+
+            // Re-enable button once deferred execution is resolved
+            bulkAction.then(function() {
+                $button.prop('disabled', false);
+            });
+        },
+
+        /**
+         * Executes the bulkAction as Ajax-request
+         *
+         * @param {object} action: the action parameters
+         */
+        _bulkActionAjax: function(action) {
+
+            let bulkAction = $.Deferred();
+
+            let confirmation = action.confirm;
+            if (!confirmation || confirm(confirmation)) {
+
+                // Get a filtered URL
+                let url = action.url;
+                if (url === undefined) {
+                    url = window.location.href;
+                }
+                let filters = S3.search.getCurrentFilters();
+                if (filters.length) {
+                    url = S3.search.filterURL(url, filters);
+                }
+
+                // Rewrite the filters as ajax data
+                let options = {type: 'GET', url: url, data: {}};
+                S3.search.searchRewriteAjaxOptions(options, 'ajax', 'submit');
+
+                let ajaxUrl = options.url,
+                    ajaxData = JSON.parse(options.data);
+
+                // Get the bulk-select information
+                let dtForm = this.outerForm,
+                    formData = {},
+                    formVars = ['mode', 'selected', '_formkey', '_timezone', '_utc_offset'];
+                formVars.forEach(function(formVar) {
+                    let node = $('input[type=hidden][name="' + formVar + '"]', dtForm);
+                    if (node.length) {
+                        formData[formVar] = node.val();
+                    }
+                });
+                let name = action.name,
+                    value = action.value;
+                if (!!name && !!value) {
+                    formData[name] = value;
+                }
+                $.extend(ajaxData, formData);
+
+                // Send an jqXHR request with filters and selection as payload
+                S3.hideAlerts();
+
+                let el = $(this.element), self = this;
+                $.ajaxS3({
+                    'url': ajaxUrl,
+                    'type': 'POST',
+                    'dataType': 'json',
+                    'contentType': 'application/json; charset=utf-8',
+                    'data': JSON.stringify(ajaxData),
+                    'success': function(data) {
+                        if (data.dialog) {
+                            // Response contains a dialog
+                            self._bulkActionDialog(action, data.dialog, formData);
+                        } else {
+                            // NB Confirmation message shown by $.ajaxS3
+
+                            // Clear selection
+                            $('.bulk-select-all', el).prop('checked', false);
+                            self.selectedRows = [];
+                            self.selectionMode = 'Inclusive';
+                            el.dataTable().api().draw(false);
+
+                            // Reload the datatable
+                            el.dataTable().fnReloadAjax();
+                        }
+                        bulkAction.resolve();
+                    },
+                    //'error': function () {
+                    //    // NB Error message shown by $.ajaxS3
+                    //}
+                });
+            } else {
+                bulkAction.resolve();
+            }
+
+            return bulkAction;
+        },
+
+        /**
+         * Displays a dialog to execute a bulk action
+         *
+         * @param {object} action: the bulk action config
+         * @param {String} form: the dialog contents HTML
+         * @param {object} formData: the bulk selection form data
+         */
+        _bulkActionDialog: function(action, contentsHTML, formData) {
+
+            let contents;
+            try {
+                contents = $(contentsHTML);
+            } catch(exception) {
+                return;
+            }
+
+            let form = contents;
+            if (form.prop('tagName') != 'FORM') {
+                // Find the form inside
+                form = $('form', contents);
+            }
+            if (form.length) {
+                // Helper function to add hidden inputs to the form
+                let addFormInput = function(name, value, stringify=false, override=false) {
+                    if (override || !$('input[name="' + name + '"]', form).length) {
+                        let input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = name;
+                        if (stringify) {
+                            input.value = JSON.stringify(value);
+                        } else {
+                            input.value = value;
+                        }
+                        form.append($(input));
+                    }
+                };
+
+                // Determine the target URL for the form
+                let submitUrl = form.attr('action');
+                if (submitUrl) {
+                    submitUrl = submitUrl.split('#')[0];
+                }
+                if (!submitUrl) {
+                    submitUrl = action.url;
+                }
+                if (!submitUrl) {
+                    submitUrl = window.location.href;
+                }
+
+                // Filter the target URL
+                let filters = S3.search.getCurrentFilters();
+                if (filters.length) {
+                    submitUrl = S3.search.filterURL(submitUrl, filters);
+                }
+
+                // Rewrite the filters as hidden form inputs
+                let options = {type: 'GET', url: submitUrl};
+                S3.search.searchRewriteAjaxOptions(options, 'form', 'submit');
+
+                let data = options.data, key;
+                if (data) {
+                    for (key in data) {
+                        addFormInput(key, data[key], true);
+                    }
+                }
+
+                // Update the target URL of the form
+                form.attr('action', options.url);
+
+                // Add the selection data as hidden form inputs
+                if (formData) {
+                    for (key in formData) {
+                        addFormInput(key, formData[key], false);
+                    }
+                }
+            }
+
+            // Render the dialog
+            let ns = this.eventNamespace,
+                container = $('<div>').hide().appendTo($('body'));
+
+            let dialog = container.append(contents).show().dialog({
+                title: action.label,
+                autoOpen: false,
+                minHeight: 480,
+                minWidth: 320,
+                modal: true,
+                closeText: '',
+                open: function( /* event, ui */ ) {
+                    // Clicking outside of the popup closes it
+                    $('.ui-widget-overlay').off(ns).on('click' + ns, function() {
+                        dialog.dialog('close');
+                    });
+                    // Any cancel-form-btn button closes the popup
+                    $('.cancel-form-btn', container).off(ns).on('click' + ns, function() {
+                        dialog.dialog('close');
+                    });
+                },
+                close: function() {
+                    // Hide + remove the container
+                    container.hide().remove();
+                }
+            });
+
+            dialog.dialog('open');
+        },
+
+        /**
+         * Executes the bulkAction by form submission
+         *
+         * @param {object} action: the action parameters
+         */
+        _bulkActionSubmit: function(action) {
+
+            let bulkAction = $.Deferred();
+
+            let name = action.name,
+                value = action.value,
+                confirmation = action.confirm;
+
+            if (!!name && !!value) {
+                if (!confirmation || confirm(confirmation)) {
+                    // Generate form to submit
+                    let form = this._bulkActionForm(action);
+
+                    // Append the name-value pair of the action as hidden input
+                    let input = $('<input type="hidden">').attr('name', name).val(value);
+                    $(form).append(input);
+
+                    // Submit the form
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+
+            return bulkAction.resolve();
+        },
+
+        /**
+         * Generates a (hidden) form to submit a bulk action
+         *
+         * @param {object} action: the action parameters
+         *
+         * @returns {HTMLElement}: the form
+         */
+        _bulkActionForm: function(action) {
+
+            // Create form element
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.target = '_self';
+            form.enctype = 'multipart/form-data';
+            form.style.display = 'none';
+
+            // Add relevant inputs
+            let formVars = ['_formkey', 'mode', 'selected', 'filterURL', 'job_id'],
+                dtForm = $(this.element).closest('form');
+            formVars.forEach(function(formVar) {
+                let node = $('input[type=hidden][name="' + formVar + '"]', dtForm);
+                if (node.length) {
+                    let input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = formVar;
+                    input.value = node.val();
+                    form.appendChild(input);
+                }
+            });
+
+            // Get a filtered URL
+            let url = action.url;
+            if (url == undefined) {
+                url = window.location.href;
+            }
+            let filters = S3.search.getCurrentFilters();
+            if (filters.length) {
+                url = S3.search.filterURL(url, filters);
+            }
+
+            // Rewrite the filters as POST vars
+            let options = {type: 'GET', url: url};
+            S3.search.searchRewriteAjaxOptions(options, 'form', 'submit');
+
+            // Add the filter data as hidden inputs to the form
+            let data = options.data;
+            if (data) {
+                let key, input;
+                for (key in data) {
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = JSON.stringify(data[key]);
+                    form.appendChild(input);
+                }
+            }
+
+            // Set the reduced URL as form action
+            form.action = options.url;
+
+            return form;
+        },
+
+        /**
+         * Restores bulk selection during refresh
+         */
+        _bulkSelectRestore: function() {
 
             var tableConfig = this.tableConfig,
                 bulkActions = tableConfig.bulkActions;
 
             if (bulkActions) {
-
-                // Generate submit-buttons for bulk-actions
-                var bulkActionControls = $('<div class="dataTable-action">');
-                bulkActions.forEach(function(bulkAction) {
-
-                    var name,
-                        value,
-                        cls;
-
-                    if (bulkAction.constructor === Array) {
-                        value = bulkAction[0];
-                        name = bulkAction[1];
-                        if (bulkAction.length > 2) {
-                            cls = bulkAction[2];
-                        }
-                    } else {
-                        name = bulkAction;
-                        value = bulkAction;
-                    }
-
-                    var bulkActionSubmit = $('<input type="submit" class="selected-action">').attr({
-                        id: name + '-selected-action',
-                        name: name,
-                        value: value
-                    }).appendTo(bulkActionControls);
-
-                    if (cls) {
-                        bulkActionSubmit.addClass(cls);
-                    }
-                });
-                this.bulkActionControls = bulkActionControls;
-
                 // Determine which rows had been selected previously
                 var selected = JSON.parse($(this.selector + '_dataTable_bulkSelection').val());
                 if (selected === null) {
@@ -1235,28 +1676,27 @@
          */
         _bulkSelect: function(row, index) {
 
-            var el = $(this.element),
-                tableConfig = this.tableConfig,
-                numSelected = this.selectedRows.length,
-                totalRecords = this.totalRecords;
-
             // Elements
-            var bulkSelectOptions = $('.bulk-select-options', el),  // mandatory layout element
+            var el = $(this.element),
+                bulkSelectOptions = $('.bulk-select-options', el),  // mandatory layout element
                 selectAll = $('.bulk-select-all', el),              // mandatory layout element
-                deselected = $('.bulk-deselected', el),             // dynamically added
                 totalAvailable = $('.bulk-total-available', el),    // optional layout element
                 totalSelected = $('.bulk-total-selected', el),      // optional layout element
-                selectedIndicator = totalAvailable.length && totalAvailable.length;
+                selectedIndicator = totalAvailable.length && totalSelected.length;
+
+            // Numbers of records
+            var totalRecords = this.totalRecords,
+                numSelected = this.selectedRows.length;
 
             if (this.selectionMode == 'Inclusive') {
-
+                // Update selected-indicator
                 if (selectedIndicator) {
                     totalSelected.text(numSelected);
                     totalAvailable.text(totalRecords);
-                } else {
-                    deselected.remove();
                 }
-                var bulkSingle = tableConfig.bulkSingle;
+
+                // Manage selection
+                let bulkSingle = this.tableConfig.bulkSingle;
                 if (index == -1) {
                     // Row is not currently selected
                     $(row).removeClass('row_selected');
@@ -1265,36 +1705,30 @@
                     // Row is currently selected
                     if (bulkSingle) {
                         // Deselect all other rows
-                        $(row).closest('table').find('tr').removeClass('row_selected')
-                                               .find('.bulkcheckbox').prop('checked', false);
+                        $(row).closest('table').find('tr')
+                                               .removeClass('row_selected')
+                                               .find('.bulkcheckbox')
+                                               .prop('checked', false);
                     }
                     $(row).addClass('row_selected');
                     $('.bulkcheckbox', row).prop('checked', true);
-
                 }
+
+                // Check selection mode
                 if (!bulkSingle && (numSelected == totalRecords)) {
                     // All rows have been selected => switch to exclusive mode
                     selectAll.prop('checked', true);
                     this.selectionMode = 'Exclusive';
                     this.selectedRows = [];
                 }
-
             } else {
-
+                // Update selected-indicator
                 if (selectedIndicator) {
-                    totalSelected.text(parseInt(totalAvailable.text(), 10) - numSelected);
+                    totalSelected.text(totalRecords - numSelected);
                     totalAvailable.text(totalRecords);
-                } else {
-                    if (!numSelected || numSelected == totalRecords) {
-                        deselected.remove();
-                    } else {
-                        if (!deselected.length && this.options.deselectedIndicator) {
-                            deselected = $('<span class="bulk-deselected">').appendTo(bulkSelectOptions);
-                        }
-                        deselected.html('[-' + numSelected + ']');
-                    }
                 }
 
+                // Manage selection
                 if (index == -1) {
                     // Row is currently selected
                     $(row).addClass('row_selected');
@@ -1305,6 +1739,7 @@
                     $('.bulkcheckbox', row).prop('checked', false);
                 }
 
+                // Check selection mode
                 if (numSelected == totalRecords) {
                     // All rows have been de-selected => switch to inclusive mode
                     selectAll.prop('checked', false);
@@ -1313,23 +1748,12 @@
                 }
             }
 
-            if (tableConfig.bulkActions) {
+            // Store select mode and (de-)selected rows in hidden form fields
+            $(this.selector + '_dataTable_bulkMode').val(this.selectionMode);
+            $(this.selector + '_dataTable_bulkSelection').val(this.selectedRows.join(','));
 
-                // Store select mode and (de-)selected rows in hidden form fields
-                $(this.selector + '_dataTable_bulkMode').val(this.selectionMode);
-                $(this.selector + '_dataTable_bulkSelection').val(this.selectedRows.join(','));
-
-                // Add the bulk action controls
-                this.bulkActionControls.insertBefore(bulkSelectOptions);
-
-                // Activate bulk actions?
-                var numActive = this.selectedRows.length;
-                if (this.selectionMode == 'Exclusive') {
-                    numActive = totalRecords - numActive;
-                }
-                $('.selected-action', el).prop('disabled', numActive == 0);
-                $('.pair-action', el).prop('disabled', numActive != 2);
-            }
+            // Update bulk-action form
+            this._bulkActionSelect($('.bulk-action-select', this.outerForm));
         },
 
         /**
@@ -1337,7 +1761,8 @@
          */
         _bulkSelectRow: function() {
 
-            var self = this;
+            var el = $(this.element),
+                self = this;
 
             return function(/* event */) {
 
@@ -1813,9 +2238,7 @@
                         }).filter(function(item) {
                             return item[0].indexOf('.') != -1;
                         });
-                    $(this.element).closest('.dt-wrapper')
-                                   .find('.dt-export')
-                                   .each(function() {
+                    $('.dt-export', this.outerForm).each(function() {
                         var $this = $(this);
                         var url = $this.data('url');
                         if (url) {
@@ -1835,6 +2258,7 @@
         _bindEvents: function() {
 
             var el = $(this.element),
+                outerForm = this.outerForm,
                 ns = this.eventNamespace,
                 self = this;
 
@@ -1846,8 +2270,7 @@
 
             // Export formats
             this._initExportFormats();
-            el.closest('.dt-wrapper').find('.dt-export')
-                                     .on('click' + ns, this._exportFormat());
+            $('.dt-export', outerForm).on('click' + ns, this._exportFormat());
 
             // Ajax-delete
             el.on('click' + ns, '.dt-ajax-delete', this.ajaxAction(i18n.delete_confirmation));
@@ -1865,22 +2288,28 @@
                 self._toggleGroup(trow, visibility);
             });
 
+
             // Bulk selection
             if (this.tableConfig.bulkActions) {
 
-                if (this.tableConfig.bulkSingle) {
-                    // Hide Select All if only 1 can be selected
-                    $('.bulk-select-options', el).hide();
-                } else {
-                    // Bulk action select-all handler
-                    el.on('click' + ns, '.bulk-select-all', this._bulkSelectAll());
-                }
+                // Bulk action select-all handler
+                el.on('click' + ns, '.bulk-select-all', this._bulkSelectAll());
 
                 // Bulk action checkbox handler
                 el.on('click' + ns, '.bulkcheckbox', this._bulkSelectRow());
+
+                // Bulk action selector and execute-button
+                $('.bulk-action-select', outerForm).on('change' + ns, function() {
+                    self._bulkActionSelect(this);
+                });
+                $('.bulk-action-execute', outerForm).on('click' + ns, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    self._bulkActionExecute(this);
+                });
             }
 
-            return true;
+            return this;
         },
 
         /**
@@ -1889,12 +2318,17 @@
         _unbindEvents: function() {
 
             var el = $(this.element),
+                outerForm = this.outerForm,
                 ns = this.eventNamespace;
 
             el.off(ns);
-            el.closest('.dt-wrapper').find('.dt-export').off(ns);
 
-            return true;
+            $('.dt-export', outerForm).off(ns);
+
+            $('.bulk-action-select', outerForm).off(ns);
+            $('.bulk-action-execute', outerForm).off(ns);
+
+            return this;
         }
     });
 

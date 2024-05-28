@@ -147,6 +147,8 @@ def event_overdue(code, interval):
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
+    T = current.T
+
     s3db = current.s3db
     auth = current.auth
 

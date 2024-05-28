@@ -401,7 +401,7 @@ class DataTable:
         bulk_col = attr_get("dt_bulk_col", 0)
         bulk_actions = attr_get("dt_bulk_actions")
         if bulk_actions:
-            if not isinstance(bulk_actions, list):
+            if not isinstance(bulk_actions, (tuple, list)):
                 bulk_actions = [bulk_actions]
             config.update(bulkActions = bulk_actions,
                           bulkCol = bulk_col,
@@ -825,6 +825,9 @@ class DataTable:
                    "search":  T("Search"),
                    "zeroRecords":  T("No matching records found"),
                    "selectAll":  T("Select All"),
+                   "selectAction": T("Select Action"),
+                   "selectedRecords": T("Selected Records"),
+                   "executeBulkAction": T("OK"),
                    }
 
         return "\n".join('''i18n.%s="%s"'''% (k, v) for k, v in strings.items())

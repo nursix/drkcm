@@ -62,6 +62,15 @@ table.dataTable {
             [dir=rtl] & {
                 padding: 0.2rem 0.5rem 0.2rem 1.5rem;
             }
+            &.dt-bulk {
+                padding: 0.2rem;
+                text-align: center;
+                vertical-align: middle;
+                min-width: 3rem;
+            }
+            &.dt-actions {
+                white-space: nowrap;
+            }
         }
         th {
             text-align: center;
@@ -182,23 +191,16 @@ table.dataTable {
 
     }
     // Bulk-select
-    .selected-action {
-        margin: 0.35rem 0.2rem;
-    }
+    //.selected-action {
+        //margin: 0.35rem 0.2rem;
+    //}
     .bulk-select-options {
-        font-size: 0.7rem;
-        font-weight: normal;
         input[type=checkbox] {
-            margin-bottom: 0.2rem;
-            margin-right: 0.5rem;
-            vertical-align: middle;
+            margin-bottom: 0;
         }
     }
-    input.bulkcheckbox[type=checkbox] {
-        position: relative;
-        left: 50%;
-        margin-top: 0.5rem;
-    }
+    //input.bulkcheckbox[type=checkbox] {
+    //}
 
     // DataTable Responsive
     &.dtr-inline.collapsed tbody {
@@ -221,58 +223,55 @@ table.dataTable {
 }
 
 .dataTables_wrapper {
-    .dataTables_filter {
+
+    .dataTables_bulk,
+    .dataTables_filter,
+    .dataTables_length {
         float: left;
-        text-align: left;
-        margin-right: 3rem;
+        text-align: left!important;
+        margin: 0 3rem 4px 0;
+        font-size: 0.75rem;
+        font-weight: normal;
+        white-space: nowrap;
+        select {
+            font-size: 0.75rem;
+            text-align: center;
+            height: auto;
+            padding: 0.2rem 1.2rem 0.2rem 0.2rem;
+            border-radius: 0;
+            margin: 0 0.2rem;
+            min-width: 3rem;
+        }
         label {
-            margin-left: 0.3rem;
             font-size: 0.75rem;
             font-weight: normal;
+            white-space: nowrap;
+            margin: 0 10rem 0.3rem 0;
+            display: inline-block;
         }
         input[type="search"] {
             margin-left: 0.3rem;
+            margin-right: 0rem;
         }
         [dir=rtl] & {
             float: right;
-            text-align: right;
-            margin-right: 0;
+            text-align: right!important;
             margin-left: 3rem;
-            label,
+            margin-right: 0;
+            select {
+                padding: 0.2rem 0.2rem 0.2rem 1.2rem;
+            }
+            label {
+                margin-left: 10rem;
+                margin-right: 0rem;
+            }
             input[type="search"] {
                 margin-left: 0rem;
                 margin-right: 0.3rem;
             }
         }
     }
-    .dataTables_length {
-        float: left;
-        margin-bottom:4px;
-        label {
-            font-size: 0.75rem;
-            font-weight: normal;
-            white-space: nowrap;
-            margin: 0 10rem 0.3rem 0.3rem;
-        }
-        select {
-            font-size: 0.75rem;
-            text-align: center;
-            height: auto;
-            padding: 0.2rem 1.2rem 0.2rem 0;
-            border-radius: 0;
-            margin: 0 0.2rem;
-            min-width: 3rem;
-        }
-        [dir=rtl] & {
-            float: right;
-            label {
-                margin: 0 0.3rem 0.3rem 10rem;
-            }
-            select {
-                padding: 0.2rem 0 0.2rem 1.1rem!important;
-            }
-        }
-    }
+
     .dataTables_processing {
         padding: 1rem 0 2rem;
         top: 2.5rem;
