@@ -1429,10 +1429,10 @@ def config(settings):
                 coordinator = has_role("COORDINATOR")
 
                 # Configure anonymize-method
-                from core import S3Anonymize
+                from core import Anonymize
                 s3db.set_method("pr_person",
                                 method = "anonymize",
-                                action = S3Anonymize,
+                                action = Anonymize,
                                 )
 
                 # Configure anonymize-rules
@@ -1716,10 +1716,10 @@ def config(settings):
                                        )
 
                     # Configure anonymize-method
-                    from core import S3Anonymize
+                    from core import Anonymize
                     s3db.set_method("pr_person",
                                     method = "anonymize",
-                                    action = S3Anonymize,
+                                    action = Anonymize,
                                     )
                     from .anonymize import rlp_volunteer_anonymize
                     resource.configure(anonymize = rlp_volunteer_anonymize(),
@@ -1768,9 +1768,8 @@ def config(settings):
                         buttons = output["buttons"]
 
                     # Anonymize-button
-                    from core import S3AnonymizeWidget
-                    anonymize = S3AnonymizeWidget.widget(r,
-                                             _class="action-btn anonymize-btn")
+                    from core import AnonymizeWidget
+                    anonymize = AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
                     # Render in place of the delete-button
                     buttons["delete_btn"] = TAG[""](anonymize,

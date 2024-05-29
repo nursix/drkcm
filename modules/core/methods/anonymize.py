@@ -36,16 +36,16 @@ from ..tools import JSONERRORS, s3_str
 
 from .base import CRUDMethod
 
-__all__ = ("S3Anonymize",
-           "S3AnonymizeWidget",
-           "S3AnonymizeBulk",
-           "S3AnonymizeBulkWidget",
+__all__ = ("Anonymize",
+           "AnonymizeWidget",
+           "AnonymizeBulk",
+           "AnonymizeBulkWidget",
            "anonymous_address",
            "obscure_dob",
            )
 
 # =============================================================================
-class S3Anonymize(CRUDMethod):
+class Anonymize(CRUDMethod):
     """
         REST Method to Anonymize a Record
         - usually pr_person
@@ -372,9 +372,9 @@ class S3Anonymize(CRUDMethod):
                 onaccept(table, data, method="update")
 
 # =============================================================================
-class S3AnonymizeWidget:
+class AnonymizeWidget:
     """
-        GUI widget for S3Anonymize
+        GUI widget for Anonymize
         - popup
         - acts via AJAX
     """
@@ -419,7 +419,7 @@ class S3AnonymizeWidget:
         table = resource.table
 
         # Determine target record
-        record_id = S3Anonymize._record_id(r)
+        record_id = Anonymize._record_id(r)
         if not record_id:
             return default
 
@@ -433,7 +433,7 @@ class S3AnonymizeWidget:
             rules = [rules]
 
         # Check permissions to anonymize
-        if not S3Anonymize.permitted(table, record_id):
+        if not Anonymize.permitted(table, record_id):
             return default
 
         # Determine widget ID
@@ -620,7 +620,7 @@ class S3AnonymizeWidget:
             jquery_ready.append(script)
 
 # =============================================================================
-class S3AnonymizeBulk(S3Anonymize):
+class AnonymizeBulk(Anonymize):
     """
         REST Method to Anonymize Records
         - usually auth_user
@@ -661,10 +661,10 @@ class S3AnonymizeBulk(S3Anonymize):
         if r.representation == "html":
             if r.http == "GET":
                 # Show form
-                anonymise_btn = S3AnonymizeBulkWidget.widget(r,
-                                                             record_ids = record_ids,
-                                                             _class = "action-btn anonymize-btn",
-                                                             )
+                anonymise_btn = AnonymizeBulkWidget.widget(r,
+                                                           record_ids = record_ids,
+                                                           _class = "action-btn anonymize-btn",
+                                                           )
                 current.response.view = "simple.html"
                 output = {"item": anonymise_btn,
                           "title": current.T("Anonymize Records"),
@@ -764,9 +764,9 @@ class S3AnonymizeBulk(S3Anonymize):
         return output
 
 # =============================================================================
-class S3AnonymizeBulkWidget(S3AnonymizeWidget):
+class AnonymizeBulkWidget(AnonymizeWidget):
     """
-        GUI widget for S3AnonymizeBulk
+        GUI widget for AnonymizeBulk
         - normal page (not popup)
         - acts via POST (not AJAX)
     """

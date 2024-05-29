@@ -120,10 +120,10 @@ def person():
         s3.crud_strings["pr_person"] = crud_strings
 
         # Configure Anonymizer
-        from core import S3Anonymize
+        from core import Anonymize
         s3db.set_method("pr_person",
                         method = "anonymize",
-                        action = S3Anonymize,
+                        action = Anonymize,
                         )
 
         # Update resource configuration for perspective
@@ -454,8 +454,8 @@ def person():
                 buttons = output["buttons"]
 
             # Anonymize-button
-            from core import S3AnonymizeWidget
-            anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
+            from core import AnonymizeWidget
+            anonymize = AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
             # ID-Card button
             if id_card_export:

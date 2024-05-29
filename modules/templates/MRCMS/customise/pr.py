@@ -147,8 +147,6 @@ def event_overdue(code, interval):
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
-    T = current.T
-
     s3db = current.s3db
     auth = current.auth
 
@@ -196,8 +194,8 @@ def pr_person_resource(r, tablename):
 
             if controller == "dvr" and auth.s3_has_role("ADMIN"):
                 # Configure anonymize-method
-                from core import S3Anonymize
-                s3db.set_method("pr_person", method="anonymize", action=S3Anonymize)
+                from core import Anonymize
+                s3db.set_method("pr_person", method="anonymize", action=Anonymize)
 
                 # Configure anonymize-rules
                 from ..anonymize import anonymize_rules
@@ -1324,8 +1322,8 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
 
             if controller == "dvr" and current.auth.s3_has_role("ADMIN"):
                 # Anonymize-button
-                from core import S3AnonymizeWidget
-                anonymize = S3AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                from core import AnonymizeWidget
+                anonymize = AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
                 inject_button(output, anonymize, before="delete_btn", alt=None)
 
             # Disabled due to requirement for skills to create templates

@@ -157,10 +157,10 @@ def pr_person_resource(r, tablename):
         if r.name == "person" and not r.component:
 
             # Configure anonymize-method
-            from core import S3Anonymize
+            from core import Anonymize
             s3db.set_method("pr_person",
                             method = "anonymize",
-                            action = S3Anonymize,
+                            action = Anonymize,
                             )
 
             # Configure anonymize-rules
@@ -806,8 +806,8 @@ def pr_person_controller(**attr):
             if not r.component and r.method in (None, "update", "read"):
 
                 # Anonymize-button
-                from core import S3AnonymizeWidget
-                anonymize = S3AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
+                from core import AnonymizeWidget
+                anonymize = AnonymizeWidget.widget(r, _class="action-btn anonymize-btn")
 
                 # Doc-From-Template-button
                 if ui_options_get("case_document_templates") and \

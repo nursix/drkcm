@@ -1,5 +1,5 @@
 /**
- * jQuery UI Widget for S3Anonymize
+ * jQuery UI Widget for Anonymize
  *
  * @copyright 2018-2021 (c) Sahana Software Foundation
  * @license MIT
