@@ -3776,6 +3776,7 @@ class OrgSitePresenceModel(DataModel):
     def model(self):
 
         T = current.T
+        crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
         super_link = self.super_link
@@ -3835,6 +3836,11 @@ class OrgSitePresenceModel(DataModel):
                   editable = False,
                   deletable = False,
                   )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            title_list = T("Site Presence Events"),
+            )
 
         # ---------------------------------------------------------------------
         # Current Presence at Sites

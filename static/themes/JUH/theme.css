@@ -5235,8 +5235,8 @@ h4.profile-sub-header {
   background-color: #fafafa;
 }
 /* line 586, ../scss/theme/_misc.scss */
-.rhist .export-link {
-  margin: 0 0.5rem;
+.rhist .action-btn .fa {
+  margin-left: 0.3rem;
 }
 /* line 589, ../scss/theme/_misc.scss */
 .rhist table {

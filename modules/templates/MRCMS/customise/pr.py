@@ -1382,6 +1382,7 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
                     "labelEmpty": s3_str(T("No data available")),
                     "labelMissing": s3_str(T("Date not registered")),
                     "labelClose": s3_str(T("Close")),
+                    "labelExport": s3_str(T("Export Data")),
                     }
             from core import JSONSEPARATORS
             script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
