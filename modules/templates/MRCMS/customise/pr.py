@@ -1365,9 +1365,13 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
                 s3.scripts.append(script)
 
             # Instantiate widget
-            opts = {"ajaxURL": r.url(component="",
-                                     method="registration_history",
-                                     representation="json",
+            opts = {"ajaxURL": r.url(component = "",
+                                     method = "registration_history",
+                                     representation = "json",
+                                     ),
+                    "xlsxURL": r.url(component = "shelter_registration_history",
+                                     method = "",
+                                     representation = "xlsx",
                                      ),
                     "container": "map",
                     "labelTitle": s3_str(label),

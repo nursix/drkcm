@@ -139,9 +139,15 @@
                 widget = $('<div class="rhist">');
 
             // Add the title
-            $('<h6>').text(opts.labelTitle).appendTo(widget);
+            let title = $('<h6>').text(opts.labelTitle).appendTo(widget);
 
             if (data.length) {
+                // Add export link
+                if (opts.xlsxURL) {
+                    let link = $('<a class="export-link" href=' + opts.xlsxURL + '><i class="fa fa-file-excel-o"></a>');
+                    title.append(link);
+                }
+
                 let history = $('<table>').appendTo(widget);
 
                 // Table Header

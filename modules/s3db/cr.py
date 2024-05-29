@@ -1737,12 +1737,13 @@ class CRShelterRegistrationModel(DataModel):
 
         T = current.T
 
+        settings = current.deployment_settings
+        crud_strings = current.response.s3.crud_strings
+
         configure = self.configure
         define_table = self.define_table
-        settings = current.deployment_settings
 
         person_id = self.pr_person_id
-
         shelter_id = self.cr_shelter_id
         shelter_unit_id = self.cr_shelter_unit_id
 
@@ -1850,6 +1851,11 @@ class CRShelterRegistrationModel(DataModel):
                   deletable = False,
                   orderby = "%s.date desc" % tablename,
                   )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            title_list = T("Shelter Registration History"),
+            )
 
         # ---------------------------------------------------------------------
         # Pass variables back to global scope (response.s3.*)
