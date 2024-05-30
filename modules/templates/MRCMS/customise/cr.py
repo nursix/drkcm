@@ -803,4 +803,22 @@ def cr_shelter_registration_controller(**attr):
 
     return attr
 
+# -------------------------------------------------------------------------
+def cr_shelter_registration_history_resource(r, tablename):
+
+    T = current.T
+    s3db = current.s3db
+
+    list_fields = ["date",
+                   (T("Status"), "status"),
+                   "shelter_id",
+                   (T("Registered by"), "modified_by"),
+                   ]
+
+    s3db.configure(tablename,
+                   list_fields = list_fields,
+                   # Oldest first, to match rhist.js registrationHistory
+                   orderby = "%s.date" % tablename,
+                   )
+
 # END =========================================================================

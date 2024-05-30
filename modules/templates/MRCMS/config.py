@@ -212,7 +212,8 @@ def config(settings):
                               cr_shelter_unit_resource, \
                               cr_shelter_unit_controller, \
                               cr_shelter_registration_resource, \
-                              cr_shelter_registration_controller
+                              cr_shelter_registration_controller, \
+                              cr_shelter_registration_history_resource
 
     settings.customise_cr_shelter_resource = cr_shelter_resource
     settings.customise_cr_shelter_controller = cr_shelter_controller
@@ -220,6 +221,7 @@ def config(settings):
     settings.customise_cr_shelter_unit_controller = cr_shelter_unit_controller
     settings.customise_cr_shelter_registration_resource = cr_shelter_registration_resource
     settings.customise_cr_shelter_registration_controller = cr_shelter_registration_controller
+    settings.customise_cr_shelter_registration_history_resource = cr_shelter_registration_history_resource
 
     # -------------------------------------------------------------------------
     # DOC Settings and Customizations
