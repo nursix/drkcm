@@ -147,12 +147,12 @@ def config(settings):
                                       "CASE_ADMIN": "ORG_ADMIN",
                                       "CASE_MANAGER": "ORG_ADMIN",
                                       "SECURITY": "ORG_ADMIN",
+                                      "CATERING": "ORG_ADMIN",
                                       # These are restricted for now until better-defined
                                       "CASE_ASSISTANT": "ADMIN",
                                       "QUARTERMASTER": "ADMIN",
                                       "JANITOR": "ADMIN",
                                       "CHECKPOINT": "ADMIN",
-                                      "CATERING": "ADMIN",
                                       }
 
     settings.auth.realm_entity = realm_entity

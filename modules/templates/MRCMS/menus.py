@@ -47,6 +47,12 @@ class MainMenu(default.MainMenu):
         has_role = auth.s3_has_role
         has_permission = auth.s3_has_permission
 
+        # CATERING role:
+        # - restrict DVR: no access other than dvr/case_event
+        # - however: allow access to all necessary tables for food registration
+        # - move Food Registration to top if CATERING and no access to dvr/person controller
+        # - hide Clients menu if CATERING and no access to dvr/person controller
+
         # Single or multiple organisations?
         if has_permission("create", "org_organisation", c="org", f="organisation"):
             organisation_id = None
@@ -75,6 +81,11 @@ class MainMenu(default.MainMenu):
 
         return [
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
+            MM("Food Distribution", c="dvr", f="case_event", m = "register_food", p = "create",
+               # Show only for CATERING role and if not authorized to see "Clients"
+               restrict = "CATERING",
+               check = lambda this: not this.preceding()[-1].check_permission(),
+               ),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
             org_menu,
