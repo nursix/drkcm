@@ -874,8 +874,6 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
 
     if not r.component:
 
-        configure_person_tags()
-
         # Attach registration history method
         from ..presence import RegistrationHistory
         s3db.set_method("pr_person",
@@ -1431,6 +1429,12 @@ def pr_person_controller(**attr):
     privileged = administration or auth.s3_has_roles(PRIVILEGED)
 
     QUARTERMASTER = auth.s3_has_role("QUARTERMASTER") and not privileged
+
+    # Add custom components
+    # - must happen before prep, so selectors from filters do not
+    #   get resolved as virtual fields prematurely
+    if current.request.controller in ("dvr", "counsel"):
+        configure_person_tags()
 
     # Custom prep
     standard_prep = s3.prep
