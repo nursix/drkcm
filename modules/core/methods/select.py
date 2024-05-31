@@ -160,6 +160,10 @@ class Select(CRUDMethod):
                 # Render as empty string to avoid the exception in the view
                 output["list_filter_form"] = ""
 
+            # Inject static scripts for bulk actions as required
+            if actions:
+                self.inject_scripts(actions)
+
         else:
             r.error(415, current.ERROR.BAD_FORMAT)
 
@@ -173,6 +177,35 @@ class Select(CRUDMethod):
         """
 
         return resource.get_config("bulk_actions")
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def inject_scripts(cls, actions):
+        """
+            Injects any static JavaScript required by the bulk actions
+
+            Args:
+                actions - the bulk action configuration (list)
+        """
+
+        scripts = current.response.s3.scripts
+
+        for action in actions:
+
+            if not isinstance(action, dict):
+                continue
+
+            # Get the list of script URLs required for this action
+            script_urls = action.get("script")
+            if not script_urls:
+                continue
+            if not isinstance(script_urls, (tuple, list)):
+                script_urls = [script_urls]
+
+            # Inject the scripts
+            for script_url in script_urls:
+                if isinstance(script_url, str) and script_url not in scripts:
+                    scripts.append(script_url)
 
     # -------------------------------------------------------------------------
     def submit(self, r, **attr):

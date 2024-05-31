@@ -201,6 +201,14 @@ def pr_person_resource(r, tablename):
                 from ..anonymize import anonymize_rules
                 resource.configure(anonymize=anonymize_rules())
 
+                # TESTING Configure anonymize-bulk
+                resource.configure(bulk_actions = ({"label": current.T("Anonymize"),
+                                                    "mode": "ajax",
+                                                    "url": r.url(method="anonymize", representation="json", vars={}),
+                                                    },
+                                                   ),
+                                   )
+
             # Disabled due to requirement for skills to create templates:
             ## Configure case document template methods
             #from .doc import CaseDocumentTemplates

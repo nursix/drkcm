@@ -193,11 +193,11 @@
                 return dfd.resolve(false);
             }
 
-            // Request data including action-key
-            var key = container.find('input[name="action-key"]').first().val(),
+            // Request data including formkey
+            var key = container.find('input[name="_formkey"]').first().val(),
                 data = JSON.stringify({
                     'apply': selected,
-                    'key': key,
+                    '_formkey': key,
                 }),
                 url = this.options.ajaxURL;
 

@@ -6025,6 +6025,7 @@
 'The duplicate record will be deleted': 'Der doppelte Datensatz wird gelöscht.',
 'The first or only name of the person (mandatory).': 'Der erste oder einzige Name der Person (erforderlich)',
 'The following information will be deleted from the record': 'Die folgenden Informationen werden aus dem Datensatz gelöscht',
+'The following information will be deleted from the selected records': 'Die folgenden Informationen werden aus den ausgewählten Datensätzen gelöscht',
 'The form of the URL is http://your/web/map/service?service=WMS&request=GetCapabilities where your/web/map/service stands for the URL path to the WMS.': 'Das Format der URL ist http://your/web/map/service?service=WMS&request=GetCapabilities wobei your/web/map/service für den Pfad der URL zum WMS steht',
 'The language you wish the site to be displayed in.': 'Die Sprache in der die Seite angezeigt werden soll.',
 'The list of Brands are maintained by the Administrators.': 'Die Liste der Marken wird von den Administratoren verwaltet.',

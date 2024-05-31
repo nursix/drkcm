@@ -1312,7 +1312,7 @@
         _bulkActionExecute: function(button) {
 
             let $button = $(button),
-                bulkAction = $.Deferred();
+                dfd = $.Deferred();
 
             // Disable the button (prevent further clicks)
             $button.prop('disabled', true);
@@ -1339,19 +1339,19 @@
                 switch(mode) {
                     case 'ajax':
                         // Ajax-mode
-                        bulkAction = this._bulkActionAjax(action);
+                        dfd = this._bulkActionAjax(action);
                         break;
                     default:
                         // Submit-mode
-                        bulkAction = this._bulkActionSubmit(action);
+                        dfd = this._bulkActionSubmit(action);
                         break;
                 }
             } else {
-                bulkAction.resolve();
+                dfd.resolve();
             }
 
             // Re-enable button once deferred execution is resolved
-            bulkAction.then(function() {
+            dfd.then(function() {
                 $button.prop('disabled', false);
             });
         },
@@ -1363,7 +1363,7 @@
          */
         _bulkActionAjax: function(action) {
 
-            let bulkAction = $.Deferred();
+            let dfd = $.Deferred();
 
             let confirmation = action.confirm;
             if (!confirmation || confirm(confirmation)) {
@@ -1428,17 +1428,17 @@
                             // Reload the datatable
                             el.dataTable().fnReloadAjax();
                         }
-                        bulkAction.resolve();
+                        dfd.resolve();
                     },
                     //'error': function () {
                     //    // NB Error message shown by $.ajaxS3
                     //}
                 });
             } else {
-                bulkAction.resolve();
+                dfd.resolve();
             }
 
-            return bulkAction;
+            return dfd;
         },
 
         /**
@@ -1555,7 +1555,7 @@
          */
         _bulkActionSubmit: function(action) {
 
-            let bulkAction = $.Deferred();
+            let dfd = $.Deferred();
 
             let name = action.name,
                 value = action.value,
@@ -1576,7 +1576,7 @@
                 }
             }
 
-            return bulkAction.resolve();
+            return dfd.resolve();
         },
 
         /**
