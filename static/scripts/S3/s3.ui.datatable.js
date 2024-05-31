@@ -1450,7 +1450,8 @@
          */
         _bulkActionDialog: function(action, contentsHTML, formData) {
 
-            let contents;
+            let ns = this.eventNamespace,
+                contents;
             try {
                 contents = $(contentsHTML);
             } catch(exception) {
@@ -1510,6 +1511,11 @@
                 // Update the target URL of the form
                 form.attr('action', options.url);
 
+                // Submitting the form removes the cancel button (if any)
+                form.off(ns).on('submit' + ns, function() {
+                    $('.cancel-form-btn', container).remove();
+                });
+
                 // Add the selection data as hidden form inputs
                 if (formData) {
                     for (key in formData) {
@@ -1519,8 +1525,7 @@
             }
 
             // Render the dialog
-            let ns = this.eventNamespace,
-                container = $('<div>').hide().appendTo($('body'));
+            let container = $('<div>').hide().appendTo($('body'));
 
             let dialog = container.append(contents).show().dialog({
                 title: action.label,
