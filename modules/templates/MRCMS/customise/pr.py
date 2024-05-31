@@ -201,7 +201,7 @@ def pr_person_resource(r, tablename):
                 from ..anonymize import anonymize_rules
                 resource.configure(anonymize=anonymize_rules())
 
-                # TESTING Configure anonymize-bulk
+                # Configure anonymize bulk-action
                 resource.configure(bulk_actions = ({"label": current.T("Anonymize"),
                                                     "mode": "ajax",
                                                     "url": r.url(method="anonymize", representation="json", vars={}),
