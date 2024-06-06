@@ -802,18 +802,10 @@ class OrgOrganisationModel(DataModel):
                        )
 
         # Beneficiary/Case Management
-        if settings.has_module("br"):
-            # Use BR for org-specific categories in case management
-            add_components(tablename,
-                           br_need = "organisation_id",
-                           br_assistance_theme = "organisation_id",
-                           )
-        else:
-            # Use DVR for org-specific categories in case management
-            add_components(tablename,
-                           dvr_need = "organisation_id",
-                           dvr_response_theme = "organisation_id",
-                           )
+        add_components(tablename,
+                       dvr_need = "organisation_id",
+                       dvr_response_theme = "organisation_id",
+                       )
 
         # Projects
         if settings.get_project_multiple_organisations():
@@ -6853,15 +6845,6 @@ def org_rheader(r, tabs=None):
                 if settings.get_org_pdf_card_configs():
                     append_tab((T("Cards"), "card_config"))
 
-                # Org-specific categories for beneficiary/case management
-                if settings.has_module("br"):
-                    labels = s3db.br_terminology()
-                    if settings.get_br_needs_org_specific():
-                        append_tab((T("Need Types"), "need"))
-                    if settings.get_br_assistance_themes() and \
-                       settings.get_br_assistance_themes_org_specific():
-                        append_tab((labels.THEMES, "assistance_theme"))
-
             if settings.get_L10n_translate_org_organisation():
                 tabs.insert(1, (T("Local Names"), "name"))
 
@@ -7288,33 +7271,6 @@ def org_organisation_controller():
                     s3db.configure("project_project",
                                    create_next = None,
                                    )
-
-                elif cname == "assistance_theme":
-                    # Filter sector_id to the sectors of the current org
-                    ttable = component.table
-                    stable = s3db.org_sector
-                    ltable = s3db.org_sector_organisation
-
-                    left = ltable.on(ltable.sector_id == stable.id)
-                    dbset = db((ltable.organisation_id == r.id) & \
-                               (ltable.deleted == False))
-
-                    field = ttable.sector_id
-                    field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "org_sector.id",
-                                                           field.represent,
-                                                           left = left,
-                                                           ))
-
-                    # If need types are org-specific, filter need_id to org's needs
-                    if settings.get_br_needs_org_specific():
-                        ntable = s3db.br_need
-
-                        dbset = db(ntable.organisation_id == r.id)
-
-                        field = ttable.need_id
-                        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "br_need.id",
-                                                               field.represent,
-                                                               ))
 
                 elif cname == "card_config":
                     s3db.doc_update_card_type_requires(r.component_id, r.id)

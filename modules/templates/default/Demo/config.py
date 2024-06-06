@@ -248,12 +248,6 @@ def config(settings):
         #    restricted = True,
         #    module_type = 10
         #)),
-        #("br", Storage(
-        #    name_nice = T("Beneficiary Registry"),
-        #    #description = "Beneficiary Registry and Case Management",
-        #    restricted = True,
-        #    module_type = 10,
-        #)),
         ("event", Storage(
             name_nice = T("Events"),
             #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",

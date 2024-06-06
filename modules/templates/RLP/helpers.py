@@ -427,7 +427,7 @@ class RLPDelegatedPersonRepresent(S3Represent):
             Represent a (key, value) as hypertext link
 
             Args:
-                k: the key (br_case_activity.id)
+                k: the key (pr_person.id)
                 v: the representation of the key
                 row: the row with this key
         """

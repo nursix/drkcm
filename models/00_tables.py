@@ -10,7 +10,6 @@ if s3.debug:
     import s3db.act
     import s3db.asset
     import s3db.auth
-    import s3db.br
     import s3db.budget
     import s3db.cap
     import s3db.cms

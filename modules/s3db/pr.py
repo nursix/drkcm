@@ -1172,54 +1172,37 @@ class PRPersonModel(DataModel):
                        )
 
         # Beneficiary/Case Management
-        if settings.has_module("br"):
-            # Use BR for case management
-            add_components(tablename,
-                           # Beneficiary Registry
-                           br_case = {"joinby": "person_id",
-                                      "multiple": False,
-                                      },
-                           br_case_language = "person_id",
-                           br_case_activity = "person_id",
-                           br_assistance_measure = "person_id",
-                           br_note = {"name": "br_note",
-                                      "joinby": "person_id",
-                                      },
-                           br_service_contact = "person_id",
-                           )
-        else:
-            # Use DVR for case management
-            add_components(tablename,
-                           dvr_case = {"name": "dvr_case",
-                                       "joinby": "person_id",
-                                       "multiple": False,
-                                       },
-                           dvr_case_details = {"joinby": "person_id",
-                                               "multiple": False,
-                                               },
-                           dvr_case_flag = {"link": "dvr_case_flag_case",
-                                            "joinby": "person_id",
-                                            "key": "flag_id",
-                                            "actuate": "link",
-                                            "autodelete": False,
-                                            },
-                           dvr_case_flag_case = {"name": "dvr_flag",
-                                                 "joinby": "person_id",
-                                                 },
-                           dvr_case_activity = "person_id",
-                           dvr_case_appointment = "person_id",
-                           dvr_case_effort = "person_id",
-                           dvr_case_event = "person_id",
-                           dvr_case_language = "person_id",
-                           dvr_response_action = "person_id",
-                           dvr_allowance = "person_id",
-                           dvr_note = {"name": "case_note",
-                                       "joinby": "person_id",
-                                       },
-                           dvr_residence_status = "person_id",
-                           dvr_service_contact = "person_id",
-                           dvr_vulnerability = "person_id",
-                           )
+        add_components(tablename,
+                       dvr_case = {"name": "dvr_case",
+                                   "joinby": "person_id",
+                                   "multiple": False,
+                                   },
+                       dvr_case_details = {"joinby": "person_id",
+                                           "multiple": False,
+                                           },
+                       dvr_case_flag = {"link": "dvr_case_flag_case",
+                                        "joinby": "person_id",
+                                        "key": "flag_id",
+                                        "actuate": "link",
+                                        "autodelete": False,
+                                        },
+                       dvr_case_flag_case = {"name": "dvr_flag",
+                                             "joinby": "person_id",
+                                             },
+                       dvr_case_activity = "person_id",
+                       dvr_case_appointment = "person_id",
+                       dvr_case_effort = "person_id",
+                       dvr_case_event = "person_id",
+                       dvr_case_language = "person_id",
+                       dvr_response_action = "person_id",
+                       dvr_allowance = "person_id",
+                       dvr_note = {"name": "case_note",
+                                   "joinby": "person_id",
+                                   },
+                       dvr_residence_status = "person_id",
+                       dvr_service_contact = "person_id",
+                       dvr_vulnerability = "person_id",
+                       )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2819,10 +2802,6 @@ class PRGroupModel(DataModel):
         pr_update_affiliations(table, record)
 
         s3db = current.s3db
-
-        # BR extensions
-        if settings.has_module("br"):
-            s3db.br_group_membership_onaccept(record, row.pr_group, group_id, person_id)
 
         # DVR extensions
         if settings.has_module("dvr"):
@@ -6277,8 +6256,6 @@ class pr_PersonRepresent(S3Represent):
                     controller = "hrm"
                 elif c == "vol":
                     controller = "vol"
-                elif c == "br":
-                    controller = "br"
                 elif c == "dvr":
                     controller = "dvr"
                 else:

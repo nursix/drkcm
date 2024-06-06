@@ -1355,11 +1355,6 @@ def config(settings):
         #    #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
         #    module_type = 10,
         #)),
-        #("br", Storage(
-        #    name_nice = T("Beneficiary Registry"),
-        #    #description = "Allow affected individuals & households to register to receive compensation and distributions",
-        #    module_type = 10,
-        #)),
         #("cr", Storage(
         #    name_nice = T("Shelters"),
         #    #description = "Tracks the location, capacity and breakdown of victims in Shelters",
