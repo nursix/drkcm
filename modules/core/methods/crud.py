@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3CRUD",)
+__all__ = ("BasicCRUD",)
 
 import json
 
@@ -45,10 +45,8 @@ from ..ui import S3EmbeddedComponentWidget, LocationSelector, ICON, S3SQLDefault
 from .base import CRUDMethod
 
 # =============================================================================
-class S3CRUD(CRUDMethod):
-    """
-        Interactive CRUD Method Handler
-    """
+class BasicCRUD(CRUDMethod):
+    """ Basic CRUD (Create, Read, Update, Delete) Method Handler """
 
     def __init__(self):
 
@@ -65,7 +63,19 @@ class S3CRUD(CRUDMethod):
 
             Args:
                 r: the CRUDRequest
-                attr: dictionary of parameters for the method handler
+
+            Keyword Args:
+                custom_crud_buttons: dict with custom CRUD buttons (see render_buttons)
+                dtargs: additional parameters for datatable
+                hide_filter: dict with settings to hide|show filters on tabs
+                filter_submit_url: URL to retrieve filtered data
+                filter_ajax_url: URL to retrieve updated filter options
+                list_ajaxurl: custom Ajax URL for datalist
+                list_id: the datatable list_id (=DOM node ID)
+                list_type: which type of list to use (datatable|datalist)
+                populate: dict {fieldname:value} with data to pre-populate
+                          create-form, or a function returning such a dict
+                variable_columns: allow user-selected table columns (True|False)
 
             Returns:
                 output object to send to the view
@@ -1172,9 +1182,9 @@ class S3CRUD(CRUDMethod):
         tablename = resource.tablename
         get_config = resource.get_config
 
-        list_fields = get_config("list_fields", None)
-
         representation = r.representation
+
+        # Data table/list
         if representation in ("html", "iframe", "aadata", "dl", "popup"):
 
             hide_filter = self.hide_filter
@@ -1320,7 +1330,12 @@ class S3CRUD(CRUDMethod):
                     if buttons:
                         output["buttons"] = buttons
 
-        elif representation == "plain":
+            return output
+
+        # Other formats
+        variable_columns = attr.get("variable_columns", False)
+        list_fields = resource.list_fields(request=r if variable_columns else None)
+        if representation == "plain":
 
             if resource.count() == 1:
                 # Provide the record
@@ -1455,7 +1470,8 @@ class S3CRUD(CRUDMethod):
         list_id = attr.get("list_id", "datatable")
 
         # List fields
-        list_fields = resource.list_fields()
+        variable_columns = attr.get("variable_columns", False)
+        list_fields = resource.list_fields(request=r if variable_columns else None)
 
         # Default orderby
         orderby = get_config("orderby", None)
@@ -2640,7 +2656,6 @@ class S3CRUD(CRUDMethod):
                 they will appear AFTER the standard action buttons
         """
 
-        s3crud = S3CRUD
         s3 = current.response.s3
         labels = s3.crud_labels
 
@@ -2692,13 +2707,13 @@ class S3CRUD(CRUDMethod):
                 update_url = iframe_safe(URL(args = args + ["update"], #.popup to use modals
                                              vars = get_vars,
                                              ))
-            s3crud.action_button(label, update_url,
-                                 # To use modals
-                                 #_class="action-btn s3_modal"
-                                 _class="action-btn edit",
-                                 icon = "edit",
-                                 **target
-                                 )
+            cls.action_button(label, update_url,
+                              # To use modals
+                              #_class="action-btn s3_modal"
+                              _class="action-btn edit",
+                              icon = "edit",
+                              **target
+                              )
         else:
             # User has permission to edit only some - or none - of the records
             if not read_url:
@@ -2706,13 +2721,13 @@ class S3CRUD(CRUDMethod):
                 read_url = iframe_safe(URL(args = args + method, #.popup to use modals
                                            vars = get_vars,
                                            ))
-            s3crud.action_button(label, read_url,
-                                 # To use modals
-                                 #_class="action-btn s3_modal"
-                                 _class="action-btn read",
-                                 icon = "file",
-                                 **target
-                                 )
+            cls.action_button(label, read_url,
+                              # To use modals
+                              #_class="action-btn s3_modal"
+                              _class="action-btn read",
+                              icon = "file",
+                              **target
+                              )
 
         # Delete-action
         if deletable and has_permission("delete", table):
@@ -2735,28 +2750,28 @@ class S3CRUD(CRUDMethod):
                     row_id = row.get("id", None)
                     if row_id:
                         rappend(str(row_id))
-                s3crud.action_button(labels.DELETE, delete_url,
-                                     _class="delete-btn",
-                                     icon=icon,
-                                     restrict=restrict,
-                                     **target
-                                     )
+                cls.action_button(labels.DELETE, delete_url,
+                                  _class="delete-btn",
+                                  icon=icon,
+                                  restrict=restrict,
+                                  **target
+                                  )
             else:
-                s3crud.action_button(labels.DELETE, delete_url,
-                                     _class="delete-btn",
-                                     icon=icon,
-                                     **target
-                                     )
+                cls.action_button(labels.DELETE, delete_url,
+                                  _class="delete-btn",
+                                  icon=icon,
+                                  **target
+                                  )
 
         # Copy-action
         if copyable and has_permission("create", table):
             if not copy_url:
                 copy_url = iframe_safe(URL(args = args + ["copy"]))
-            s3crud.action_button(labels.COPY,
-                                 copy_url,
-                                 icon="icon-copy",
-                                 **target
-                                 )
+            cls.action_button(labels.COPY,
+                              copy_url,
+                              icon="icon-copy",
+                              **target
+                              )
 
         # Append custom actions
         if custom_actions:

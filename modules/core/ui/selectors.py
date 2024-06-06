@@ -1680,7 +1680,7 @@ i18n.location_not_found="%s"''' % (T("Address Mapped"),
     def represent(self, value):
         """
             Representation of a new/updated location row (before DB commit).
-                - this method is called during S3CRUD.validate for inline
+                - this method is called during BasicCRUD.validate for inline
                   components
 
             Args:

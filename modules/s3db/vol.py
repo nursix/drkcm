@@ -1453,7 +1453,7 @@ def vol_volunteer_controller():
     def postp(r, output):
         if r.interactive and not r.component:
             # Configure action buttons
-            S3CRUD.action_buttons(r, deletable=settings.get_hrm_deletable())
+            BasicCRUD.action_buttons(r, deletable=settings.get_hrm_deletable())
             if settings.has_module("msg") and \
                settings.get_hrm_compose_button() and \
                current.auth.permission.has_permission("update", c="hrm", f="compose"):

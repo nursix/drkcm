@@ -5112,11 +5112,11 @@ class cap_AssignArea(CRUDMethod):
                                   f = "area",
                                   args = ["[id]", "read"],
                                   )
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url,
-                                      )
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url,
+                                         )
                 # Hide export icons
                 response.s3.no_formats = True
 

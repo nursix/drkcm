@@ -312,7 +312,7 @@ def page():
         if r.record and not r.transformable():
             output = {"item": s3base.S3XMLContents(r.record.body).xml()}
             current.menu.options = None
-            response.view = s3base.S3CRUD._view(r, "cms/page.html")
+            response.view = s3base.BasicCRUD._view(r, "cms/page.html")
             if r.record.replies:
                 ckeditor = URL(c="static", f="ckeditor", args="ckeditor.js")
                 s3.scripts.append(ckeditor)
@@ -441,7 +441,7 @@ def blog():
     # Post-process
     def postp(r, output):
         if r.record:
-            response.view = s3base.S3CRUD._view(r, "cms/blog.html")
+            response.view = s3base.BasicCRUD._view(r, "cms/blog.html")
         return output
     s3.postp = postp
 
@@ -849,7 +849,7 @@ def newsfeed():
             if r.method == "datalist" and r.representation != "dl":
                 # Hide side menu
                 current.menu.options = None
-                response.view = s3base.S3CRUD._view(r, "cms/newsfeed.html")
+                response.view = s3base.BasicCRUD._view(r, "cms/newsfeed.html")
 
         return output
     s3.postp = postp

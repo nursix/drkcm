@@ -14,7 +14,7 @@ from dateutil.relativedelta import relativedelta
 from gluon import current, IS_EMPTY_OR, IS_IN_SET
 from gluon.storage import Storage
 
-from core import CustomController, IS_ONE_OF, IS_UTC_DATE, S3CRUD, S3Represent, \
+from core import CustomController, IS_ONE_OF, IS_UTC_DATE, BasicCRUD, S3Represent, \
                  get_form_record_id
 
 # -------------------------------------------------------------------------
@@ -341,9 +341,9 @@ def disease_case_diagnostics_controller(**attr):
                 elif record and method in (None, "read"):
                     key, label = "list_btn", T("Register another test result")
             if key:
-                regbtn = S3CRUD.crud_button(label = label,
-                                            _href = r.url(id="", method="register"),
-                                            )
+                regbtn = BasicCRUD.crud_button(label = label,
+                                               _href = r.url(id="", method="register"),
+                                               )
                 if record:
                     from gluon import BUTTON, TAG
                     pdfbtn = BUTTON(T("Certificate Form (PDF)"),

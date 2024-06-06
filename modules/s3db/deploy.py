@@ -1501,7 +1501,7 @@ def deploy_rheader(r, tabs=None, profile=False):
                                               "deploy_mission",
                                               record_id = r.id,
                                               ):
-                    crud_button = S3CRUD.crud_button
+                    crud_button = BasicCRUD.crud_button
                     edit_btn = crud_button(T("Edit"),
                                            _href = r.url(method="update"),
                                            )
@@ -1803,15 +1803,15 @@ class deploy_Inbox(CRUDMethod):
                            "url": URL(f="email_inbox", args=["[id]", "select"]),
                            },
                           ]
-            S3CRUD.action_buttons(r,
-                                  editable = False,
-                                  read_url = r.url(method = "read",
-                                                   id = "[id]",
-                                                   ),
-                                  delete_url = r.url(method = "delete",
-                                                     id = "[id]",
-                                                     ),
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     editable = False,
+                                     read_url = r.url(method = "read",
+                                                      id = "[id]",
+                                                      ),
+                                     delete_url = r.url(method = "delete",
+                                                        id = "[id]",
+                                                        ),
+                                     )
 
             # Export not needed
             s3.no_formats = True
@@ -2030,11 +2030,11 @@ def deploy_apply(r, **attr):
             profile_url = URL(f = "human_resource",
                               args = ["[id]", "profile"],
                               )
-            S3CRUD.action_buttons(r,
-                                  deletable = False,
-                                  read_url = profile_url,
-                                  update_url = profile_url,
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     deletable = False,
+                                     read_url = profile_url,
+                                     update_url = profile_url,
+                                     )
             s3.no_formats = True
 
             # Selection of Deploying Organisation

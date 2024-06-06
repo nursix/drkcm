@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 from gluon import current, URL, DIV, H4, P, TAG, IS_EMPTY_OR
 
-from core import S3CRUD, FS, IS_ONE_OF, \
+from core import BasicCRUD, FS, IS_ONE_OF, \
                  LocationSelector, PresenceRegistration, S3SQLCustomForm, \
                  get_form_record_id, s3_fieldmethod, s3_str
 
@@ -481,7 +481,7 @@ def cr_shelter_controller(**attr):
         if is_admin and not record and not r.component and r.method != "deduplicate":
 
             # Default action buttons (except delete)
-            S3CRUD.action_buttons(r, deletable =False)
+            BasicCRUD.action_buttons(r, deletable =False)
 
             # Identify shelters which have never been occupied
             table = r.resource.table
@@ -523,7 +523,7 @@ def cr_shelter_controller(**attr):
 
             # Add a "Presence Registration"-button
             presence_url = URL(c="cr", f="shelter", args=[record.id, "presence"])
-            presence_btn = S3CRUD.crud_button(T("Presence Registration"), _href=presence_url)
+            presence_btn = BasicCRUD.crud_button(T("Presence Registration"), _href=presence_url)
 
             delete_btn = buttons.get("delete_btn")
             buttons["delete_btn"] = TAG[""](presence_btn, delete_btn) \

@@ -175,7 +175,7 @@ class userstats(CustomController):
         if not auth.s3_has_role("ORG_GROUP_ADMIN"):
             auth.permission.fail()
 
-        from core import S3CRUD, s3_get_extension, crud_request
+        from core import BasicCRUD, s3_get_extension, crud_request
 
         request = current.request
         args = request.args
@@ -249,10 +249,10 @@ class userstats(CustomController):
             output["title"] = T("User Statistics")
 
             # URL to open the resource
-            open_url = S3CRUD._linkto(r, update=False)("[id]")
+            open_url = BasicCRUD._linkto(r, update=False)("[id]")
 
             # Add action button for open
-            action_buttons = S3CRUD.action_buttons
+            action_buttons = BasicCRUD.action_buttons
             action_buttons(r,
                            deletable = False,
                            copyable = False,

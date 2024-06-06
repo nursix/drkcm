@@ -59,7 +59,7 @@ def document_tabs(r):
                 },
                 ]
     tabs = [(T("Details"), None)]
-    crud_string = s3base.S3CRUD.crud_string
+    crud_string = s3base.BasicCRUD.crud_string
     for tab_opt in tab_opts:
         tablename = tab_opt["tablename"]
         if tablename in db and document_id in db[tablename]:

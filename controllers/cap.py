@@ -337,7 +337,7 @@ def alert():
                                       ),
                         ]
                     s3.crud_strings["cap_alert"].title_list = T("Alerts Hub")
-                    s3base.S3CRUD.action_buttons(r, deletable=False)
+                    s3base.BasicCRUD.action_buttons(r, deletable=False)
                     profile_button = {"url": URL(args=["[id]", "profile"]),
                                       "_class": "action-btn",
                                       "_target": "_blank",
@@ -380,7 +380,7 @@ def alert():
                                         (FS("external") != True)
                             s3.crud_strings["cap_alert"].title_list = T("Incomplete Alerts")
                             url = URL(c="cap", f="alert", args=["[id]"])
-                            s3base.S3CRUD.action_buttons(r, update_url=url, read_url=url)
+                            s3base.BasicCRUD.action_buttons(r, update_url=url, read_url=url)
                         elif not r.get_vars:
                             # Filter those alerts having at least info and area segment
                             s3.filter = ((FS("info.id") != None) & (FS("area.id") != None)) & \

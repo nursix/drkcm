@@ -752,22 +752,29 @@ def configure_case_list_fields(resource,
         orderby = "pr_person.last_name, pr_person.first_name"
 
     # Custom list fields
+    available_list_fields = [(T("ID"), "pe_label"),
+                             (T("Principal Ref.No."), "dvr_case.reference"),
+                             (T("BAMF Ref.No."), "bamf.value"),
+                             # TODO "dvr_case.organisation_id", # not default
+                             "last_name",
+                             "first_name",
+                             "date_of_birth",
+                             # TODO age, # not default
+                             "gender",
+                             # TODO "person_details.marital_status", # not default
+                             "person_details.nationality",
+                             # TODO residence status / permit, # not default
+                             (T("Size of Family"), "dvr_case.household_size"),
+                             case_status,
+                             case_date,
+                             shelter,
+                             unit,
+                             # TODO presence (at assigned shelter), # not default
+                             "dvr_case.last_seen_on",
+                             ]
     if fmt in ("xlsx", "xls"):
-        list_fields = [(T("ID"), "pe_label"),
-                       (T("Principal Ref.No."), "dvr_case.reference"),
-                       (T("BAMF Ref.No."), "bamf.value"),
-                       "last_name",
-                       "first_name",
-                       "date_of_birth",
-                       "gender",
-                       "person_details.nationality",
-                       (T("Size of Family"), "dvr_case.household_size"),
-                       case_status,
-                       case_date,
-                       shelter,
-                       unit,
-                       "dvr_case.last_seen_on",
-                       ]
+        # Export all available list fields by default
+        list_fields = available_list_fields
     else:
         list_fields = [(T("ID"), "pe_label"),
                        "last_name",
@@ -781,7 +788,9 @@ def configure_case_list_fields(resource,
                        unit,
                        ]
 
+
     resource.configure(list_fields = list_fields,
+                       available_list_fields = available_list_fields,
                        orderby = orderby,
                        )
 
@@ -1529,6 +1538,7 @@ def pr_person_controller(**attr):
     from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
     if current.request.controller in ("dvr", "counsel"):
         attr["rheader"] = dvr_rheader
+        attr["variable_columns"] = True
     elif current.request.controller == "hrm":
         attr["rheader"] = hrm_rheader
     elif current.request.controller == "default":

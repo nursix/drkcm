@@ -7339,7 +7339,7 @@ def org_organisation_controller():
                 args = ["[id]", "read"] if settings.get_ui_open_read_first() else ["[id]"]
                 read_url = URL(c=controller, f=function, args=args)
                 update_url = URL(c=controller, f=function, args=["[id]", "update"])
-                S3CRUD.action_buttons(r, read_url=read_url, update_url=update_url)
+                BasicCRUD.action_buttons(r, read_url=read_url, update_url=update_url)
 
             elif r.component_name == "branch" and r.record and \
                  isinstance(output, dict) and \
@@ -7646,8 +7646,7 @@ def org_office_controller():
             # (Delete not overridden to keep errors within Tab)
             read_url = URL(c="hrm", f="staff", args=["[id]"])
             update_url = URL(c="hrm", f="staff", args=["[id]", "update"])
-            S3CRUD.action_buttons(r, read_url=read_url,
-                                     update_url=update_url)
+            BasicCRUD.action_buttons(r, read_url=read_url, update_url=update_url)
         return output
     s3.postp = postp
 
@@ -7790,7 +7789,7 @@ def org_facility_controller():
     def postp(r, output):
         if r.interactive and r.component_name == "shift":
             # Normal Action Buttons
-            S3CRUD.action_buttons(r)
+            BasicCRUD.action_buttons(r)
             # Custom Action Buttons
             s3.actions += [{"label": s3_str(current.T("Assign")),
                             "url": URL(c = "hrm",
@@ -8690,10 +8689,10 @@ class org_AssignMethod(CRUDMethod):
                 profile_url = URL(c = "org",
                                   f = "organisation",
                                   args = ["[id]", "profile"])
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url)
                 response.s3.no_formats = True
 
                 # Data table (items)

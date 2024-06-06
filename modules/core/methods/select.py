@@ -31,7 +31,7 @@ from ..filters import FilterForm
 from ..tools import FormKey, get_crud_string
 
 from .base import CRUDMethod
-from .crud import S3CRUD
+from .crud import BasicCRUD
 
 __all__ = ("Select",
            )
@@ -415,7 +415,7 @@ class Select(CRUDMethod):
 
         # Linkto
         if not linkto:
-            linkto = S3CRUD._linkto(r)
+            linkto = BasicCRUD._linkto(r)
 
         left = []
         dtargs = attr.get("dtargs", {})

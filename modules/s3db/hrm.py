@@ -5906,10 +5906,10 @@ class hrm_AssignMethod(CRUDMethod):
                 profile_url = URL(c = controller,
                                   f = "human_resource",
                                   args = ["[id]", "profile"])
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url)
 
                 response.s3.no_formats = True
 
@@ -7743,7 +7743,7 @@ def hrm_competency_controller():
     def postp(r, output):
         if r.interactive:
             # Custom action button to add the member to a team
-            S3CRUD.action_buttons(r)
+            BasicCRUD.action_buttons(r)
 
             args = ["[id]", "group_membership"]
             s3.actions.append({"label": str(T("Add to a Team")),
@@ -7981,7 +7981,7 @@ def hrm_group_controller():
         if r.interactive:
             if not r.component:
                 update_url = URL(args=["[id]", "group_membership"])
-                S3CRUD.action_buttons(r, update_url=update_url)
+                BasicCRUD.action_buttons(r, update_url=update_url)
                 if current.deployment_settings.has_module("msg") and \
                    current.auth.permission.has_permission("update", c="hrm",
                                                           f="compose"):
@@ -8475,10 +8475,10 @@ def hrm_human_resource_controller(extra_filter = None):
                     # Standard CRUD buttons
                     read_url = None
                     update_url = None
-                S3CRUD.action_buttons(r,
-                                      deletable = deletable,
-                                      read_url = read_url,
-                                      update_url = update_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = deletable,
+                                         read_url = read_url,
+                                         update_url = update_url)
                 if "msg" in settings.modules and \
                    settings.get_hrm_compose_button() and \
                    current.auth.permission.has_permission("update",
@@ -9062,11 +9062,11 @@ def hrm_training_event_controller():
     #           showadd_btn = output.get("showadd_btn", None)
     #           if showadd_btn:
     #               # Add an Import button
-    #               import_btn = S3CRUD.crud_button(label=current.T("Import Participants"),
-    #                                               _class="action-btn s3_modal",
-    #                                               _href=URL(f="training", args="import.popup",
-    #                                                         vars={"~.training_event_id":r.id}),
-    #                                               )
+    #               import_btn = BasicCRUD.crud_button(label=current.T("Import Participants"),
+    #                                                  _class="action-btn s3_modal",
+    #                                                  _href=URL(f="training", args="import.popup",
+    #                                                            vars={"~.training_event_id":r.id}),
+    #                                                  )
     #               output["showadd_btn"] = TAG[""](showadd_btn, import_btn)
     #    return output
     #s3.postp = postp

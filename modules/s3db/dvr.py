@@ -7684,7 +7684,7 @@ class DVRManageAppointments(CRUDMethod):
                 # Page load
                 resource.configure(deletable = False)
 
-                S3CRUD.action_buttons(r)
+                BasicCRUD.action_buttons(r)
                 response.s3.no_formats = True
 
                 # Data table (items)

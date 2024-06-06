@@ -497,8 +497,8 @@ class CRUDRequest:
             handler = self.default_methods.get(method)
 
         if handler is None:
-            from .methods import S3CRUD
-            handler = S3CRUD()
+            from .methods import BasicCRUD
+            handler = BasicCRUD()
 
         return handler() if isinstance(handler, type) else handler
 
@@ -590,8 +590,8 @@ class CRUDRequest:
                         from .methods import RESTful
                         handler = RESTful
                     elif http in HTTP_METHODS:
-                        from .methods import S3CRUD
-                        handler = S3CRUD
+                        from .methods import BasicCRUD
+                        handler = BasicCRUD
                     else:
                         self.error(405, current.ERROR.BAD_METHOD)
             if isinstance(handler, type):
@@ -1284,22 +1284,22 @@ def crud_controller(prefix=None, resourcename=None, **attr):
             copyable = get_config(tablename, "copyable", False)
 
             # URL to open the resource
-            from .methods import S3CRUD
-            open_url = S3CRUD._linkto(r,
-                                      authorised = authorised,
-                                      update = editable,
-                                      native = native)("[id]")
+            from .methods import BasicCRUD
+            open_url = BasicCRUD._linkto(r,
+                                         authorised = authorised,
+                                         update = editable,
+                                         native = native)("[id]")
 
             # Add action buttons for Open/Delete/Copy as appropriate
-            S3CRUD.action_buttons(r,
-                                  deletable = deletable,
-                                  copyable = copyable,
-                                  editable = editable,
-                                  read_url = open_url,
-                                  update_url = open_url
-                                  # To use modals
-                                  #update_url = "%s.popup?refresh=list" % open_url
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     deletable = deletable,
+                                     copyable = copyable,
+                                     editable = editable,
+                                     read_url = open_url,
+                                     update_url = open_url
+                                     # To use modals
+                                     #update_url = "%s.popup?refresh=list" % open_url
+                                     )
 
             # Override Add-button, link to native controller and put
             # the primary key into get_vars for automatic linking

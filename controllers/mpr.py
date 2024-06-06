@@ -133,7 +133,7 @@ def person():
                 linkto = URL(f="person", args=("[id]", "note"))
             else:
                 label = UPDATE
-                linkto = s3base.S3CRUD._linkto(r)("[id]")
+                linkto = s3base.BasicCRUD._linkto(r)("[id]")
             s3.actions = [action(label, linkto)]
             if not r.component:
                 label = str(T("Found"))

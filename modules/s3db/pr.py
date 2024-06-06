@@ -7198,10 +7198,10 @@ class pr_AssignMethod(CRUDMethod):
                     profile_url = URL(c = controller,
                                       f = "person",
                                       args = ["[id]", "profile"])
-                    S3CRUD.action_buttons(r,
-                                          deletable = False,
-                                          read_url = profile_url,
-                                          update_url = profile_url)
+                    BasicCRUD.action_buttons(r,
+                                             deletable = False,
+                                             read_url = profile_url,
+                                             update_url = profile_url)
                     actions = s3.actions
 
                 s3.no_formats = True

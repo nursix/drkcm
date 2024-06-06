@@ -31,7 +31,7 @@ from ..filters import FilterForm
 from ..tools import get_crud_string
 
 from .base import CRUDMethod
-from .crud import S3CRUD
+from .crud import BasicCRUD
 
 # =============================================================================
 class S3Summary(CRUDMethod):
@@ -156,7 +156,7 @@ class S3Summary(CRUDMethod):
                     handler = r.get_widget_handler(method)
                     if handler is None:
                         # Fall back to CRUD
-                        handler = S3CRUD()
+                        handler = BasicCRUD()
                     if handler is not None:
                         if method == "datatable":
                             # Assume that we have a FilterForm, so disable Quick Search

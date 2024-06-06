@@ -2736,7 +2736,7 @@ def cr_warn_if_full(shelter_id, unit_id):
             response.warning = warning
 
 # =============================================================================
-class cr_AssignUnit(S3CRUD):
+class cr_AssignUnit(BasicCRUD):
     """
         Assign a Person to a Housing Unit (used in DRK-Village)
     """

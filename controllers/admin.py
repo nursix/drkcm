@@ -317,7 +317,7 @@ def user():
             # @ToDo: Merge these with the code in s3aaa.py and use S3SQLCustomForm to implement
             form = output.get("form", None)
             if not form:
-                crud_button = s3base.S3CRUD.crud_button
+                crud_button = s3base.BasicCRUD.crud_button
                 if UNAPPROVED:
                     switch_view = crud_button(T("View All Users"),
                                               _href = URL(vars = {}),

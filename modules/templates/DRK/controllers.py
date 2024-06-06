@@ -216,7 +216,7 @@ class surplus_meals(CustomController):
         from gluon import IS_INT_IN_RANGE
         from core import FS, \
                          crud_request, \
-                         S3CRUD, \
+                         BasicCRUD, \
                          TextFilter, \
                          DateFilter, \
                          S3SQLCustomForm
@@ -342,11 +342,11 @@ class surplus_meals(CustomController):
                 else:
                     action_args = [controller, '[id]']
                 action_url = lambda action: URL(args=action_args + [action], vars={})
-                S3CRUD.action_buttons(r,
-                                      read_url = action_url('read'),
-                                      update_url = action_url('update'),
-                                      delete_url = action_url('delete'),
-                                      )
+                BasicCRUD.action_buttons(r,
+                                         read_url = action_url('read'),
+                                         update_url = action_url('update'),
+                                         delete_url = action_url('delete'),
+                                         )
 
                 # Inject controller name in CRUD buttons
                 buttons = output.get("buttons")

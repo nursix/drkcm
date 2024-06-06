@@ -6,7 +6,7 @@
 
 from gluon import current, A, TAG, URL
 
-from core import IS_FLOAT_AMOUNT, IS_ONE_OF, JSONERRORS, S3CRUD, s3_str
+from core import IS_FLOAT_AMOUNT, IS_ONE_OF, JSONERRORS, BasicCRUD, s3_str
 
 from .org import add_org_tags
 
@@ -371,7 +371,7 @@ def req_req_controller(**attr):
                 stable = s3db.org_site
 
                 # Default action buttons (except delete)
-                S3CRUD.action_buttons(r, deletable =False)
+                BasicCRUD.action_buttons(r, deletable =False)
 
                 if has_role("SUPPLY_COORDINATOR"):
                     # Can only register shipments for unfulfilled requests with

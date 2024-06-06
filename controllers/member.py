@@ -191,7 +191,7 @@ def person():
                 # Provide correct list-button (non-native controller)
                 buttons = output["buttons"]
                 if "list_btn" in buttons:
-                    crud_button = s3base.S3CRUD.crud_button
+                    crud_button = s3base.BasicCRUD.crud_button
                     buttons["list_btn"] = crud_button(None,
                                                 tablename="member_membership",
                                                 name="label_list_button",

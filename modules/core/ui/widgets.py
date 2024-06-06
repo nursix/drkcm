@@ -1681,9 +1681,9 @@ class S3QRInput(EdenFormWidget):
 # =============================================================================
 class S3EmbeddedComponentWidget(EdenFormWidget):
     """
-        Widget used by S3CRUD for link-table components with actuate="embed".
+        Widget used by BasicCRUD for link-table components with actuate="embed".
         Uses s3.embed_component.js for client-side processing, and
-        S3CRUD._postprocess_embedded to receive the data.
+        BasicCRUD._postprocess_embedded to receive the data.
     """
 
     def __init__(self,
@@ -2451,7 +2451,7 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
 # =============================================================================
 class S3InvBinWidget(FormWidget):
     """
-        Widget used by S3CRUD to offer the user matching bins where
+        Widget used by BasicCRUD to offer the user matching bins where
         stock items can be placed
     """
 

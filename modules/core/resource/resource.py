@@ -2742,7 +2742,7 @@ class CRUDResource:
             return "~.%s" % selector
 
     # -------------------------------------------------------------------------
-    def list_fields(self, key="list_fields", id_column=0):
+    def list_fields(self, key="list_fields", id_column=0, request=None):
         """
             Get the list_fields for this resource
 
@@ -2754,10 +2754,17 @@ class CRUDResource:
                              whether it is configured or not
         """
 
-        list_fields = self.get_config(key, None)
+        if key == "list_fields":
+            list_fields = self.active_list_fields(request) if request else None
+        else:
+            list_fields = self.get_config(key)
+        if not list_fields:
+            list_fields = self.get_config("list_fields")
 
-        if not list_fields and key != "list_fields":
-            list_fields = self.get_config("list_fields", None)
+        #list_fields = self.get_config(key, None)
+
+        #if not list_fields and key != "list_fields":
+            #list_fields = self.get_config("list_fields", None)
         if not list_fields:
             list_fields = [f.name for f in self.readable_fields()]
 
@@ -2788,6 +2795,38 @@ class CRUDResource:
             fields.insert(0, id_field)
 
         return fields
+
+    # -------------------------------------------------------------------------
+    def active_list_fields(self, request):
+        """
+            Uses the aCols URL parameter to determine the active list_fields
+            and their order in variable-columns data tables and exports
+
+            Args:
+                request: the (CRUD)Request to read the aCols parameter from
+
+            Returns:
+                list_fields configuration (a list) or None if aCols is not applicable
+        """
+
+        available = self.get_config("available_list_fields")
+        if not available:
+            return None
+
+        active = None
+        if available and "aCols" in request.get_vars:
+            try:
+                selected = request.get_vars.aCols.split(",")
+                selected = [int(index) for index in selected]
+            except (TypeError, ValueError):
+                pass
+            else:
+                try:
+                    active = [available[i] for i in selected]
+                except IndexError:
+                    pass
+
+        return active
 
     # -------------------------------------------------------------------------
     def get_defaults(self, master, defaults=None, data=None):
