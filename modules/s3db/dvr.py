@@ -780,7 +780,7 @@ class DVRCaseModel(DataModel):
         person_id = case.person_id
         organisation_id = case.organisation_id
 
-        # Auto-create active appointments
+        # Auto-create appointments
         org_specific = settings.get_dvr_appointment_types_org_specific()
         if not org_specific or org_specific and organisation_id:
 
@@ -790,7 +790,7 @@ class DVRCaseModel(DataModel):
             left = atable.on((atable.type_id == ttable.id) &
                              (atable.person_id == person_id) &
                              (atable.deleted == False))
-            query = (atable.id == None) & (ttable.active == True)
+            query = (atable.id == None) & (ttable.autocreate == True)
             if org_specific:
                 query &= (ttable.organisation_id == organisation_id)
             query &= (ttable.deleted == False)
@@ -3505,12 +3505,12 @@ class DVRCaseAppointmentModel(DataModel):
                      Field("name", length=64,
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(64, minsize=1)],
                            ),
-                     Field("active", "boolean",
-                           default = True,
-                           label = T("Active"),
+                     Field("autocreate", "boolean",
+                           default = False,
+                           label = T("Create automatically"),
                            represent = s3_yes_no_represent,
                            comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Active Appointment"),
+                                         _title = "%s|%s" % (T("Create automatically"),
                                                              T("Automatically create this appointment for new cases"),
                                                              ),
                                          ),
