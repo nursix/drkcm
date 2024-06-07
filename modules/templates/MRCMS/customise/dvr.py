@@ -9,7 +9,6 @@ import datetime
 from gluon import current, URL, A, TAG, IS_EMPTY_OR
 from gluon.storage import Storage
 
-from s3dal import Field
 from core import CRUDRequest, CustomController, FS, IS_ONE_OF, \
                  S3HoursWidget, S3SQLCustomForm, S3SQLInlineLink, \
                  DateFilter, HierarchyFilter, OptionsFilter, TextFilter, \
@@ -937,35 +936,6 @@ def dvr_case_event_controller(**attr):
     return attr
 
 # -------------------------------------------------------------------------
-def managed_orgs_field():
-    """
-        Returns a Field with an organisation selector, to be used
-        for imports of organisation-specific types
-    """
-
-    db = current.db
-    s3db = current.s3db
-    auth = current.auth
-
-    from ..helpers import get_managed_orgs
-
-    if auth.s3_has_role("ADMIN"):
-        dbset = db
-    else:
-        managed_orgs = []
-        for role in ("ORG_GROUP_ADMIN", "ORG_ADMIN"):
-            if auth.s3_has_role(role):
-                managed_orgs = get_managed_orgs(role=role)
-        otable = s3db.org_organisation
-        dbset = db(otable.id.belongs(managed_orgs))
-
-    field = Field("organisation_id", "reference org_organisation",
-                  requires = IS_ONE_OF(dbset, "org_organisation.id", "%(name)s"),
-                  represent = s3db.org_OrganisationRepresent(),
-                  )
-    return field
-
-# -------------------------------------------------------------------------
 def dvr_case_appointment_type_controller(**attr):
 
     T = current.T
@@ -974,8 +944,9 @@ def dvr_case_appointment_type_controller(**attr):
     s3 = current.response.s3
 
     # Selectable organisation
+    from ..helpers import managed_orgs_field
     attr["csv_extra_fields"] = [{"label": "Organisation",
-                                 "field": managed_orgs_field(),
+                                 "field": managed_orgs_field,
                                  }]
 
     # Custom postp
@@ -1061,8 +1032,9 @@ def dvr_case_event_type_controller(**attr):
     s3 = current.response.s3
 
     # Selectable organisation
+    from ..helpers import managed_orgs_field
     attr["csv_extra_fields"] = [{"label": "Organisation",
-                                 "field": managed_orgs_field(),
+                                 "field": managed_orgs_field,
                                  }]
 
     standard_prep = s3.prep
@@ -1121,8 +1093,9 @@ def dvr_case_flag_controller(**attr):
     s3 = current.response.s3
 
     # Selectable organisation
+    from ..helpers import managed_orgs_field
     attr["csv_extra_fields"] = [{"label": "Organisation",
-                                 "field": managed_orgs_field(),
+                                 "field": managed_orgs_field,
                                  }]
 
     # Custom postp

@@ -10,7 +10,8 @@ from dateutil.relativedelta import relativedelta
 
 from gluon import current, URL, A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
 
-from core import FS, WorkflowOptions, RangeFilter, s3_fullname
+from s3dal import Field
+from core import FS, IS_ONE_OF, WorkflowOptions, RangeFilter, s3_fullname
 
 # =============================================================================
 def get_role_realms(role):
@@ -207,6 +208,33 @@ def get_managed_orgs(role="ORG_ADMIN", group=None, cacheable=True):
                                     join = join,
                                     )
     return [o.id for o in orgs]
+
+# -------------------------------------------------------------------------
+def managed_orgs_field():
+    """
+        Returns a Field with an organisation selector, to be used
+        for imports of organisation-specific types
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    if auth.s3_has_role("ADMIN"):
+        dbset = db
+    else:
+        managed_orgs = []
+        for role in ("ORG_GROUP_ADMIN", "ORG_ADMIN"):
+            if auth.s3_has_role(role):
+                managed_orgs = get_managed_orgs(role=role)
+        otable = s3db.org_organisation
+        dbset = db(otable.id.belongs(managed_orgs))
+
+    field = Field("organisation_id", "reference org_organisation",
+                  requires = IS_ONE_OF(dbset, "org_organisation.id", "%(name)s"),
+                  represent = s3db.org_OrganisationRepresent(),
+                  )
+    return field
 
 # =============================================================================
 def get_user_orgs(roles=None, cacheable=True, limit=None):

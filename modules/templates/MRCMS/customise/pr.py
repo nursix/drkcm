@@ -1175,16 +1175,16 @@ def configure_security_person_controller(r):
                                 _class="profile-header",
                                 )
 
-        notes_widget = dict(label = "Security Notes",
-                            label_create = "Add Note",
-                            type = "datatable",
-                            tablename = "dvr_note",
-                            filter = ((FS("note_type_id$name") == "Security") & \
-                                        (FS("person_id") == person_id)),
-                            #icon = "report",
-                            create_controller = "dvr",
-                            create_function = "note",
-                            )
+        notes_widget = {"label": "Security Notes",
+                        "label_create": "Add Note",
+                        "type": "datatable",
+                        "tablename": "dvr_note",
+                        "filter": (FS("note_type_id$name") == "Security") & \
+                                  (FS("person_id") == person_id),
+                        #"icon": "report",
+                        "create_controller": "dvr",
+                        "create_function": "note",
+                        }
         profile_widgets = [notes_widget]
     else:
         profile_header = None
@@ -1537,8 +1537,16 @@ def pr_person_controller(**attr):
     # Custom rheader tabs
     from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
     if current.request.controller in ("dvr", "counsel"):
+
         attr["rheader"] = dvr_rheader
         attr["variable_columns"] = True
+
+        # Allow selection of Organisation with case imports
+        from ..helpers import managed_orgs_field
+        attr["csv_extra_fields"] = [{"label": "Organisation",
+                                     "field": managed_orgs_field,
+                                     }]
+
     elif current.request.controller == "hrm":
         attr["rheader"] = hrm_rheader
     elif current.request.controller == "default":
