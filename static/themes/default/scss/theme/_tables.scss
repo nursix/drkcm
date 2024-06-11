@@ -345,9 +345,8 @@ table.dataTable {
         padding-top: 0;
         margin: 0 0.2rem;
         .dt-export {
-            float: right;
-            margin: 0 0.1rem;
-            padding: 1px;
+            display: inline-block;
+            margin: 0 0.15rem;
             cursor: pointer;
             height: 16px;
             width: 16px;
@@ -388,9 +387,6 @@ table.dataTable {
     }
     [dir=rtl] & {
         float: left;
-        .dt-export {
-            float: left;
-        }
     }
 }
 

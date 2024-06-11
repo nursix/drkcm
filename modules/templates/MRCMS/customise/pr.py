@@ -205,7 +205,7 @@ def pr_person_resource(r, tablename):
                     from ..shelter import BulkRegistration
                     s3db.set_method("pr_person", method="checkout", action=BulkRegistration)
 
-                    bulk_actions.append({"label": T("Checkout"),
+                    bulk_actions.append({"label": T("Check-out"),
                                          "mode": "ajax",
                                          "url": r.url(method="checkout", representation="json", vars={}),
                                          "confirm": T("Do you want to check-out these residents?"),

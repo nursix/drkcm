@@ -463,7 +463,7 @@ class Select(CRUDMethod):
             dtargs["dt_pagination"] = dt_pagination
             dtargs["dt_pageLength"] = display_length
             dtargs["dt_base_url"] = r.url(method="", vars={})
-            dtargs["dt_permalink"] = r.url()
+            dtargs["dt_list_url"] = r.url(method="", vars={})
             datatable = dt.html(totalrows, displayrows, **dtargs)
 
             # View + data

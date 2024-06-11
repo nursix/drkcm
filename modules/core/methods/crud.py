@@ -1569,8 +1569,11 @@ class BasicCRUD(CRUDMethod):
             #        of EmptyTable)
             dtargs["dt_pagination"] = dt_pagination
             dtargs["dt_pageLength"] = display_length
+
             dtargs["dt_base_url"] = r.url(method="", vars={})
-            dtargs["dt_permalink"] = r.url()
+            if get_config("bulk_actions"):
+                dtargs["dt_select_url"] = r.url(method="select", vars={})
+
             datatable = dt.html(totalrows, displayrows, **dtargs)
 
             # View + data

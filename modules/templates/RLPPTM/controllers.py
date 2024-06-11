@@ -847,7 +847,6 @@ class approve(CustomController):
                 dtargs["dt_pagination"] = dt_pagination
                 dtargs["dt_pageLength"] = display_length
                 dtargs["dt_base_url"] = URL(c="default", f="index", args="approve")
-                dtargs["dt_permalink"] = URL(c="default", f="index", args="approve")
                 datatable = dt.html(totalrows, displayrows, **dtargs)
 
                 # Action Buttons

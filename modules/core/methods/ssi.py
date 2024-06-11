@@ -318,7 +318,6 @@ class SpreadsheetImporter(CRUDMethod):
                              dt_pagination = True,
                              dt_pageLength = display_length,
                              dt_base_url = r.url(method="import", vars={"job_id": job_id}),
-                             dt_permalink = None,
                              dt_ajax_url = ajax_url,
                              dt_bulk_actions = dt_bulk_actions,
                              dt_bulk_selected = select_list,

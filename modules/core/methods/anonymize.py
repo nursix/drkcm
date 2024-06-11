@@ -264,8 +264,10 @@ class Anonymize(CRUDMethod):
                         record = record_id,
                         representation = "html",
                         )
-                current.session.confirmation = T("%(number)s records updated, %(failed)s failed") % \
-                                               {"number": updated, "failed": failed}
+                msg = T("%(number)s records updated") % {"number": updated}
+                if failed:
+                    msg = "%s - %s" % (msg, T("%(number)s failed") % {"number": failed})
+                current.session.confirmation = msg
             else:
                 current.session.error = T("No applicable rules found")
 

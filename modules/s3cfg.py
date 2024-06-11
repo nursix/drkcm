@@ -2282,7 +2282,7 @@ class S3Config(Storage):
               * a tuple (extension, css-class[, onhover-title])
         """
         return self.ui.get("export_formats",
-                           ("cap", "have", "kml", "map", "pdf", "rss", "xls", "xlsx", "xml"))
+                           ("xls", "xlsx", "pdf", "map", "rss", "cap", "have", "kml", "xml"))
 
     def get_ui_hide_report_filter_options(self):
         """
@@ -2348,13 +2348,6 @@ class S3Config(Storage):
             e.g. 'Cell Phone'
         """
         return current.T(self.ui.get("label_mobile_phone", "Mobile Phone"))
-
-    def get_ui_label_permalink(self):
-        """
-            Label for the Permalink on dataTables
-            - set to None to disable
-        """
-        return self.ui.get("label_permalink", "Link to this result")
 
     def get_ui_label_postcode(self):
         """

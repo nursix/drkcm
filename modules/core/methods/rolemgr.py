@@ -186,7 +186,6 @@ class S3RoleManager(CRUDMethod):
                                 dt_pagination = dt_pagination,
                                 dt_pageLength = display_length,
                                 dt_base_url = r.url(method="", vars={}),
-                                dt_permalink = r.url(),
                                 dt_formkey = formkey,
                                 )
 

@@ -3375,66 +3375,61 @@ table.dataTable table.import-item-details {
 }
 /* line 347, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
-  float: right;
-  margin: 0 0.1rem;
-  padding: 1px;
+  display: inline-block;
+  margin: 0 0.15rem;
   cursor: pointer;
   height: 16px;
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 355, ../../default/scss/theme/_tables.scss */
+/* line 354, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 360, ../../default/scss/theme/_tables.scss */
+/* line 359, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 363, ../../default/scss/theme/_tables.scss */
+/* line 362, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 366, ../../default/scss/theme/_tables.scss */
+/* line 365, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 369, ../../default/scss/theme/_tables.scss */
+/* line 368, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 372, ../../default/scss/theme/_tables.scss */
+/* line 371, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 375, ../../default/scss/theme/_tables.scss */
+/* line 374, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 378, ../../default/scss/theme/_tables.scss */
+/* line 377, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 381, ../../default/scss/theme/_tables.scss */
+/* line 380, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 384, ../../default/scss/theme/_tables.scss */
+/* line 383, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 389, ../../default/scss/theme/_tables.scss */
+/* line 388, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
-/* line 391, ../../default/scss/theme/_tables.scss */
-[dir=rtl] .dt-export-options .dt-export {
-  float: left;
-}
 
-/* line 400, ../../default/scss/theme/_tables.scss */
+/* line 396, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

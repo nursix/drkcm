@@ -466,8 +466,6 @@ def config(settings):
     #settings.ui.datatables_responsive = False
     # Uncomment to enable double scroll bars on non-responsive datatables
     #settings.ui.datatables_double_scroll = True
-    # Uncomment to modify the label of the Permalink
-    #settings.ui.label_permalink = "Permalink"
     # Uncomment to modify the main menu logo
     #settings.ui.menu_logo = URL(c="static", f="img", args=["S3menulogo.png"])
     # Configure business hours to indicate in organizer (can be a list)
