@@ -147,6 +147,7 @@ def event_overdue(code, interval):
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
+    T = current.T
     s3db = current.s3db
     auth = current.auth
 
@@ -155,9 +156,11 @@ def pr_person_resource(r, tablename):
     controller = r.controller
     if controller in ("dvr", "counsel"):
 
+        case_administration = has_permission("create", "pr_person")
+
         # Users who can not register new residents also have only
         # limited write-access to basic details of residents
-        if not has_permission("create", "pr_person"):
+        if not case_administration:
 
             # Cannot modify any fields in main person record
             ptable = s3db.pr_person
@@ -192,34 +195,51 @@ def pr_person_resource(r, tablename):
         resource = r.resource
         if not r.component and resource.tablename == "pr_person":
 
-            if controller == "dvr" and auth.s3_has_role("ADMIN"):
-                # Configure anonymize-method
-                from core import Anonymize
-                s3db.set_method("pr_person", method="anonymize", action=Anonymize)
+            if controller == "dvr":
 
-                # Configure anonymize-rules
-                from ..anonymize import anonymize_rules
-                resource.configure(anonymize=anonymize_rules())
+                bulk_actions = []
 
-                # Configure anonymize bulk-action
-                resource.configure(bulk_actions = ({"label": current.T("Anonymize"),
-                                                    "mode": "ajax",
-                                                    "url": r.url(method="anonymize", representation="json", vars={}),
-                                                    },
-                                                   ),
-                                   )
+                if case_administration and \
+                   has_permission("update", "cr_shelter_registration"):
 
-            # Disabled due to requirement for skills to create templates:
-            ## Configure case document template methods
-            #from .doc import CaseDocumentTemplates
-            #s3db.set_method("pr_person",
-            #                method = "templates",
-            #                action = CaseDocumentTemplates,
-            #                )
-            #s3db.set_method("pr_person",
-            #                method = "template",
-            #                action = s3db.pr_Template,
-            #                )
+                    from ..shelter import BulkRegistration
+                    s3db.set_method("pr_person", method="checkout", action=BulkRegistration)
+
+                    bulk_actions.append({"label": T("Checkout"),
+                                         "mode": "ajax",
+                                         "url": r.url(method="checkout", representation="json", vars={}),
+                                         "confirm": T("Do you want to check-out these residents?"),
+                                         })
+
+                if auth.s3_has_role("ADMIN"):
+                    # Configure anonymize-method
+                    from core import Anonymize
+                    s3db.set_method("pr_person", method="anonymize", action=Anonymize)
+
+                    # Configure anonymize-rules
+                    from ..anonymize import anonymize_rules
+                    resource.configure(anonymize=anonymize_rules())
+
+                    # Configure anonymize bulk-action
+                    bulk_actions.append({"label": T("Anonymize"),
+                                         "mode": "ajax",
+                                         "url": r.url(method="anonymize", representation="json", vars={}),
+                                         })
+
+                if bulk_actions:
+                    resource.configure(bulk_actions = bulk_actions)
+
+                # Disabled due to requirement for skills to create templates:
+                ## Configure case document template methods
+                #from .doc import CaseDocumentTemplates
+                #s3db.set_method("pr_person",
+                #                method = "templates",
+                #                action = CaseDocumentTemplates,
+                #                )
+                #s3db.set_method("pr_person",
+                #                method = "template",
+                #                action = s3db.pr_Template,
+                #                )
 
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case

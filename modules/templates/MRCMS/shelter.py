@@ -14,8 +14,8 @@ from gluon import current, URL, \
 from gluon.contenttype import contenttype
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from core import BooleanRepresent, CRUDMethod, CustomController, ICON, \
-                 JSONSEPARATORS, PresenceRegistration, XLSXWriter, \
+from core import BooleanRepresent, CRUDMethod, CustomController, FormKey, FS, ICON, \
+                 JSONERRORS, JSONSEPARATORS, PresenceRegistration, XLSXWriter, \
                  s3_format_fullname, s3_str
 
 # =============================================================================
@@ -1217,5 +1217,129 @@ class ShelterStatus:
         row = current.db(query).select(num_persons).first()
 
         return row[num_persons]
+
+# =============================================================================
+class BulkRegistration(CRUDMethod):
+    """ Bulk shelter checkin/checkout method """
+
+    def apply_method(self, r, **attr):
+        """
+            Method entry point for CRUD controller
+
+            Args:
+                r: the CRUDRequest
+                attr: dict of controller parameters
+
+            TODO extend for check-in
+        """
+
+        output = None
+
+        if r.http == "POST":
+            if r.ajax and r.representation == "json":
+                output = self.checkout(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def checkout(self, r, **attr):
+        """
+            Handles bulk check-out requested via Select/Ajax
+
+            Args:
+                r: the CRUDRequest
+                attr: dict of controller parameters
+        """
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+        auth = current.auth
+
+        # Resource comes in pre-filtered
+        resource = self.resource
+
+        # Verify permissions
+        has_permission = auth.s3_has_permission
+        if not has_permission("create", "pr_person") or \
+           not has_permission("update", "cr_shelter_registration"):
+            r.unauthorised()
+
+        # Read+parse body JSON
+        s = r.body
+        s.seek(0)
+        try:
+            options = json.load(s)
+        except JSONERRORS:
+            options = None
+        if not isinstance(options, dict):
+            r.error(400, "Invalid request options")
+
+        # Verify the XSRF token
+        formkey = FormKey("select/%s" % resource.tablename)
+        if not formkey.verify(options, invalidate=False):
+            r.unauthorised()
+
+        # Customise cr_shelter_registration
+        r.customise_resource("cr_shelter_registration")
+
+        # Read mode and selected from options
+        mode, selected = options.get("mode"), options.get("selected")
+        if not mode or not selected:
+            r.error(400, "Invalid request options")
+
+        # Lookup the relevant person IDs
+        if isinstance(selected, str):
+            selected = {item for item in selected.split(",") if item.strip()}
+        query = FS("id").belongs(selected)
+        if mode == "Exclusive":
+            query = ~query
+        resource.add_filter(query)
+        rows = resource.select(["id"], as_rows=True)
+        person_ids = {row.id for row in rows}
+
+        # Count relevant shelter registrations
+        table = s3db.cr_shelter_registration
+        query = (table.person_id.belongs(person_ids)) & \
+                (table.registration_status != 3) & \
+                (table.deleted == False)
+        cnt = table.id.count()
+        row = db(query).select(cnt).first()
+        total = row[cnt]
+
+        if total > 0:
+
+            # Get the permitted shelter registrations
+            query = auth.s3_accessible_query("update", table) & query
+            rows = db(query).select(table.id,
+                                    table.person_id,
+                                    table.registration_status,
+                                    )
+
+            # Perform the checkout
+            now = current.request.utcnow
+            onaccept = lambda record: s3db.onaccept(table, record, method="update")
+            for registration in rows:
+                registration.update_record(registration_status = 3,
+                                           check_out_date = now,
+                                           )
+                onaccept(registration)
+
+            # Confirmation message
+            updated = len(rows)
+            message = T("%(number)s residents checked-out") % {"number": updated}
+            if updated != total:
+                message = "%s - %s" % (message,
+                                       T("%(number)s failed") % {"number": total-updated},
+                                       )
+        else:
+            message = T("All selected residents already checked-out")
+
+        return current.xml.json_message(message=message)
 
 # END =========================================================================

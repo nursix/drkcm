@@ -263,7 +263,6 @@ class Select(CRUDMethod):
         #try:
         #    options = json.load(s)
         #except JSONERRORS:
-        #    raise
         #    options = None
         #if not isinstance(options, dict):
         #    r.error(400, "Invalid request options")
