@@ -1,0 +1,9 @@
+First Name,Last Name,Email,Password,Role,Organisation,Language
+Admin,ADD,add_admin@example.com,eden,"ORG_GROUP_ADMIN/0,NEWSLETTER_AUTHOR/0,STAFF",Aufsichts- und Dienstleistungsdirektion,de
+Admin,AfA TR,tr_admin@example.com,eden,"ORG_ADMIN,CASE_ADMIN,SHELTER_ADMIN,STAFF",AfA Trier,de
+Case Admin,AfA TR,tr_case_admin@example.com,eden,"CASE_ADMIN,SHELTER_MANAGER,STAFF",AfA Trier,de
+Case Manager,AfA TR,tr_case_manager@example.com,eden,"CASE_MANAGER,CHECKPOINT,STAFF",AfA Trier,de
+Caterer,AfA TR,tr_caterer@example.com,eden,"CATERING,STAFF",AfA Trier,de
+Security,AfA TR,tr_security@example.com,eden,"SECURITY,STAFF",AfA Trier,de
+Admin,AfA SP,sp_admin@example.com,eden,"ORG_ADMIN,CASE_ADMIN,STAFF",AfA Speyer,de
+Case Manager,AfA SP,sp_case_manager@example.com,eden,"CASE_ADMIN,STAFF",AfA Speyer,de
