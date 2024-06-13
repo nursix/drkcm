@@ -1287,7 +1287,7 @@ class IDCardLayoutL(PDFCardLayout):
         """
         # TODO move into config.py, allow override
 
-        path = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
+        path = os.path.join("static", "themes", "RLP", "img", "logo_rlp.png")
         return os.path.join(current.request.folder, path)
 
 # =============================================================================
