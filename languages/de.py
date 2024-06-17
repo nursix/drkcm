@@ -5398,6 +5398,7 @@
 'Select %(location)s': 'Auswahl %(location)s',
 'Select Action': 'Aktion auswählen',
 'Select All': 'Alle auswählen',
+'Select Columns': 'Spalten auswählen',
 'Select Country': 'Wählen Sie ein Land aus',
 'Select Items from the Request': 'Wählen sie Artikel aus der Anfrage',
 'Select Items from this Inventory': 'Wählen sie Artikel aus diesem Bestand',

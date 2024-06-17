@@ -287,12 +287,14 @@
          */
         _init: function() {
 
-            var el = $(this.element),
-                tableID = el.attr('id');
+            const el = $(this.element),
+                  tableID = el.attr('id');
 
             this.tableID = tableID;
             this.selector = '#' + tableID;
             this.outerForm = el.closest('form.dt-wrapper');
+
+            $('.column-selector', this.outerForm).hide();
 
             this.refresh();
         },
@@ -801,7 +803,10 @@
          */
         _rowCallback: function() {
 
-            var self = this;
+            var self = this,
+                tableConfig = this.tableConfig,
+                actionCol = tableConfig.actionCol,
+                rowActions = tableConfig.rowActions;
 
             /**
              * Callback function per row
@@ -810,9 +815,6 @@
              * @param {Array} aData - the contents of the columns in this row
              */
             return function(nRow, aData /* , iDisplayIndex */) {
-
-                var tableConfig = self.tableConfig,
-                    actionCol = tableConfig.actionCol;
 
                 // Determine the record ID of the row
                 var result = />(.*)</i.exec(aData[actionCol]),
@@ -824,11 +826,10 @@
                 }
 
                 // Render action buttons
-                var rowActions = tableConfig.rowActions;
                 if (rowActions.length || tableConfig.bulkActions) {
 
                     // Render the action buttons
-                    var buttons = [];
+                    const buttons = [];
                     for (var i=0; i < rowActions.length; i++) {
                         buttons.push(self._renderActionButton(recordId, rowActions[i]));
                     }
@@ -845,9 +846,9 @@
                 }
 
                 // Add per-row CSS classes
-                var styles = tableConfig.rowStyles;
+                const styles = tableConfig.rowStyles;
                 if (styles) {
-                    var row = $(nRow);
+                    const row = $(nRow);
                     for (var style in styles) {
                         if (inList(recordId, styles[style]) != -1) {
                             row.addClass(style);
@@ -881,6 +882,7 @@
                     outerForm = self.outerForm;
 
                 // Update permalink
+                // DEPRECATED
                 var ajaxSource = self.ajaxUrl;
                 if (ajaxSource) {
                     outerForm.find('a.permalink').each(function() {
@@ -890,6 +892,7 @@
                 }
 
                 self._renderBulkActions();
+                self._variableColumnsButton();
 
                 var numrows = oSettings.fnRecordsDisplay();
 
@@ -998,22 +1001,17 @@
             var button = '';
 
             // Check if action is restricted to a subset of records
-            var restrict = action.restrict;
+            const restrict = action.restrict;
             if (restrict && restrict.constructor === Array && restrict.indexOf(recordId) == -1) {
                 return button;
             }
-            var exclude = action.exclude;
+            const exclude = action.exclude;
             if (exclude && exclude.constructor === Array && exclude.indexOf(recordId) != -1) {
                 return button;
             }
 
-            var c = action._class;
-
-            // Construct button label and on-hover title
-            var label = action.label,
-                title = action._title || label;
-
-            // Display the button as icon or image?
+            // Construct button label
+            var label = action.label;
             if (action.icon) {
                 label = '<i class="' + action.icon + '" alt="' + label + '"> </i>';
             } else if (action.img) {
@@ -1021,22 +1019,20 @@
             }
 
             // Disabled button?
-            var disabled;
-            if (action._disabled) {
-                disabled = ' disabled="disabled"';
-            } else {
-                disabled = '';
-            }
+            const disabled = action._disabled ? ' disabled="disabled"' : '';
 
-            var re = /%5Bid%5D/g;
+            const title = action._title || action.label,
+                  c = action._class,
+                  re = /%5Bid%5D/g;
+
             if (action._onclick) {
                 // Onclick-script
-                var oc = action._onclick.replace(re, recordId);
+                const oc = action._onclick.replace(re, recordId);
                 button = '<a class="' + c + '" onclick="' + oc + disabled + '">' + label + '</a>';
 
             } else if (action.url) {
                 // Hyperlink
-                var url = action.url.replace(re, recordId),
+                let url = action.url.replace(re, recordId),
                     target = action._target || '';
                 if (target) {
                     target = ' target="' + target + '"';
@@ -1045,7 +1041,7 @@
 
             } else {
                 // External click-event handler
-                var ajaxURL = action._ajaxurl || '';
+                let ajaxURL = action._ajaxurl || '';
                 if (ajaxURL) {
                     ajaxURL = ' data-url="' + ajaxURL + '"';
                 }
@@ -1470,11 +1466,7 @@
                         let input = document.createElement('input');
                         input.type = 'hidden';
                         input.name = name;
-                        if (stringify) {
-                            input.value = JSON.stringify(value);
-                        } else {
-                            input.value = value;
-                        }
+                        input.value = stringify ? JSON.stringify(data[key]) : value;
                         form.append($(input));
                     }
                 };
@@ -1810,6 +1802,136 @@
                 // Trigger row-callback for all rows
                 el.dataTable().api().draw(false);
             };
+        },
+
+        // --------------------------------------------------------------------
+        // VARIABLE COLUMNS METHODS
+
+        /**
+         * Renders a button to open the column selection dialog
+         */
+        _variableColumnsButton: function() {
+
+            const outerForm = this.outerForm,
+                  container = $('.dataTables_wrapper', outerForm),
+                  selector = $('.column-selector', outerForm);
+
+            if (selector.length && !$('.dt-variable-columns', container).length) {
+                // TODO make button icon a setting
+                let btn = $('<button type="button" class="dt-variable-columns"><i class="fa fa-columns"></button>');
+                btn.prop('title', i18n.selectColumns)
+                   .prependTo(container);
+            }
+        },
+
+        /**
+         * Opens the column selection dialog
+         */
+        _variableColumnsDialog: function() {
+
+            const outerForm = this.outerForm,
+                  selector = $('.column-selector', outerForm),
+                  ns = this.eventNamespace;
+
+            if (!selector) {
+                return;
+            }
+
+            // Render the dialog
+            const container = $('<div>').hide().appendTo($('body')),
+                  // TODO use document.creatElement instead
+                  form = $('<form>').prop('method', 'post')
+                                    .prop('enctype', 'multipart/form-data')
+                                    .appendTo(container),
+                  self = this;
+
+            $('.column-selector', this.outerForm).first()
+                                                 .clone()
+                                                 .removeClass('hide')
+                                                 .show()
+                                                 .appendTo(form);
+
+            const dialog = container.append(form).show().dialog({
+                title: i18n.selectColumns,
+                autoOpen: false,
+                minHeight: 480,
+                maxHeight: 640,
+                minWidth: 320,
+                modal: true,
+                closeText: '',
+                open: function( /* event, ui */ ) {
+                    // TODO implement selectAll
+                    // Clicking outside of the popup closes it
+                    $('.ui-widget-overlay').off(ns).on('click' + ns, function() {
+                        dialog.dialog('close');
+                    });
+                    // Any cancel-form-btn button closes the popup
+                    $('.cancel-form-btn', container).off(ns).on('click' + ns, function() {
+                        dialog.dialog('close');
+                    });
+                    // Submit button updates the form and submits it
+                    $('.submit-form-btn', container).off(ns).on('click' + ns, function() {
+                        if ($('.column-select:checked', container).length) {
+                            self._variableColumnsSubmit(form.get(0));
+                            dialog.dialog('close');
+                        }
+                    });
+                },
+                close: function() {
+                    // Hide + remove the container
+                    container.hide().remove();
+                }
+            });
+
+            dialog.dialog('open');
+        },
+
+        /**
+         * Submits the column selection to reload the page
+         */
+        _variableColumnsSubmit: function(form) {
+
+            // Get a filtered URL
+            var url = this.tableConfig.baseURL || window.location.href;
+            const filters = S3.search.getCurrentFilters();
+            if (filters.length) {
+                url = S3.search.filterURL(url, filters);
+            }
+
+            // Rewrite the filters as POST vars
+            const options = {type: 'GET', url: url};
+            S3.search.searchRewriteAjaxOptions(options, 'form');
+
+            // Add the filter data as hidden inputs to the form
+            const data = options.data;
+            if (data) {
+                let key, input;
+                for (key in data) {
+                    let value = data[key];
+                    input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = JSON.stringify(data[key]);
+                    form.appendChild(input);
+                }
+            }
+
+            const selected = [];
+            $('.column-select:checked', form).each(function() {
+                selected.push($(this).data('index'));
+            });
+
+            // Update form action URL with new aCols
+            const link = document.createElement('a');
+            link.href = options.url;
+
+            const params = new URLSearchParams(link.search);
+            params.delete('aCols');
+            params.append('aCols', selected.join(','));
+            link.search = params.toString();
+            form.action = link.href;
+
+            form.submit();
         },
 
         // --------------------------------------------------------------------
@@ -2293,6 +2415,10 @@
                 self._toggleGroup(trow, visibility);
             });
 
+            // Column selection
+            $('.dt-variable-columns', outerForm).off(ns).on('click' + ns, function() {
+                self._variableColumnsDialog();
+            });
 
             // Bulk selection
             if (this.tableConfig.bulkActions) {
@@ -2329,6 +2455,7 @@
             el.off(ns);
 
             $('.dt-export', outerForm).off(ns);
+            $('.dt-variable-columns', outerForm).off(ns);
 
             $('.bulk-action-select', outerForm).off(ns);
             $('.bulk-action-execute', outerForm).off(ns);

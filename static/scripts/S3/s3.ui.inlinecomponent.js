@@ -1640,9 +1640,9 @@
          */
         _bindEvents: function() {
 
-            var el = $(this.element),
-                ns = this.eventNamespace,
-                self = this;
+            const el = $(this.element),
+                  ns = this.eventNamespace,
+                  self = this;
 
             // Button events
             el.on('click' + ns, '.read-row', function(e) {
@@ -1696,35 +1696,35 @@
             });
 
             // Form events
-            var inputs = 'input',
-                textInputs = 'input[type="text"],input[type="file"],textarea',
-                fileInputs = 'input[type="file"]',
-                dateInputs = 'input.s3-calendar-widget',
-                otherInputs = 'input[type!="text"][type!="file"],select',
-                multiSelects = 'select.multiselect-widget',
-                hierarchyInputs = 'input.s3-hierarchy-input';
+            const inputs = 'input',
+                  textInputs = 'input[type="text"],input[type="file"],textarea',
+                  fileInputs = 'input[type="file"]',
+                  dateInputs = 'input.s3-calendar-widget',
+                  otherInputs = 'input[type!="text"][type!="file"],select',
+                  multiSelects = 'select.multiselect-widget',
+                  hierarchyInputs = 'input.s3-hierarchy-input';
 
-            el.find('.add-row,.edit-row').each(function() {
+            $('.add-row,.edit-row', el).each(function() {
                 var $this = $(this);
                 // Event to be triggered to force recollection of data (used by LocationSelector when modifying Point/Polygon on map)
-                $this.find('div.map_wrapper').on('change' + ns, function() {
+                $('div.map_wrapper', $this).on('change' + ns, function() {
                     self._markChanged(this);
                     self._catchSubmit();
                 });
 
-                $this.find(textInputs).on('input' + ns, function() {
+                $(textInputs, $this).on('input' + ns, function() {
                     self._markChanged(this);
                     self._catchSubmit();
                 });
-                $this.find(fileInputs).on('change' + ns, function() {
+                $(fileInputs, $this).on('change' + ns, function() {
                     self._markChanged(this);
                     self._catchSubmit();
                 });
-                $this.find(dateInputs).on('change' + ns, function() {
+                $(dateInputs, $this).on('change' + ns, function() {
                     self._markChanged(this);
                     self._catchSubmit();
                 });
-                $this.find(otherInputs).on('focusin' + ns, function() {
+                $(otherInputs, $this).on('focusin' + ns, function() {
                     $(this).one('change' + ns, function() {
                         self._markChanged(this);
                         self._catchSubmit();
@@ -1732,18 +1732,18 @@
                         $(this).off('change' + ns);
                     });
                 });
-                $this.find(multiSelects).on('multiselectopen' + ns, function() {
+                $(multiSelects, $this).on('multiselectopen' + ns, function() {
                     $(this).off('change' + ns)
                            .one('change' + ns, function() {
                         self._markChanged(this);
                         self._catchSubmit();
                     });
                 });
-                $this.find(hierarchyInputs).on('change' + ns, function() {
+                $(hierarchyInputs, $this).on('change' + ns, function() {
                     self._markChanged(this);
                     self._catchSubmit();
                 });
-                $this.find(inputs).on('keypress' + ns, function(e) {
+                $(inputs, $this).on('keypress' + ns, function(e) {
                     if (e.which == 13) {
                         e.preventDefault();
                         return false;
@@ -1752,8 +1752,8 @@
                 });
             });
 
-            el.find('.add-row').each(function() {
-                $(this).find(inputs).on('keyup' + ns, function(e) {
+            $('.add-row', el).each(function() {
+                $(inputs, $(this)).on('keyup' + ns, function(e) {
                     switch (e.which) {
                         case 13: // Enter
                             self._addRow();
@@ -1764,8 +1764,8 @@
                 });
             });
 
-            el.find('.edit-row').each(function() {
-                $(this).find(inputs).on('keyup' + ns, function(e) {
+            $('.edit-row', el).each(function() {
+                $(inputs, $(this)).on('keyup' + ns, function(e) {
                     var rowIndex = $(this).closest('.edit-row').data('rowindex');
                     switch (e.which) {
                         case 13: // Enter
@@ -1781,7 +1781,7 @@
             });
 
             // Explicit open-action to reveal the add-row
-            el.find('.inline-open-add').on('click' + ns, function(e) {
+            $('.inline-open-add', el).on('click' + ns, function(e) {
                 e.preventDefault();
                 $('#add-row-' + self.formname).removeClass('hide').show();
                 $(this).hide();
@@ -1799,15 +1799,15 @@
                 ns = this.eventNamespace;
 
             // Remove inline-locationselector-widget event handlers
-            el.find('.inline-locationselector-widget').off(ns);
+            $('.inline-locationselector-widget', el).off(ns);
 
             // Remove all form event handlers
-            el.find('.add-row,.edit-row').each(function() {
+            $('.add-row,.edit-row', el).each(function() {
                 $(this).find('input,textarea,select').off(ns);
             });
 
             // Remove open-action event handler
-            el.find('.inline-open-add').off(ns);
+            $('.inline-open-add', el).off(ns);
 
             // Remove all delegations
             el.off(ns);

@@ -413,11 +413,6 @@ class DataTable:
             if bulk_col <= action_col:
                 action_col += 1
 
-        # Variable Columns
-        available_cols = attr_get("dt_available_cols")
-        if available_cols:
-            config["availableCols"] = available_cols
-
         # Row actions
         row_actions = attr_get("dt_row_actions", s3.actions)
         if row_actions is None:
@@ -573,6 +568,11 @@ class DataTable:
             add_hidden("selected", "dataTable_bulkSelection", "[%s]" % bulk_selected)
             add_hidden("filterURL", "dataTable_filterURL", config["ajaxUrl"])
 
+        # Variable columns selector
+        available_cols = attr.get("dt_available_cols")
+        if available_cols:
+            form.append(cls.column_selector(available_cols))
+
         # InitComplete callback (processed in views/dataTables.html)
         callback = settings.get_ui_datatables_initComplete()
         if callback:
@@ -668,6 +668,43 @@ class DataTable:
                 action_col += 1
 
         return colnames, action_col
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def column_selector(available_cols):
+        # TODO docstring
+        # TODO render as table, with select-all checkbox in header
+
+        from gluon import LABEL, BUTTON
+
+        T = current.T
+
+        subform = DIV(_class="column-selector columns hide")
+
+        for index, label, selector, status in available_cols:
+            row = LABEL(INPUT(_type="checkbox",
+                              _value=index,
+                              _class = "column-select",
+                              data = {"selector": selector, "index": index},
+                              value = status,
+                              ),
+                        label,
+                        _class = "available-column",
+                        )
+            subform.append(row)
+
+        subform.append(DIV(BUTTON(T("Submit"),
+                                  _class = "submit-form-btn small primary button",
+                                  _type = "button",
+                                  _style = "margin-bottom:0.3rem;"
+                                  ),
+                           A(T("Cancel"),
+                             _class = "cancel-form-btn action-lnk",
+                             _href = "javascript:void(0)",
+                             ),
+                           ))
+
+        return subform
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -856,6 +893,7 @@ class DataTable:
                    "selectAction": T("Select Action"),
                    "selectedRecords": T("Selected Records"),
                    "executeBulkAction": T("OK"),
+                   "selectColumns": T("Select Columns"),
                    }
 
         return "\n".join('''i18n.%s="%s"'''% (k, v) for k, v in strings.items())
