@@ -1574,6 +1574,9 @@ class BasicCRUD(CRUDMethod):
             if get_config("bulk_actions"):
                 dtargs["dt_select_url"] = r.url(method="select", vars={})
 
+            if variable_columns:
+                dtargs["dt_available_cols"] = self.available_cols(resource, list_fields)
+
             datatable = dt.html(totalrows, displayrows, **dtargs)
 
             # View + data
@@ -1583,8 +1586,7 @@ class BasicCRUD(CRUDMethod):
         elif representation == "aadata":
 
             # Apply datatable filters
-            searchq, orderby, left = resource.datatable_filter(list_fields,
-                                                               get_vars)
+            searchq, orderby, left = resource.datatable_filter(list_fields, get_vars)
             if searchq is not None:
                 totalrows = resource.count()
                 resource.add_filter(searchq)
@@ -1626,6 +1628,61 @@ class BasicCRUD(CRUDMethod):
             r.error(415, current.ERROR.BAD_FORMAT)
 
         return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def available_cols(resource, list_fields):
+        """
+            Build a JSON-serializable list of available columns, for column
+            selection in variable column data tables
+
+            Args:
+                resource: the CRUDResource
+                list_fields: the currently active list fields
+
+            Returns:
+                an array of [[index, label, selector, active]]
+                - index: the index of the field in the available_list_fields
+                - label: the field label
+                - selector: the field selector
+                - active: True|False whether the field is currently active
+        """
+
+        available_list_fields = resource.get_config("available_list_fields")
+        if available_list_fields:
+
+            available_cols = []
+
+            # Get the selectors of all available list fields
+            available = [f[1] if isinstance(f, (tuple, list)) else f for f in available_list_fields]
+
+            # Get the selectors of all active list fields
+            active = [f[1] if isinstance(f, (tuple, list)) else f for f in list_fields]
+
+            # Determine the indices of all active list fields
+            active_idx = [available.index(s) for s in active if s in available]
+
+            # Build list of available columns, preserving active order
+            rfields = resource.resolve_selectors(available_list_fields, extra_fields=False)[0]
+            last = len(available) - 1
+            for index, rfield in enumerate(rfields):
+
+                # Skip if active (except last)
+                if index < last and index in active_idx:
+                    continue
+
+                # Append all active list fields up to the current index
+                while active_idx and active_idx[0] < index:
+                    nxt = active_idx.pop(0)
+                    rf, s = rfields[nxt], available[nxt]
+                    available_cols.append([nxt, str(rf.label), s, True])
+
+                # Append this field
+                available_cols.append([index, str(rfield.label), available[index], index in active_idx])
+        else:
+            available_cols = None
+
+        return available_cols
 
     # -------------------------------------------------------------------------
     def _datalist(self, r, **attr):

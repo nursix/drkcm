@@ -302,6 +302,9 @@ class DataTable:
                 ** Searching
                 dt_searching: Enable or disable filtering of data.
 
+                ** Variable Columns
+                dt_available_cols: [[index, label, selector, active], ...]
+
                 ** Row Actions
                 dt_row_actions: list of actions (each a dict), overrides
                                 current.response.s3.actions
@@ -409,6 +412,11 @@ class DataTable:
                           )
             if bulk_col <= action_col:
                 action_col += 1
+
+        # Variable Columns
+        available_cols = attr_get("dt_available_cols")
+        if available_cols:
+            config["availableCols"] = available_cols
 
         # Row actions
         row_actions = attr_get("dt_row_actions", s3.actions)
