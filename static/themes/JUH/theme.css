@@ -2883,70 +2883,75 @@ form.auth_login #submit_record__row {
 }
 
 /* line 45, ../../default/scss/theme/_filters.scss */
+.filter-form.has-active-filters {
+  border: 1px solid #e0a0a0 !important;
+}
+
+/* line 49, ../../default/scss/theme/_filters.scss */
 .filter-form td {
   border-top: 1px solid #d9d9d9;
 }
 
-/* line 48, ../../default/scss/theme/_filters.scss */
+/* line 52, ../../default/scss/theme/_filters.scss */
 .filter-form tr:first-child > td {
   border-top: 0;
 }
 
-/* line 51, ../../default/scss/theme/_filters.scss */
+/* line 55, ../../default/scss/theme/_filters.scss */
 .filter-form table.s3-groupedopts-widget td {
   border-top: 0;
 }
 
 /* Vertical arrangement of multi-button multi-select filter widgets such as LocationFilter */
-/* line 56, ../../default/scss/theme/_filters.scss */
+/* line 60, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
   display: block;
   min-width: 225px;
 }
 
-/* line 62, ../../default/scss/theme/_filters.scss */
+/* line 66, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type {
   clear: none;
 }
 
-/* line 67, ../../default/scss/theme/_filters.scss */
+/* line 71, ../../default/scss/theme/_filters.scss */
 .ui-selectmenu-button,
 .ui-multiselect-menu {
   min-width: 225px;
 }
 
 /* Don't display the default widget, only the multiselect generated widget is displayed */
-/* line 73, ../../default/scss/theme/_filters.scss */
+/* line 77, ../../default/scss/theme/_filters.scss */
 select.multiselect-filter-widget {
   display: none;
 }
 
-/* line 77, ../../default/scss/theme/_filters.scss */
+/* line 81, ../../default/scss/theme/_filters.scss */
 .filter-advanced {
   text-decoration: none;
   cursor: pointer;
 }
 
-/* line 81, ../../default/scss/theme/_filters.scss */
+/* line 85, ../../default/scss/theme/_filters.scss */
 .filter-advanced-label {
   padding-right: 4px;
 }
 
-/* line 85, ../../default/scss/theme/_filters.scss */
+/* line 89, ../../default/scss/theme/_filters.scss */
 .s3-options-filter-anyall label {
   display: inline;
   margin-right: 0.7rem;
   font-size: 0.7rem;
 }
 
-/* line 94, ../../default/scss/theme/_filters.scss */
+/* line 98, ../../default/scss/theme/_filters.scss */
 .filter-manager-widget {
   display: inline-block;
 }
 
-/* line 97, ../../default/scss/theme/_filters.scss */
+/* line 101, ../../default/scss/theme/_filters.scss */
 .fm-load,
 .fm-save,
 .fm-delete,
@@ -2961,32 +2966,32 @@ select.multiselect-filter-widget {
   vertical-align: middle;
 }
 
-/* line 111, ../../default/scss/theme/_filters.scss */
+/* line 115, ../../default/scss/theme/_filters.scss */
 .fm-load {
   background: url(../../img/filter/load.png) no-repeat;
 }
 
-/* line 114, ../../default/scss/theme/_filters.scss */
+/* line 118, ../../default/scss/theme/_filters.scss */
 .fm-save {
   background: url(../../img/filter/save.png) no-repeat;
 }
 
-/* line 117, ../../default/scss/theme/_filters.scss */
+/* line 121, ../../default/scss/theme/_filters.scss */
 .fm-delete {
   background: url(../../img/filter/delete.png) no-repeat;
 }
 
-/* line 120, ../../default/scss/theme/_filters.scss */
+/* line 124, ../../default/scss/theme/_filters.scss */
 .fm-create {
   background: url(../../img/filter/create.png) no-repeat;
 }
 
-/* line 123, ../../default/scss/theme/_filters.scss */
+/* line 127, ../../default/scss/theme/_filters.scss */
 .fm-accept {
   background: url(../../img/crud/apply.png) no-repeat;
 }
 
-/* line 126, ../../default/scss/theme/_filters.scss */
+/* line 130, ../../default/scss/theme/_filters.scss */
 .fm-cancel {
   background: url(../../img/crud/cancel.png) no-repeat;
 }
