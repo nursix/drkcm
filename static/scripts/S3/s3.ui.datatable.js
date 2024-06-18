@@ -1928,11 +1928,6 @@
             params.delete('aCols');
             params.append('aCols', selected.join(','));
 
-            // Add $search=session if not set otherwise
-            if (!params.get('$search')) {
-                params.append('$search', 'session');
-            }
-
             // Reload the page
             link.search = params.toString();
             window.location.href = link.href;
