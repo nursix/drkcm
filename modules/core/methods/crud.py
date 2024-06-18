@@ -1191,8 +1191,7 @@ class BasicCRUD(CRUDMethod):
             filter_widgets = get_config("filter_widgets", None)
 
             show_filter_form = False
-            if filter_widgets and not hide_filter and \
-               representation not in ("aadata", "dl"):
+            if filter_widgets and not hide_filter and representation not in ("aadata", "dl"):
                 show_filter_form = True
                 # Apply filter defaults (before rendering the data!)
                 from ..filters import FilterForm
@@ -1215,14 +1214,11 @@ class BasicCRUD(CRUDMethod):
                     # Hide datatable filter box if we have a filter form
                     if "dt_searching" not in dtargs:
                         dtargs["dt_searching"] = False
-                    # Override default ajax URL if we have default filters
+                    # Set Ajax URL (also used to initialize exports)
+                    ajax_vars = dict(get_vars)
                     if default_filters:
-                        ajax_vars = dict(get_vars)
                         ajax_vars.update(default_filters)
-                        ajax_url = r.url(representation = "aadata",
-                                         vars = ajax_vars,
-                                         )
-                        dtargs["dt_ajax_url"] = ajax_url
+                    dtargs["dt_ajax_url"] = r.url(representation="aadata", vars=ajax_vars)
                     attr["dtargs"] = dtargs
                 filter_ajax = True
                 target = "datatable"

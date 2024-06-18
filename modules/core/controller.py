@@ -148,6 +148,7 @@ class CRUDRequest:
         self.name = name or self.function
 
         # Parse the request
+        self._search_id = None
         self.__parse()
         self.custom_action = None
 
@@ -325,23 +326,33 @@ class CRUDRequest:
         else:
             self.representation = self.DEFAULT_REPRESENTATION
 
-        # Check for special URL variable $search, indicating
-        # that the request body contains filter queries:
-        if self.http == "POST" and "$search" in self.get_vars:
+        # Check for special URL variable $search, indicating that the request
+        # shall be filtered:
+        search = self.get_vars.get("$search")
+        if search and self.http == "POST" or search == "session":
             self.__search()
 
     # -------------------------------------------------------------------------
     def __search(self):
         """
-            Process filters in POST, interprets URL filter expressions
-            in POST vars (if multipart), or from JSON request body (if
-            not multipart or $search=ajax).
+            Applies filter expressions
+            - from session with $search=session
+            - from POST vars (if urlencoded), or
+            - from JSON request body (if $search=ajax or not multipart)
+            - from POST vars (if multipart)
 
             Note:
                 Overrides CRUDRequest method as GET (r.http) to trigger
                 the correct method handlers, but will not change
                 current.request.env.request_method.
         """
+
+        # Get session filters and search ID
+        session = current.session
+        session_filters = session.s3.filters
+        if not session_filters:
+            session_filters = session.s3.filters = {}
+        search_id = self.search_id
 
         get_vars = self.get_vars
         content_type = self.env.get("content_type") or ""
@@ -353,11 +364,17 @@ class CRUDRequest:
         if mode and action != "submit":
             self.http = "GET"
 
-        # Retrieve filters from request body
-        if content_type == "application/x-www-form-urlencoded":
+        # Retrieve filters
+        if mode == "session":
+            # Restore previous filters from session
+            filters = session_filters.get(search_id, {})
+            decode = None
+
+        elif content_type == "application/x-www-form-urlencoded":
             # Read POST vars (e.g. from S3.gis.refreshLayer)
             filters = self.post_vars
             decode = None
+
         elif mode == "ajax" or content_type[:10] != "multipart/":
             # Read body JSON (e.g. from $.searchS3)
             body = self.body
@@ -373,16 +390,19 @@ class CRUDRequest:
             if not isinstance(filters, dict):
                 filters = {}
             decode = None
+
         else:
             # Read POST vars JSON (e.g. from $.searchDownloadS3)
             filters = self.post_vars
             decode = json.loads
 
-        # Move filters into GET vars
+        # Forget search mode
+        del get_vars["$search"]
+
+        # Retrieve filter expressions
         get_vars = Storage(get_vars)
         post_vars = Storage(self.post_vars)
-
-        del get_vars["$search"]
+        filter_vars = {}
         for k, v in filters.items():
             k0 = k[0]
             if k == "$filter" or k[0:2] == "$$" or k == "bbox" or \
@@ -399,10 +419,22 @@ class CRUDRequest:
                              ]
                 elif type(value) is not str:
                     value = s3_str(value)
-                get_vars[s3_str(k)] = value
+
+                filter_vars[s3_str(k)] = value
                 # Remove filter expression from POST vars
                 if k in post_vars:
                     del post_vars[k]
+
+        # Move filter expressions into GET vars
+        get_vars.update(filter_vars)
+
+        # Suppress filter defaults as this is a filtered request
+        if "default_filters" not in get_vars:
+            get_vars["default_filters"] = "0"
+
+        # Store filters in session
+        if search_id:
+            session_filters[search_id] = filter_vars
 
         # Override self.get_vars and self.post_vars
         self.get_vars = get_vars
@@ -411,6 +443,30 @@ class CRUDRequest:
         # Update combined vars
         self.vars = get_vars.copy()
         self.vars.update(self.post_vars)
+
+    # -------------------------------------------------------------------------
+    @property
+    def search_id(self):
+        """
+            The search ID for this request (lazy property);
+            the search ID can be used to restore previous filters applied
+            to this page, using $search=session
+
+            Returns:
+                the search ID (str)
+        """
+
+        search_id = self._search_id
+        if not search_id:
+            array = [self.controller, self.function]
+            if self.args:
+                array.extend(self.args)
+
+            string = "#".join(array)
+            import hashlib
+            self._search_id = search_id = hashlib.md5(string.encode("utf-8")).hexdigest()
+
+        return search_id
 
     # -------------------------------------------------------------------------
     # Method handlers

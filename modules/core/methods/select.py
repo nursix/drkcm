@@ -125,12 +125,11 @@ class Select(CRUDMethod):
                 # Hide datatable filter box if we have a filter form
                 if "dt_searching" not in dtargs:
                     dtargs["dt_searching"] = False
-                # Override default ajax URL if we have default filters
+                # Set Ajax URL
+                ajax_vars = dict(get_vars)
                 if default_filters:
-                    ajax_vars = dict(get_vars)
                     ajax_vars.update(default_filters)
-                    ajax_url = r.url(representation = "aadata", vars = ajax_vars)
-                    dtargs["dt_ajax_url"] = ajax_url
+                dtargs["dt_ajax_url"] = r.url(representation="aadata", vars=ajax_vars)
 
             attr["dtargs"] = dtargs
 

@@ -713,9 +713,11 @@
                     // Use $.searchS3 if filter framework is available,
                     // otherwise (e.g. custom page without s3.filter.js)
                     // fall back to $.ajaxS3
-                    var ajaxMethod = $.ajaxS3;
+                    var ajaxMethod = $.ajaxS3,
+                        updatePageURL = false;
                     if ($.searchS3 !== undefined) {
                         ajaxMethod = $.searchS3;
+                        updatePageURL = true;
                     }
 
                     settings.jqXHR = ajaxMethod({
@@ -725,6 +727,21 @@
                         'dataType': 'json',
                         'cache':    false,
                         'success':  function(json) {
+
+                            // Add a $search=session to current page URL if $search
+                            // is not yet set; this way, the filters are reused when
+                            // reloading or going back to this page
+                            if (updatePageURL) {
+                                const link = document.createElement('a');
+                                link.href = window.location.href;
+
+                                const params = new URLSearchParams(link.search);
+                                if (!params.get('$search')) {
+                                    params.append('$search', 'session');
+                                    link.search = params.toString();
+                                    window.history.replaceState(null, null, link.href);
+                                }
+                            }
 
                             // Store the data in the cache
                             var cacheEnd = self.totalRecords;
@@ -1872,7 +1889,7 @@
                     // Submit button updates the form and submits it
                     $('.submit-form-btn', container).off(ns).on('click' + ns, function() {
                         if ($('.column-select:checked', container).length) {
-                            self._variableColumnsSubmit(form.get(0));
+                            self._variableColumnsApply(form.get(0));
                             dialog.dialog('close');
                         }
                     });
@@ -1887,51 +1904,33 @@
         },
 
         /**
-         * Submits the column selection to reload the page
+         * Reloads the page, applying the column selection
          */
-        _variableColumnsSubmit: function(form) {
+        _variableColumnsApply: function(form) {
 
-            // Get a filtered URL
-            var url = this.tableConfig.baseURL || window.location.href;
-            const filters = S3.search.getCurrentFilters();
-            if (filters.length) {
-                url = S3.search.filterURL(url, filters);
-            }
-
-            // Rewrite the filters as POST vars
-            const options = {type: 'GET', url: url};
-            S3.search.searchRewriteAjaxOptions(options, 'form');
-
-            // Add the filter data as hidden inputs to the form
-            const data = options.data;
-            if (data) {
-                let key, input;
-                for (key in data) {
-                    let value = data[key];
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = JSON.stringify(data[key]);
-                    form.appendChild(input);
-                }
-            }
-
+            // Get selected columns indices from form
             const selected = [];
             $('.column-select:checked', form).each(function() {
                 selected.push($(this).data('index'));
             });
 
-            // Update form action URL with new aCols
+            // Get a link to the current page
             const link = document.createElement('a');
-            link.href = options.url;
+            link.href = window.location.href;
 
+            // Add aCols parameter
             const params = new URLSearchParams(link.search);
             params.delete('aCols');
             params.append('aCols', selected.join(','));
-            link.search = params.toString();
-            form.action = link.href;
 
-            form.submit();
+            // Add $search=session if not set otherwise
+            if (!params.get('$search')) {
+                params.append('$search', 'session');
+            }
+
+            // Reload the page
+            link.search = params.toString();
+            window.location.href = link.href;
         },
 
         // --------------------------------------------------------------------
