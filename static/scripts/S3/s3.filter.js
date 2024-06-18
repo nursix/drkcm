@@ -501,6 +501,11 @@ S3.search = {};
         $('.date-filter-input', form).each(function() {
 
             $this = $(this);
+            // Skip if not yet initialized
+            if (!$this.calendarWidget('instance')) {
+                return;
+            }
+
             id = $this.attr('id');
             urlVar = $('#' + id + '-data').val();
             value = $this.val();
