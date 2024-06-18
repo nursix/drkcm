@@ -31,6 +31,8 @@ __all__ = ("DateFilter",
 
 import datetime
 
+from dateutil.relativedelta import relativedelta
+
 from gluon import current, DIV, INPUT, LABEL, OPTION, SELECT, TAG
 from gluon.storage import Storage
 
@@ -521,8 +523,28 @@ class AgeFilter(RangeFilter):
 
             input_id = "%s-%s" % (_id, operator)
 
+            variable = _variable(selector, operator)
+
+            # Populate with the value, if given
+            # if user has not set any of the limits, we get [] in values.
+            value = values.get(variable, None)
+            selected = None
+            if value not in [None, []]:
+                if type(value) is list:
+                    value = value[0]
+                # Value comes as date => compute age option in years
+                try:
+                    then = s3_decode_iso_datetime(value).date()
+                except ValueError:
+                    selected = None
+                else:
+                    selected = relativedelta(current.request.utcnow.date(), then).years
+                    if operator == "gt":
+                        selected = max(0, selected - 1)
+
             # Selectable options
-            input_opts = [OPTION("%s" % i, value=i)
+            input_opts = [OPTION("%s" % i, value=i) if selected != i else
+                          OPTION("%s" % i, value=i, _selected="selected")
                           for i in range(minimum, maximum + 1)
                           ]
             input_opts.insert(0, OPTION("", value=""))
@@ -531,18 +553,8 @@ class AgeFilter(RangeFilter):
             input_box = SELECT(input_opts,
                                _id = input_id,
                                _class = input_class,
+                               _value = selected,
                                )
-
-            variable = _variable(selector, operator)
-
-            # Populate with the value, if given
-            # if user has not set any of the limits, we get [] in values.
-            value = values.get(variable, None)
-            if value not in [None, []]:
-                if type(value) is list:
-                    value = value[0]
-                input_box["_value"] = value
-                input_box["value"] = value
 
             label = input_labels[operator]
             if label:
