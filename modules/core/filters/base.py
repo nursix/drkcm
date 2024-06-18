@@ -891,8 +891,8 @@ class FilterForm:
             # Do not apply defaults of hidden widgets because they are
             # not visible to the user
             widget_opts = filter_widget.opts
-            if widget_opts.get("hidden"):
-                continue
+            #if widget_opts.get("hidden"):
+                #continue
 
             # Skip widget if there are no defaults
             if table_defaults is None and "default" not in widget_opts:

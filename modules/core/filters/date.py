@@ -536,7 +536,8 @@ class AgeFilter(RangeFilter):
                 try:
                     then = s3_decode_iso_datetime(value).date()
                 except ValueError:
-                    selected = None
+                    # Filter default may be an age, use as-is
+                    selected = value
                 else:
                     selected = relativedelta(current.request.utcnow.date(), then).years
                     if operator == "gt":
