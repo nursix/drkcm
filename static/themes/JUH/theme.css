@@ -3429,7 +3429,32 @@ table.dataTable table.import-item-details {
   float: left;
 }
 
-/* line 396, ../../default/scss/theme/_tables.scss */
+/* line 397, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options {
+  list-style: none;
+  margin: 0.5rem auto;
+}
+/* line 401, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options.ui-sortable .ui-sortable-handle {
+  margin: 2px auto;
+  border: 1px solid #ccc;
+}
+/* line 405, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options.ui-sortable .sortable-placeholder {
+  background-color: #fff7d8;
+}
+/* line 409, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options .available-column {
+  margin: 0;
+  padding: 0.2rem 0;
+  line-height: normal;
+}
+/* line 413, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options .available-column .column-select {
+  margin: 0.3rem;
+}
+
+/* line 423, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

@@ -1878,6 +1878,10 @@
                 closeText: '',
                 open: function( /* event, ui */ ) {
                     // TODO implement selectAll
+                    $('.column-options', form).sortable({
+                        placeholder: "sortable-placeholder",
+                        forcePlaceholderSize: true
+                    });
                     // Clicking outside of the popup closes it
                     $('.ui-widget-overlay').off(ns).on('click' + ns, function() {
                         dialog.dialog('close');
@@ -1896,6 +1900,7 @@
                 },
                 close: function() {
                     // Hide + remove the container
+                    $('.column-options', form).sortable('destroy');
                     container.hide().remove();
                 }
             });

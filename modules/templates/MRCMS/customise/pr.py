@@ -1560,6 +1560,7 @@ def pr_person_controller(**attr):
 
         attr["rheader"] = dvr_rheader
         attr["variable_columns"] = True
+        #attr["dtargs"] = {"dt_double_scroll": True}
 
         # Allow selection of Organisation with case imports
         from ..helpers import managed_orgs_field

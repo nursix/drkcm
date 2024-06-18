@@ -31,7 +31,9 @@ __all__ = ("DataTable",
 import re
 
 from gluon import current, URL, \
-                  A, DIV, FORM, INPUT, SPAN, TABLE, TBODY, TD, TH, THEAD, TR
+                  A, BUTTON, DIV, FORM, INPUT, LABEL, LI, SPAN, \
+                  TABLE, TBODY, TD, TH, THEAD, TR, UL
+
 from gluon.serializers import json as jsons
 
 from s3dal import Expression, S3DAL
@@ -673,14 +675,13 @@ class DataTable:
     @staticmethod
     def column_selector(available_cols):
         # TODO docstring
-        # TODO render as table, with select-all checkbox in header
-
-        from gluon import LABEL, BUTTON
+        # TODO implement select-all
 
         T = current.T
 
         subform = DIV(_class="column-selector columns hide")
 
+        options = UL(_class="column-options")
         for index, label, selector, status in available_cols:
             row = LABEL(INPUT(_type="checkbox",
                               _value=index,
@@ -691,7 +692,8 @@ class DataTable:
                         label,
                         _class = "available-column",
                         )
-            subform.append(row)
+            options.append(LI(row))
+        subform.append(options)
 
         subform.append(DIV(BUTTON(T("Submit"),
                                   _class = "submit-form-btn small primary button",

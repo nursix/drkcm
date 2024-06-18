@@ -133,6 +133,7 @@ def config(settings):
     #
     settings.ui.calendar_clear_icon = True
     settings.ui.auth_user_represent = "name"
+    #settings.ui.datatables_responsive = False
 
     # -------------------------------------------------------------------------
     # AUTH Settings
