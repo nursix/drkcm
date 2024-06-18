@@ -532,14 +532,15 @@ class AgeFilter(RangeFilter):
             if value not in [None, []]:
                 if type(value) is list:
                     value = value[0]
-                # Value comes as date => compute age option in years
                 try:
                     then = s3_decode_iso_datetime(value).date()
                 except ValueError:
-                    # Filter default may be an age, use as-is
+                    # Value may be an age => use as-is
                     selected = value
                 else:
-                    selected = relativedelta(current.request.utcnow.date(), then).years
+                    # Value is an ISO date of birth => convert to age in years
+                    now = S3DateTime.to_local(current.request.utcnow).date()
+                    selected = relativedelta(now, then).years
                     if operator == "gt":
                         selected = max(0, selected - 1)
 
