@@ -367,7 +367,7 @@ class CRUDRequest:
         # Retrieve filters
         if mode == "session":
             # Restore previous filters from session
-            filters = session_filters.get(search_id, {})
+            filters = session_filters.get(search_id)
             decode = None
 
         elif content_type == "application/x-www-form-urlencoded":
@@ -386,9 +386,9 @@ class CRUDRequest:
             try:
                 filters = json.loads(s)
             except ValueError:
-                filters = {}
+                filters = None
             if not isinstance(filters, dict):
-                filters = {}
+                filters = None
             decode = None
 
         else:
@@ -398,6 +398,10 @@ class CRUDRequest:
 
         # Forget search mode
         del get_vars["$search"]
+
+        if filters is None:
+            # No filters found
+            return
 
         # Retrieve filter expressions
         get_vars = Storage(get_vars)
