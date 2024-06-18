@@ -257,7 +257,7 @@ S3.search = {};
 
         // If no form has been specified, find the first one
         if (undefined === form) {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         // Temporarily disable auto-submit
@@ -362,7 +362,7 @@ S3.search = {};
 
         // Fall back to first filter form in page
         if (typeof form == 'undefined') {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         var i,
@@ -749,7 +749,7 @@ S3.search = {};
     var setCurrentFilters = function(form, queries) {
 
         if (undefined === form) {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         // Temporarily disable auto-submit
@@ -2316,7 +2316,7 @@ S3.search = {};
         });
 
         // Determine whether the form has active filters
-        $('form.filter-form').each(function() {
+        $('.filter-form').each(function() {
             getCurrentFilters($(this));
         });
 
