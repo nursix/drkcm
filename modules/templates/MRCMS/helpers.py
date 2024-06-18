@@ -981,18 +981,6 @@ class AbsenceFilter(RangeFilter):
 
             input_id = "%s-%s" % (_id, operator)
 
-            # Selectable options
-            input_opts = [OPTION("%s" % i, value=i)
-                          for i in range(minimum, maximum + 1)
-                          ]
-            input_opts.insert(0, OPTION("", value=""))
-
-            # Input Element
-            input_box = SELECT(input_opts,
-                               _id = input_id,
-                               _class = input_class,
-                               )
-
             variable = _variable(selector, operator)
 
             # Populate with the value, if given
@@ -1001,8 +989,24 @@ class AbsenceFilter(RangeFilter):
             if value not in [None, []]:
                 if type(value) is list:
                     value = value[0]
-                input_box["_value"] = value
-                input_box["value"] = value
+                try:
+                    value = int(value)
+                except (ValueError, TypeError):
+                    value = None
+
+            # Selectable options
+            input_opts = [OPTION("%s" % i, value=i) if value != i else
+                          OPTION("%s" % i, value=i, _selected="selected")
+                          for i in range(minimum, maximum + 1)
+                          ]
+            input_opts.insert(0, OPTION("", value=""))
+
+            # Input Element
+            input_box = SELECT(input_opts,
+                               _id = input_id,
+                               _class = input_class,
+                               _value = value,
+                               )
 
             label = input_labels[operator]
             if label:
