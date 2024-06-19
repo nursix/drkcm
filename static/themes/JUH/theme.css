@@ -3291,6 +3291,7 @@ table.dataTable table.import-item-details {
 }
 /* line 275, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_processing {
+  z-index: 99;
   padding: 1rem 0 2rem;
   top: 2.5rem;
   left: 30%;
@@ -3298,107 +3299,112 @@ table.dataTable table.import-item-details {
   color: #737373;
   border-color: #737373;
 }
-/* line 282, ../../default/scss/theme/_tables.scss */
+/* line 283, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_processing {
   left: unset;
   right: 30%;
 }
-/* line 287, ../../default/scss/theme/_tables.scss */
+/* line 288, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info {
   float: right;
   clear: none;
   margin: 0.5rem 0;
   padding-top: 0.3rem;
 }
-/* line 289, ../../default/scss/theme/_tables.scss */
+/* line 290, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info {
   float: left;
 }
-/* line 292, ../../default/scss/theme/_tables.scss */
+/* line 293, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_info:last-of-type {
   float: left;
 }
-/* line 294, ../../default/scss/theme/_tables.scss */
+/* line 295, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_info:last-of-type {
   float: right;
 }
-/* line 302, ../../default/scss/theme/_tables.scss */
+/* line 303, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate {
   float: right;
   margin: 0.3rem 0 0.3rem 0.7rem;
   padding-top: 0.3rem;
 }
-/* line 306, ../../default/scss/theme/_tables.scss */
+/* line 307, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dataTables_wrapper .dataTables_paginate {
   float: left;
   margin: 0.3rem 0.7rem 0.3rem 0;
 }
-/* line 311, ../../default/scss/theme/_tables.scss */
+/* line 312, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate.paging_full_numbers {
   width: auto;
 }
-/* line 314, ../../default/scss/theme/_tables.scss */
+/* line 315, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button,
 .dataTables_wrapper .dataTables_paginate .paginate_active {
   padding: 0.1rem 0.5rem !important;
   font-size: 0.8rem;
 }
-/* line 318, ../../default/scss/theme/_tables.scss */
+/* line 319, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button a,
 .dataTables_wrapper .dataTables_paginate .paginate_active a {
   text-decoration: none;
   color: #333 !important;
 }
-/* line 322, ../../default/scss/theme/_tables.scss */
+/* line 323, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:hover a {
   color: #eee !important;
 }
-/* line 325, ../../default/scss/theme/_tables.scss */
+/* line 326, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button:active a,
 .dataTables_wrapper .dataTables_paginate .paginate_active:active a {
   color: rgba(0, 0, 0, 0.5) !important;
 }
-/* line 328, ../../default/scss/theme/_tables.scss */
+/* line 329, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.disabled a {
   color: #666 !important;
 }
-/* line 331, ../../default/scss/theme/_tables.scss */
+/* line 332, ../../default/scss/theme/_tables.scss */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current a,
 .dataTables_wrapper .dataTables_paginate .paginate_active.current a {
   color: #333 !important;
 }
 
-/* line 340, ../../default/scss/theme/_tables.scss */
+/* line 341, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.fixed-height .dataTable_table {
   max-height: 80vh;
   overflow: scroll;
+  scroll-snap-type: y proximity;
 }
-/* line 343, ../../default/scss/theme/_tables.scss */
+/* line 345, ../../default/scss/theme/_tables.scss */
+.dt-wrapper.fixed-height .dataTable_table th, .dt-wrapper.fixed-height .dataTable_table td {
+  scroll-snap-align: end;
+}
+/* line 348, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.fixed-height .dataTable_table .dataTable {
   border-collapse: separate;
   border-spacing: 0;
   border-width: 0;
 }
-/* line 347, ../../default/scss/theme/_tables.scss */
+/* line 352, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.fixed-height .dataTable_table .dataTable thead {
   position: sticky;
   top: 0;
   background-color: #ffffff;
 }
 
-/* line 359, ../../default/scss/theme/_tables.scss */
+/* line 364, ../../default/scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 362, ../../default/scss/theme/_tables.scss */
+/* line 367, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 365, ../../default/scss/theme/_tables.scss */
+/* line 370, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   display: inline-block;
   margin: 0 0.15rem;
@@ -3407,54 +3413,54 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 372, ../../default/scss/theme/_tables.scss */
+/* line 377, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 377, ../../default/scss/theme/_tables.scss */
+/* line 382, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 380, ../../default/scss/theme/_tables.scss */
+/* line 385, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 383, ../../default/scss/theme/_tables.scss */
+/* line 388, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 386, ../../default/scss/theme/_tables.scss */
+/* line 391, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 389, ../../default/scss/theme/_tables.scss */
+/* line 394, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 392, ../../default/scss/theme/_tables.scss */
+/* line 397, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 395, ../../default/scss/theme/_tables.scss */
+/* line 400, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 398, ../../default/scss/theme/_tables.scss */
+/* line 403, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 401, ../../default/scss/theme/_tables.scss */
+/* line 406, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 406, ../../default/scss/theme/_tables.scss */
+/* line 411, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
 
-/* line 414, ../../default/scss/theme/_tables.scss */
+/* line 419, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns {
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -3463,38 +3469,38 @@ table.dataTable table.import-item-details {
   min-width: 2.5rem;
   cursor: pointer;
 }
-/* line 420, ../../default/scss/theme/_tables.scss */
+/* line 425, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns:hover {
   border-color: #aaa;
   background-color: #eee;
 }
 
-/* line 427, ../../default/scss/theme/_tables.scss */
+/* line 432, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options {
   list-style: none;
   margin: 0.5rem auto;
 }
-/* line 431, ../../default/scss/theme/_tables.scss */
+/* line 436, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .ui-sortable-handle {
   margin: 2px auto;
   border: 1px solid #ccc;
 }
-/* line 435, ../../default/scss/theme/_tables.scss */
+/* line 440, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 439, ../../default/scss/theme/_tables.scss */
+/* line 444, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column {
   margin: 0;
   padding: 0.2rem 0;
   line-height: normal;
 }
-/* line 443, ../../default/scss/theme/_tables.scss */
+/* line 448, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column .column-select {
   margin: 0.3rem;
 }
 
-/* line 453, ../../default/scss/theme/_tables.scss */
+/* line 458, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
