@@ -1397,7 +1397,10 @@ class BasicCRUD(CRUDMethod):
             report_filename = get_config("report_filename", None)
             report_formname = get_config("report_formname", None)
 
+            pdf_fields = get_config("pdf_fields", list_fields)
+
             output = DataExporter.pdf(resource,
+                                      list_fields = pdf_fields,
                                       request = r,
                                       report_hide_comments = report_hide_comments,
                                       report_filename = report_filename,
