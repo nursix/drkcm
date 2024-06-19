@@ -335,6 +335,24 @@ table.dataTable {
     }
 }
 
+// Fixed height for non-responsive data tables
+.dt-wrapper.fixed-height {
+    .dataTable_table {
+        max-height: 80vh;
+        overflow: scroll;
+        .dataTable {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-width: 0;
+            thead {
+                position: sticky;
+                top: 0;
+                background-color: $datatables_bgcolor_head;
+            }
+        }
+    }
+}
+
 // ----------------------------------------------------------------------------
 // Export Options
 //

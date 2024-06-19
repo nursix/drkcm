@@ -520,6 +520,8 @@ class DataTable:
 
         # Build the form
         form = FORM(_class="dt-wrapper")
+        if not settings.get_ui_datatables_responsive():
+            form.add_class("fixed-height")
 
         # Form key (XSRF protection for Ajax actions)
         formkey = attr_get("dt_formkey")

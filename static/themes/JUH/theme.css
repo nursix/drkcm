@@ -3370,17 +3370,35 @@ table.dataTable table.import-item-details {
   color: #333 !important;
 }
 
-/* line 341, ../../default/scss/theme/_tables.scss */
+/* line 340, ../../default/scss/theme/_tables.scss */
+.dt-wrapper.fixed-height .dataTable_table {
+  max-height: 80vh;
+  overflow: scroll;
+}
+/* line 343, ../../default/scss/theme/_tables.scss */
+.dt-wrapper.fixed-height .dataTable_table .dataTable {
+  border-collapse: separate;
+  border-spacing: 0;
+  border-width: 0;
+}
+/* line 347, ../../default/scss/theme/_tables.scss */
+.dt-wrapper.fixed-height .dataTable_table .dataTable thead {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+}
+
+/* line 359, ../../default/scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 344, ../../default/scss/theme/_tables.scss */
+/* line 362, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 347, ../../default/scss/theme/_tables.scss */
+/* line 365, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   display: inline-block;
   margin: 0 0.15rem;
@@ -3389,54 +3407,54 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 354, ../../default/scss/theme/_tables.scss */
+/* line 372, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 359, ../../default/scss/theme/_tables.scss */
+/* line 377, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 362, ../../default/scss/theme/_tables.scss */
+/* line 380, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 365, ../../default/scss/theme/_tables.scss */
+/* line 383, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 368, ../../default/scss/theme/_tables.scss */
+/* line 386, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 371, ../../default/scss/theme/_tables.scss */
+/* line 389, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 374, ../../default/scss/theme/_tables.scss */
+/* line 392, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 377, ../../default/scss/theme/_tables.scss */
+/* line 395, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 380, ../../default/scss/theme/_tables.scss */
+/* line 398, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 383, ../../default/scss/theme/_tables.scss */
+/* line 401, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 388, ../../default/scss/theme/_tables.scss */
+/* line 406, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
 
-/* line 396, ../../default/scss/theme/_tables.scss */
+/* line 414, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns {
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -3445,38 +3463,38 @@ table.dataTable table.import-item-details {
   min-width: 2.5rem;
   cursor: pointer;
 }
-/* line 402, ../../default/scss/theme/_tables.scss */
+/* line 420, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns:hover {
   border-color: #aaa;
   background-color: #eee;
 }
 
-/* line 409, ../../default/scss/theme/_tables.scss */
+/* line 427, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options {
   list-style: none;
   margin: 0.5rem auto;
 }
-/* line 413, ../../default/scss/theme/_tables.scss */
+/* line 431, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .ui-sortable-handle {
   margin: 2px auto;
   border: 1px solid #ccc;
 }
-/* line 417, ../../default/scss/theme/_tables.scss */
+/* line 435, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 421, ../../default/scss/theme/_tables.scss */
+/* line 439, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column {
   margin: 0;
   padding: 0.2rem 0;
   line-height: normal;
 }
-/* line 425, ../../default/scss/theme/_tables.scss */
+/* line 443, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column .column-select {
   margin: 0.3rem;
 }
 
-/* line 435, ../../default/scss/theme/_tables.scss */
+/* line 453, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;
