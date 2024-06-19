@@ -704,6 +704,10 @@ class DataTable:
                              _class = "cancel-form-btn action-lnk",
                              _href = "javascript:void(0)",
                              ),
+                           A(T("Reset"),
+                             _class = "reset-form-btn action-lnk",
+                             _href = "javascript:void(0)",
+                             ),
                            ))
 
         return subform

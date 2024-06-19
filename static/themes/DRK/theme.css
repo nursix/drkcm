@@ -96,7 +96,8 @@
 }
 
 /* line 120, ../../default/scss/theme/_buttons.scss */
-.cancel-form-btn {
+.cancel-form-btn,
+.reset-form-btn {
   display: inline-block;
   padding: 0.875rem 1.75rem 0.9375rem 1.75rem;
   line-height: 1;
@@ -104,20 +105,21 @@
   margin-bottom: 0.3rem;
   border: 1px solid transparent;
 }
-/* line 128, ../../default/scss/theme/_buttons.scss */
-.cancel-form-btn:hover {
+/* line 129, ../../default/scss/theme/_buttons.scss */
+.cancel-form-btn:hover,
+.reset-form-btn:hover {
   background-color: #fefefe;
   border-color: #386570;
 }
 
-/* line 137, ../../default/scss/theme/_buttons.scss */
+/* line 138, ../../default/scss/theme/_buttons.scss */
 .map_home .gis_fullscreen_map-btn {
   font-weight: normal;
   font-size: 0.8rem;
   padding: 0.2rem;
 }
 
-/* line 146, ../../default/scss/theme/_buttons.scss */
+/* line 147, ../../default/scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
   background-color: #386570;
@@ -126,12 +128,12 @@ button.toggle-text {
   line-height: 1.0;
   padding: 0.2rem 0.3rem;
 }
-/* line 151, ../../default/scss/theme/_buttons.scss */
+/* line 152, ../../default/scss/theme/_buttons.scss */
 [dir=rtl] button.toggle-text {
   margin: 0 0.7rem 0 0;
 }
 
-/* line 161, ../../default/scss/theme/_buttons.scss */
+/* line 162, ../../default/scss/theme/_buttons.scss */
 .pr-contacts-editable button {
   display: inline-block;
   margin: 0.15rem;
@@ -149,7 +151,7 @@ button.toggle-text {
   margin: 2px;
 }
 
-/* line 172, ../../default/scss/theme/_buttons.scss */
+/* line 173, ../../default/scss/theme/_buttons.scss */
 #footer button.btn {
   display: inline-block;
   margin: 0.15rem;
@@ -165,13 +167,13 @@ button.toggle-text {
   color: #fefefe;
   background: #dddddd;
 }
-/* line 177, ../../default/scss/theme/_buttons.scss */
+/* line 178, ../../default/scss/theme/_buttons.scss */
 #footer button.btn:hover {
   color: #fefefe;
   background: #a0a0a0;
 }
 
-/* line 186, ../../default/scss/theme/_buttons.scss */
+/* line 187, ../../default/scss/theme/_buttons.scss */
 .caret {
   display: inline-block;
   width: 0;
@@ -2878,70 +2880,75 @@ form.auth_login #submit_record__row {
 }
 
 /* line 45, ../../default/scss/theme/_filters.scss */
+.filter-form.has-active-filters {
+  border: 1px solid #e0a0a0 !important;
+}
+
+/* line 49, ../../default/scss/theme/_filters.scss */
 .filter-form td {
   border-top: 1px solid #d9d9d9;
 }
 
-/* line 48, ../../default/scss/theme/_filters.scss */
+/* line 52, ../../default/scss/theme/_filters.scss */
 .filter-form tr:first-child > td {
   border-top: 0;
 }
 
-/* line 51, ../../default/scss/theme/_filters.scss */
+/* line 55, ../../default/scss/theme/_filters.scss */
 .filter-form table.s3-groupedopts-widget td {
   border-top: 0;
 }
 
 /* Vertical arrangement of multi-button multi-select filter widgets such as LocationFilter */
-/* line 56, ../../default/scss/theme/_filters.scss */
+/* line 60, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all {
   display: block;
   min-width: 225px;
 }
 
-/* line 62, ../../default/scss/theme/_filters.scss */
+/* line 66, ../../default/scss/theme/_filters.scss */
 .filter-form .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type,
 .form-container .ui-multiselect.ui-widget.ui-state-default.ui-corner-all:first-of-type {
   clear: none;
 }
 
-/* line 67, ../../default/scss/theme/_filters.scss */
+/* line 71, ../../default/scss/theme/_filters.scss */
 .ui-selectmenu-button,
 .ui-multiselect-menu {
   min-width: 225px;
 }
 
 /* Don't display the default widget, only the multiselect generated widget is displayed */
-/* line 73, ../../default/scss/theme/_filters.scss */
+/* line 77, ../../default/scss/theme/_filters.scss */
 select.multiselect-filter-widget {
   display: none;
 }
 
-/* line 77, ../../default/scss/theme/_filters.scss */
+/* line 81, ../../default/scss/theme/_filters.scss */
 .filter-advanced {
   text-decoration: none;
   cursor: pointer;
 }
 
-/* line 81, ../../default/scss/theme/_filters.scss */
+/* line 85, ../../default/scss/theme/_filters.scss */
 .filter-advanced-label {
   padding-right: 4px;
 }
 
-/* line 85, ../../default/scss/theme/_filters.scss */
+/* line 89, ../../default/scss/theme/_filters.scss */
 .s3-options-filter-anyall label {
   display: inline;
   margin-right: 0.7rem;
   font-size: 0.7rem;
 }
 
-/* line 94, ../../default/scss/theme/_filters.scss */
+/* line 98, ../../default/scss/theme/_filters.scss */
 .filter-manager-widget {
   display: inline-block;
 }
 
-/* line 97, ../../default/scss/theme/_filters.scss */
+/* line 101, ../../default/scss/theme/_filters.scss */
 .fm-load,
 .fm-save,
 .fm-delete,
@@ -2956,32 +2963,32 @@ select.multiselect-filter-widget {
   vertical-align: middle;
 }
 
-/* line 111, ../../default/scss/theme/_filters.scss */
+/* line 115, ../../default/scss/theme/_filters.scss */
 .fm-load {
   background: url(../../img/filter/load.png) no-repeat;
 }
 
-/* line 114, ../../default/scss/theme/_filters.scss */
+/* line 118, ../../default/scss/theme/_filters.scss */
 .fm-save {
   background: url(../../img/filter/save.png) no-repeat;
 }
 
-/* line 117, ../../default/scss/theme/_filters.scss */
+/* line 121, ../../default/scss/theme/_filters.scss */
 .fm-delete {
   background: url(../../img/filter/delete.png) no-repeat;
 }
 
-/* line 120, ../../default/scss/theme/_filters.scss */
+/* line 124, ../../default/scss/theme/_filters.scss */
 .fm-create {
   background: url(../../img/filter/create.png) no-repeat;
 }
 
-/* line 123, ../../default/scss/theme/_filters.scss */
+/* line 127, ../../default/scss/theme/_filters.scss */
 .fm-accept {
   background: url(../../img/crud/apply.png) no-repeat;
 }
 
-/* line 126, ../../default/scss/theme/_filters.scss */
+/* line 130, ../../default/scss/theme/_filters.scss */
 .fm-cancel {
   background: url(../../img/crud/cancel.png) no-repeat;
 }
@@ -3425,6 +3432,46 @@ table.dataTable table.import-item-details {
 }
 
 /* line 396, ../../default/scss/theme/_tables.scss */
+.dt-variable-columns {
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  padding: 0.2rem;
+  color: #666;
+  min-width: 2.5rem;
+  cursor: pointer;
+}
+/* line 402, ../../default/scss/theme/_tables.scss */
+.dt-variable-columns:hover {
+  border-color: #aaa;
+  background-color: #eee;
+}
+
+/* line 409, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options {
+  list-style: none;
+  margin: 0.5rem auto;
+}
+/* line 413, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options.ui-sortable .ui-sortable-handle {
+  margin: 2px auto;
+  border: 1px solid #ccc;
+}
+/* line 417, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options.ui-sortable .sortable-placeholder {
+  background-color: #fff7d8;
+}
+/* line 421, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options .available-column {
+  margin: 0;
+  padding: 0.2rem 0;
+  line-height: normal;
+}
+/* line 425, ../../default/scss/theme/_tables.scss */
+.column-selector .column-options .available-column .column-select {
+  margin: 0.3rem;
+}
+
+/* line 435, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

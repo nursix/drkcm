@@ -393,6 +393,18 @@ table.dataTable {
 // ----------------------------------------------------------------------------
 // Variable columns dialog
 //
+.dt-variable-columns {
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    padding: 0.2rem;
+    color: #666;
+    min-width: 2.5rem;
+    &:hover {
+        border-color: #aaa;
+        background-color: #eee;
+    }
+    cursor: pointer;
+}
 .column-selector {
     .column-options {
         list-style: none;

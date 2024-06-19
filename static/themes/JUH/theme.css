@@ -101,7 +101,8 @@
 }
 
 /* line 127, ../scss/theme/_buttons.scss */
-.cancel-form-btn {
+.cancel-form-btn,
+.reset-form-btn {
   display: inline-block;
   padding: 0.875rem 1.75rem 0.9375rem 1.75rem;
   line-height: 1;
@@ -109,20 +110,21 @@
   margin-bottom: 0.3rem;
   border: 1px solid transparent;
 }
-/* line 135, ../scss/theme/_buttons.scss */
-.cancel-form-btn:hover {
+/* line 136, ../scss/theme/_buttons.scss */
+.cancel-form-btn:hover,
+.reset-form-btn:hover {
   background-color: #fefefe;
   border-color: #000548;
 }
 
-/* line 144, ../scss/theme/_buttons.scss */
+/* line 145, ../scss/theme/_buttons.scss */
 .map_home .gis_fullscreen_map-btn {
   font-weight: normal;
   font-size: 0.8rem;
   padding: 0.2rem;
 }
 
-/* line 153, ../scss/theme/_buttons.scss */
+/* line 154, ../scss/theme/_buttons.scss */
 button.toggle-text {
   color: #fefefe;
   background-color: #000548;
@@ -131,12 +133,12 @@ button.toggle-text {
   line-height: 1.0;
   padding: 0.2rem 0.3rem;
 }
-/* line 158, ../scss/theme/_buttons.scss */
+/* line 159, ../scss/theme/_buttons.scss */
 [dir=rtl] button.toggle-text {
   margin: 0 0.7rem 0 0;
 }
 
-/* line 168, ../scss/theme/_buttons.scss */
+/* line 169, ../scss/theme/_buttons.scss */
 .pr-contacts-editable button {
   display: inline-block;
   margin: 0.15rem;
@@ -154,7 +156,7 @@ button.toggle-text {
   margin: 2px;
 }
 
-/* line 179, ../scss/theme/_buttons.scss */
+/* line 180, ../scss/theme/_buttons.scss */
 #footer button.btn {
   display: inline-block;
   margin: 0.15rem;
@@ -170,13 +172,13 @@ button.toggle-text {
   color: #fefefe;
   background: #dddddd;
 }
-/* line 184, ../scss/theme/_buttons.scss */
+/* line 185, ../scss/theme/_buttons.scss */
 #footer button.btn:hover {
   color: #fefefe;
   background: #a0a0a0;
 }
 
-/* line 193, ../scss/theme/_buttons.scss */
+/* line 194, ../scss/theme/_buttons.scss */
 .caret {
   display: inline-block;
   width: 0;
@@ -3434,32 +3436,47 @@ table.dataTable table.import-item-details {
   float: left;
 }
 
-/* line 397, ../../default/scss/theme/_tables.scss */
+/* line 396, ../../default/scss/theme/_tables.scss */
+.dt-variable-columns {
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  padding: 0.2rem;
+  color: #666;
+  min-width: 2.5rem;
+  cursor: pointer;
+}
+/* line 402, ../../default/scss/theme/_tables.scss */
+.dt-variable-columns:hover {
+  border-color: #aaa;
+  background-color: #eee;
+}
+
+/* line 409, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options {
   list-style: none;
   margin: 0.5rem auto;
 }
-/* line 401, ../../default/scss/theme/_tables.scss */
+/* line 413, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .ui-sortable-handle {
   margin: 2px auto;
   border: 1px solid #ccc;
 }
-/* line 405, ../../default/scss/theme/_tables.scss */
+/* line 417, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 409, ../../default/scss/theme/_tables.scss */
+/* line 421, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column {
   margin: 0;
   padding: 0.2rem 0;
   line-height: normal;
 }
-/* line 413, ../../default/scss/theme/_tables.scss */
+/* line 425, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column .column-select {
   margin: 0.3rem;
 }
 
-/* line 423, ../../default/scss/theme/_tables.scss */
+/* line 435, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

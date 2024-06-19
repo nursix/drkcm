@@ -117,7 +117,8 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 // ----------------------------------------------------------------------------
 // Form-cancel button
 //
-.cancel-form-btn {
+.cancel-form-btn,
+.reset-form-btn {
     display: inline-block;
     padding: $button-padding;
     line-height: 1;

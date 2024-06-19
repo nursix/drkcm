@@ -1846,29 +1846,24 @@
          */
         _variableColumnsDialog: function() {
 
-            const outerForm = this.outerForm,
-                  selector = $('.column-selector', outerForm),
-                  ns = this.eventNamespace;
-
-            if (!selector) {
+            const selector = $('.column-selector', this.outerForm);
+            if (!selector.length) {
                 return;
             }
 
             // Render the dialog
             const container = $('<div>').hide().appendTo($('body')),
-                  // TODO use document.creatElement instead
-                  form = $('<form>').prop('method', 'post')
-                                    .prop('enctype', 'multipart/form-data')
-                                    .appendTo(container),
+                  form = document.createElement('form'),
+                  $form = $(form).appendTo(container),
+                  ns = this.eventNamespace,
                   self = this;
 
-            $('.column-selector', this.outerForm).first()
-                                                 .clone()
-                                                 .removeClass('hide')
-                                                 .show()
-                                                 .appendTo(form);
+            form.method = 'post';
+            form.enctype = 'multipart/form-data';
 
-            const dialog = container.append(form).show().dialog({
+            selector.first().clone().removeClass('hide').show().appendTo($form);
+
+            const dialog = container.show().dialog({
                 title: i18n.selectColumns,
                 autoOpen: false,
                 minHeight: 480,
@@ -1877,15 +1872,11 @@
                 modal: true,
                 closeText: '',
                 open: function( /* event, ui */ ) {
-                    // TODO implement selectAll
-                    $('.column-options', form).sortable({
-                        placeholder: "sortable-placeholder",
-                        forcePlaceholderSize: true
-                    });
                     // Clicking outside of the popup closes it
                     $('.ui-widget-overlay').off(ns).on('click' + ns, function() {
                         dialog.dialog('close');
                     });
+                    // TODO implement selectAll
                     // Any cancel-form-btn button closes the popup
                     $('.cancel-form-btn', container).off(ns).on('click' + ns, function() {
                         dialog.dialog('close');
@@ -1893,14 +1884,23 @@
                     // Submit button updates the form and submits it
                     $('.submit-form-btn', container).off(ns).on('click' + ns, function() {
                         if ($('.column-select:checked', container).length) {
-                            self._variableColumnsApply(form.get(0));
+                            self._variableColumnsApply(form);
                             dialog.dialog('close');
                         }
+                    });
+                    // Reset button restores the default
+                    $('.reset-form-btn', container).off(ns).on('click' + ns, function() {
+                        self._variableColumnsApply(form, true);
+                    });
+                    // Make columns sortable
+                    $('.column-options', $form).sortable({
+                        placeholder: "sortable-placeholder",
+                        forcePlaceholderSize: true
                     });
                 },
                 close: function() {
                     // Hide + remove the container
-                    $('.column-options', form).sortable('destroy');
+                    $('.column-options', $form).sortable('destroy');
                     container.hide().remove();
                 }
             });
@@ -1911,22 +1911,25 @@
         /**
          * Reloads the page, applying the column selection
          */
-        _variableColumnsApply: function(form) {
-
-            // Get selected columns indices from form
-            const selected = [];
-            $('.column-select:checked', form).each(function() {
-                selected.push($(this).data('index'));
-            });
+        _variableColumnsApply: function(form, reset) {
 
             // Get a link to the current page
             const link = document.createElement('a');
             link.href = window.location.href;
 
-            // Add aCols parameter
             const params = new URLSearchParams(link.search);
             params.delete('aCols');
-            params.append('aCols', selected.join(','));
+
+            if (!reset) {
+                // Get selected columns indices from form
+                const selected = [];
+                $('.column-select:checked', form).each(function() {
+                    selected.push($(this).data('index'));
+                });
+                if (selected.length) {
+                    params.append('aCols', selected.join(','));
+                }
+            }
 
             // Reload the page
             link.search = params.toString();
