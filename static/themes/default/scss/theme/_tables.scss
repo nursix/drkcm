@@ -336,8 +336,8 @@ table.dataTable {
     }
 }
 
-// Fixed height for non-responsive data tables
-.dt-wrapper.fixed-height {
+// Independent scrolling and sticky header for non-responsive data tables
+.dt-wrapper.scrollable {
     .dataTable_table {
         max-height: 80vh;
         overflow: scroll;
@@ -348,8 +348,18 @@ table.dataTable {
         .dataTable {
             border-collapse: separate;
             border-spacing: 0;
-            border-width: 0;
+            th, td {
+                border-top-width: 0;
+                border-right-width: 0;
+            }
+            tr th:last-child,
+            tr td:last-child {
+                border-right-width: 1px;
+            }
             thead {
+                tr:first-child th {
+                    border-top-width: 1px
+                }
                 position: sticky;
                 top: 0;
                 background-color: $datatables_bgcolor_head;
