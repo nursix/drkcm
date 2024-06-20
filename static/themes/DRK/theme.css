@@ -3380,39 +3380,40 @@ table.dataTable table.import-item-details {
 .dt-wrapper.scrollable .dataTable_table .dataTable {
   border-collapse: separate;
   border-spacing: 0;
+  border-bottom: 0;
 }
-/* line 351, ../../default/scss/theme/_tables.scss */
+/* line 352, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.scrollable .dataTable_table .dataTable th, .dt-wrapper.scrollable .dataTable_table .dataTable td {
   border-top-width: 0;
   border-right-width: 0;
 }
-/* line 355, ../../default/scss/theme/_tables.scss */
+/* line 356, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.scrollable .dataTable_table .dataTable tr th:last-child,
 .dt-wrapper.scrollable .dataTable_table .dataTable tr td:last-child {
   border-right-width: 1px;
 }
-/* line 359, ../../default/scss/theme/_tables.scss */
+/* line 360, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.scrollable .dataTable_table .dataTable thead {
   position: sticky;
   top: 0;
   background-color: #ffffff;
 }
-/* line 360, ../../default/scss/theme/_tables.scss */
+/* line 361, ../../default/scss/theme/_tables.scss */
 .dt-wrapper.scrollable .dataTable_table .dataTable thead tr:first-child th {
   border-top-width: 1px;
 }
 
-/* line 374, ../../default/scss/theme/_tables.scss */
+/* line 375, ../../default/scss/theme/_tables.scss */
 .dt-export-options {
   float: right;
   padding-top: 5px;
 }
-/* line 377, ../../default/scss/theme/_tables.scss */
+/* line 378, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats {
   padding-top: 0;
   margin: 0 0.2rem;
 }
-/* line 380, ../../default/scss/theme/_tables.scss */
+/* line 381, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export {
   display: inline-block;
   margin: 0 0.15rem;
@@ -3421,54 +3422,54 @@ table.dataTable table.import-item-details {
   width: 16px;
   background-repeat: no-repeat;
 }
-/* line 387, ../../default/scss/theme/_tables.scss */
+/* line 388, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.fa {
   font-size: 14px;
   padding: 0;
   padding-top: 2px;
 }
-/* line 392, ../../default/scss/theme/_tables.scss */
+/* line 393, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_cap {
   background-image: url(../../img/cap_16.png);
 }
-/* line 395, ../../default/scss/theme/_tables.scss */
+/* line 396, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_have {
   background-image: url(../../img/have_16.png);
 }
-/* line 398, ../../default/scss/theme/_tables.scss */
+/* line 399, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_kml {
   background-image: url(../../img/kml_icon.png);
 }
-/* line 401, ../../default/scss/theme/_tables.scss */
+/* line 402, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_map {
   background-image: url(../../img/map_icon.png);
 }
-/* line 404, ../../default/scss/theme/_tables.scss */
+/* line 405, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_pdf {
   background-image: url(../../img/pdficon_small.gif);
 }
-/* line 407, ../../default/scss/theme/_tables.scss */
+/* line 408, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_rss {
   background-image: url(../../img/RSS_16.png);
 }
-/* line 410, ../../default/scss/theme/_tables.scss */
+/* line 411, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xls {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 413, ../../default/scss/theme/_tables.scss */
+/* line 414, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xlsx {
   background-image: url(../../img/icon-xls.png);
 }
-/* line 416, ../../default/scss/theme/_tables.scss */
+/* line 417, ../../default/scss/theme/_tables.scss */
 .dt-export-options .list_formats .dt-export.export_xml {
   background-image: url(../../img/icon-xml.png);
 }
-/* line 421, ../../default/scss/theme/_tables.scss */
+/* line 422, ../../default/scss/theme/_tables.scss */
 [dir=rtl] .dt-export-options {
   float: left;
 }
 
-/* line 429, ../../default/scss/theme/_tables.scss */
+/* line 430, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns {
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -3477,38 +3478,38 @@ table.dataTable table.import-item-details {
   min-width: 2.5rem;
   cursor: pointer;
 }
-/* line 435, ../../default/scss/theme/_tables.scss */
+/* line 436, ../../default/scss/theme/_tables.scss */
 .dt-variable-columns:hover {
   border-color: #aaa;
   background-color: #eee;
 }
 
-/* line 442, ../../default/scss/theme/_tables.scss */
+/* line 443, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options {
   list-style: none;
   margin: 0.5rem auto;
 }
-/* line 446, ../../default/scss/theme/_tables.scss */
+/* line 447, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .ui-sortable-handle {
   margin: 2px auto;
   border: 1px solid #ccc;
 }
-/* line 450, ../../default/scss/theme/_tables.scss */
+/* line 451, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 454, ../../default/scss/theme/_tables.scss */
+/* line 455, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column {
   margin: 0;
   padding: 0.2rem 0;
   line-height: normal;
 }
-/* line 458, ../../default/scss/theme/_tables.scss */
+/* line 459, ../../default/scss/theme/_tables.scss */
 .column-selector .column-options .available-column .column-select {
   margin: 0.3rem;
 }
 
-/* line 468, ../../default/scss/theme/_tables.scss */
+/* line 469, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

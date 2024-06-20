@@ -630,7 +630,7 @@ def dvr_response_action_controller(**attr):
                                 )
                 export_formats = list(settings.get_ui_export_formats())
                 fmt = "%s.xls" % method
-                export_formats.append((fmt, "fa fa-%s" % icon, title))
+                export_formats.insert(0, (fmt, "fa fa-%s" % icon, title))
                 s3.formats[fmt] = r.url(method=method)
                 settings.ui.export_formats = export_formats
 
