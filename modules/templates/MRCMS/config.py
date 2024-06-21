@@ -259,7 +259,7 @@ def config(settings):
     # Uncomment this to enable household size in cases, set to "auto" for automatic counting
     settings.dvr.household_size = "auto"
 
-    settings.dvr.case_include_activity_docs = False
+    settings.dvr.case_include_activity_docs = True
     settings.dvr.case_include_group_docs = True
 
     # Manage case flags
@@ -311,7 +311,7 @@ def config(settings):
     # Disable follow-up fields in case activities
     settings.dvr.case_activity_follow_up = False
     # Allow uploading of documents in individual case activities
-    #settings.dvr.case_activity_documents = True
+    settings.dvr.case_activity_documents = True
 
     # Manage individual response actions in case activities
     settings.dvr.manage_response_actions = True

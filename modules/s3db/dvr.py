@@ -6762,13 +6762,14 @@ class dvr_DocEntityRepresent(S3Represent):
     """ Module context-specific representation of doc-entities """
 
     def __init__(self,
-                 case_label=None,
-                 case_group_label=None,
-                 activity_label=None,
-                 use_sector=True,
-                 use_need=False,
-                 use_subject=True,
-                 show_link=False,
+                 case_label = None,
+                 case_group_label = None,
+                 activity_label = None,
+                 use_sector = True,
+                 use_need = False,
+                 use_subject = True,
+                 show_link = False,
+                 linkto_controller = "dvr",
                  ):
         """
             Args:
@@ -6781,6 +6782,7 @@ class dvr_DocEntityRepresent(S3Represent):
                 use_subject: include subject when representing activities
                              as need type
                 show_link: show representation as clickable link
+                linkto_controller: controller to link to
         """
 
         super().__init__(lookup = "doc_entity",
@@ -6807,6 +6809,7 @@ class dvr_DocEntityRepresent(S3Represent):
         self.use_sector = use_sector
         self.use_need = use_need
         self.use_subject = use_subject or not use_need
+        self.linkto_controller = linkto_controller
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -7001,7 +7004,7 @@ class dvr_DocEntityRepresent(S3Represent):
                 except AttributeError:
                     pass
                 else:
-                    url = URL(c = "dvr",
+                    url = URL(c = self.linkto_controller,
                               f = "person",
                               args = [person_id,
                                       "case_activity",

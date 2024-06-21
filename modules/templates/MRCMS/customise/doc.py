@@ -196,7 +196,9 @@ def dvr_document_prep(r):
                 doc_ids.append(row.doc_id)
 
     # Include case activities
-    if include_activity_docs:
+    # - to be able to limit access to activity attachments, they must be accessed
+    #   through counsel-controller (and thus, user must have counsel controller permission)
+    if include_activity_docs and r.controller == "counsel":
 
         # Look up relevant case activities
         atable = s3db.dvr_case_activity
@@ -224,6 +226,7 @@ def dvr_document_prep(r):
                                 use_subject = subject_type in ("subject", "both"),
                                 case_group_label = T("Family"),
                                 activity_label = T("Need"),
+                                linkto_controller = r.controller,
                                 )
 
         # Make doc_id readable and visible in table
