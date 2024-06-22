@@ -3485,31 +3485,57 @@ table.dataTable table.import-item-details {
 }
 
 /* line 443, ../../default/scss/theme/_tables.scss */
-.column-selector .column-options {
-  list-style: none;
-  margin: 0.5rem auto;
+.column-selector table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0.1rem;
 }
 /* line 447, ../../default/scss/theme/_tables.scss */
-.column-selector .column-options.ui-sortable .ui-sortable-handle {
-  margin: 2px auto;
+.column-selector table td {
+  padding: 0.25rem;
+  margin: 0;
+}
+/* line 450, ../../default/scss/theme/_tables.scss */
+.column-selector table td label {
+  margin: 0;
+}
+/* line 452, ../../default/scss/theme/_tables.scss */
+.column-selector table td label input {
+  margin: 0.2rem;
+}
+/* line 456, ../../default/scss/theme/_tables.scss */
+.column-selector table td.column-left, .column-selector table td.column-right {
+  cursor: pointer;
+  width: 2rem;
+  font-size: 1rem;
+  text-align: center;
+}
+/* line 461, ../../default/scss/theme/_tables.scss */
+.column-selector table td.column-left:hover, .column-selector table td.column-right:hover {
+  background-color: #eee;
+}
+/* line 466, ../../default/scss/theme/_tables.scss */
+.column-selector table thead {
+  background: transparent;
+}
+/* line 468, ../../default/scss/theme/_tables.scss */
+.column-selector table thead th, .column-selector table thead td {
+  border: 0;
+}
+/* line 473, ../../default/scss/theme/_tables.scss */
+.column-selector table tbody td {
   border: 1px solid #ccc;
 }
-/* line 451, ../../default/scss/theme/_tables.scss */
-.column-selector .column-options.ui-sortable .sortable-placeholder {
+/* line 476, ../../default/scss/theme/_tables.scss */
+.column-selector table tbody.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 455, ../../default/scss/theme/_tables.scss */
-.column-selector .column-options .available-column {
-  margin: 0;
-  padding: 0.2rem 0;
-  line-height: normal;
-}
-/* line 459, ../../default/scss/theme/_tables.scss */
-.column-selector .column-options .available-column .column-select {
-  margin: 0.3rem;
+/* line 481, ../../default/scss/theme/_tables.scss */
+.column-selector .submit-form-btn {
+  margin-bottom: 0.3rem;
 }
 
-/* line 469, ../../default/scss/theme/_tables.scss */
+/* line 489, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

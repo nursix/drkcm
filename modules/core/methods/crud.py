@@ -1653,10 +1653,14 @@ class BasicCRUD(CRUDMethod):
             available_cols = []
 
             # Get the selectors of all available list fields
-            available = [f[1] if isinstance(f, (tuple, list)) else f for f in available_list_fields]
+            available = [f[1] if isinstance(f, (tuple, list)) else f
+                         for f in available_list_fields if f
+                         ]
 
             # Get the selectors of all active list fields
-            active = [f[1] if isinstance(f, (tuple, list)) else f for f in list_fields]
+            active = [f[1] if isinstance(f, (tuple, list)) else f
+                      for f in list_fields if f
+                      ]
 
             # Determine the indices of all active list fields
             active_idx = [available.index(s) for s in active if s in available]

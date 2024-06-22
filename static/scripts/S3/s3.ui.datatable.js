@@ -1876,26 +1876,43 @@
                     $('.ui-widget-overlay').off(ns).on('click' + ns, function() {
                         dialog.dialog('close');
                     });
-                    // TODO implement selectAll
                     // Any cancel-form-btn button closes the popup
-                    $('.cancel-form-btn', container).off(ns).on('click' + ns, function() {
+                    $('.cancel-form-btn', $form).off(ns).on('click' + ns, function() {
                         dialog.dialog('close');
                     });
                     // Submit button updates the form and submits it
-                    $('.submit-form-btn', container).off(ns).on('click' + ns, function() {
+                    $('.submit-form-btn', $form).off(ns).on('click' + ns, function() {
                         if ($('.column-select:checked', container).length) {
                             self._variableColumnsApply(form);
                             dialog.dialog('close');
                         }
                     });
                     // Reset button restores the default
-                    $('.reset-form-btn', container).off(ns).on('click' + ns, function() {
+                    $('.reset-form-btn', $form).off(ns).on('click' + ns, function() {
                         self._variableColumnsApply(form, true);
                     });
                     // Make columns sortable
                     $('.column-options', $form).sortable({
                         placeholder: "sortable-placeholder",
                         forcePlaceholderSize: true
+                    });
+                    // Alternative if drag&drop not available
+                    $('.column-left', $form).off(ns).on('click' + ns, function() {
+                        const row = $(this).closest('tr');
+                        row.insertBefore(row.prev());
+                    });
+                    $('.column-right', $form).off(ns).on('click' + ns, function() {
+                        const row = $(this).closest('tr');
+                        row.insertAfter(row.next());
+                    });
+                    // Select/deselect all
+                    $('.column-select-all', $form).off(ns).on('change' + ns, function() {
+                        let status = $(this).prop('checked');
+                        $('.column-select', $form).prop('checked', status);
+                    });
+                    $('.column-select', $form).off(ns).on('change' + ns, function() {
+                        let deselected = $('.column-select:not(:checked)', container).length;
+                        $('.column-select-all', $form).prop('checked', !deselected);
                     });
                 },
                 close: function() {

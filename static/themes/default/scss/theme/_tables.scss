@@ -440,26 +440,46 @@ table.dataTable {
     cursor: pointer;
 }
 .column-selector {
-    .column-options {
-        list-style: none;
-        margin: 0.5rem auto;
-        &.ui-sortable {
-            .ui-sortable-handle {
-                margin: 2px auto;
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0.1rem;
+        td {
+            padding: 0.25rem;
+            margin: 0;
+            label {
+                margin: 0;
+                input {
+                    margin: 0.2rem;
+                }
+            }
+            &.column-left, &.column-right {
+                cursor: pointer;
+                width: 2rem;
+                font-size: 1rem;
+                text-align: center;
+                &:hover {
+                    background-color: #eee;
+                }
+            }
+        }
+        thead {
+            background: transparent;
+            th, td {
+                border: 0;
+            }
+        }
+        tbody {
+            td {
                 border: 1px solid #ccc;
             }
-            .sortable-placeholder {
-                background-color: #fff7d8;
+            &.ui-sortable .sortable-placeholder {
+                    background-color: #fff7d8;
             }
         }
-        .available-column {
-            margin: 0;
-            padding: 0.2rem 0;
-            line-height: normal;
-            .column-select {
-                margin: 0.3rem;
-            }
-        }
+    }
+    .submit-form-btn {
+        margin-bottom: 0.3rem;
     }
 }
 

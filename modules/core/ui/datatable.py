@@ -31,14 +31,16 @@ __all__ = ("DataTable",
 import re
 
 from gluon import current, URL, \
-                  A, BUTTON, DIV, FORM, INPUT, LABEL, LI, SPAN, \
-                  TABLE, TBODY, TD, TH, THEAD, TR, UL
+                  A, BUTTON, DIV, FORM, INPUT, LABEL, SPAN, \
+                  TABLE, TBODY, TD, TH, THEAD, TR
 
 from gluon.serializers import json as jsons
 
 from s3dal import Expression, S3DAL
 
 from ..tools import s3_orderby_fields, s3_set_extension, s3_str
+
+from .icons import ICON
 
 # =============================================================================
 class DataTable:
@@ -676,16 +678,27 @@ class DataTable:
     # -------------------------------------------------------------------------
     @staticmethod
     def column_selector(available_cols):
-        # TODO docstring
-        # TODO implement select-all
+        """
+            Produces a column selector for variable columns
+
+            Args:
+                available_columns: the available columns, a list of tuples
+                                   (index, label, selector, active)
+            Returns:
+                columns selector subform
+        """
 
         T = current.T
 
-        subform = DIV(_class="column-selector columns hide")
-
-        options = UL(_class="column-options")
+        # The column options
+        options = TBODY(_class="column-options")
+        all_selected = True
         for index, label, selector, status in available_cols:
-            row = LABEL(INPUT(_type="checkbox",
+
+            if not status:
+                all_selected = False
+
+            col = LABEL(INPUT(_type="checkbox",
                               _value=index,
                               _class = "column-select",
                               data = {"selector": selector, "index": index},
@@ -694,23 +707,41 @@ class DataTable:
                         label,
                         _class = "available-column",
                         )
-            options.append(LI(row))
-        subform.append(options)
 
-        subform.append(DIV(BUTTON(T("Submit"),
-                                  _class = "submit-form-btn small primary button",
-                                  _type = "button",
-                                  _style = "margin-bottom:0.3rem;"
-                                  ),
-                           A(T("Cancel"),
-                             _class = "cancel-form-btn action-lnk",
-                             _href = "javascript:void(0)",
-                             ),
-                           A(T("Reset"),
-                             _class = "reset-form-btn action-lnk",
-                             _href = "javascript:void(0)",
-                             ),
-                           ))
+            row = (TR(TD(col),
+                      TD(ICON("fa fa-caret-up"), _class = "column-left"),
+                      TD(ICON("fa fa-caret-down"), _class = "column-right"),
+                      ))
+            options.append(row)
+
+        # Select/Deselect All option
+        select_all = THEAD(TR(TD(LABEL(INPUT(_type="checkbox",
+                                             _class = "column-select-all",
+                                             value = all_selected,
+                                             ),
+                                       T("All"),
+                                       _class = "available-column",
+                                       ),
+                                  _colspan = 3,
+                                  )))
+
+        # Complete subform
+        subform = DIV(TABLE(select_all, options),
+                      DIV(BUTTON(T("Submit"),
+                                 _class = "submit-form-btn small primary button",
+                                 _type = "button",
+                                 ),
+                          A(T("Cancel"),
+                            _class = "cancel-form-btn action-lnk",
+                            _href = "javascript:void(0)",
+                            ),
+                          A(T("Reset"),
+                            _class = "reset-form-btn action-lnk",
+                            _href = "javascript:void(0)",
+                            ),
+                          ),
+                      _class="column-selector columns hide",
+                      )
 
         return subform
 

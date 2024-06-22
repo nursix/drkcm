@@ -823,17 +823,17 @@ class CRUDResource:
                     self.error = INTEGRITY_ERROR
                     db.rollback()
                     raise
-                else:
-                    # Clear session
-                    if get_last_record_id(tablename) == row[pkey]:
-                        remove_last_record_id(tablename)
 
-                    # Delete super-entity
-                    delete_super(table, row)
+                # Clear session
+                if get_last_record_id(tablename) == row[pkey]:
+                    remove_last_record_id(tablename)
 
-                    # On-delete
-                    if ondelete:
-                        callback(ondelete, row, tablename=tablename)
+                # Delete super-entity
+                delete_super(table, row)
+
+                # On-delete
+                if ondelete:
+                    callback(ondelete, row, tablename=tablename)
 
         return True
 
@@ -1091,17 +1091,16 @@ class CRUDResource:
                     if f == "the_geom":
                         # Filter out bulky Polygons
                         continue
+                    fmt = current.auth.permission.format
+                    if fmt == "cap":
+                        # Include WKT
+                        pass
+                    elif fmt == "xml" and current.deployment_settings.get_gis_xml_wkt():
+                        # Include WKT
+                        pass
                     else:
-                        fmt = current.auth.permission.format
-                        if fmt == "cap":
-                            # Include WKT
-                            pass
-                        elif fmt == "xml" and current.deployment_settings.get_gis_xml_wkt():
-                            # Include WKT
-                            pass
-                        else:
-                            # Filter out bulky Polygons
-                            continue
+                        # Filter out bulky Polygons
+                        continue
                 elif tablename.startswith("gis_layer_shapefile_"):
                     # Filter out bulky Polygons
                     continue
@@ -1279,8 +1278,8 @@ class CRUDResource:
             self.load()
         try:
             master = self[key]
-        except IndexError:
-            raise KeyError("Record not found")
+        except IndexError as e:
+            raise KeyError("Record not found") from e
 
         if not component and not link:
             return master
@@ -1296,8 +1295,8 @@ class CRUDResource:
         else:
             try:
                 c = self.components[component]
-            except KeyError:
-                raise AttributeError("Undefined component %s" % component)
+            except KeyError as e:
+                raise AttributeError("Undefined component %s" % component) from e
 
         rows = c._rows
         if rows is None:
@@ -1314,9 +1313,9 @@ class CRUDResource:
             else:
                 try:
                     rows = [record for record in rows if master_id == record[fkey]]
-                except AttributeError:
+                except AttributeError as e:
                     # Most likely need to tweak static/formats/geoson/export.xsl
-                    raise AttributeError("Component %s records are missing fkey %s" % (component, fkey))
+                    raise AttributeError("Component %s records are missing fkey %s" % (component, fkey)) from e
         else:
             rows = []
         return rows
@@ -2020,7 +2019,7 @@ class CRUDResource:
         for item in selectors:
             if not item:
                 continue
-            elif type(item) is tuple:
+            if type(item) is tuple:
                 item = item[-1]
             if isinstance(item, str):
                 selector = item
@@ -2088,8 +2087,7 @@ class CRUDResource:
             colname = rfield.colname
             if colname in columns:
                 continue
-            else:
-                add_column(colname)
+            add_column(colname)
 
             # Replace default label
             if label is not None:
@@ -2493,7 +2491,7 @@ class CRUDResource:
 
             # Build filter
             text = get_vars[sSearch]
-            words = [w for w in text.lower().split()]
+            words = text.lower().split()
 
             if words:
                 try:
@@ -2760,11 +2758,6 @@ class CRUDResource:
             list_fields = self.get_config(key)
         if not list_fields:
             list_fields = self.get_config("list_fields")
-
-        #list_fields = self.get_config(key, None)
-
-        #if not list_fields and key != "list_fields":
-            #list_fields = self.get_config("list_fields", None)
         if not list_fields:
             list_fields = [f.name for f in self.readable_fields()]
 
@@ -2810,8 +2803,8 @@ class CRUDResource:
         """
 
         available = self.get_config("available_list_fields")
-        if not available:
-            return None
+        if available:
+            available = [f for f in available if f]
 
         active = None
         if available and "aCols" in request.get_vars:
