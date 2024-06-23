@@ -3497,8 +3497,9 @@ table.dataTable table.import-item-details {
 }
 /* line 447, ../../default/scss/theme/_tables.scss */
 .column-selector table td {
-  padding: 0.25rem;
+  padding: 0.15rem;
   margin: 0;
+  width: 100%;
 }
 /* line 450, ../../default/scss/theme/_tables.scss */
 .column-selector table td label {
@@ -3508,39 +3509,40 @@ table.dataTable table.import-item-details {
 .column-selector table td label input {
   margin: 0.2rem;
 }
-/* line 456, ../../default/scss/theme/_tables.scss */
+/* line 457, ../../default/scss/theme/_tables.scss */
 .column-selector table td.column-left, .column-selector table td.column-right {
   cursor: pointer;
-  width: 2rem;
+  width: 1.5rem;
+  min-width: 1.5rem;
   font-size: 1rem;
   text-align: center;
 }
-/* line 461, ../../default/scss/theme/_tables.scss */
+/* line 463, ../../default/scss/theme/_tables.scss */
 .column-selector table td.column-left:hover, .column-selector table td.column-right:hover {
   background-color: #eee;
 }
-/* line 466, ../../default/scss/theme/_tables.scss */
+/* line 468, ../../default/scss/theme/_tables.scss */
 .column-selector table thead {
   background: transparent;
 }
-/* line 468, ../../default/scss/theme/_tables.scss */
+/* line 470, ../../default/scss/theme/_tables.scss */
 .column-selector table thead th, .column-selector table thead td {
   border: 0;
 }
-/* line 473, ../../default/scss/theme/_tables.scss */
+/* line 475, ../../default/scss/theme/_tables.scss */
 .column-selector table tbody td {
   border: 1px solid #ccc;
 }
-/* line 476, ../../default/scss/theme/_tables.scss */
+/* line 478, ../../default/scss/theme/_tables.scss */
 .column-selector table tbody.ui-sortable .sortable-placeholder {
   background-color: #fff7d8;
 }
-/* line 481, ../../default/scss/theme/_tables.scss */
+/* line 483, ../../default/scss/theme/_tables.scss */
 .column-selector .submit-form-btn {
   margin-bottom: 0.3rem;
 }
 
-/* line 489, ../../default/scss/theme/_tables.scss */
+/* line 491, ../../default/scss/theme/_tables.scss */
 .empty {
   font-style: italic;
   font-size: 0.825rem;

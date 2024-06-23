@@ -445,7 +445,7 @@ table.dataTable {
         border-collapse: separate;
         border-spacing: 0.1rem;
         td {
-            padding: 0.25rem;
+            padding: 0.15rem;
             margin: 0;
             label {
                 margin: 0;
@@ -453,9 +453,11 @@ table.dataTable {
                     margin: 0.2rem;
                 }
             }
+            width: 100%;
             &.column-left, &.column-right {
                 cursor: pointer;
-                width: 2rem;
+                width: 1.5rem;
+                min-width: 1.5rem;
                 font-size: 1rem;
                 text-align: center;
                 &:hover {
@@ -474,7 +476,7 @@ table.dataTable {
                 border: 1px solid #ccc;
             }
             &.ui-sortable .sortable-placeholder {
-                    background-color: #fff7d8;
+                background-color: #fff7d8;
             }
         }
     }
