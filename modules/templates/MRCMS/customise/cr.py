@@ -516,7 +516,7 @@ def cr_shelter_controller(**attr):
 
         # Add presence registration button, if permitted
         if record and not r.component and \
-           PresenceRegistration.permitted("cr_shelter", record) and \
+           PresenceRegistration.permitted("cr_shelter", record=record) and \
            isinstance(output, dict) and "buttons" in output:
 
             buttons = output["buttons"]
