@@ -197,6 +197,9 @@ def pr_person_resource(r, tablename):
 
             if controller == "dvr":
 
+                from ..presence import PresenceReport
+                s3db.set_method("pr_person", method="presence_report", action=PresenceReport)
+
                 bulk_actions = []
 
                 if case_administration and \
