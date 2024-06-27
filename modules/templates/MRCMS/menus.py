@@ -47,6 +47,8 @@ class MainMenu(default.MainMenu):
         has_role = auth.s3_has_role
         has_permission = auth.s3_has_permission
 
+        is_admin = has_role("ADMIN")
+
         # Single or multiple organisations?
         if has_permission("create", "org_organisation", c="org", f="organisation"):
             organisation_id = None
@@ -54,7 +56,7 @@ class MainMenu(default.MainMenu):
             organisation_id = get_default_organisation()
 
         # Organisation menu
-        c = ("org", "hrm") if has_role("ADMIN") else ("org", "hrm", "cms")
+        c = ("org", "hrm") if is_admin else ("org", "hrm", "cms")
         f = ("organisation", "*")
         if organisation_id:
             org_menu = MM("Organization", c=c, f=f, args=[organisation_id], ignore_args=True)
@@ -75,7 +77,10 @@ class MainMenu(default.MainMenu):
 
         return [
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
-            MM("Food Distribution", c="dvr", f="case_event", m="register_food", p="create", restrict="CATERING"),
+            MM("Food Distribution", c="dvr", f="case_event", m="register_food", p="create",
+               restrict = "CATERING",
+               check = lambda i: not is_admin,
+               ),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
             org_menu,

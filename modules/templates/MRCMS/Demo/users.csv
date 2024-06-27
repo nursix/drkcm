@@ -4,7 +4,7 @@ Admin,LUK RD,rd_admin@example.com,eden,"ORG_ADMIN, SHELTER_ADMIN, STAFF",Betreuu
 Case Admin,LUK RD,rd_case_admin@example.com,eden,"CASE_ADMIN, SHELTER_MANAGER, STAFF",Betreuungsverband LUK Rendsburg,de
 Case Manager,LUK RD,rd_case_manager@example.com,eden,"CASE_MANAGER, CHECKPOINT, STAFF",Betreuungsverband LUK Rendsburg,de
 Case Assistant,LUK RD,rd_case_assistant@example.com,eden,"CASE_ASSISTANT, CHECKPOINT, STAFF",Betreuungsverband LUK Rendsburg,de
-Caterer,LUK RD,rd_caterer@example.com,eden,"CATERER,STAFF",Betreuungsverband LUK Rendsburg,de
+Caterer,LUK RD,rd_caterer@example.com,eden,"CATERING,STAFF",Betreuungsverband LUK Rendsburg,de
 Quartermaster,LUK RD,rd_quartermaster@example.com,eden,"QUARTERMASTER, STAFF",Betreuungsverband LUK Rendsburg,de
 Janitor,LUK RD,rd_janitor@example.com,eden,"JANITOR, STAFF",Betreuungsverband LUK Rendsburg,de
 Security,LUK RD,rd_security@example.com,eden,"SECURITY, STAFF",Betreuungsverband LUK Rendsburg,de
