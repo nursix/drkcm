@@ -9,14 +9,15 @@ import json
 
 from dateutil.relativedelta import relativedelta
 
-from gluon import current, SQLFORM
+from gluon import current, SQLFORM, BUTTON, DIV
 from gluon.contenttype import contenttype
 from gluon.serializers import json as jsons
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
 from s3dal import Field
 
-from core import CRUDMethod, CustomController, DateField, FormKey, JSONERRORS, S3DateTime, XLSXWriter, s3_str
+from core import CRUDMethod, CustomController, DateField, FormKey, \
+                 ICON, IS_ONE_OF, JSONERRORS, S3DateTime, XLSXWriter, s3_str
 
 # =============================================================================
 class PresenceList(CRUDMethod):
@@ -487,41 +488,79 @@ class PresenceReport(CRUDMethod):
 
         T = current.T
 
-        # Standard form fields and data
+        db = current.db
+        s3db = current.s3db
+
+        # Determine selectable organisations
+        from .helpers import permitted_orgs
+        org_ids = permitted_orgs("read", "dvr_case")
+        if not org_ids:
+            r.unauthorised()
+        default_org = org_ids[0] if len(org_ids) == 1 else None
+
+        # Create form to select organisation and date
+        ctable = s3db.dvr_case
+        otable = s3db.org_organisation
+        dbset = db(otable.id.belongs(org_ids))
         formfields = [Field("organisation_id",
                             label = T("Organization"),
-                            # TODO implement selector
-                            #requires = IS_IN_SET,
+                            requires = IS_ONE_OF(dbset, "org_organisation.id",
+                                                 ctable.organisation_id.represent,
+                                                 ),
+                            default = default_org,
                             ),
                       DateField("date",
                                 label = T("Date"),
                                 default = "now",
+                                future = 0,
                                 ),
                       ]
 
         # Hidden inputs
-        hidden = {"formkey": FormKey("last_seen").generate(),
+        hidden = {"formkey": FormKey("presence_report").generate(),
                   }
 
+        # Form buttons
+        buttons = [BUTTON(T("Show Report"),
+                          _type = "button",
+                          _class = "small primary button update-report-btn",
+                          ),
+                   BUTTON(ICON("file-xls"), T("Download Report"),
+                          _type = "button",
+                          _class = "small activity button download-report-btn",
+                          ),
+                   ]
+
+        # IDs for form and table container
+        widget_id = "presence-report"
+        container_id = "%s-data" % widget_id
+
         formstyle = current.deployment_settings.get_ui_formstyle()
-        widget_id = "last-seen"
         form = SQLFORM.factory(*formfields,
                                record = None,
                                showid = False,
                                formstyle = formstyle,
                                hidden = hidden,
-                               buttons = [],
+                               buttons = buttons,
                                _id = widget_id,
-                               _class = "last-seen-form",
+                               _class = "presence-report-form",
                                )
-        output = {"title": T("Last Presence"),
+        output = {"title": T("Presence Report"),
                   "form": form,
+                  "items": DIV(_class = "presence-report-data",
+                               _id = "%s-data" % widget_id,
+                               ),
                   }
 
-        # TODO add XLSX export button
-        CustomController._view("MRCMS", "last_seen.html")
+        # Inject client-side script to retrieve and render the data
+        script_opts = {"ajaxURL": r.url(representation="json"),
+                       "xlsxURL": r.url(representation="xlsx"),
+                       "tableContainer": container_id,
+                       }
+        self.inject_script(widget_id, script_opts)
 
-        # TODO inject client-side script to retrieve and render the data
+        # Set view template
+        CustomController._view("MRCMS", "presence_report.html")
 
         return output
 
@@ -540,8 +579,6 @@ class PresenceReport(CRUDMethod):
                 HTTP400 for invalid parameters or formkey mismatch
         """
 
-        INVALID = "Invalid request parameters"
-
         # Read+parse body JSON
         s = r.body
         s.seek(0)
@@ -550,11 +587,11 @@ class PresenceReport(CRUDMethod):
         except JSONERRORS:
             options = None
         if not isinstance(options, dict):
-            r.error(400, INVALID)
+            r.error(400, "Invalid request parameters")
 
         # Verify submitted form key against session (CSRF protection)
-        formkey = FormKey("last_seen")
-        if not formkey.verify(options):
+        formkey = FormKey("presence_report")
+        if not formkey.verify(options, invalidate=False):
             r.error(400, "Invalid action key (form reopened in another tab?)")
 
         # Extract organisation ID
@@ -562,13 +599,13 @@ class PresenceReport(CRUDMethod):
         try:
             organisation_id = int(organisation)
         except (ValueError, TypeError):
-            r.error(400, INVALID)
+            r.error(400, "Invalid or missing organisation parameter")
 
         # Extract report reference date
         dtstr = options.get("date")
         date = current.calendar.parse_date(dtstr)
         if not date:
-            r.error(400, INVALID)
+            r.error(400, "Invalid or missing date parameter")
 
         return organisation_id, date
 
@@ -685,8 +722,8 @@ class PresenceReport(CRUDMethod):
         output = XLSXWriter.encode(table_data, title=title, as_stream=True)
 
         # Set response headers
-        # TODO add date to file name
-        disposition = "attachment; filename=\"presence_report.xlsx\""
+        filename = "presence_report_%s" % date.strftime("%Y%m%d")
+        disposition = "attachment; filename=\"%s\"" % filename
         response = current.response
         response.headers["Content-Type"] = contenttype(".xlsx")
         response.headers["Content-disposition"] = disposition
@@ -957,5 +994,37 @@ class PresenceReport(CRUDMethod):
             result[event.person_id] = event
 
         return result
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inject_script(widget_id, options):
+        """
+            Inject the necessary JavaScript for the UI dialog
+
+            Args:
+                widget_id: the widget ID
+                options: JSON-serializable dict of widget options
+        """
+
+        request = current.request
+        s3 = current.response.s3
+
+        # Static script
+        script = "/%s/static/themes/JUH/js/presence_report.js" % request.application
+        scripts = s3.scripts
+        if script not in scripts:
+            scripts.append(script)
+
+        # Widget options
+        opts = {}
+        if options:
+            opts.update(options)
+
+        # Widget instantiation
+        script = '''$('#%(widget_id)s').presenceReport(%(options)s)''' % \
+                 {"widget_id": widget_id, "options": json.dumps(opts)}
+        jquery_ready = s3.jquery_ready
+        if script not in jquery_ready:
+            jquery_ready.append(script)
 
 # END =========================================================================

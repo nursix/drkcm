@@ -5390,3 +5390,23 @@ h4.profile-sub-header {
 .rhist .empty {
   margin: 0.7rem 1.4rem;
 }
+
+/* line 627, ../scss/theme/_misc.scss */
+.presence-report-data {
+  max-height: 80vh;
+  overflow: scroll;
+  padding: 0.3rem;
+  margin-top: 0.7rem;
+}
+/* line 632, ../scss/theme/_misc.scss */
+.presence-report-data table, .presence-report-data th, .presence-report-data td {
+  border: 1px solid #ccc;
+}
+/* line 635, ../scss/theme/_misc.scss */
+.presence-report-data thead th {
+  text-align: center;
+}
+/* line 639, ../scss/theme/_misc.scss */
+.presence-report-data tbody tr:nth-child(even) {
+  background: #fafafa;
+}

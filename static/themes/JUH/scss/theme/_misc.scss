@@ -624,4 +624,22 @@
     }
 }
 
+.presence-report-data {
+    max-height: 80vh;
+    overflow: scroll;
+    padding: 0.3rem;
+    margin-top: 0.7rem;
+    table, th, td {
+        border: 1px solid #ccc;
+    }
+    thead th {
+        text-align: center;
+    }
+    tbody {
+        tr:nth-child(even) {
+            background: #fafafa;
+        }
+    }
+}
+
 // END ========================================================================
