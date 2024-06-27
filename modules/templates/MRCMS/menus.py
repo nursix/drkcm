@@ -79,7 +79,7 @@ class MainMenu(default.MainMenu):
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
             MM("Food Distribution", c="dvr", f="case_event", m="register_food", p="create",
                restrict = "CATERING",
-               check = lambda i: not is_admin,
+               check = not is_admin,
                ),
             shelter_menu,
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
