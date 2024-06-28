@@ -113,35 +113,48 @@
          * Reads the report parameters from the form
          *
          * @returns {object} - the report parameters as object
-         *                     {organisation, date, _formkey},
+         *                     {organisation, shelter, start_date, end_date, _formkey},
          */
         _getParameters: function() {
 
             const $el = $(this.element),
                   organisationID = $('select[name="organisation_id"]', $el).val(),
+                  shelterID = $('select[name="shelter_id"]', $el).val(),
                   formKey = $('input[name="formkey"]', $el).val(),
-                  dateInput = $('input[name="date"]', $el);
+                  params = {
+                    organisation: organisationID,
+                    shelter: shelterID,
+                    _formkey: formKey
+                  };
 
-            var dt = dateInput.length ? dateInput.calendarWidget('getJSDate') : null,
-                date = null;
-            if (dt) {
-                date = dt.getFullYear() + '-' +
-                       ('0' + (dt.getMonth() + 1)).slice(-2) + '-' +
-                       ('0' + dt.getDate()).slice(-2);
-            }
+            var dtName, dtInput, dt, date;
+            [['start_date', false], ['end_date', true]].forEach(function(dateField) {
+                dtName = dateField[0];
+                dtInput = $('input[name="' + dtName + '"]', $el);
+                dt = dtInput.length ? dtInput.calendarWidget('getJSDate', dateField[1]) : null;
+                if (dt) {
+                    params[dtName] = dt.toISOString();
+                }
+            });
 
-            return {
-                organisation: organisationID,
-                date: date,
-                _formkey: formKey
-            };
+            return params;
         },
 
         /**
          * Disables the report parameter form
          */
         _disableForm: function() {
-            $('select,input,button', $(this.element)).prop('disabled', true);
+
+            var $this;
+            $('select,input,button', $(this.element)).each(function() {
+                $this = $(this);
+                if (!$this.prop('disabled')) {
+                    $this.prop('disabled', true);
+                    if (!$this.hasClass('state-enabled')) {
+                        $this.addClass('state-enabled');
+                    }
+                }
+            });
         },
 
         /**
@@ -149,7 +162,9 @@
          */
         _enableForm: function() {
 
-            $('select,input,button', $(this.element)).prop('disabled', false);
+            $('select.state-enabled,input.state-enabled,button.state-enabled', $(this.element)).each(function() {
+                $(this).removeClass('state-enabled').prop('disabled', false);
+            });
         },
 
         /**
@@ -164,7 +179,7 @@
             // Get request parameters
             const url = this.options.ajaxURL,
                   params = this._getParameters();
-            if (!params.organisation || !params.date || !url) {
+            if (!params.organisation || !params.start_date || !params.end_date || !url) {
                 this._enableForm();
                 return;
             }
@@ -201,7 +216,7 @@
 
             // Get request parameters
             const params = this._getParameters();
-            if (!params.organisation || !params.date || !url) {
+            if (!params.organisation || !params.start_date || !params.end_date || !url) {
                 this._enableForm();
                 return;
             }

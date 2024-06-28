@@ -17,7 +17,8 @@ from gluon.streamer import DEFAULT_CHUNK_SIZE
 from s3dal import Field
 
 from core import CRUDMethod, CustomController, DateField, FormKey, \
-                 ICON, IS_ONE_OF, JSONERRORS, S3DateTime, XLSXWriter, s3_str
+                 ICON, IS_ONE_OF, IS_ONE_OF_EMPTY, JSONERRORS, JSONSEPARATORS, \
+                 S3DateTime, XLSXWriter, s3_decode_iso_datetime, s3_str
 
 # =============================================================================
 class PresenceList(CRUDMethod):
@@ -498,9 +499,14 @@ class PresenceReport(CRUDMethod):
             r.unauthorised()
         default_org = org_ids[0] if len(org_ids) == 1 else None
 
+        # Date interval
+        today = current.request.utcnow.date()
+        one_month_ago = today - relativedelta(months=1)
+
         # Create form to select organisation and date
         ctable = s3db.dvr_case
         otable = s3db.org_organisation
+        rtable = s3db.cr_shelter_registration
         dbset = db(otable.id.belongs(org_ids))
         formfields = [Field("organisation_id",
                             label = T("Organization"),
@@ -509,12 +515,38 @@ class PresenceReport(CRUDMethod):
                                                  ),
                             default = default_org,
                             ),
-                      DateField("date",
-                                label = T("Date"),
-                                default = "now",
+                      Field("shelter_id",
+                            label = T("Shelter"),
+                            requires = IS_ONE_OF_EMPTY(db, "cr_shelter.id",
+                                                       rtable.shelter_id.represent,
+                                                       ),
+                            ),
+
+                      DateField("start_date",
+                                label = T("From Date"),
+                                default = one_month_ago,
                                 future = 0,
+                                set_min = "#presence_report_end_date",
+                                ),
+                      DateField("end_date",
+                                label = T("Until Date"),
+                                default = today,
+                                future = 0,
+                                set_max = "#presence_report_start_date",
                                 ),
                       ]
+
+        # Filter shelter list to just those for organisation
+        options = {"trigger": "organisation_id",
+                   "target": "shelter_id",
+                   "lookupPrefix": "cr",
+                   "lookupResource": "shelter",
+                   "showEmptyField": False,
+                   "optional": True,
+                   }
+        jquery_ready = current.response.s3.jquery_ready
+        jquery_ready.append('''$.filterOptionsS3(%s)''' % \
+                            json.dumps(options, separators=JSONSEPARATORS))
 
         # Hidden inputs
         hidden = {"formkey": FormKey("presence_report").generate(),
@@ -535,11 +567,12 @@ class PresenceReport(CRUDMethod):
         widget_id = "presence-report"
         container_id = "%s-data" % widget_id
 
-        formstyle = current.deployment_settings.get_ui_formstyle()
+        formstyle = current.deployment_settings.get_ui_filter_formstyle()
         form = SQLFORM.factory(*formfields,
                                record = None,
                                showid = False,
                                formstyle = formstyle,
+                               table_name = "presence_report",
                                hidden = hidden,
                                buttons = buttons,
                                _id = widget_id,
@@ -573,7 +606,7 @@ class PresenceReport(CRUDMethod):
                 r: the CRUDRequest
 
             Returns:
-                tuple (organisation_id, date)
+                tuple (organisation_id, shelter_id, start_date, end_date)
 
             Raises:
                 HTTP400 for invalid parameters or formkey mismatch
@@ -601,13 +634,28 @@ class PresenceReport(CRUDMethod):
         except (ValueError, TypeError):
             r.error(400, "Invalid or missing organisation parameter")
 
-        # Extract report reference date
-        dtstr = options.get("date")
-        date = current.calendar.parse_date(dtstr)
-        if not date:
-            r.error(400, "Invalid or missing date parameter")
+        # Extract shelter ID
+        shelter = options.get("shelter")
+        if shelter:
+            try:
+                shelter_id = int(shelter)
+            except (ValueError, TypeError):
+                r.error(400, "Invalid shelter parameter")
+        else:
+            shelter_id = None
 
-        return organisation_id, date
+        # Extract report reference date
+        dtstr = options.get("start_date")
+        start_date = s3_decode_iso_datetime(dtstr)
+        if not start_date:
+            r.error(400, "Invalid or missing start date parameter")
+
+        dtstr = options.get("end_date")
+        end_date = s3_decode_iso_datetime(dtstr)
+        if not end_date:
+            r.error(400, "Invalid or missing end_date parameter")
+
+        return organisation_id, shelter_id, start_date, end_date
 
     # -------------------------------------------------------------------------
     def json(self, r, **attr):
@@ -625,14 +673,14 @@ class PresenceReport(CRUDMethod):
         T = current.T
 
         # Read request parameters
-        organisation_id, date = self.parameters(r)
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r)
 
         # Check permissions
         if not self.permitted(organisation_id=organisation_id):
             r.unauthorised()
 
         # Extract the data
-        data = self.extract(organisation_id, date)
+        data = self.extract(organisation_id, shelter_id, start_date, end_date)
 
         extension = [("presence.event_type", T("Last Presence Registration")),
                      ("presence.shelter_name", T("Place")),
@@ -679,14 +727,14 @@ class PresenceReport(CRUDMethod):
         T = current.T
 
         # Read request parameters
-        organisation_id, date = self.parameters(r)
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r)
 
         # Check permissions
         if not self.permitted(organisation_id=organisation_id):
             r.unauthorised()
 
         # Extract the data
-        data = self.extract(organisation_id, date)
+        data = self.extract(organisation_id, shelter_id, start_date, end_date)
 
         # Prepare the input for XLSXWriter
         table_data = {"columns": [],
@@ -714,15 +762,18 @@ class PresenceReport(CRUDMethod):
 
         # Use a title row (also includes exported-date)
         current.deployment_settings.base.xls_title_row = True
-        title = "%s - %s" % (T("Presence Report"),
-                             S3DateTime.date_represent(date, utc=True),
-                             )
+        title = "%s %s -- %s" % (T("Presence Report"),
+                                 S3DateTime.date_represent(start_date, utc=True),
+                                 S3DateTime.date_represent(end_date, utc=True),
+                                 )
 
         # Generate XLSX byte stream
         output = XLSXWriter.encode(table_data, title=title, as_stream=True)
 
         # Set response headers
-        filename = "presence_report_%s" % date.strftime("%Y%m%d")
+        filename = "presence_report_%s_%s" % (start_date.strftime("%Y%m%d"),
+                                              end_date.strftime("%Y%m%d"),
+                                              )
         disposition = "attachment; filename=\"%s\"" % filename
         response = current.response
         response.headers["Content-Type"] = contenttype(".xlsx")
@@ -772,14 +823,18 @@ class PresenceReport(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def extract(cls, organisation_id, date):
+    def extract(cls, organisation_id, shelter_id, start_date, end_date):
         """
-            Extracts the case data and last sighting events for all open cases
-            of the organisation on the given date
+            Looks up the case data and last sighting events for all residents
+            of a shelter that were checked-in there during the date interval;
+            if no shelter is specified, all cases of the organisation during
+            that interval are looked at instead
 
             Args:
                 organisation_id: the organisation record ID
-                date: the cutoff date
+                shelter_id: the shelter record ID (optional)
+                start_date: start date of the interval
+                end_date: end date of the interval
 
             Returns:
                 ResourceData instance (pr_person) with extended rows
@@ -800,14 +855,26 @@ class PresenceReport(CRUDMethod):
                        "person_details.nationality",
                        ]
 
-        # All persons with open cases with this organisation on that date
-        table = s3db.dvr_case
-        query = (table.organisation_id == organisation_id) & \
-                ((table.date == None) | (table.date <= date)) & \
-                ((table.closed_on == None) | (table.closed_on >= date)) & \
-                (table.archived == False) & \
-                (table.deleted == False)
-        person_ids = db(query)._select(table.person_id)
+        stable = s3db.cr_shelter
+        if shelter_id:
+            # Limit to residents of this shelter
+            person_ids = cls.residents(shelter_id, start_date, end_date)
+
+            # Include only presence events at this shelter
+            squery = (stable.id == shelter_id)
+        else:
+            # All persons with open cases with this organisation
+            table = s3db.dvr_case
+            query = (table.organisation_id == organisation_id) & \
+                    ((table.date == None) | (table.date <= end_date)) & \
+                    ((table.closed_on == None) | (table.closed_on >= start_date)) & \
+                    (table.archived == False) & \
+                    (table.deleted == False)
+            person_ids = db(query)._select(table.person_id)
+
+            # Include presence events at any shelter of the organisation
+            squery = (stable.organisation_id == organisation_id) & \
+                     (stable.deleted == False)
 
         # Retrieve the case data
         resource = s3db.resource("pr_person")
@@ -819,16 +886,21 @@ class PresenceReport(CRUDMethod):
                                   )
 
         # All relevant shelters
-        stable = s3db.cr_shelter
-        query = (stable.organisation_id == organisation_id) & \
-                (stable.deleted == False)
-        site_ids = db(query)._select(stable.site_id)
+        site_ids = db(squery)._select(stable.site_id)
 
         # Last presence events for the persons at any of these shelters
-        presence_events = cls.last_site_presence_event(person_ids, site_ids, date)
+        presence_events = cls.last_site_presence_event(person_ids,
+                                                       site_ids,
+                                                       start_date,
+                                                       end_date,
+                                                       )
 
         # Last checkpoint events for the persons with this organisation
-        case_events = cls.last_case_event(person_ids, organisation_id, date)
+        case_events = cls.last_case_event(person_ids,
+                                          organisation_id,
+                                          start_date,
+                                          end_date,
+                                          )
 
         # Representation functions
         ptable = s3db.org_site_presence_event
@@ -870,15 +942,78 @@ class PresenceReport(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def last_case_event(person_ids, organisation_id, date):
+    def residents(shelter_id, start_date, end_date):
         """
-            Retrieves the last case events (checkpoint events) before or
-            on date, where personal presence was required
+            Looks up the person_ids of all residents who were checked-in
+            at the specified shelter at any time during the date interval
+
+            Args:
+                shelter_id: the shelter record ID
+                start_date: start date of the interval
+                end_date: end date of the interval
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.cr_shelter_registration_history
+
+        # All residents checked-in to this shelter between start and end date
+        query = (table.shelter_id == shelter_id) & \
+                (table.status == 2) & \
+                (table.date >= start_date) & \
+                (table.date <= end_date) & \
+                (table.deleted == False)
+        rows = db(query).select(table.person_id, distinct=True)
+        person_ids = {row.person_id for row in rows}
+
+        # Other residents that have been checked-in to this shelter before
+        # start date
+        # TODO exclude all cases where the current registration is
+        #      checked-out with an effective date before start_date
+        # TODO also exclude all persons where the current registration is
+        #      checked-in to another shelter with effective date before
+        #      start date
+        query = (table.shelter_id == shelter_id) & \
+                (table.status == 2) & \
+                (table.date < start_date) & \
+                (~(table.person_id.belongs(person_ids))) & \
+                (table.deleted == False)
+        previous = db(query)._select(table.person_id, distinct=True)
+
+        # Dates of the last status change for each of those previous residents
+        query = (table.person_id.belongs(previous)) & \
+                (table.date < start_date) & \
+                (table.deleted == False)
+        last_event = db(query).nested_select(table.person_id,
+                                             table.date.max().with_alias("max_date"),
+                                             groupby = table.person_id,
+                                             ).with_alias("last_event")
+
+        # Any history entries matching these dates that represent check-ins
+        # to this shelter (i.e. all residents that were last checked-in to this
+        # shelter before start_date)
+        join = last_event.on((last_event.person_id == table.person_id) & \
+                             (last_event.max_date == table.date))
+        query = (table.shelter_id == shelter_id) & \
+                (table.status == 2)
+        rows = db(table.id > 0).select(table.person_id, join=join, distinct=True)
+        person_ids |= {row.person_id for row in rows}
+
+        return person_ids
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def last_case_event(person_ids, organisation_id, start_date, end_date):
+        """
+            Retrieves the last case events (checkpoint events) during the date
+            interval, where personal presence was required
 
             Args:
                 person_ids: the person record IDs of the relevant clients
                 organisation_id: the organisation defining the event types
-                date: the cutoff date
+                start_date: start date of the interval
+                end_date: end_date of the interval
 
             Returns:
                 a dict {person_id: dvr_case_event Row}, with the
@@ -900,7 +1035,8 @@ class PresenceReport(CRUDMethod):
         table = s3db.dvr_case_event
         query = (table.person_id.belongs(person_ids)) & \
                 (table.type_id.belongs(event_types)) & \
-                (table.date <= date) & \
+                (table.date >= start_date) & \
+                (table.date <= end_date) & \
                 (table.deleted == False)
         last_event = db(query).nested_select(table.person_id,
                                              table.date.max().with_alias("max_date"),
@@ -933,15 +1069,16 @@ class PresenceReport(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def last_site_presence_event(person_ids, site_ids, date):
+    def last_site_presence_event(person_ids, site_ids, start_date, end_date):
         """
-            Retrieves the last site presence events (IN|OUT) before or on
-            date
+            Retrieves the last site presence events (IN|OUT) at any of the
+            specified sites during the date interval
 
             Args:
                 person_ids: the person record IDs of the relevant clients
                 site_ids: the site_id of the relevant shelters
-                date: the cutoff date
+                start_date: start date of the interval
+                end_date: end date of the interval
 
             Returns:
                 a dict {person_id: org_site_presence_event Row}, with
@@ -957,7 +1094,8 @@ class PresenceReport(CRUDMethod):
         query = (table.person_id.belongs(person_ids)) & \
                 (table.site_id.belongs(site_ids)) & \
                 (table.event_type.belongs(("IN", "OUT"))) & \
-                (table.date <= date) & \
+                (table.date >= start_date) & \
+                (table.date <= end_date) & \
                 (table.deleted == False)
         last_event = db(query).nested_select(table.person_id,
                                              table.date.max().with_alias("max_date"),
