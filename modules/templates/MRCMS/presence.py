@@ -958,22 +958,19 @@ class PresenceReport(CRUDMethod):
 
         table = s3db.cr_shelter_registration_history
 
-        # All residents checked-in to this shelter between start and end date
+        # All residents checked-in to or checked-out from this shelter
+        # during the interval
         query = (table.shelter_id == shelter_id) & \
-                (table.status == 2) & \
+                (table.status.belongs(2, 3)) & \
                 (table.date >= start_date) & \
                 (table.date <= end_date) & \
                 (table.deleted == False)
         rows = db(query).select(table.person_id, distinct=True)
         person_ids = {row.person_id for row in rows}
 
-        # Other residents that have been checked-in to this shelter before
-        # start date
-        # TODO exclude all cases where the current registration is
-        #      checked-out with an effective date before start_date
-        # TODO also exclude all persons where the current registration is
-        #      checked-in to another shelter with effective date before
-        #      start date
+        # Other residents that have been checked-in to this shelter
+        # before the interval
+        # TODO limit this to cases that were still open during the interval
         query = (table.shelter_id == shelter_id) & \
                 (table.status == 2) & \
                 (table.date < start_date) & \
