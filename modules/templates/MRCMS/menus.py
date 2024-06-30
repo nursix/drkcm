@@ -325,6 +325,7 @@ class OptionsMenu(default.OptionsMenu):
                     ),
                 M("Reports", link=False)(
                     M("Presence", c="dvr", f="person", m="presence_report",
+                      t = "org_site_presence_event", p="read",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                       ),
                     ),
