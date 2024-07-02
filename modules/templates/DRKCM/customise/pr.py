@@ -170,15 +170,9 @@ def pr_person_resource(r, tablename):
                            )
 
             if current.auth.s3_has_role("CASE_MANAGEMENT"):
-                # Allow use of Document Templates
-                s3db.set_method("pr_person",
-                                method = "templates",
-                                action = s3db.pr_Templates(),
-                                )
-                s3db.set_method("pr_person",
-                                method = "template",
-                                action = s3db.pr_Template(),
-                                )
+
+                from core import GenerateDocument
+                GenerateDocument.configure("pr_person")
 
     # Configure components to inherit realm_entity from person record
     pr_person_set_realm_components()

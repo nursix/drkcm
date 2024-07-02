@@ -1058,7 +1058,7 @@ class CRUDRequest:
 
         if not os.path.exists(stylesheet):
             if not skip_error:
-                self.error(501, "%s: %s" % (current.ERROR.BAD_TEMPLATE,
+                self.error(501, "%s: %s" % (current.T("XSLT stylesheet not found"),
                                             stylesheet,
                                             ))
             stylesheet = None

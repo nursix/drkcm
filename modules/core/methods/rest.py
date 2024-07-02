@@ -307,7 +307,7 @@ class RESTful(CRUDMethod):
         if not source:
             if filenames or fetchurls:
                 # Error: source not found
-                r.error(400, "Invalid source")
+                r.error(400, current.ERROR.BAD_SOURCE)
             else:
                 # No source specified => return resource structure
                 return r.get_struct(r, **attr)

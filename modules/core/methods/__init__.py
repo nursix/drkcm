@@ -5,6 +5,7 @@ from .cico import *
 from .crud import *
 from .checkpoint import Checkpoint
 from .filtermgr import *
+from .gendoc import GenerateDocument
 from .grouped import *
 from .hcrud import *
 from .mapview import *

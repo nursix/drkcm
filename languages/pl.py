@@ -4072,7 +4072,6 @@
 'Record could not be approved.': 'Rekord nie może zostać zatwierdzony.',
 'Record could not be deleted.': 'Rekord nie może zostać usunięty.',
 'Record deleted': 'Rekord usunięty',
-'Record not found!': 'Nie znaleziono rekordu!',
 'Record not found': 'Nie znaleziono rekordu',
 'Record updated': 'Rekord zaktualizowany',
 'Record': 'Rekord',

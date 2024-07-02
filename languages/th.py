@@ -4765,7 +4765,6 @@
 'Record deleted': 'ลบบันทึกแล้ว',
 'Record does not exist': 'ไม่มีบันทึก',
 'Record id': 'รหัสรายการ',
-'Record not found!': 'บันทึกไม่พบ!',
 'Record not found': 'ไม่พบระเบียน',
 'Record updated': 'อัปเดตระเบียนแล้ว',
 'Record': 'บันทึก',

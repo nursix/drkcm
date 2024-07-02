@@ -6,9 +6,7 @@
 
 from gluon import current, IS_NOT_EMPTY
 
-from core import represent_file, IS_ONE_OF, FS
-
-from s3db.pr import pr_Templates
+from core import represent_file, GenerateDocument, IS_ONE_OF, FS
 
 # -------------------------------------------------------------------------
 def doc_image_resource(r, tablename):
@@ -333,19 +331,19 @@ def doc_set_default_organisation(r, table=None):
         table.organisation_id.default = organisation_id
 
 # -------------------------------------------------------------------------
-class CaseDocumentTemplates(pr_Templates):
+class GenerateCaseDocument(GenerateDocument):
     """
-        Custom version of pr_Templates that uses the case organisation
+        Custom version of GenerateDocument that uses the case organisation
         rather than the user organisation for template lookup
     """
 
     @staticmethod
-    def get_templates(r):
+    def template_query(r):
 
         person = r.record
 
         if r.tablename != "pr_person" or not person:
-            return super().get_templates(r)
+            return super().template_query(r)
 
         s3db = current.s3db
 
@@ -356,11 +354,7 @@ class CaseDocumentTemplates(pr_Templates):
         query = (table.organisation_id == organisation_id) & \
                 (table.is_template == True) & \
                 (table.deleted == False)
-        templates = current.db(query).select(table.id,
-                                             table.name,
-                                             orderby = table.name,
-                                             )
 
-        return templates
+        return query
 
 # END =========================================================================

@@ -4620,7 +4620,6 @@
 'Record could not be deleted.': 'Rekord nuk mund të fshihet.',
 'Record deleted': 'Rekord fshihet',
 'Record id': 'ID rekord',
-'Record not found!': 'Regjistro nuk u gjet!',
 'Record not found': 'Regjistro nuk u gjet',
 'Record updated': 'Regjistrimi i përditësuar',
 'Record': 'Rekord',

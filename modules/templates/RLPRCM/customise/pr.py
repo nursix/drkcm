@@ -229,17 +229,10 @@ def pr_person_resource(r, tablename):
                 if bulk_actions:
                     resource.configure(bulk_actions = bulk_actions)
 
-                # Disabled due to requirement for skills to create templates:
+                ## Disabled due to requirement for skills to create templates:
                 ## Configure case document template methods
-                #from .doc import CaseDocumentTemplates
-                #s3db.set_method("pr_person",
-                #                method = "templates",
-                #                action = CaseDocumentTemplates,
-                #                )
-                #s3db.set_method("pr_person",
-                #                method = "template",
-                #                action = s3db.pr_Template,
-                #                )
+                #from .doc import GenerateCaseDocument
+                #GenerateCaseDocument.configure("pr_person")
 
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case
@@ -1361,7 +1354,7 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
                 anonymize = AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
                 inject_button(output, anonymize, before="delete_btn", alt=None)
 
-            # Disabled due to requirement for skills to create templates
+            ## Disabled due to requirement for skills to create templates
             #if is_case_admin:
             #    # Doc-From-Template-button (requires appropriate role)
             #    doc_from_template = A(T("Document from Template"),
