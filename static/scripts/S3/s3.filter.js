@@ -693,22 +693,8 @@ S3.search = {};
             urlVar = $('#' + id + '-data').val();
             value = $this.val();
 
-            var years = value - 0;
-            if (value && !isNaN(years)) {
-                var m = urlVar.match(FILTEROP);
-                if (m && m[1] == 'gt') {
-                    // Age in years is the same until one day before
-                    // the next birthday, so must add one year here:
-                    years += 1;
-                }
-                // Convert years (ago) into a date
-                var dt = new Date();
-                dt.setYear(dt.getFullYear() - years);
-                // Convert to ISO format
-                dt = dt.getFullYear() + '-' +
-                       ('0' + (dt.getMonth() + 1)).slice(-2) + '-' +
-                       ('0' + dt.getDate()).slice(-2);
-                queries.push([urlVar, dt]);
+            if (value !== '') {
+                queries.push([urlVar, value]);
             } else {
                 queries.push([urlVar, null]);
             }
@@ -929,6 +915,24 @@ S3.search = {};
                     $this.calendarWidget('setJSDate', new Date(dtString));
                 } else {
                     $this.calendarWidget('clear');
+                }
+            }
+        });
+
+        // Age filter widgets
+        form.find('.age-filter-input').each(function() {
+            $this = $(this);
+            id = $this.attr('id');
+            expression = $('#' + id + '-data').val();
+            if (q.hasOwnProperty(expression)) {
+                if (!$this.is(':visible') && !$this.hasClass('active')) {
+                    toggleAdvanced(form);
+                }
+                values = q[expression];
+                if (values) {
+                    $this.val(values[0]);
+                } else {
+                    $this.val('');
                 }
             }
         });

@@ -644,6 +644,8 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
                           ),
             AgeFilter("date_of_birth",
                       label = T("Age"),
+                      extra_options = [("6 %s" % T("months"), "-6M")],
+                      #include = "upper",
                       hidden = True,
                       ),
             OptionsFilter("person_details.nationality",

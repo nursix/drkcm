@@ -35,7 +35,7 @@ import time
 from gluon import IS_TIME
 from gluon.languages import lazyT
 
-from .calendar import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime
+from .calendar import ISOFORMAT, s3_decode_iso_datetime, s3_relative_datetime, S3DateTime
 
 # =============================================================================
 class S3TypeConverter:
@@ -205,7 +205,7 @@ class S3TypeConverter:
                 # Relative datime expression?
                 dt = s3_relative_datetime(b)
                 if dt:
-                    value = dt.date()
+                    value = S3DateTime.to_local(dt).date()
             if value is None:
                 from .validators import IS_UTC_DATE
                 # Try ISO format first (e.g. DateFilter)
