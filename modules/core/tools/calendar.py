@@ -60,7 +60,7 @@ from gluon import current
 #
 ISOFORMAT = "%Y-%m-%dT%H:%M:%S" #: ISO 8601 Combined Date+Time format
 OFFSET = re.compile(r"([+|-]{0,1})(\d{1,2}):(\d\d)")
-RELATIVE = re.compile(r"([+-]{0,1})([0-9]*)([YMDhms])")
+RELATIVE = re.compile(r"([+-]{0,1})([0-9]*)([YMWDhms])")
 SECONDS = {"W": 604800, "D": 86400, "h": 3600, "m": 60, "s": 1}
 
 # =============================================================================
