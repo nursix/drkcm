@@ -504,11 +504,11 @@ class AgeFilter(RangeFilter):
 
         super().__init__(field=field, **attr)
 
-        mode = self.opts.get("exact_age")
+        mode = self.opts.get("exact")
         if mode == "from":
-            self.operator = ["lt", "ge"]
-        elif mode == "to":
             self.operator = ["le", "gt"]
+        elif mode == "to":
+            self.operator = ["lt", "ge"]
 
     # -------------------------------------------------------------------------
     def widget(self, resource, values):
@@ -551,7 +551,8 @@ class AgeFilter(RangeFilter):
 
             # Selectable options
             options = self.options(value)
-            input_opts = [OPTION("", _value="")]
+            zero = self.opts.get("zero", "") if operator in ("le", "lt") else ""
+            input_opts = [OPTION(zero, _value="")]
             selected_value = None
             for l, v, _, selected in options:
                 if selected:
