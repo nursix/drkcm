@@ -471,7 +471,7 @@ class PresenceReport(BaseReport):
 
         # Use a title row (also includes exported-date)
         current.deployment_settings.base.xls_title_row = True
-        title = "%s %s -- %s" % (T("Presence Report"),
+        title = "%s %s -- %s" % (self.report_title,
                                  S3DateTime.date_represent(start_date, utc=True),
                                  S3DateTime.date_represent(end_date, utc=True),
                                  )
