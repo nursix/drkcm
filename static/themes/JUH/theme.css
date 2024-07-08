@@ -5391,29 +5391,29 @@ h4.profile-sub-header {
   margin: 0.7rem 1.4rem;
 }
 
-/* line 627, ../scss/theme/_misc.scss */
-.presence-report-form {
+/* line 628, ../scss/theme/_misc.scss */
+.table-report-form {
   width: auto;
   border: 1px solid #eee;
   padding: 0.5rem;
 }
 
-/* line 632, ../scss/theme/_misc.scss */
-.presence-report-data {
+/* line 633, ../scss/theme/_misc.scss */
+.table-report-data {
   max-height: 80vh;
   overflow: scroll;
   padding: 0.3rem;
   margin-top: 0.7rem;
 }
-/* line 637, ../scss/theme/_misc.scss */
-.presence-report-data table, .presence-report-data th, .presence-report-data td {
+/* line 638, ../scss/theme/_misc.scss */
+.table-report-data table, .table-report-data th, .table-report-data td {
   border: 1px solid #ccc;
 }
-/* line 640, ../scss/theme/_misc.scss */
-.presence-report-data thead th {
+/* line 641, ../scss/theme/_misc.scss */
+.table-report-data thead th {
   text-align: center;
 }
-/* line 644, ../scss/theme/_misc.scss */
-.presence-report-data tbody tr:nth-child(even) {
+/* line 645, ../scss/theme/_misc.scss */
+.table-report-data tbody tr:nth-child(even) {
   background: #fafafa;
 }

@@ -916,6 +916,12 @@ def dvr_case_event_resource(r, tablename):
                     action = FoodDistribution,
                     )
 
+    from ..reports import MealsReport
+    s3db.set_method("dvr_case_event",
+                    method = "meals_report",
+                    action = MealsReport,
+                    )
+
 # -------------------------------------------------------------------------
 def dvr_case_event_controller(**attr):
 

@@ -1,5 +1,5 @@
 /**
- * MRCMS Presence Report (jQuery UI Widget)
+ * MRCMS Table Report (jQuery UI Widget)
  *
  * @copyright 2024 (c) AHSS
  * @license MIT
@@ -8,12 +8,12 @@
 
     "use strict";
 
-    var presenceReportID = 0;
+    var tableReportID = 0;
 
     /**
-     * presenceReport, instantiated on form
+     * tableReport, instantiated on form
      */
-    $.widget('dvr.presenceReport', {
+    $.widget('mrcms.tableReport', {
 
         /**
          * Default options
@@ -26,7 +26,7 @@
         options: {
             ajaxURL: '',
             xlsxURL: '',
-            tableContainer: 'presence-report-data',
+            tableContainer: 'table-report-data',
 
             labelNoData: 'No data available'
         },
@@ -36,11 +36,11 @@
          */
         _create: function() {
 
-            this.id = presenceReportID;
-            presenceReportID += 1;
+            this.id = tableReportID;
+            tableReportID += 1;
 
             // Namespace for events
-            this.eventNamespace = '.presenceReport';
+            this.eventNamespace = '.tableReport';
         },
 
         /**

@@ -328,6 +328,9 @@ class OptionsMenu(default.OptionsMenu):
                       t = "org_site_presence_event", p="read",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                       ),
+                    M("Food Distribution", c="dvr", f="case_event", m="meals_report",
+                      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                      ),
                     ),
                 M("Archive", link=False)(
                     M("Closed Cases", f="person",

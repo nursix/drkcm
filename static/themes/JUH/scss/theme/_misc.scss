@@ -624,12 +624,13 @@
     }
 }
 
-.presence-report-form {
+// Table reports
+.table-report-form {
     width: auto;
     border: 1px solid #eee;
     padding: 0.5rem;
 }
-.presence-report-data {
+.table-report-data {
     max-height: 80vh;
     overflow: scroll;
     padding: 0.3rem;
