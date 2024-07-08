@@ -316,67 +316,6 @@ class BaseReport(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def residents(shelter_id, start_date, end_date):
-        """
-            Looks up the person_ids of all residents who were checked-in
-            at the specified shelter at any time during the date interval
-
-            Args:
-                shelter_id: the shelter record ID
-                start_date: start date of the interval
-                end_date: end date of the interval
-
-            Returns:
-                a set of person IDs
-        """
-
-        db = current.db
-        s3db = current.s3db
-
-        table = s3db.cr_shelter_registration_history
-
-        # All residents checked-in to or checked-out from this shelter
-        # during the interval
-        query = (table.shelter_id == shelter_id) & \
-                (table.status.belongs(2, 3)) & \
-                (table.date >= start_date) & \
-                (table.date <= end_date) & \
-                (table.deleted == False)
-        rows = db(query).select(table.person_id, distinct=True)
-        person_ids = {row.person_id for row in rows}
-
-        # Other residents that have been checked-in to this shelter
-        # before the interval
-        query = (table.shelter_id == shelter_id) & \
-                (table.status == 2) & \
-                (table.date < start_date) & \
-                (~(table.person_id.belongs(person_ids))) & \
-                (table.deleted == False)
-        previous = db(query)._select(table.person_id, distinct=True)
-
-        # Dates of the last status change for each of those previous residents
-        query = (table.person_id.belongs(previous)) & \
-                (table.date < start_date) & \
-                (table.deleted == False)
-        last_event = db(query).nested_select(table.person_id,
-                                             table.date.max().with_alias("max_date"),
-                                             groupby = table.person_id,
-                                             ).with_alias("last_event")
-
-        # Any history entries matching these dates that represent check-ins
-        # to this shelter (i.e. all residents that were last checked-in to this
-        # shelter before start_date)
-        join = last_event.on((last_event.person_id == table.person_id) & \
-                             (last_event.max_date == table.date))
-        query = (table.shelter_id == shelter_id) & \
-                (table.status == 2)
-        rows = db(table.id > 0).select(table.person_id, join=join, distinct=True)
-        person_ids |= {row.person_id for row in rows}
-
-        return person_ids
-
-    # -------------------------------------------------------------------------
-    @staticmethod
     def inject_script(widget_id, options):
         """
             Inject the necessary JavaScript for the UI dialog
@@ -709,6 +648,67 @@ class PresenceReport(BaseReport):
             row.update(details)
 
         return persons
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def residents(shelter_id, start_date, end_date):
+        """
+            Looks up the person_ids of all residents who were checked-in
+            at the specified shelter at any time during the date interval
+
+            Args:
+                shelter_id: the shelter record ID
+                start_date: start date of the interval
+                end_date: end date of the interval
+
+            Returns:
+                a set of person IDs
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.cr_shelter_registration_history
+
+        # All residents checked-in to or checked-out from this shelter
+        # during the interval
+        query = (table.shelter_id == shelter_id) & \
+                (table.status.belongs(2, 3)) & \
+                (table.date >= start_date) & \
+                (table.date <= end_date) & \
+                (table.deleted == False)
+        rows = db(query).select(table.person_id, distinct=True)
+        person_ids = {row.person_id for row in rows}
+
+        # Other residents that have been checked-in to this shelter
+        # before the interval
+        query = (table.shelter_id == shelter_id) & \
+                (table.status == 2) & \
+                (table.date < start_date) & \
+                (~(table.person_id.belongs(person_ids))) & \
+                (table.deleted == False)
+        previous = db(query)._select(table.person_id, distinct=True)
+
+        # Dates of the last status change for each of those previous residents
+        query = (table.person_id.belongs(previous)) & \
+                (table.date < start_date) & \
+                (table.deleted == False)
+        last_event = db(query).nested_select(table.person_id,
+                                             table.date.max().with_alias("max_date"),
+                                             groupby = table.person_id,
+                                             ).with_alias("last_event")
+
+        # Any history entries matching these dates that represent check-ins
+        # to this shelter (i.e. all residents that were last checked-in to this
+        # shelter before start_date)
+        join = last_event.on((last_event.person_id == table.person_id) & \
+                             (last_event.max_date == table.date))
+        query = (table.shelter_id == shelter_id) & \
+                (table.status == 2)
+        rows = db(table.id > 0).select(table.person_id, join=join, distinct=True)
+        person_ids |= {row.person_id for row in rows}
+
+        return person_ids
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1083,7 +1083,7 @@ class MealsReport(BaseReport):
         day = (table.date + (offset + ":00")).cast("date") if offset else table.date.cast("date")
 
         # Expression for total number of events
-        number = table.id.count()
+        number = table.id.count(distinct=True)
 
         # Extract data
         query = (table.type_id.belongs(set(event_types))) & \
@@ -1091,11 +1091,25 @@ class MealsReport(BaseReport):
                 (table.date < end_date) & \
                 (table.deleted == False)
         if shelter_id:
-            # Limit to residents of that shelter during the interval
-            residents = cls.residents(shelter_id, start_date, end_date)
-            query = table.person_id.belongs(residents)
-        rows = db(query).select(day, table.type_id, number, groupby=(day, table.type_id))
+            # Include only events where the client was a checked-in resident
+            # of that shelter at the time of the event
+            # Note: the join could result in multiple rows per event, so
+            #       must count distinct events in number-expression
+            registration = cls.registrations(shelter_id, start_date, end_date)
+            join = registration.on((registration.person_id == table.person_id) & \
+                                   (registration.date <= table.date) & \
+                                   ((registration.end_date == None) | \
+                                    (registration.end_date >= table.date)))
+        else:
+            # Include all events
+            join = None
 
+        rows = db(query).select(day,
+                                table.type_id,
+                                number,
+                                join = join,
+                                groupby = (day, table.type_id),
+                                )
         # Process the data
         for row in rows:
 
@@ -1127,5 +1141,54 @@ class MealsReport(BaseReport):
                 "types": types,
                 "rows": rows,
                 }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def registrations(shelter_id, start_date, end_date):
+        """
+            Constructs a nested select of shelter registration history entries
+            at the shelter with end dates
+
+            Args:
+                shelter_id: the cr_shelter record ID
+                start_date: the start of the date interval
+                end_date: the end of of the date interval
+
+            Returns:
+                a subselect with alias "registration", with fields
+                person_id, date and end_date
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        rtable = s3db.cr_shelter_registration_history
+        ntable = rtable.with_alias("next_event")
+
+        # Select all check-in events at this shelter before end_date
+        query = (rtable.shelter_id == shelter_id) & \
+                (rtable.status == 2) & \
+                (rtable.date <= end_date) & \
+                (rtable.deleted == False)
+
+        # Left join any subsequent events for the same person
+        # with change of shelter or status before end_date
+        left = ntable.on((ntable.person_id == rtable.person_id) & \
+                         (ntable.date > rtable.date) & \
+                         (ntable.date <= end_date) & \
+                         ((ntable.status.belongs((1,3))  | \
+                          (ntable.shelter_id != rtable.shelter_id))) & \
+                         (ntable.deleted == False))
+
+        # Select the earliest next-event date as end_date (could be None)
+        registrations = db(query).nested_select(rtable.person_id,
+                                                rtable.date,
+                                                ntable.date.min().with_alias("end_date"),
+                                                left = left,
+                                                groupby = (rtable.person_id, rtable.date),
+                                                orderby = (rtable.person_id, rtable.date),
+                                                ).with_alias("registration")
+
+        return registrations
 
 # END =========================================================================
