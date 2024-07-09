@@ -3832,7 +3832,7 @@
 'Minutes per Month': 'Minuten pro Monat',
 'Minutes should be a number greater than 0 and less than 60': 'Minuten muss eine Zahl größer als 0 und kleiner als 60 sein',
 'Mirandese': 'Mirandés',
-'Miscellaneous': 'Verschiedenes',
+'Miscellaneous': 'Sonstige',
 'Missed': 'Verpasst',
 'Missing Person Details': 'Nähere Angaben zur vermissten Person',
 'Missing Person Registry': 'Register der vermissten Personen',
