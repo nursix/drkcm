@@ -3237,6 +3237,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("zun", "Zuni"),
                 #("zxx", "No linguistic content; Not applicable"),
                 ("zza", "Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki"),
+                ("mis", "Miscellaneous"),
                 ]
 
         settings = current.deployment_settings
