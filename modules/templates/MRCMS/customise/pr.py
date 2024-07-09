@@ -283,7 +283,14 @@ def configure_person_tags():
                                                     },
                                                   "multiple": False,
                                                   },
-                                                 )
+                                                 ),
+                                dvr_case_language = ({"name": "mother_tongue",
+                                                      "joinby": "person_id",
+                                                      "filterby": {
+                                                          "quality": "N",
+                                                          },
+                                                      },
+                                                     ),
                                 )
 
 # -------------------------------------------------------------------------
@@ -772,16 +779,17 @@ def configure_case_list_fields(resource,
 
     # Custom list fields
     available_list_fields = [(T("ID"), "pe_label"),
+                             "dvr_case.organisation_id",
                              (T("Principal Ref.No."), "dvr_case.reference"),
                              (T("BAMF Ref.No."), "bamf.value"),
-                             # TODO "dvr_case.organisation_id", # not default
                              "last_name",
                              "first_name",
                              "date_of_birth",
                              # TODO age, # not default
                              "gender",
-                             # TODO "person_details.marital_status", # not default
+                             "person_details.marital_status",
                              "person_details.nationality",
+                             "mother_tongue.language",
                              # TODO residence status / permit, # not default
                              (T("Size of Family"), "dvr_case.household_size"),
                              case_status,
@@ -791,22 +799,30 @@ def configure_case_list_fields(resource,
                              # TODO presence (at assigned shelter), # not default
                              "dvr_case.last_seen_on",
                              ]
-    if fmt in ("xlsx", "xls"):
-        # Export all available list fields by default
-        list_fields = available_list_fields
-    else:
-        list_fields = [(T("ID"), "pe_label"),
-                       "last_name",
-                       "first_name",
-                       "date_of_birth",
-                       "gender",
-                       "person_details.nationality",
-                       case_status,
-                       case_date,
-                       shelter,
-                       unit,
-                       ]
 
+    list_fields = [(T("ID"), "pe_label"),
+                   "last_name",
+                   "first_name",
+                   "date_of_birth",
+                   "gender",
+                   "person_details.nationality",
+                   case_status,
+                   case_date,
+                   shelter,
+                   unit,
+                   ]
+
+    if fmt in ("xlsx", "xls"):
+        # Include external references
+        list_fields[1:1] = [(T("Principal Ref.No."), "dvr_case.reference"),
+                            (T("BAMF Ref.No."), "bamf.value"),
+                            ]
+
+        # Include household size
+        list_fields.insert(-4, (T("Size of Family"), "dvr_case.household_size"))
+
+        # Include last-seen-on date
+        list_fields.append("dvr_case.last_seen_on")
 
     resource.configure(list_fields = list_fields,
                        available_list_fields = available_list_fields,
