@@ -35,26 +35,16 @@ table {
     }
 }
 
-// DataTable
+// ----------------------------------------------------------------------------
+// The table itself
+// - child of form.dt-wrapper > div.dataTables_wrapper > div.dataTable_table
 //
-#table-container {
-    display: block;
-    margin-bottom: 1.5rem;
-    width: 100%;
-    .empty {
-        margin-top: 30px;
-        margin-left: 10px;
-    }
-}
-.dataTable_table {
-    // Scroll the table not the wrapper
-    overflow: auto;
-    clear: both;
-}
-table.dataTable {
+.dataTable {
+
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+
     thead, tbody, tfoot {
         th, td {
             border: 1px solid $datatables_border_color;
@@ -191,23 +181,17 @@ table.dataTable {
 
     }
     // Bulk-select
-    //.selected-action {
-        //margin: 0.35rem 0.2rem;
-    //}
     .bulk-select-options {
         input[type=checkbox] {
             margin-bottom: 0;
         }
     }
-    //input.bulkcheckbox[type=checkbox] {
-    //}
 
     // DataTable Responsive
     &.dtr-inline.collapsed tbody {
         td:first-child::before,
         th:first-child::before {
             top: 0.4rem;
-            //line-height: 0.9rem;
             background-color: $primary-color;
         }
         tr.parent td:first-child::before,
@@ -222,8 +206,32 @@ table.dataTable {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Wrapper and controls
+//
 .dataTables_wrapper {
 
+    // Scroll the table not the wrapper
+    .dataTable_table {
+        overflow: auto;
+        clear: both;
+    }
+
+    // Variable columns selection button
+    .dt-variable-columns {
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        padding: 0.2rem;
+        color: #666;
+        min-width: 2.5rem;
+        &:hover {
+            border-color: #aaa;
+            background-color: #eee;
+        }
+        cursor: pointer;
+    }
+
+    // Table controls
     .dataTables_bulk,
     .dataTables_filter,
     .dataTables_length {
@@ -269,20 +277,6 @@ table.dataTable {
                 margin-left: 0rem;
                 margin-right: 0.3rem;
             }
-        }
-    }
-
-    .dataTables_processing {
-        z-index: 99;
-        padding: 1rem 0 2rem;
-        top: 2.5rem;
-        left: 30%;
-        background-color: #fffbe0;
-        color: #737373;
-        border-color: #737373;
-        [dir=rtl] & {
-            left: unset;
-            right: 30%;
         }
     }
     .dataTables_info {
@@ -334,9 +328,22 @@ table.dataTable {
             }
         }
     }
+    .dataTables_processing {
+        z-index: 99;
+        padding: 1rem 0 2rem;
+        top: 2.5rem;
+        left: 30%;
+        background-color: #fffbe0;
+        color: #737373;
+        border-color: #737373;
+        [dir=rtl] & {
+            left: unset;
+            right: 30%;
+        }
+    }
 }
 
-// Independent scrolling and sticky header for non-responsive data tables
+// Overrides for scrollable (non-responsive) data tables
 .dt-wrapper.scrollable {
     .dataTable_table {
         max-height: 80vh;
@@ -345,100 +352,33 @@ table.dataTable {
         th, td {
             scroll-snap-align: end;
         }
-        .dataTable {
-            border-collapse: separate;
-            border-spacing: 0;
-            border-bottom: 0;
-            th, td {
-                border-top-width: 0;
-                border-right-width: 0;
+    }
+    .dataTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-bottom: 0;
+        th, td {
+            border-top-width: 0;
+            border-right-width: 0;
+        }
+        tr th:last-child,
+        tr td:last-child {
+            border-right-width: 1px;
+        }
+        thead {
+            tr:first-child th {
+                border-top-width: 1px
             }
-            tr th:last-child,
-            tr td:last-child {
-                border-right-width: 1px;
-            }
-            thead {
-                tr:first-child th {
-                    border-top-width: 1px
-                }
-                position: sticky;
-                top: 0;
-                background-color: $datatables_bgcolor_head;
-            }
+            position: sticky;
+            top: 0;
+            background-color: $datatables_bgcolor_head;
         }
     }
 }
 
 // ----------------------------------------------------------------------------
-// Export Options
+// Variable columns selection dialog
 //
-.dt-export-options {
-    float: right;
-    padding-top: 5px;
-    .list_formats {
-        padding-top: 0;
-        margin: 0 0.2rem;
-        .dt-export {
-            display: inline-block;
-            margin: 0 0.15rem;
-            cursor: pointer;
-            height: 16px;
-            width: 16px;
-            background-repeat: no-repeat;
-            &.fa {
-                font-size: 14px;
-                padding: 0;
-                padding-top: 2px;
-            }
-            &.export_cap {
-                background-image: url(../../img/cap_16.png);
-            }
-            &.export_have {
-                background-image: url(../../img/have_16.png);
-            }
-            &.export_kml {
-                background-image: url(../../img/kml_icon.png);
-            }
-            &.export_map {
-                background-image: url(../../img/map_icon.png);
-            }
-            &.export_pdf {
-                background-image: url(../../img/pdficon_small.gif);
-            }
-            &.export_rss {
-                background-image: url(../../img/RSS_16.png);
-            }
-            &.export_xls {
-                background-image: url(../../img/icon-xls.png);
-            }
-            &.export_xlsx {
-                background-image: url(../../img/icon-xls.png);
-            }
-            &.export_xml {
-                background-image: url(../../img/icon-xml.png);
-            }
-        }
-    }
-    [dir=rtl] & {
-        float: left;
-    }
-}
-
-// ----------------------------------------------------------------------------
-// Variable columns dialog
-//
-.dt-variable-columns {
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    padding: 0.2rem;
-    color: #666;
-    min-width: 2.5rem;
-    &:hover {
-        border-color: #aaa;
-        background-color: #eee;
-    }
-    cursor: pointer;
-}
 .column-selector {
     table {
         width: 100%;
@@ -482,6 +422,61 @@ table.dataTable {
     }
     .submit-form-btn {
         margin-bottom: 0.3rem;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Export options
+//
+.dt-export-options {
+    float: right;
+    [dir=rtl] & {
+        float: left;
+    }
+    padding-top: 5px;
+    .list_formats {
+        padding-top: 0;
+        margin: 0 0.2rem;
+    }
+}
+.dt-export {
+    display: inline-block;
+    margin: 0 0.15rem;
+    cursor: pointer;
+    height: 16px;
+    width: 16px;
+    background-repeat: no-repeat;
+    &.fa {
+        font-size: 14px;
+        padding: 0;
+        padding-top: 2px;
+    }
+    &.export_cap {
+        background-image: url(../../img/cap_16.png);
+    }
+    &.export_have {
+        background-image: url(../../img/have_16.png);
+    }
+    &.export_kml {
+        background-image: url(../../img/kml_icon.png);
+    }
+    &.export_map {
+        background-image: url(../../img/map_icon.png);
+    }
+    &.export_pdf {
+        background-image: url(../../img/pdficon_small.gif);
+    }
+    &.export_rss {
+        background-image: url(../../img/RSS_16.png);
+    }
+    &.export_xls {
+        background-image: url(../../img/icon-xls.png);
+    }
+    &.export_xlsx {
+        background-image: url(../../img/icon-xls.png);
+    }
+    &.export_xml {
+        background-image: url(../../img/icon-xml.png);
     }
 }
 

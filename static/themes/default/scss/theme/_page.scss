@@ -220,6 +220,15 @@ html, body {
 #summary-filter-form {
     margin: 0;
 }
+#table-container {
+    display: block;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    .empty {
+        margin-top: 30px;
+        margin-left: 10px;
+    }
+}
 
 // ----------------------------------------------------------------------------
 // Form Popup

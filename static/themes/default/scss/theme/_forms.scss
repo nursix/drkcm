@@ -137,135 +137,12 @@ form {
         margin-bottom: 0.3rem;
     }
 
-    // Inline-components
-    table.embeddedComponent {
-        margin-top: 0.125rem;
-        margin-bottom: 0.125rem;
-        border: 1px solid #dddddd;
-        border-collapse: separate;
-        border-spacing: 0;
-        td {
-            border: none;
-            padding: 0.15rem 5px 0.05rem;
-            text-align: left;
-            [dir=rtl] & {
-                text-align: right;
-            }
-            vertical-align: top;
-        }
-        &.subform-vertical {
-            .add-row, .edit-row {
-                td {
-                    border-top: 1px solid #dddddd;
-                    padding: 0 0.4rem 0.4rem;
-                    &.subform-action {
-                        vertical-align: bottom;
-                    }
-                }
-            }
-        }
-        .label-row {
-            td {
-                color: #b3b3b3;
-                border-bottom: 1px solid #dddddd;
-                &:empty {
-                    padding: 0;
-                }
-            }
-            label {
-                color: $form_label_color;
-                margin: 0;
-            }
-        }
-        tr.inline-form {
-            input,
-            .btn.date-clear-btn,
-            .postfix.calendar-clear-btn {
-                margin-top: 0;
-            }
-            input[type="text"],
-            .s3-upload-widget {
-                font-size: 0.8rem;
-                max-width: 14rem;
-                &.datetimepicker {
-                    width: rem-calc(120) !important;
-                    &.hide-time {
-                        width: rem-calc(80) !important;
-                    }
-                }
-            }
-            input.string,
-            textarea  {
-                width: auto;
-            }
-            input.integer {
-                max-width: 10rem;
-            }
-            textarea {
-                font-size: 0.8rem;
-            }
-            &.single td:only-child {
-                padding: 0;
-                div.form-row {
-                    padding: 0 0.2rem 0.2rem;
-                }
-            }
-            select {
-                max-width: 18rem;
-            }
-            .s3_inline_add_resource_link {
-                padding: 0.1rem;
-            }
-        }
-        tr.inline-form,
-        tr.read-row {
-            .zoom img {
-                max-height: 8rem;
-            }
-            td {
-                font-size: 0.8rem;
-                max-width: 21rem;
-                white-space: pre-line;
-            }
-        }
-    }
     .inline-throbber {
         background-image: url(../../img/indicator.gif);
         background-repeat: no-repeat;
         background-position: center;
         height: 16px;
         width: 16px;
-    }
-
-    .inline-add,
-    .inline-dsc,
-    .inline-cnc,
-    .inline-edt,
-    .inline-rdy,
-    .inline-rmv {
-        cursor: pointer;
-        background-repeat: no-repeat;
-        background-position: center;
-        height: 23px;
-        width: 23px;
-    }
-    .inline-add {
-        background-image: url(../../img/crud/add.png);
-    }
-    .inline-dsc {
-        background-image: url(../../img/crud/cancel.png);
-    }
-    .inline-cnc {
-        background-image: url(../../img/crud/cancel.png);
-    }
-    .inline-edt {
-        background-image: url(../../img/crud/edit.png);
-    }
-    .inline-rdy {
-        background-image: url(../../img/crud/apply.png);
-    }
-    .inline-rmv {
-        background-image: url(../../img/crud/remove.png);
     }
 
     .s3_inline_add_resource_link a {
@@ -315,6 +192,132 @@ form {
 }
 
 // ----------------------------------------------------------------------------
+// Inline-components
+//
+.embeddedComponent {
+    margin-top: 0.125rem;
+    margin-bottom: 0.125rem;
+    border: 1px solid #dddddd;
+    border-collapse: separate;
+    border-spacing: 0;
+    td {
+        border: none;
+        text-align: left;
+        padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+        [dir=rtl] & {
+            text-align: right;
+            padding: 0.25rem 0.25rem 0.25rem 0.75rem;
+        }
+    }
+    &.subform-vertical {
+        .add-row, .edit-row {
+            td {
+                border-top: 1px solid #dddddd;
+                padding: 0 0.4rem 0.4rem;
+                &.subform-action {
+                    vertical-align: bottom;
+                }
+            }
+        }
+    }
+    .label-row {
+        td {
+            color: #b3b3b3;
+            border-bottom: 1px solid #dddddd;
+            &:empty {
+                padding: 0;
+            }
+        }
+        label {
+            color: $form_label_color;
+            margin: 0;
+        }
+    }
+    tr.inline-form {
+        input,
+        .btn.date-clear-btn,
+        .postfix.calendar-clear-btn {
+            margin-top: 0;
+        }
+        input[type="text"],
+        .s3-upload-widget {
+            font-size: 0.8rem;
+            max-width: 14rem;
+            &.datetimepicker {
+                width: rem-calc(120) !important;
+                &.hide-time {
+                    width: rem-calc(80) !important;
+                }
+            }
+        }
+        input.string,
+        textarea  {
+            width: auto;
+        }
+        input.integer {
+            max-width: 10rem;
+        }
+        textarea {
+            font-size: 0.8rem;
+        }
+        &.single td:only-child {
+            padding: 0;
+            div.form-row {
+                padding: 0 0.2rem 0.2rem;
+            }
+        }
+        select {
+            max-width: 18rem;
+        }
+        .s3_inline_add_resource_link {
+            padding: 0.1rem;
+        }
+    }
+    tr.inline-form,
+    tr.read-row {
+        .zoom img {
+            max-height: 8rem;
+        }
+        td {
+            font-size: 0.8rem;
+            max-width: 21rem;
+            white-space: pre-line;
+        }
+    }
+}
+
+.inline-add,
+.inline-dsc,
+.inline-cnc,
+.inline-edt,
+.inline-rdy,
+.inline-rmv {
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-position: center;
+    height: 23px;
+    width: 23px;
+}
+.inline-add {
+    background-image: url(../../img/crud/add.png);
+}
+.inline-dsc {
+    background-image: url(../../img/crud/cancel.png);
+}
+.inline-cnc {
+    background-image: url(../../img/crud/cancel.png);
+}
+.inline-edt {
+    background-image: url(../../img/crud/edit.png);
+}
+.inline-rdy {
+    background-image: url(../../img/crud/apply.png);
+}
+.inline-rmv {
+    background-image: url(../../img/crud/remove.png);
+}
+
+// ----------------------------------------------------------------------------
 // Containers
 //
 .form-info {
@@ -337,14 +340,6 @@ form {
         padding: 0.35rem 0.7rem;
         tr td {
             padding: rem-calc(3);
-        }
-        .embeddedComponent td {
-            [dir=ltr] & {
-                padding: 0.25rem 0.75rem 0.25rem 0.25rem;
-            }
-            [dir=rtl] & {
-                padding: 0.25rem 0.25rem 0.25rem 0.75rem;
-            }
         }
     }
     .controls {

@@ -42,12 +42,20 @@ $action_btn_fgcolor_disabled: $action_btn_fgcolor_hover !default;
 // ============================================================================
 // STYLES
 //
-// Action buttons
+#footer button.btn,
+.pr-contacts-editable button,
 .action-btn,
 .delete-btn-ajax,
 .delete-btn,
 .selected-action {
     @include tiny_button_style();
+}
+
+// Action buttons
+.action-btn,
+.delete-btn-ajax,
+.delete-btn,
+.selected-action {
     &[disabled],
     &[disabled]:hover, &[disabled]:focus {
         color: $action_btn_fgcolor_disabled;
@@ -167,7 +175,6 @@ button.toggle-text {
 // prContacts editable-buttons
 //
 .pr-contacts-editable button {
-    @include tiny_button_style();
     background-color: $action_btn_bgcolor_default;
     color: $action_btn_fgcolor_default !important;
     margin: 2px;
@@ -178,7 +185,6 @@ button.toggle-text {
 //
 #footer {
     button.btn {
-        @include tiny_button_style();
         color: $action_btn_fgcolor_debug;
         background: $action_btn_bgcolor_debug;
     }
