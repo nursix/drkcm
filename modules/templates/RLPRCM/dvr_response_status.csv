@@ -1,7 +1,0 @@
-Position,Status,Default,Closed,Canceled,Default Closure,Color,Comments
-1,In Progress,false,false,false,false,c85583,Response action is in progress
-2,Completed,false,true,false,true,a0d0a0,Response action is completed
-3,Canceled,false,true,true,false,e0e0e0,Response action canceled
-4,Canceled (failed to appear),false,true,true,false,e0e0e0,Response action canceled because client failed to appear
-5,Canceled (excused),false,true,true,false,e0e0e0,"Response action canceled, client have excused themselves"
-6,Obsolete,false,true,true,false,e0e0e0,Response action is no longer required

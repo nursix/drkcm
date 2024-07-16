@@ -1,8 +1,0 @@
-Position,Code,Status,Default,Closed,Not Transferable,Comments
-1,OPEN,In Bearbeitung,true,false,false,Case in progress
-2,TRANSFERRED,Transfer erledigt,false,true,false,"Transferred to other entity, case closed"
-3,DEPARTED,Abgereist,false,true,false,"Moved out to private accommodation, case closed"
-4,DISAPPEARED,Untergetaucht,false,true,false,"Confirmed disappeared, no longer entitled to benefits, case closed"
-5,DEPORTED,Ausgewiesen,false,true,false,"Deported to safe country / country of origin, case closed"
-6,RETURNED,Freiwillig ausgereist,false,true,false,"Returned voluntarily to country of origin, case closed"
-7,DECEASED,Verstorben,false,true,true,"Deceased, case closed"
