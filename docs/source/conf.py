@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../../modules'))
 # -- Project information -----------------------------------------------------
 
 project = 'Eden ASP'
-copyright = '2021, Eden ASP Team'
+copyright = '2024, Eden ASP Team'
 author = 'Eden ASP Team'
 
 

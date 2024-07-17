@@ -15,7 +15,7 @@ application development on your computer.
 
 .. note::
 
-   This guide further assumes that you have *Python* (version 3.6 or later)
+   This guide further assumes that you have *Python* (version 3.9 or later)
    installed, which comes bundled with the *pip* package installer - and that
    you are familiar with the Python programming language.
 
@@ -81,7 +81,7 @@ To install Eden ASP, clone it directly from GitHub:
 
 .. code-block:: bash
 
-   git clone --recursive https://github.com/aqmaster/eden-asp.git ~/eden
+   git clone --recursive https://github.com/sahana/eden-asp.git ~/eden
 
 .. tip::
    You can of course choose any other target location than *~/eden* for
