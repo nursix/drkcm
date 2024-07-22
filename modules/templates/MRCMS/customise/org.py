@@ -100,6 +100,9 @@ def configure_org_components():
 
     s3db = current.s3db
 
+    # Make sure default model is loaded first
+    s3db.table("org_organisation")
+
     # Configure filtered components document/template
     s3db.add_components("org_organisation",
                         doc_document = ({"name": "document",
