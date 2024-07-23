@@ -686,8 +686,8 @@ def hr_details(record):
         human_resource = None
     elif len(rows) > 1:
         rrows = rows
-        rrows = rrows.filter(lambda row: row.status == 1) or rrows
-        rrows = rrows.filter(lambda row: row.org_contact) or rrows
+        rrows = rrows.find(lambda row: row.status == 1) or rrows
+        rrows = rrows.find(lambda row: row.org_contact) or rrows
         human_resource = rrows.first()
     else:
         human_resource = rows.first()
