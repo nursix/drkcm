@@ -6943,15 +6943,15 @@ class dvr_DocEntityRepresent(S3Represent):
                 table = current.s3db.dvr_case_activity
                 activity = row.dvr_case_activity
 
-                title = activity.subject
+                title = activity.subject if activity.subject else "-"
                 if self.use_need:
                     need_id = activity.need_id
                     if need_id:
                         represent = table.need_id.represent
-                    if self.use_subject and title:
-                        title = "%s: %s" % (represent(need_id), title)
-                    else:
-                        title = represent(need_id)
+                        if self.use_subject and title:
+                            title = "%s: %s" % (represent(need_id), title)
+                        else:
+                            title = represent(need_id)
 
                 label = self.activity_label
                 if self.use_sector:
