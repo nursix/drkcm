@@ -56,7 +56,6 @@ __all__ = ("S3AgeWidget",
            "CheckboxesWidgetS3",
            "s3_comments_widget",
            "s3_richtext_widget",
-           "S3XMLContents",
            "S3TagCheckboxWidget",
            )
 
@@ -4169,89 +4168,6 @@ def s3_richtext_widget(field, value):
                     value = value,
                     requires = field.requires,
                     )
-
-# =============================================================================
-class S3XMLContents:
-    """
-        Renderer for db-stored XML contents (e.g. CMS)
-
-        Replaces {{page}} expressions inside the contents with local URLs.
-
-        {{page}}                 - gives the URL of the current page
-        {{name:example}}         - gives the URL of the current page with
-                                   a query ?name=example (can add any number
-                                   of query variables)
-        {{c:org,f:organisation}} - c and f tokens override controller and
-                                   function of the current page, in this
-                                   example like /org/organisation
-        {{args:arg,arg}}         - override the current request's URL args
-                                   (this should come last in the expression)
-        {{noargs}}               - strip all URL args
-
-        NB does not check permissions for the result URLs
-    """
-
-    def __init__(self, contents):
-        """
-            Args:
-                contents: the contents (string)
-        """
-
-        self.contents = contents
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def link(match):
-        """
-            Replace {{}} expressions with local URLs, with the ability to
-            override controller, function and URL query variables.Called
-            from re.sub.
-
-            Args:
-                match: the re match object
-        """
-
-        # Parse the expression
-        tokens = match.group(1).split(",")
-
-        args = True
-        parameters = {}
-        arguments = []
-        collect_args = False
-        for token in tokens:
-            if not token:
-                continue
-            elif ":" in token:
-                collect_args = False
-                key, value = token.split(":")
-            else:
-                key, value = token, None
-            key = key.strip()
-            if not value:
-                if key == "noargs":
-                    args = False
-                elif collect_args:
-                    arguments.append(key)
-            elif key == "args":
-                arguments.append(value.strip())
-                collect_args = True
-            else:
-                parameters[key] = value.strip()
-
-        # Construct the URL
-        request = current.request
-        c = parameters.pop("c", request.controller)
-        f = parameters.pop("f", request.function)
-        if not arguments:
-            arguments = request.args
-        args = arguments if args else []
-        return URL(c=c, f=f, args=args, vars=parameters, host=True)
-
-    # -------------------------------------------------------------------------
-    def xml(self):
-        """ Render the output """
-
-        return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
 
 # =============================================================================
 class S3TagCheckboxWidget(EdenFormWidget):

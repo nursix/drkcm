@@ -2656,7 +2656,8 @@ def cms_index(module,
 # =============================================================================
 def cms_documentation(r, default_page, default_url):
     """
-        Render an online documentation page, to be called from prep
+        Render an online documentation page;
+        to be called from prep of a cms_post CRUD controller
 
         Args:
             r: the CRUDRequest
@@ -2687,10 +2688,10 @@ def cms_documentation(r, default_page, default_url):
             s3_redirect_default(default_url)
 
     # Render the page
-    from core import S3XMLContents
+    from core import XMLContentsRepresent
     return {"bypass": True,
             "output": {"title": row.title,
-                       "contents": S3XMLContents(row.body),
+                       "contents": XMLContentsRepresent(row.body),
                        },
             }
 
