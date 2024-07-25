@@ -1571,8 +1571,9 @@ class BasicCRUD(CRUDMethod):
 
             dtargs["dt_base_url"] = r.url(method="", vars={})
             if get_config("bulk_actions"):
-                dtargs["dt_select_url"] = r.url(method="select", vars={})
-
+                dtargs["dt_select_url"] = r.url(method = "select",
+                                                vars = self._remove_filters(r.get_vars),
+                                                )
             if variable_columns:
                 dtargs["dt_available_cols"] = self.available_cols(resource, list_fields)
 
