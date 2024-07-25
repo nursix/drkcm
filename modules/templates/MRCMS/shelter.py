@@ -1290,7 +1290,7 @@ class BulkRegistration(CRUDMethod):
 
         # Read mode and selected from options
         mode, selected = options.get("mode"), options.get("selected")
-        if not mode or not selected:
+        if not mode or selected is None:
             r.error(400, "Invalid request options")
 
         # Lookup the relevant person IDs
