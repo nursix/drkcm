@@ -99,17 +99,17 @@ class GenerateIDCard(CRUDMethod):
         response = current.response
         s3 = response.s3
 
-        # TODO translations
+        # Available Formats
         card_formats = (("A4", T("A4")),
                         ("CCL", "%s (%s)" % (T("Credit Card"), T("Landscape##format"))),
                         ("CCP", "%s (%s)" % (T("Credit Card"), T("Portrait##format"))),
                         )
 
         # Form fields
-        now = request.utcnow.date()
+        #now = request.utcnow.date()
         formfields = [DateField("valid_until",
                                 label = T("Valid Until"),
-                                default = now + relativedelta(months=1, day=31),
+                                #default = now + relativedelta(months=1, day=31),
                                 month_selector = True,
                                 past = 0,
                                 #empty = False,
