@@ -1321,6 +1321,7 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
                          allowed_override = allowed_override,
                          ignore_common_filters = ignore_common_filters,
                          )
+
         self.skip_imports = skip_imports
 
     # -------------------------------------------------------------------------

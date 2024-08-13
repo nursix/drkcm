@@ -695,22 +695,26 @@ class S3Merge(CRUDMethod):
                 d: the duplicate value
         """
 
+        requires = field.requires
+
         allowed_override = [str(o), str(d)]
 
-        requires = field.requires
         if field.unique and not requires:
-            field.requires = IS_NOT_IN_DB(current.db, str(field),
-                                          allowed_override=allowed_override)
+            field.requires = IS_NOT_IN_DB(current.db,
+                                          str(field),
+                                          allowed_override = allowed_override,
+                                          )
         else:
-            if not isinstance(requires, (list, tuple)):
-                requires = [requires]
-            for r in requires:
-                if hasattr(r, "allowed_override"):
+            def set_allowed_override(r):
+                if isinstance(r, (list, tuple)):
+                    for validator in r:
+                        set_allowed_override(validator)
+                elif hasattr(r, "other"):
+                    set_allowed_override(r.other)
+                elif hasattr(r, "allowed_override"):
                     r.allowed_override = allowed_override
-                if hasattr(r, "other") and \
-                   hasattr(r.other, "allowed_override"):
-                    r.other.allowed_override = allowed_override
-        return
+
+            set_allowed_override(requires)
 
     # -------------------------------------------------------------------------
     @staticmethod
