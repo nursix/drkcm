@@ -584,6 +584,8 @@ class SpreadsheetImporter(CRUDMethod):
                 continue
 
             field = f.get("field")
+            if callable(field):
+                field = field()
             if field:
                 # Read value from upload form
                 if field.name in form_vars:
