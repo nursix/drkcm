@@ -37,14 +37,31 @@ class MergeProcess:
     """
         Low-level process to merge two records; can be subclassed and extended
         with resource-specific actions before and after the actual merge to
-        handle non-generalizable relationships (configure the class for the
-        table as "merge_process")
+        handle non-generalizable relationships (to do so, configure the class
+        for the table as "merge_process")
+
+        Notes:
+            - Any exceptions during the process will immediately roll back
+              the current DB transaction, so this should always be called
+              in an isolated transaction without any other relevant writes;
+              in particular one should not run multiple merges within a
+              single translation (e.g. from the CLI)
+            - MergeProcesses can produce unexpected inconsistencies in
+              complex models, which then require additional cleaning up.
+              Therefore it is not recommended to expose this functionality
+              to users with insufficient knowledge/privileges to perform
+              such cleanups
+            - In many cases, it is safer and will maintain better traceability
+              to archive or otherwise deactivate duplicate records rather than
+              merging them - this tool should therefore be used with much
+              consideration and not as a routine means to fix user mistakes
     """
 
     def __init__(self, resource, main=True):
         """
             Args:
                 resource: the resource
+                main: indicator for recursive calls
         """
 
         self.resource = resource
@@ -80,21 +97,9 @@ class MergeProcess:
                 KeyError: if either of the records cannot be found
                 RuntimeError: for any other error during the process
 
-            Important:
-                - Any exceptions during the process will immediately roll back
-                  the current DB transaction, so this should always be called
-                  in an isolated transaction without any other relevant writes;
-                  in particular one should not run multiple merges within a
-                  single translation (e.g. from the CLI)
-                - MergeProcesses can produce unexpected inconsistencies in
-                  complex models, which then require additional cleaning up.
-                  Therefore it is not recommended to expose this functionality
-                  to users with insufficient knowledge/privileges to perform
-                  such cleanups
-                - In many cases, it is safer and will maintain better traceability
-                  to archive or otherwise deactivate duplicate records rather than
-                  merging them - this tool should therefore be used with much
-                  consideration and not as a routine means to fix user mistakes
+            Note:
+                This method can only be run for master resources, not for
+                components.
         """
 
         if resource.get_config("immutable"):
@@ -136,19 +141,11 @@ class MergeProcess:
             Returns:
                 success True|False
 
-            Notes:
-                - virtual references (i.e. non-SQL, without foreign key
-                  constraints) must be declared in the table configuration
-                  of the referenced table like:
-
-                    s3db.configure(tablename, referenced_by=[(tablename, fieldname)])
-
-                  This does not apply for list:references which will be found
-                  automatically.
-                - this method can only be run from master resources (in order
-                  to find all components). To merge component records, you have
-                  to re-define the component as a master resource.
-                - CLI calls must db.commit()
+            Note:
+                The merge process should normally be instantiated and run
+                via MergeProcess.merge; otherwise the caller must take care
+                to choose the correct process class for the target resource
+                and to roll back the DB transaction if any Exception occurs.
         """
 
         db = current.db
@@ -259,58 +256,6 @@ class MergeProcess:
 
         # Nothing to do in the default MergeProcess
         pass
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def get_single_components(resource):
-        """
-            Finds all single-components of the target resource, so that
-            their records can be merged rather than just re-linked (see
-            limitations for this logic below)
-
-            Returns:
-                a dict {tablename: [CRUDResource, ...]}, i.e. component
-                resources grouped by component table name
-
-            Notes:
-            - This is only reliable as far as the relevant component
-              declarations have actually happened before calling merge:
-              Where that happens in a controller (or customise_*) other
-              than the one merge is being run from, those components may
-              be treated as multiple instead!
-            - Filtered components will never be deduplicated automatically,
-              even if they are declared single
-            - For single-components that are linked via link table, this
-              will return the link resource instead (i.e. the links will
-              be deduplicated, but not the linked records)
-            - If a single component is not bound by a direct foreign key
-              constraint, then it will not be picked up by update_references,
-              regardless what this function finds
-        """
-
-        table = resource.table
-
-        single = {}
-        hooks = current.s3db.get_hooks(table)[1]
-        if hooks:
-            for alias, hook in hooks.items():
-                if hook.multiple or hook.filterby:
-                    continue
-                component = resource.components.get(alias)
-                if not component:
-                    # E.g. module disabled
-                    continue
-
-                if component.link:
-                    component = component.link
-
-                ctablename = component.tablename
-                if ctablename in single:
-                    single[ctablename].append(component)
-                else:
-                    single[ctablename] = [component]
-
-        return single
 
     # -------------------------------------------------------------------------
     def update_references(self,
@@ -447,6 +392,58 @@ class MergeProcess:
                         keys.append(original[key])
                     data = {fn: keys}
                 update_record(rtable, row[rtable._id], row, data)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_single_components(resource):
+        """
+            Finds all single-components of the target resource, so that
+            their records can be merged rather than just re-linked (see
+            limitations for this logic below)
+
+            Returns:
+                a dict {tablename: [CRUDResource, ...]}, i.e. component
+                resources grouped by component table name
+
+            Notes:
+            - This is only reliable as far as the relevant component
+              declarations have actually happened before calling merge:
+              Where that happens in a controller (or customise_*) other
+              than the one merge is being run from, those components may
+              be treated as multiple instead!
+            - Filtered components will never be deduplicated automatically,
+              even if they are declared single
+            - For single-components that are linked via link table, this
+              will return the link resource instead (i.e. the links will
+              be deduplicated, but not the linked records)
+            - If a single component is not bound by a direct foreign key
+              constraint, then it will not be picked up by update_references,
+              regardless what this function finds
+        """
+
+        table = resource.table
+
+        single = {}
+        hooks = current.s3db.get_hooks(table)[1]
+        if hooks:
+            for alias, hook in hooks.items():
+                if hook.multiple or hook.filterby:
+                    continue
+                component = resource.components.get(alias)
+                if not component:
+                    # E.g. module disabled
+                    continue
+
+                if component.link:
+                    component = component.link
+
+                ctablename = component.tablename
+                if ctablename in single:
+                    single[ctablename].append(component)
+                else:
+                    single[ctablename] = [component]
+
+        return single
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -617,9 +614,6 @@ class MergeProcess:
                 row: the target Row
                 data: a dict {fieldname: value} with the update
 
-            Returns:
-                form.vars of the update (why?)
-
             Raises:
                 RuntimeError: if the update failed
         """
@@ -637,9 +631,6 @@ class MergeProcess:
         current.auth.s3_set_record_owner(table, row[table._id], force_update=True)
         s3db.onaccept(table, form, method="update")
 
-        # TODO Why return the form vars?
-        return form.vars
-
     # -------------------------------------------------------------------------
     @staticmethod
     def delete_record(table, record_id, replaced_by=None):
@@ -654,9 +645,6 @@ class MergeProcess:
 
             Raises:
                 RuntimeError: if the deletion failed
-
-            Returns:
-                success True|False (why?)
         """
 
         if replaced_by is not None:
@@ -668,9 +656,6 @@ class MergeProcess:
         if not success:
             raise RuntimeError("Could not delete %s.%s (%s)" % \
                   (resource.tablename, record_id, resource.error))
-
-        # TODO why return anything?
-        return bool(success)
 
     # -------------------------------------------------------------------------
     @staticmethod

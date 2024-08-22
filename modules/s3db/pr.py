@@ -5961,11 +5961,24 @@ def pr_get_entities(pe_ids=None,
 
 # =============================================================================
 class pr_PersonMergeProcess(MergeProcess):
-    # TODO docstring
+    """
+        Low-level merge process for person records
+
+        - extends the default process to handle user accounts linked
+          to the person records
+    """
 
     # -------------------------------------------------------------------------
     def prepare(self, original, duplicate):
-        # TODO docstring
+        """
+            Prepares the merge process
+            - removes all account links for the duplicate record
+            - deactivates and removes all corresponding user accounts
+
+            Args:
+                original: the original record
+                duplicate: the duplicate record
+        """
 
         super().prepare(original, duplicate)
 
@@ -5998,33 +6011,17 @@ class pr_PersonMergeProcess(MergeProcess):
 
     # -------------------------------------------------------------------------
     def cleanup(self):
-        # TODO docstring
+        """
+            Performs cleanup actions at the end of the merge process
+            - Cleans up any duplicate account links (pr_person_user)
+              that may be left behind by the default merge process
+        """
 
         super().cleanup()
 
-        db = current.db
-        s3db = current.s3db
-
         # Remove any duplicate links from pr_person_user
-        # TODO generalize link-deduplication in s3db
-        ltable = s3db.pr_person_user
-        query = (ltable.deleted == False)
-        total = ltable.id.count()
-        original = ltable.id.min()
-        rows = db(query).select(total,
-                                original,
-                                ltable.pe_id,
-                                ltable.user_id,
-                                groupby = (ltable.pe_id, ltable.user_id),
-                                having = total > 1,
-                                )
-        for row in rows:
-            link = row.pr_person_user
-            query = (ltable.pe_id == link.pe_id) & \
-                    (ltable.user_id == link.user_id) & \
-                    (ltable.id > row[original]) & \
-                    (ltable.deleted == False)
-            db(query).delete()
+        ltable = current.s3db.pr_person_user
+        deduplicate_links(ltable, "pe_id", "user_id")
 
 # =============================================================================
 class pr_RoleRepresent(S3Represent):

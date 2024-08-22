@@ -1,7 +1,7 @@
 """
     Interactive Record Merger
 
-    Copyright: 2012-2022 (c) Sahana Software Foundation
+    Copyright: 2012-2024 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -614,9 +614,9 @@ class S3Merge(CRUDMethod):
             except Exception:
                 import sys
                 r.error(424,
-                        T("Could not merge records. (Internal Error: %s)") %
-                            sys.exc_info()[1],
-                        next=r.url())
+                        T("Could not merge records. (Internal Error: %s)") % sys.exc_info()[1],
+                        next=r.url(),
+                        )
             else:
                 # Cleanup bookmark list
                 if mode == "Inclusive":
