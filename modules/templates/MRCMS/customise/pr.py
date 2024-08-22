@@ -1480,6 +1480,13 @@ def pr_person_controller(**attr):
     if current.request.controller in ("dvr", "counsel"):
         configure_person_tags()
 
+    # Only one staff record per person
+    current.s3db.add_components("pr_person",
+                                hrm_human_resource = {"joinby": "person_id",
+                                                      "multiple": False,
+                                                      },
+                                )
+
     # Custom prep
     standard_prep = s3.prep
     def prep(r):

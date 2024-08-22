@@ -101,6 +101,7 @@ __all__ = (# PR Base Entities
            # Other functions
            "pr_availability_filter",
            "pr_import_prep",
+           "pr_PersonMergeProcess",
 
            # Data List Default Layouts
            #"pr_address_list_layout",
@@ -948,6 +949,7 @@ class PRPersonModel(DataModel):
                                            "presence",
                                            ),
                        super_entity = ("pr_pentity", "sit_trackable"),
+                       merge_process = pr_PersonMergeProcess,
                        )
 
         person_id_comment = pr_person_comment(
@@ -5956,6 +5958,73 @@ def pr_get_entities(pe_ids=None,
             return repr_grp
         else:
             return repr_all
+
+# =============================================================================
+class pr_PersonMergeProcess(MergeProcess):
+    # TODO docstring
+
+    # -------------------------------------------------------------------------
+    def prepare(self, original, duplicate):
+        # TODO docstring
+
+        super().prepare(original, duplicate)
+
+        db = current.db
+        s3db = current.s3db
+        auth = current.auth
+
+        # Remove all account links of the duplicate
+        ltable = s3db.pr_person_user
+        query = (ltable.pe_id == duplicate.pe_id) & \
+                (ltable.deleted == False)
+        links = db(query).select(ltable.id, ltable.user_id)
+        user_ids = {l.user_id for l in links}
+        for link in links:
+            self.delete_record(ltable, link)
+
+        # Remove any orphaned accounts
+        utable = auth.settings.table_user
+        left = ltable.on((ltable.user_id == utable.id) & (ltable.deleted == False))
+        query = (utable.id.belongs(user_ids)) & \
+                (ltable.id == None) & \
+                (utable.deleted == False)
+        accounts = db(query).select(utable.id, left=left)
+        auth = current.auth
+        for account in accounts:
+            user_id = account.id
+            auth.s3_anonymise_password(user_id, utable.id, user_id)
+            auth.s3_anonymise_roles(user_id, utable.id, user_id)
+            account.update_record(registration_key="disabled", deleted=True)
+
+    # -------------------------------------------------------------------------
+    def cleanup(self):
+        # TODO docstring
+
+        super().cleanup()
+
+        db = current.db
+        s3db = current.s3db
+
+        # Remove any duplicate links from pr_person_user
+        # TODO generalize link-deduplication in s3db
+        ltable = s3db.pr_person_user
+        query = (ltable.deleted == False)
+        total = ltable.id.count()
+        original = ltable.id.min()
+        rows = db(query).select(total,
+                                original,
+                                ltable.pe_id,
+                                ltable.user_id,
+                                groupby = (ltable.pe_id, ltable.user_id),
+                                having = total > 1,
+                                )
+        for row in rows:
+            link = row.pr_person_user
+            query = (ltable.pe_id == link.pe_id) & \
+                    (ltable.user_id == link.user_id) & \
+                    (ltable.id > row[original]) & \
+                    (ltable.deleted == False)
+            db(query).delete()
 
 # =============================================================================
 class pr_RoleRepresent(S3Represent):

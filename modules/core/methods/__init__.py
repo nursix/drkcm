@@ -9,7 +9,7 @@ from .gendoc import GenerateDocument
 from .grouped import *
 from .hcrud import *
 from .mapview import *
-from .merge import S3Merge, S3RecordMerger
+from .merge import S3Merge
 from .mobile import *
 from .organizer import *
 from .pois import *

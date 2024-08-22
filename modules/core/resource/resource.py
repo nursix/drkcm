@@ -845,15 +845,18 @@ class CRUDResource:
               update = None,
               main = True,
               ):
-        """ Merge two records, see also S3RecordMerger.merge """
+        """
+            Merge two records; see MergeProcess.merge
+        """
 
-        from ..methods import S3RecordMerger
-        return S3RecordMerger(self).merge(original_id,
-                                          duplicate_id,
-                                          replace = replace,
-                                          update = update,
-                                          main = main,
-                                          )
+        from .merge import MergeProcess
+        return MergeProcess.merge(self,
+                                  original_id,
+                                  duplicate_id,
+                                  replace = replace,
+                                  update = update,
+                                  main = main,
+                                  )
 
     # -------------------------------------------------------------------------
     # Exports

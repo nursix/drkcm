@@ -3827,6 +3827,7 @@ class OrgSitePresenceModel(DataModel):
                   insertable = False,
                   editable = False,
                   deletable = False,
+                  immutable = True,
                   )
 
         # CRUD strings
@@ -3866,6 +3867,7 @@ class OrgSitePresenceModel(DataModel):
                   insertable = False,
                   editable = False,
                   deletable = False,
+                  immutable = True,
                   )
 
         # ---------------------------------------------------------------------
