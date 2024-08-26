@@ -259,6 +259,24 @@ def config(settings):
     # Uncomment this to enable household size in cases, set to "auto" for automatic counting
     settings.dvr.household_size = "auto"
 
+    # Most commonly documented case languages
+    settings.dvr.case_languages = ('aa', 'am', 'anp', 'as', 'az', 'bal', 'bg', 'bho', 'bn',
+                                   'bs', 'cs', 'da', 'de', 'el', 'en', 'es', 'et', 'fa',
+                                   'fi', 'fil', 'fr', 'ga', 'gu', 'ha', 'hi', 'hmn', 'hr',
+                                   'hu', 'hy', 'id', 'ig', 'it', 'ja', 'jv', 'ka', 'km',
+                                   'kn', 'ko', 'ku', 'lo', 'lt', 'lv', 'mai', 'mk', 'ml',
+                                   'mlt', 'mn', 'mr', 'my', 'nl', 'om', 'pa', 'pl', 'prs',
+                                   'ps', 'pt', 'ro', 'rom', 'ru', 'rup', 'sd', 'si', 'sk',
+                                   'sl', 'so', 'sq', 'sr', 'sv', 'sw', 'ta', 'te', 'th',
+                                   'ti', 'tk', 'tl', 'tr', 'uk', 'ur', 'uz', 'vi', 'yo',
+                                   'zh', 'ab', 'af', 'ak', 'an', 'ar', 'bem', 'cop', 'cr',
+                                   'dak', 'del', 'din', 'gaa', 'kaw', 'kg', 'kho', 'kpe',
+                                   'kru', 'kum', 'kv', 'kw', 'ky', 'lez', 'mdr', 'mis',
+                                   'new', 'nso', 'nzi', 'pau', 'pi', 'raj', 'rm', 'rn',
+                                   'rw', 'sm', 'sn', 'snk', 'srn', 'su', 'syr', 'tig',
+                                   'tog', 'tsi', 'tw', 'umb', 'zza',
+                                   )
+
     settings.dvr.case_include_activity_docs = True
     settings.dvr.case_include_group_docs = True
 

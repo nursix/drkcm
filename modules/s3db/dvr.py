@@ -477,28 +477,6 @@ class DVRCaseModel(DataModel):
                                          },
                             )
 
-        # Report options FIXME
-        #axes = ["organisation_id",
-        #        "case_need.need_id",
-        #        ]
-        #levels = current.gis.get_relevant_hierarchy_levels()
-        #for level in levels:
-        #    axes.append("current_address.location_id$%s" % level)
-        #highest_lx = "current_address.location_id$%s" % levels[0]
-        #
-        #facts = [(T("Number of Cases"), "count(id)"),
-        #         ]
-        #
-        #report_options = {"rows": axes,
-        #                  "cols": axes,
-        #                  "fact": facts,
-        #                  "defaults": {"rows": "case_need.need_id",
-        #                               "cols": highest_lx,
-        #                               "fact": facts[0],
-        #                               "totals": True,
-        #                               },
-        #                  }
-
         # Table configuration
         configure(tablename,
                   deduplicate = S3Duplicate(primary=("person_id",),
@@ -527,6 +505,7 @@ class DVRCaseModel(DataModel):
         # Case Language: languages that can be used to communicate with
         #                a case beneficiary
         #
+        languages = settings.get_dvr_case_languages()
 
         # Quality/Mode of communication:
         lang_quality_opts = (("N", T("native")),
@@ -541,7 +520,7 @@ class DVRCaseModel(DataModel):
                      person_id(empty = False,
                                ondelete = "CASCADE",
                                ),
-                     LanguageField(select=None),
+                     LanguageField(select=languages),
                      Field("quality",
                            default = "N",
                            label = T("Quality/Mode"),

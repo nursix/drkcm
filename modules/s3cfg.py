@@ -3317,6 +3317,18 @@ class S3Config(Storage):
         """
         return self.dvr.get("household_size", False)
 
+    def get_dvr_case_languages(self):
+        """
+            The most commonly documented case languages as a list|tuple
+            of ISO 639/2 language codes; this will vary greatly between
+            deployments, so the default is to use all languages available
+            from the IS_ISO639_2_LANGUAGE_CODE validator, which may be
+            difficult to use (selector with over 360 languages!)
+
+            - e.g. settings.dvr.case_languages = ("ar", "en", "zh")
+        """
+        return self.dvr.get("case_languages")
+
     def get_dvr_track_transfer_sites(self):
         """
             Enable features to track transfer origin/destination sites
@@ -3368,6 +3380,7 @@ class S3Config(Storage):
         return self.dvr.get("case_flags_org_specific", False)
 
     # Needs -----------------------------------------------
+
     def get_dvr_need_types_org_specific(self):
         """
             Use org-specific need types

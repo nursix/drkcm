@@ -2433,8 +2433,8 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             Args:
                 error_message: alternative error message
                 multiple: allow selection of multiple options
-                select: dict of options for the selector,
-                        defaults to settings.L10n.languages,
+                select: dict or code/tuple-list of options for the
+                        selector, defaults to settings.L10n.languages,
                         set explicitly to None to allow all languages
                 sort: sort options in selector
                 translate: translate the language options into
@@ -2453,6 +2453,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             self._select = current.deployment_settings.get_L10n_languages()
         else:
             self._select = select
+
         self.translate = translate
 
     # -------------------------------------------------------------------------
@@ -2463,26 +2464,28 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             superclass function here.
 
             Args:
-                zero: include an empty-option (overrides self.zero)
+                zero: include an empty-option (with self.zero as label)
 
             Returns:
                 list of tuples (code, representation)
         """
 
-        language_codes = self.language_codes()
+        language_codes = self.language_codes(mis=False)
 
-        if self._select:
+        translate = self.translate
+        T = current.T
+
+        selection = self._select
+        if selection:
             language_codes_dict = dict(language_codes)
-            if self.translate:
-                T = current.T
-                items = ((k, T(v)) for k, v in self._select.items()
-                                   if k in language_codes_dict)
-            else:
-                items = ((k, v) for k, v in self._select.items()
-                                if k in language_codes_dict)
+            if isinstance(selection, (list, tuple)):
+                selection = self.subset(language_codes_dict, selection)
+            items = ((k, (T(v) if translate else v))
+                     for k, v in selection.items()
+                     if k != "mis" and k in language_codes_dict
+                     )
         else:
-            if self.translate:
-                T = current.T
+            if translate:
                 items = ((k, T(v)) for k, v in language_codes)
             else:
                 items = language_codes
@@ -2492,10 +2495,42 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
         else:
             items = list(items)
 
-        if zero and not self.zero is None and not self.multiple:
+        if zero and self.zero is not None and not self.multiple:
             items.insert(0, ("", self.zero))
 
+        # Miscellaneous always as last option
+        items.append(("mis", (T("Miscellaneous") if translate else "Miscellaneous")))
+
         return items
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def subset(languages, selection):
+        """
+            Converts a list|tuple of languages into a dict {code: name},
+            permitting both languages codes or tuples (code, name) as
+            list elements
+
+            Args:
+                languages: the complete language dict (from .language_codes)
+                selection: the selection to determine the subset
+
+            Returns:
+                a dict {code: language}
+        """
+
+        subset = []
+        append = subset.append
+
+        for l in selection:
+            if isinstance(l, str):
+                name = languages.get(l)
+                if name:
+                    append((l, name))
+            else:
+                append(l)
+
+        return dict(subset)
 
     # -------------------------------------------------------------------------
     def represent(self, code):
@@ -2557,10 +2592,13 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def language_codes():
+    def language_codes(mis=True):
         """
             Returns a list of tuples of ISO639-1 alpha-2 language
             codes, can also be used to look up the language name
+
+            Args:
+                mis: include the "Miscellaneous" option
 
             Just the subset which are useful for Translations
             - 2 letter code preferred, 3-letter code where none exists,
@@ -3238,7 +3276,6 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("zun", "Zuni"),
                 #("zxx", "No linguistic content; Not applicable"),
                 ("zza", "Zaza; Dimili; Dimli; Kirdki; Kirmanjki; Zazaki"),
-                ("mis", "Miscellaneous"),
                 ]
 
         settings = current.deployment_settings
@@ -3249,6 +3286,8 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
         extra_codes = settings.get_L10n_extra_codes()
         if extra_codes:
             lang += extra_codes
+        if mis:
+            lang.append(("mis", "Miscellaneous"))
 
         return list(set(lang)) # Remove duplicates
 
