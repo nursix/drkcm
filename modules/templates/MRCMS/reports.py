@@ -1193,7 +1193,7 @@ class MealsReport(BaseReport):
 
 # =============================================================================
 class ArrivalsDeparturesReport(BaseReport):
-    # TODO docstring
+    """ Report over newly arrived/departed shelter residents """
 
     report_type = "aandd"
 
@@ -1277,7 +1277,7 @@ class ArrivalsDeparturesReport(BaseReport):
 
             Args:
                 organisation_id: limit to cases of this organisation
-                shelter_id: limit ins/outs at this shelter
+                shelter_id: limit to arrivals at/departures fromthis shelter
                 start_date: the start of the interval (datetime.datetime)
                 end_date: the end of the interval (datetime.datetime)
 
@@ -1286,59 +1286,70 @@ class ArrivalsDeparturesReport(BaseReport):
         """
         # TODO complete this
 
-        # Generate a sub-query for relevant clients
+        # Determine which residents were already checked-in at the start
+        # of the interval
         clients = cls.clients(start_date,
-                               end_date,
-                               organisation_id = organisation_id,
-                               )
-
-        # Determine which of the relevant clients were already checked-in
-        # at the start of the interval
+                              end_date,
+                              organisation_id = organisation_id,
+                              )
         rows = cls.prior_check_ins(clients, start_date, shelter_id)
         checked_in_before = {row.person_id for row in rows}
 
-        # Determine which of the relevant clients were checked-in at any
-        # time during the interval
-        # TODO exclude prior_ins from clients-subquery
+        # Determine which residents were checked-in during the interval
+        # and when (date of first check-in)
+        clients = cls.clients(start_date,
+                              end_date,
+                              organisation_id = organisation_id,
+                              exclude = checked_in_before,
+                              )
         rows = cls.check_ins(clients, start_date, end_date, shelter_id)
-        checked_in_later = {row.person_id for row in rows}
+        arrivals = {}
+        for row in rows:
+            person_id = row.person_id
+            if person_id not in arrivals:
+                arrivals[person_id] = row.date
 
-        # Anyone who was not checked-in at the start of the interval,
-        # but only later => ARRIVALS
-        arrivals = checked_in_later - checked_in_before
-
-        # For those checked-in at the start of or during the interval,
-        # determine who was no longer checked-in at the end of the
-        # interval => DEPARTURES
-        rows = cls.final_events(checked_in_before | arrivals,
+        # Determine which of these residents were no longer checked-in by
+        # the end of the interval, and when they departed (date of last check-out
+        # after the first check-in)
+        rows = cls.final_events(checked_in_before | set(arrivals.keys()),
                                 start_date,
                                 end_date,
                                 shelter_id,
                                 )
-        departures = {row.person_id for row in rows}
+        departures = cls.check_out_dates({row.person_id for row in rows},
+                                         start_date,
+                                         end_date,
+                                         shelter_id = shelter_id,
+                                         check_in_dates = arrivals,
+                                         )
 
         data = arrivals, departures # TESTING
 
-        # TODO for arrivals, determine the first check-in date during the interval
-        # TODO for departures, determine the last check-out date during the interval
-
         # TODO for both groups, extract the relevant person and case details
         #      for the report
+        #      Fields required:
+        #           ID, Principal RefNo, Name, DoB, Gender, Nationality, BAMF Az,
+        #           case status, last-seen on, check-in-date|check-out-date
+        #       Possibly:
+        #           Shelter, in multi-shelter requests
 
         return data
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def clients(start_date, end_date, organisation_id=None):
+    def clients(start_date, end_date, organisation_id=None, exclude=None):
         """
             Returns a subquery for all relevant client person IDs, i.e. those
             who have a registration history entry (=status change) within the
-            given time interval
+            given time interval (without status change, they can neither have
+            moved in nor moved out, and therefore are irrelevant for this report)
 
             Args:
                 start_date: the start of the interval (datetime.datetime)
                 end_date: the end of the interval (datetime.datetime)
                 organisation_id: limit to cases of this organisation
+                exclude: exclude these person IDs (set|list|tuple)
 
             Returns:
                 The subquery as SQL string
@@ -1361,8 +1372,10 @@ class ArrivalsDeparturesReport(BaseReport):
                          (ctable.archived == False))
 
         query = (rtable.date >= start_date) & \
-                (rtable.date <= end_date) & \
-                (rtable.deleted == False)
+                (rtable.date < end_date)
+        if exclude:
+            query &= (~(rtable.person_id.belongs(exclude)))
+        query &= (rtable.deleted == False)
 
         return db(query)._select(rtable.person_id,
                                  distinct = True,
@@ -1371,13 +1384,19 @@ class ArrivalsDeparturesReport(BaseReport):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def prior_check_ins(cls, person_ids, start_date, shelter_id):
+    def prior_check_ins(cls, person_ids, start_date, shelter_id=None):
         """
-            Returns the check-in events for all persons who were
-            checked in to the shelter at the start of the period
+            Returns the last check-in events before start_date for all
+            persons who were checked in (at a shelter) at that date
+
+            Args:
+                person_ids: the person IDs
+                start_date: the start of the interval (datetime.datetime)
+                shelter_id: only consider checked-in at this shelter
+
+            Returns:
+                Rows (cr_shelter_registration_history)
         """
-        # TODO complete docstring
-        # TODO make shelter_id optional
 
         db = current.db
         s3db = current.s3db
@@ -1390,10 +1409,14 @@ class ArrivalsDeparturesReport(BaseReport):
         join = latest.on((latest.person_id == rtable.person_id) & \
                          (latest.date == rtable.date))
 
+        # If the last event before start_date is a check-in status
+        # (at the shelter), then the person was already there and
+        # therefore cannot be a new arrival
         query = (rtable.person_id.belongs(person_ids)) & \
-                (rtable.shelter_id == shelter_id) & \
                 (rtable.status == 2) & \
                 (rtable.deleted == False)
+        if shelter_id:
+            query = (rtable.shelter_id == shelter_id) & query
 
         rows = db(query).select(rtable.id,
                                 rtable.person_id,
@@ -1406,42 +1429,59 @@ class ArrivalsDeparturesReport(BaseReport):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def check_ins(cls, person_ids, start_date, end_date, shelter_id):
+    def check_ins(cls, person_ids, start_date, end_date, shelter_id=None):
         """
-            Returns all check-in events at the site during the period
+            Returns all check-in events (at a shelter) during the period
+
+            Args:
+                person_ids: the person IDs
+                start_date: the start of the interval (datetime.datetime)
+                end_date: the end of the interval (datetime.datetime)
+                shelter_id: only consider check-ins at this shelter
+
+            Returns:
+                Rows (cr_shelter_registration_history)
         """
-        # TODO complete docstring
-        # TODO make shelter_id optional
 
         db = current.db
         s3db = current.s3db
 
         rtable = s3db.cr_shelter_registration_history
 
-        query = (rtable.shelter_id == shelter_id) & \
-                (rtable.status == 2) & \
+        query = (rtable.status == 2) & \
                 (rtable.date >= start_date) & \
-                (rtable.date <= end_date) & \
+                (rtable.date < end_date) & \
                 (rtable.person_id.belongs(person_ids)) & \
                 (rtable.deleted == False)
+        if shelter_id:
+            query = (rtable.shelter_id == shelter_id) & query
 
         rows = db(query).select(rtable.id,
                                 rtable.person_id,
                                 rtable.shelter_id,
                                 rtable.date,
                                 rtable.status,
+                                orderby = rtable.date,
                                 )
         return rows
 
     # -------------------------------------------------------------------------
     @classmethod
-    def final_events(cls, person_ids, start_date, end_date, shelter_id):
+    def final_events(cls, person_ids, start_date, end_date, shelter_id=None):
         """
             Returns the final status events of the period for all persons
-            who were no longer checked-in at the end of the period
+            who were no longer checked-in (at a shelter) by the end of the
+            period
+
+            Args:
+                person_ids: the person IDs
+                start_date: the start of the interval (datetime.datetime)
+                end_date: the end of the interval (datetime.datetime)
+                shelter_id: only consider checked-in at this shelter
+
+            Returns:
+                Rows (cr_shelter_registration_history)
         """
-        # TODO complete docstring
-        # TODO make shelter_id optional
 
         db = current.db
         s3db = current.s3db
@@ -1455,8 +1495,13 @@ class ArrivalsDeparturesReport(BaseReport):
         join = latest.on((latest.person_id == rtable.person_id) & \
                          (latest.date == rtable.date))
 
-        query = (rtable.person_id.belongs(person_ids)) & \
-                ((rtable.status != 2) | (rtable.shelter_id != shelter_id)) & \
+        # Any final event during the period that is either not checked-in
+        # status or not at the shelter in question indicates that the person
+        # was no longer checked-in at the end of the interval
+        query = (rtable.status != 2)
+        if shelter_id:
+            query |= (rtable.shelter_id != shelter_id)
+        query = (rtable.person_id.belongs(person_ids)) & query & \
                 (rtable.deleted == False)
 
         rows = db(query).select(rtable.id,
@@ -1470,8 +1515,81 @@ class ArrivalsDeparturesReport(BaseReport):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def check_out_dates(person_ids, start_date=None, end_date=None, shelter_id=None,
+                        check_in_dates=None):
+        """
+            Finds the last check-out date of persons during the interval
+
+            Args:
+                person_id: the person IDs
+                start_date: the start of the interval (datetime.datetime)
+                end_date: the end of the interval (datetime.datetime)
+                shelter_id: limit to check-outs from this shelter
+                check_in_dates: a dict {person_id: check_in_dates} with known
+                                check-in dates
+
+            Returns:
+                a dict {person_id: check_out_date}, where check_out_date
+                can be None if no explicit checkout (from this shelter) was
+                registered
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        rtable = s3db.cr_shelter_registration_history
+
+        query = (rtable.person_id.belongs(person_ids)) & \
+                (rtable.status == 3)
+        if shelter_id:
+            query &= (rtable.shelter_id == shelter_id)
+        if start_date:
+            query &= (rtable.date >= start_date)
+        if end_date:
+            query &= (rtable.date < end_date)
+        query &= (rtable.deleted == False)
+
+        rows = db(query).select(rtable.person_id.with_alias("person_id"),
+                                rtable.date.max().with_alias("date"),
+                                groupby = rtable.person_id,
+                                )
+
+        dates = {person_id: None for person_id in person_ids}
+        if not check_in_dates:
+            check_in_dates = {}
+
+        for row in rows:
+            person_id = row.person_id
+            # Disregard any check-out events that predate the check-in date
+            check_in_date = check_in_dates.get(person_id)
+            if check_in_date and row.date < check_in_date:
+                continue
+            dates[person_id] = row.date
+
+        return dates
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def last_status_change(person_ids, start_date=None, end_date=None):
-        # TODO docstring
+        """
+            Returns a joinable sub-select with the dates of the last
+            registration status change of persons during an interval
+
+            Args:
+                person_ids: the person IDs
+                start_date: the start of the interval (datetime.datetime)
+                end_date: the end of the interval (datetime.datetime)
+
+            Returns:
+                A joinable subquery with alias "last_status" and fields
+                "person_id" and "date"
+
+            Notes:
+                - either end of the interval can be ommitted, thereby
+                  including all registered status changes before/after
+                  the other end date (if given)
+                - all dates in UTC (tz-naive)
+        """
 
         db = current.db
         s3db = current.s3db
@@ -1482,10 +1600,10 @@ class ArrivalsDeparturesReport(BaseReport):
         if start_date:
             query &= (rtable.date >= start_date)
         if end_date:
-            query &= (rtable.date <= end_date)
+            query &= (rtable.date < end_date)
         query &= (rtable.deleted == False)
 
-        latest = db(query).nested_select(rtable.person_id,
+        latest = db(query).nested_select(rtable.person_id.with_alias("person_id"),
                                          rtable.date.max().with_alias("date"),
                                          groupby = rtable.person_id,
                                          ).with_alias("last_status")
