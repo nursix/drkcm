@@ -1282,9 +1282,16 @@ class ArrivalsDeparturesReport(BaseReport):
                 end_date: the end of the interval (datetime.datetime)
 
             Returns:
-                tbd
+                a list of two dicts [arrivals, departures], like:
+                {"columns": [colname, ...],
+                 "headers": {colname: label, ...},
+                 "types": {colname: datatype, ...},
+                 "rows": [{colname: value, ...}, ...]
+                 }
         """
-        # TODO complete this
+
+        T = current.T
+        s3db = current.s3db
 
         # Determine which residents were already checked-in at the start
         # of the interval
@@ -1324,17 +1331,62 @@ class ArrivalsDeparturesReport(BaseReport):
                                          check_in_dates = arrivals,
                                          )
 
-        data = arrivals, departures # TESTING
+        # Extract the person data for the clients
+        resource = s3db.resource("pr_person",
+                                 id = list(arrivals.keys()) + list(departures.keys()),
+                                 )
+        list_fields = ["id",
+                       (T("Principal Ref.No."), "dvr_case.reference"),
+                       "last_name",
+                       "first_name",
+                       "date_of_birth",
+                       "gender",
+                       "person_details.nationality",
+                       "bamf.value",
+                       "dvr_case.status_id",
+                       "dvr_case.last_seen_on",
+                       ]
+        person_data = resource.select(list_fields,
+                                      represent = True,
+                                      raw_data = True,
+                                      )
+        persons = {row._row["pr_person.id"]: row for row in person_data.rows}
 
-        # TODO for both groups, extract the relevant person and case details
-        #      for the report
-        #      Fields required:
-        #           ID, Principal RefNo, Name, DoB, Gender, Nationality, BAMF Az,
-        #           case status, last-seen on, check-in-date|check-out-date
-        #       Possibly:
-        #           Shelter, in multi-shelter requests
+        # Columns for the tables
+        date_col = "cr_shelter_registration_history.date"
+        columns, labels, types = [date_col], {}, {date_col: "datetime"}
+        for rfield in person_data.rfields:
+            if rfield.ftype == "id":
+                continue
+            columns.append(rfield.colname)
+            labels[rfield.colname] = rfield.label
+            types[rfield.colname] = str(rfield.ftype)
 
-        return data
+        # Build result
+        rtable = current.s3db.cr_shelter_registration_history
+        date_represent = rtable.date.represent
+        group_title = [T("Arrivals"), T("Departures")]
+        date_col_label = [T("Check-in Date"), T("Check-out Date")]
+
+        output = []
+        for i, group in enumerate((arrivals, departures)):
+            rows = []
+            for person_id, date in sorted(group.items(), key=lambda i: i[1]):
+                row = persons.get(person_id)
+                if not row:
+                    continue
+                row._row[date_col], row[date_col] = date, date_represent(date)
+                rows.append(row)
+            result = {"title": group_title[i],
+                      "columns": columns,
+                      "labels": dict(labels),
+                      "types": types,
+                      "rows": rows,
+                      }
+            result["labels"][date_col] = date_col_label[i]
+            output.append(result)
+
+        return output
 
     # -------------------------------------------------------------------------
     @staticmethod
