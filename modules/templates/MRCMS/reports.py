@@ -479,7 +479,11 @@ class PresenceReport(BaseReport):
                                  )
 
         # Generate XLSX byte stream
-        output = XLSXWriter.encode(table_data, title=title, as_stream=True)
+        output = XLSXWriter.encode(table_data,
+                                   title = title,
+                                   sheet_title = self.report_title,
+                                   as_stream = True,
+                                   )
 
         # Set response headers
         filename = "presence_report_%s_%s" % (start_date.strftime("%Y%m%d"),
@@ -937,7 +941,11 @@ class MealsReport(BaseReport):
                                  )
 
         # Generate XLSX byte stream
-        output = XLSXWriter.encode(data, title=title, as_stream=True)
+        output = XLSXWriter.encode(data,
+                                   title = title,
+                                   sheet_title = self.report_title,
+                                   as_stream = True,
+                                   )
 
         # Set response headers
         filename = "meals_report_%s_%s" % (start_date.strftime("%Y%m%d"),
@@ -1274,8 +1282,53 @@ class ArrivalsDeparturesReport(BaseReport):
                 a XLSX file
         """
 
-        # TODO implement this
-        raise NotImplementedError()
+        report_name = "%s_report" % self.report_type
+
+        # Read request parameters
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r, report_name)
+
+        # Check permissions
+        if not self.permitted(organisation_id=organisation_id):
+            r.unauthorised()
+
+        # Extract the data
+        datasets = self.extract(organisation_id, shelter_id, start_date, end_date)
+
+        output = None
+        for dataset in datasets:
+            # Use a title row (also includes exported-date)
+            current.deployment_settings.base.xls_title_row = True
+
+            subtitle = dataset.get("title")
+            if not subtitle:
+                subtitle = self.report_title
+            title = "%s %s -- %s" % (subtitle,
+                                     S3DateTime.date_represent(start_date, utc=True),
+                                     S3DateTime.date_represent(end_date, utc=True),
+                                     )
+
+            # Generate XLSX byte stream
+            output = XLSXWriter.encode(dataset,
+                                       title = title,
+                                       sheet_title = subtitle,
+                                       as_stream = True,
+                                       append_to = output,
+                                       )
+
+        # Set response headers
+        filename = "aandd_report_%s_%s" % (start_date.strftime("%Y%m%d"),
+                                           end_date.strftime("%Y%m%d"),
+                                           )
+        disposition = "attachment; filename=\"%s\"" % filename
+        response = current.response
+        response.headers["Content-Type"] = contenttype(".xlsx")
+        response.headers["Content-disposition"] = disposition
+
+        # Return stream response
+        return response.stream(output,
+                               chunk_size = DEFAULT_CHUNK_SIZE,
+                               request = current.request
+                               )
 
     # -------------------------------------------------------------------------
     @staticmethod
