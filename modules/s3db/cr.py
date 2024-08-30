@@ -2007,7 +2007,6 @@ class CRShelterRegistrationModel(DataModel):
             if unit:
                 shelter_id = update["shelter_id"] = unit.shelter_id
 
-
         # Get the last registration history entry
         htable = s3db.cr_shelter_registration_history
         query = (htable.person_id == person_id) & \
@@ -2037,7 +2036,8 @@ class CRShelterRegistrationModel(DataModel):
         # Get effective date
         if effective_date_field:
             effective_date = registration[effective_date_field]
-            if not effective_date or previous_date and effective_date < previous_date:
+            if not effective_date or shelter_id != last_shelter_id or \
+               previous_date and effective_date < previous_date:
                 effective_date = update[effective_date_field] = registration.modified_on
         else:
             effective_date = registration.modified_on

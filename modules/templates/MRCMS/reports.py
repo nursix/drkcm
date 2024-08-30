@@ -1339,7 +1339,7 @@ class ArrivalsDeparturesReport(BaseReport):
         checked_in_before = {row.person_id for row in rows}
 
         # Determine which residents were checked-in during the interval
-        # and when (date of first check-in)
+        # and when (date of last check-in)
         clients = cls.clients(start_date,
                               end_date,
                               organisation_id = organisation_id,
@@ -1354,7 +1354,7 @@ class ArrivalsDeparturesReport(BaseReport):
 
         # Determine which of these residents were no longer checked-in by
         # the end of the interval, and when they departed (date of last check-out
-        # after the first check-in)
+        # after the last check-in)
         rows = cls.final_events(checked_in_before | set(arrivals.keys()),
                                 start_date,
                                 end_date,
@@ -1556,7 +1556,7 @@ class ArrivalsDeparturesReport(BaseReport):
                                 rtable.shelter_id,
                                 rtable.date,
                                 rtable.status,
-                                orderby = rtable.date,
+                                orderby = ~rtable.date,
                                 )
         return rows
 
