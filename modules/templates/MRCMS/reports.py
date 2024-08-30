@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 from gluon import current, SQLFORM, BUTTON, DIV
 from gluon.contenttype import contenttype
 from gluon.serializers import json as jsons
+from gluon.storage import Storage
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
 from s3dal import Field
@@ -335,7 +336,7 @@ class BaseReport(CRUDMethod):
             scripts.append(script)
 
         # Widget options
-        opts = {}
+        opts = {"labelNoData": s3_str(current.T("No records found"))}
         if options:
             opts.update(options)
 
@@ -1202,8 +1203,7 @@ class ArrivalsDeparturesReport(BaseReport):
     def report_title(self):
         """ A title for this report """
 
-        # TODO translation
-        return current.T("Arrivals and Departures##people")
+        return current.T("Arrivals and Departures##shelter")
 
     # -------------------------------------------------------------------------
     def json(self, r, **attr):
@@ -1215,15 +1215,50 @@ class ArrivalsDeparturesReport(BaseReport):
                 attr - controller parameters
 
             Returns:
-                a JSON object to construct a table like:
-                    {"labels": [label, label, ...],
-                     "rows": [[value, value, ...], ...]
-                     "results": number
-                     }
+                an array of JSON objects to construct a table like:
+                    [{"labels": [label, label, ...],
+                      "rows": [[value, value, ...], ...]
+                      "results": number
+                      }, ...]
         """
 
-        # TODO implement this
-        raise NotImplementedError()
+        report_name = "%s_report" % self.report_type
+
+        # Read request parameters
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r, report_name)
+
+        # Check permissions
+        if not self.permitted(organisation_id=organisation_id):
+            r.unauthorised()
+
+        # Extract the data
+        data = self.extract(organisation_id, shelter_id, start_date, end_date)
+
+        output = []
+        for item in data:
+
+            columns = item["columns"]
+            headers = item["headers"]
+            labels = [headers[colname] for colname in columns]
+
+            records, rows = [], item["rows"]
+            for row in rows:
+                records.append([s3_str(row[colname])
+                                if row[colname] is not None else ""
+                                for colname in columns
+                                ])
+
+            table = {"labels": labels,
+                     "records": records,
+                     "results": max(0, len(records) - 1),
+                     "title": item.get("title"),
+                     }
+            output.append(table)
+
+        # Set Content Type
+        current.response.headers["Content-Type"] = "application/json"
+
+        return jsons(output)
 
     # -------------------------------------------------------------------------
     def xlsx(self, r, **attr):
@@ -1336,6 +1371,7 @@ class ArrivalsDeparturesReport(BaseReport):
                                  id = list(arrivals.keys()) + list(departures.keys()),
                                  )
         list_fields = ["id",
+                       (T("ID"), "pe_label"),
                        (T("Principal Ref.No."), "dvr_case.reference"),
                        "last_name",
                        "first_name",
@@ -1354,36 +1390,41 @@ class ArrivalsDeparturesReport(BaseReport):
 
         # Columns for the tables
         date_col = "cr_shelter_registration_history.date"
-        columns, labels, types = [date_col], {}, {date_col: "datetime"}
+        columns, headers, types = [date_col], {date_col: T("Date")}, {date_col: "datetime"}
         for rfield in person_data.rfields:
             if rfield.ftype == "id":
                 continue
             columns.append(rfield.colname)
-            labels[rfield.colname] = rfield.label
+            headers[rfield.colname] = rfield.label
             types[rfield.colname] = str(rfield.ftype)
 
         # Build result
         rtable = current.s3db.cr_shelter_registration_history
         date_represent = rtable.date.represent
-        group_title = [T("Arrivals"), T("Departures")]
-        date_col_label = [T("Check-in Date"), T("Check-out Date")]
+        group_title = [T("Arrivals##shelter"), T("Departures##shelter")]
 
         output = []
         for i, group in enumerate((arrivals, departures)):
             rows = []
-            for person_id, date in sorted(group.items(), key=lambda i: i[1]):
-                row = persons.get(person_id)
-                if not row:
+            for person_id, date in sorted(group.items(), key=lambda item: item[1]):
+
+                # Get the original person Row
+                person = persons.get(person_id)
+                if not person:
                     continue
+
+                # Make a shallow copy and add the date column
+                row = Storage(person)
+                row._row = Storage(person._row)
                 row._row[date_col], row[date_col] = date, date_represent(date)
                 rows.append(row)
+
             result = {"title": group_title[i],
                       "columns": columns,
-                      "labels": dict(labels),
+                      "headers": headers,
                       "types": types,
                       "rows": rows,
                       }
-            result["labels"][date_col] = date_col_label[i]
             output.append(result)
 
         return output

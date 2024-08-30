@@ -353,6 +353,12 @@ def cr_shelter_resource(r, tablename):
                     action = PresenceList,
                     )
 
+    from ..reports import ArrivalsDeparturesReport
+    s3db.set_method("cr_shelter",
+                    method = "aandd",
+                    action = ArrivalsDeparturesReport,
+                    )
+
 # -------------------------------------------------------------------------
 def cr_shelter_controller(**attr):
 

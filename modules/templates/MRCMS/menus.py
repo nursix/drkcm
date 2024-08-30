@@ -272,6 +272,14 @@ class OptionsMenu(default.OptionsMenu):
                         #    ),
                     )
 
+        menu = menu(M("Reports", link=False)(
+                        M("Arrivals and Departures##shelter", f="shelter", m="aandd",
+                          t = "cr_shelter_registration_event", p="read",
+                          restrict = ("ADMIN", "ORG_ADMIN", "CASE_ADMIN"),
+                          ),
+                        ),
+                    )
+
         return menu
 
     # -------------------------------------------------------------------------

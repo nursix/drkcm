@@ -73,17 +73,43 @@
         },
 
         /**
-         * Renders the report data as table
+         * Renders the report
          *
-         * @param {object} data: the data returned from the server, an object
-         *                       {labels: [], records: [[]], results: 0}
+         * @param {object} data: the data returned from the server, one or more
+         *                       objects like {labels: [], records: [[]], results: 0}
          */
-        _renderTable: function(data) {
+        _renderReport: function(report) {
+
+            const container = this.tableContainer.empty(),
+                  self = this;
+
+            if (Array.isArray(report)) {
+                report.forEach(function(data) {
+                    self._renderTable(container, data);
+                });
+            } else {
+                this._renderTable(container, report);
+            }
+        },
+
+        /**
+         * Renders report data as table
+         *
+         * @param {jQuery} container: the container to append the table to
+         * @param {object} data: the data returned from the server, an object
+         *                       like {labels: [], records: [[]], results: 0}
+         */
+        _renderTable: function(container, data) {
 
             const results = data.results,
                   labels = data.labels,
                   records = data.records,
-                  container = this.tableContainer.empty();
+                  title = data.title;
+
+            // Optional subtitle for the table
+            if (title) {
+                $('<h4>').text(title).appendTo(container);
+            }
 
             if (!data.results || !labels || !records) {
                 $('<p class="empty">').text(this.options.labelNoData).appendTo(container);
@@ -195,7 +221,7 @@
                 'data': JSON.stringify(params),
                 'success': function(data) {
                     throbber.remove();
-                    self._renderTable(data);
+                    self._renderReport(data);
                     self._enableForm();
                 },
                 'error': function () {
@@ -272,7 +298,7 @@
             $('.download-report-btn', $el).on('click' + ns, function() {
                 self._downloadReport();
             });
-            $('input,select', $el).on('change' + ns, function() {
+            $($el).on('change' + ns, 'input,select', function() {
                 self.tableContainer.empty();
             });
 
