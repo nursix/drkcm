@@ -1432,7 +1432,7 @@ class ArrivalsDeparturesReport(BaseReport):
                        "date_of_birth",
                        "gender",
                        "person_details.nationality",
-                       "bamf.value",
+                       (T("BAMF Ref.No."), "bamf.value"),
                        "dvr_case.status_id",
                        "dvr_case.last_seen_on",
                        ]
