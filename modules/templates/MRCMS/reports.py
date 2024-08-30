@@ -1401,12 +1401,13 @@ class ArrivalsDeparturesReport(BaseReport):
         # Build result
         rtable = current.s3db.cr_shelter_registration_history
         date_represent = rtable.date.represent
+        sort_by_date = lambda item: item[1] if item[1] else datetime.datetime.max
         group_title = [T("Arrivals##shelter"), T("Departures##shelter")]
 
         output = []
         for i, group in enumerate((arrivals, departures)):
             rows = []
-            for person_id, date in sorted(group.items(), key=lambda item: item[1]):
+            for person_id, date in sorted(group.items(), key=sort_by_date):
 
                 # Get the original person Row
                 person = persons.get(person_id)
