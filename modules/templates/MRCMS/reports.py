@@ -412,7 +412,7 @@ class PresenceReport(BaseReport):
 
         output = {"labels": labels,
                   "records": records,
-                  "results": len(records),
+                  "results": max(0, len(records)),
                   }
 
         # Set Content Type
@@ -1259,7 +1259,7 @@ class ArrivalsDeparturesReport(BaseReport):
 
             table = {"labels": labels,
                      "records": records,
-                     "results": max(0, len(records) - 1),
+                     "results": max(0, len(records)),
                      "title": item.get("title"),
                      }
             output.append(table)

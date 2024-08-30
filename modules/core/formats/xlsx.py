@@ -129,7 +129,8 @@ class XLSXWriter(FormatWriter):
         else:
             # Create the workbook
             wb = Workbook(iso_dates=True)
-            wb.remove(wb['Sheet']) # Remove default worksheet
+            if len(wb.sheetnames) > 0:
+                wb.remove(wb[wb.sheetnames[0]]) # Remove default worksheet
             sheet_number = 0
 
         # Add named styles
@@ -161,6 +162,9 @@ class XLSXWriter(FormatWriter):
             sheet_name = " ".join(re.sub(r"[\\\/\?\*\[\]:]", " ", s3_str(title)).split())
 
         batch, remaining = rows[:batch_size], rows[batch_size:]
+        if not batch:
+            # Create at least one sheet even if there are no data
+            batch = True
         while batch:
 
             # Create work sheet
@@ -205,7 +209,8 @@ class XLSXWriter(FormatWriter):
             ws.append(label_row)
 
             # Add the data
-            cls.write_rows(ws, batch, lfields, types, column_widths)
+            if batch is not True:
+                cls.write_rows(ws, batch, lfields, types, column_widths)
 
             # Adjust column widths
             for i in range(1, num_columns + 1):
