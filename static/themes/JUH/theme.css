@@ -5378,20 +5378,21 @@ h4.profile-sub-header {
 
 /* line 633, ../scss/theme/_misc.scss */
 .table-report-data {
+  font-size: 0.875rem;
   max-height: 80vh;
   overflow: scroll;
   padding: 0.3rem;
   margin-top: 0.7rem;
 }
-/* line 638, ../scss/theme/_misc.scss */
+/* line 639, ../scss/theme/_misc.scss */
 .table-report-data table, .table-report-data th, .table-report-data td {
   border: 1px solid #ccc;
 }
-/* line 641, ../scss/theme/_misc.scss */
+/* line 642, ../scss/theme/_misc.scss */
 .table-report-data thead th {
   text-align: center;
 }
-/* line 645, ../scss/theme/_misc.scss */
+/* line 646, ../scss/theme/_misc.scss */
 .table-report-data tbody tr:nth-child(even) {
   background: #fafafa;
 }
