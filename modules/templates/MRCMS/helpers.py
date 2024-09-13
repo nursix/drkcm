@@ -8,7 +8,8 @@ import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from gluon import current, URL, A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
+from gluon import current, URL, \
+                  A, DIV, I, LABEL, OPTION, SELECT, SPAN, TAG
 
 from s3dal import Field
 from core import FS, IS_ONE_OF, WorkflowOptions, RangeFilter, s3_fullname

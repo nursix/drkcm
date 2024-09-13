@@ -8,7 +8,7 @@
 // ============================================================================
 // STYLES
 
-/* Case Rheader Flags */
+// Case file header ***********************************************************
 .overdue {
     color: red;
 }
@@ -22,8 +22,30 @@
     padding: 0.1rem 0.2rem;
     text-transform: uppercase;
 }
+.client-gender-age {
+    font-size: 0.7rem;
+    vertical-align: top;
+    color: #999;
+    .fa {
+        margin: 0 0.2rem;
+    }
+    margin: 0 1rem;
+}
 
-/* Check-in/check-out UI */
+.last-seen-critical, .last-seen-warning {
+    .fa {
+        margin: 0.2rem;
+    }
+    cursor: pointer;
+}
+.last-seen-critical {
+    color: #c10031;
+}
+.last-seen-warning {
+    color: #bd5900;
+}
+
+// Check-in/check-out UI ******************************************************
 .checkpoint-advise {
     background: #fff0f0 none repeat scroll 0 0;
     border: 2px solid red;
@@ -71,7 +93,7 @@
     }
 }
 
-/* Event Registration UI */
+// Event Registration UI ******************************************************
 .event-registration {
     .org-header {
         margin-top: 0.3rem;
@@ -194,7 +216,7 @@
     padding-top: 0.5rem;
 }
 
-/* Response Theme Selector */
+// Response Theme Selector ****************************************************
 #dvr_response_action_response_theme_ids__row,
 #sub-defaultresponse_action {
     .ui-multiselect.ui-widget {
@@ -229,6 +251,7 @@
     }
 }
 
+// Occupancy bar (in shelter unit list) ***************************************
 .occupancy-bar {
     border: 1px solid black;
     position: relative;
@@ -294,7 +317,7 @@
     }
 }
 
-// Residents list
+// Shelter overview / resident list *******************************************
 .shelter-overview-stats {
     font-size: 0.8rem;
     background-color: #eaeaea;
@@ -371,11 +394,11 @@
             }
         }
     }
-    .units-list { /* table */
+    .units-list { // table
 
         min-width: 71%;
 
-        .unit { /* tbody */
+        .unit { // tbody
 
             .unit-data {
                 position: relative;
@@ -441,7 +464,7 @@
                 }
             }
 
-            .unit-header { /* tr unit header */
+            .unit-header { // tr unit header
                 padding: 0;
                 background-color: #DDD;
                 border-top: 3px solid #AAA;
@@ -464,7 +487,7 @@
                 }
             }
 
-            .resident-header { /* tr residents header */
+            .resident-header { // tr residents header
                 th {
                     font-size: 0.9rem;
                     color: #777;
@@ -472,7 +495,7 @@
                 }
             }
 
-            .resident { /* tr resident */
+            .resident { // tr resident
                 td {
                     padding: 0.2rem 0.5rem;
                     font-size: 0.9rem;
@@ -504,14 +527,14 @@
                 }
             }
 
-            .capacity-free { /* tr free capacity */
+            .capacity-free { // tr free capacity
                 td {
                     padding: 0.2rem 0.5rem;
                     font-size: 0.9rem;
                 }
                 background-color: #b9ffb9;
             }
-            .capacity-blocked { /* tr blocked capacity */
+            .capacity-blocked { // tr blocked capacity
                 td {
                     padding: 0.2rem 0.5rem;
                     font-size: 0.9rem;
@@ -519,16 +542,16 @@
                 background-color: #ffced5;
             }
 
-            .unit-subheader { /* subheader tr */
+            .unit-subheader { // subheader tr
                 border-top: 2px solid #AAA;
-                .residents-planned { /* div */
+                .residents-planned { // div
                     font-size: 0.7rem;
                     padding: 0.2rem;
                     color: #666;
                 }
             }
 
-            .unit-spacer { /* tr spacer */
+            .unit-spacer { // tr spacer
                 border: none;
                 border-top: 3px solid #AAA;
                 td {
@@ -540,6 +563,7 @@
     }
 }
 
+// Registration card dialog ***************************************************
 .id-card-data {
     border: 1px solid #ccc;
     padding: 1rem;
@@ -555,29 +579,7 @@
     font-size: 1rem;
 }
 
-.client-gender-age {
-    font-size: 0.7rem;
-    vertical-align: top;
-    color: #999;
-    .fa {
-        margin: 0 0.2rem;
-    }
-    margin: 0 1rem;
-}
-
-.last-seen-critical, .last-seen-warning {
-    .fa {
-        margin: 0.2rem;
-    }
-    cursor: pointer;
-}
-.last-seen-critical {
-    color: #c10031;
-}
-.last-seen-warning {
-    color: #bd5900;
-}
-
+// Registration history (on presence tab) *************************************
 .rhist {
     border: 1px solid #ccc;
     margin-bottom: 0.7rem;
@@ -624,7 +626,7 @@
     }
 }
 
-// Table reports
+// Table reports **************************************************************
 .table-report-form {
     width: auto;
     border: 1px solid #eee;
@@ -645,6 +647,38 @@
     tbody {
         tr:nth-child(even) {
             background: #fafafa;
+        }
+    }
+}
+
+// Bulk checkout/closure ******************************************************
+.bulk-checkout-form {
+
+    padding: 1rem;
+    .checkout-info {
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .checkout-question {
+        font-size: 0.8rem;
+        font-weight: bold;
+        border-top: 1px solid #eee;
+        padding-top: 0.5rem;
+    }
+    label {
+        font-size: 0.825rem;
+    }
+    .label-above {
+        font-weight: bold;
+        select {
+            display: block;
+            margin-bottom: 1rem;
+            min-width: 12rem;
+        }
+    }
+    .checkout-buttons {
+        button, a.cancel-form-btn {
+            margin-bottom: 0
         }
     }
 }

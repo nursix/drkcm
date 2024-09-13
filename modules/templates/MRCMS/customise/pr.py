@@ -203,6 +203,9 @@ def pr_person_resource(r, tablename):
 
                 bulk_actions = []
 
+                get_vars = r.get_vars
+                select_vars = {k:get_vars[k] for k in get_vars.keys() & {"closed", "archived"}}
+
                 if case_administration and \
                    has_permission("update", "cr_shelter_registration"):
 
@@ -211,8 +214,7 @@ def pr_person_resource(r, tablename):
 
                     bulk_actions.append({"label": T("Check-out"),
                                          "mode": "ajax",
-                                         "url": r.url(method="checkout", representation="json", vars={}),
-                                         "confirm": T("Do you want to check-out these residents?"),
+                                         "url": r.url(method="checkout", representation="json", vars=select_vars),
                                          })
 
                 if auth.s3_has_role("ADMIN"):
