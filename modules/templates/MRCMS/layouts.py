@@ -18,7 +18,10 @@ class OrgMenuLayout(S3NavigationItem):
     @staticmethod
     def layout(item):
 
-        name = "Johanniter-Unfall-Hilfe"
+        settings = current.deployment_settings
+
+        name = settings.get_custom("context_org_name")
+        logo = settings.get_custom("context_org_logo")
 
         current_user = current.auth.user
         if current_user:
@@ -33,10 +36,13 @@ class OrgMenuLayout(S3NavigationItem):
                 if row:
                     name = row.name
 
-        logo = IMG(_src = "/%s/static/themes/JUH/img/logo_smaller.png" % current.request.application,
-                   _alt = name,
-                   _width = 49,
-                   )
+        if logo:
+            logo = IMG(_src = "/%s/%s" % (current.request.application, logo),
+                       _alt = name,
+                       _width = 49,
+                       )
+        else:
+            logo = ""
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]
         return (name, logo)

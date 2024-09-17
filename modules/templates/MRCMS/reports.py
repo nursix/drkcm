@@ -331,7 +331,7 @@ class BaseReport(CRUDMethod):
         s3 = current.response.s3
 
         # Static script
-        script = "/%s/static/themes/JUH/js/tblreport.js" % request.application
+        script = "/%s/static/scripts/templates/MRCMS/tblreport.js" % request.application
         scripts = s3.scripts
         if script not in scripts:
             scripts.append(script)

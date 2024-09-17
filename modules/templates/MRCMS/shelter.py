@@ -397,7 +397,7 @@ class ResidentsList:
         s3 = current.response.s3
 
         # Static script
-        script = "/%s/static/themes/JUH/js/residents.js" % current.request.application
+        script = "/%s/static/scripts/templates/MRCMS/residents.js" % current.request.application
         scripts = s3.scripts
         if script not in scripts:
             scripts.append(script)

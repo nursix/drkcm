@@ -1413,7 +1413,7 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
 
             # Inject JS
             appname = current.request.application
-            script = "/%s/static/themes/JUH/js/rhist.js" % appname
+            script = "/%s/static/scripts/templates/MRCMS/rhist.js" % appname
             if script not in s3.scripts:
                 s3.scripts.append(script)
 

@@ -127,6 +127,10 @@ def config(settings):
     # Defaults for custom settings
     #
     settings.custom.autogenerate_case_ids = True
+
+    settings.custom.context_org_name = "Johanniter-Unfall-Hilfe"
+    settings.custom.context_org_logo = "static/themes/JUH/img/logo_smaller.png"
+
     settings.custom.default_org_logo = ("static", "themes", "JUH", "img", "logo_small.png")
 
     # -------------------------------------------------------------------------
