@@ -127,6 +127,7 @@ def config(settings):
     # Defaults for custom settings
     #
     settings.custom.autogenerate_case_ids = True
+    settings.custom.default_org_logo = ("static", "themes", "JUH", "img", "logo_small.png")
 
     # -------------------------------------------------------------------------
     # General UI settings
