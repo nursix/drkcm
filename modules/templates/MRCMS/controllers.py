@@ -4,7 +4,7 @@
     License: MIT
 """
 
-from gluon import current
+from gluon import current, URL
 from gluon.html import DIV, H3, H4, I, LI, TAG, UL, XML
 
 from core import CustomController
@@ -93,10 +93,16 @@ class index(CustomController):
             auth.messages.submit_button = T("Login")
             login_form = auth.login(inline=True)
 
+        logo = settings.get_custom("homepage_logo")
+        logo = URL(c="static", f="themes", args=list(logo)) if logo else ""
+        logo_alt = settings.get_custom("context_org_name")
+
         output = {"login_div": login_div,
                   "login_form": login_form,
                   "announcements": announcements,
                   "announcements_title": announcements_title,
+                  "logo": logo,
+                  "logo_alt": logo_alt,
                   }
 
         # Custom view and homepage styles

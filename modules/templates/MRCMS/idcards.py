@@ -1286,9 +1286,10 @@ class IDCardLayoutL(PDFCardLayout):
             Returns the default organisation logo for ID cards
         """
 
-        path = current.deployment_settings.get_custom("default_org_logo")
+        path = current.deployment_settings.get_custom("idcard_default_logo")
 
-        return os.path.join(current.request.folder, *path) if path else None
+        return os.path.join(current.request.folder, "static", "themes", *path) \
+               if path else None
 
 # =============================================================================
 class IDCardLayoutP(IDCardLayoutL):

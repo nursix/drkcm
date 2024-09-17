@@ -8,7 +8,7 @@ __all__ = ("OrgMenuLayout",
            "OM",
            )
 
-from gluon import current, IMG
+from gluon import current, URL, IMG
 from core import S3NavigationItem
 
 # =============================================================================
@@ -21,7 +21,7 @@ class OrgMenuLayout(S3NavigationItem):
         settings = current.deployment_settings
 
         name = settings.get_custom("context_org_name")
-        logo = settings.get_custom("context_org_logo")
+        logo = settings.get_custom("org_menu_logo")
 
         current_user = current.auth.user
         if current_user:
@@ -37,10 +37,8 @@ class OrgMenuLayout(S3NavigationItem):
                     name = row.name
 
         if logo:
-            logo = IMG(_src = "/%s/%s" % (current.request.application, logo),
-                       _alt = name,
-                       _width = 49,
-                       )
+            path = URL(c="static", f="themes", args=list(logo))
+            logo = IMG(_src=path, _alt=name, _width=49)
         else:
             logo = ""
 
