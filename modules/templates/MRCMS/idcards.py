@@ -630,7 +630,7 @@ class IDCard:
         data = label.strip().split("##") if label else None
         if not data:
             raise SyntaxError("No data for identification")
-        elif len(data) == 3:
+        if len(data) == 3:
             label, token, chash = data
         else:
             label, token, chash = data[0], None, None
@@ -703,9 +703,9 @@ class IDCard:
         # Compute the ID card verification hash
         try:
             uid = uuid.UUID(record.uuid).hex.upper()
-        except ValueError:
+        except ValueError as e:
             # Malformed ID record UID (invalid ID record)
-            raise ValueError("Invalid ID record")
+            raise ValueError("Invalid ID record") from e
         chash_v = cls.generate_chash(person.pe_label, uid, vhash)
 
         if chash_v != chash:

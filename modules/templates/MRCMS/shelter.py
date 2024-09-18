@@ -780,7 +780,7 @@ class ResidentsList:
 
         residents = self.residents
 
-        units = [row for row in self.units] + [None]
+        units = list(self.units) + [None]
         for unit in units:
             if unit:
                 unit_name = unit.name
