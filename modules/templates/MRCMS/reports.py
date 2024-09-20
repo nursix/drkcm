@@ -711,7 +711,7 @@ class PresenceReport(BaseReport):
                              (last_event.max_date == table.date))
         query = (table.shelter_id == shelter_id) & \
                 (table.status == 2)
-        rows = db(table.id > 0).select(table.person_id, join=join, distinct=True)
+        rows = db(query).select(table.person_id, join=join, distinct=True)
         person_ids |= {row.person_id for row in rows}
 
         return person_ids
