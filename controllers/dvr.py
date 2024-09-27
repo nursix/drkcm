@@ -105,16 +105,6 @@ def person():
             status_opts = s3db.dvr_case_status_filter_opts
             default_status = None
 
-            # Set default for dvr_case_effort.person_id and hide it
-            etable = s3db.dvr_case_effort
-            field = etable.person_id
-            field.default = r.record.id
-            field.readable = field.writable = False
-
-            # Set default for dvr_case_effort.human_resource_id
-            field = etable.human_resource_id
-            field.default = auth.s3_logged_in_human_resource()
-
         # Should not be able to delete records in this view
         resource.configure(deletable = False)
 
@@ -1173,6 +1163,19 @@ def vulnerability_type():
     return crud_controller()
 
 # =============================================================================
+# Distributions
+#
+def distribution_template():
+    """ Distribution Templates: CRUD Controller """
+
+    return crud_controller()
+
+def distribution():
+    """ Distributions: CRUD Controller """
+
+    return crud_controller()
+
+# =============================================================================
 # Notes
 #
 def note():
@@ -1211,14 +1214,6 @@ def residence_permit_type():
 #
 def service_contact_type():
     """ Service Contact Types: RESTful CRUD controller """
-
-    return crud_controller()
-
-# =============================================================================
-# Site Activities (in connection with CR module)
-#
-def site_activity():
-    """ Site Activity Reports: RESTful CRUD Controller """
 
     return crud_controller()
 

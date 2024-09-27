@@ -1182,7 +1182,6 @@ class PRPersonModel(DataModel):
                                              },
                        dvr_case_activity = "person_id",
                        dvr_case_appointment = "person_id",
-                       dvr_case_effort = "person_id",
                        dvr_case_event = "person_id",
                        dvr_case_language = "person_id",
                        dvr_response_action = "person_id",

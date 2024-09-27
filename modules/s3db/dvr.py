@@ -31,16 +31,15 @@ __all__ = ("DVRCaseModel",
            "DVRCaseAllowanceModel",
            "DVRCaseAppointmentModel",
            "DVRResidenceStatusModel",
-           "DVRCaseEffortModel",
            "DVRCaseEventModel",
            "DVRNeedsModel",
            "DVRNotesModel",
            "DVRReferralModel",
            "DVRResponseModel",
            "DVRVulnerabilityModel",
+           "DVRDistributionModel",
            "DVRDiagnosisModel",
            "DVRServiceContactModel",
-           "DVRSiteActivityModel",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
@@ -807,6 +806,7 @@ class DVRCaseFlagModel(DataModel):
 
     names = ("dvr_case_flag",
              "dvr_case_flag_case",
+             "dvr_case_flag_id",
              )
 
     def model(self):
@@ -2908,7 +2908,6 @@ class DVRCaseActivityModel(DataModel):
 
         # Components
         self.add_components(tablename,
-                            dvr_case_effort = "case_activity_id",
                             dvr_response_action = "case_activity_id",
                             dvr_response_action_theme = "case_activity_id",
                             dvr_case_activity_update = "case_activity_id",
@@ -3309,135 +3308,6 @@ class DVRCaseActivityModel(DataModel):
 
             # Remove end-date if present
             activity.update_record(end_date = None)
-
-# =============================================================================
-class DVRCaseEffortModel(DataModel):
-    """ Effort Log for Case / Case Activities """
-
-    names = ("dvr_case_effort",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        s3 = current.response.s3
-
-        define_table = self.define_table
-        crud_strings = s3.crud_strings
-
-        # ---------------------------------------------------------------------
-        # Effort log
-        #
-        tablename = "dvr_case_effort"
-        define_table(tablename,
-                     self.pr_person_id(
-                         ondelete = "CASCADE",
-                         ),
-                     self.dvr_case_activity_id(
-                         ondelete = "SET NULL",
-                         readable = False,
-                         writable = False,
-                         ),
-                     DateTimeField(
-                         default = "now"
-                         ),
-                     Field("name",
-                           label = T("Short Description"),
-                           ),
-                     self.hrm_human_resource_id(
-                         comment = None,
-                         widget = None,
-                         ),
-                     Field("hours", "double",
-                           represent = lambda v: \
-                                       IS_FLOAT_AMOUNT.represent(v,
-                                                                 precision = 2,
-                                                                 ),
-                           requires = IS_FLOAT_AMOUNT(minimum=0.0),
-                           widget = S3HoursWidget(precision = 2,
-                                                  ),
-                           ),
-                     CommentsField(),
-                     )
-
-        # Table Configuration
-        self.configure(tablename,
-                       onaccept = self.case_effort_onaccept,
-                       )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Add Effort"),
-            title_display = T("Effort Details Details"),
-            title_list = T("Efforts"),
-            title_update = T("Edit Effort"),
-            label_list_button = T("List Efforts"),
-            label_delete_button = T("Delete Effort"),
-            msg_record_created = T("Effort added"),
-            msg_record_modified = T("Effort updated"),
-            msg_record_deleted = T("Effort deleted"),
-            msg_list_empty = T("No Efforts currently registered"),
-        )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-    # -------------------------------------------------------------------------
-    def defaults(self):
-        """ Safe defaults for names in case the module is disabled """
-
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def case_effort_onaccept(form):
-        """
-            Onaccept-callback for dvr_case_effort:
-                - inherit person_id from case_activity, unless specified
-                  in form or default
-
-            Args:
-                form: the FORM
-        """
-
-        # Read form data
-        formvars = form.vars
-
-        # Get the record ID
-        if "id" in formvars:
-            record_id = formvars.id
-        elif hasattr(form, "record_id"):
-            record_id = form.record_id
-        else:
-            record_id = None
-        if not record_id:
-            return
-
-        s3db = current.s3db
-
-        etable = s3db.dvr_case_effort
-        field = etable.person_id
-
-        if "person_id" not in formvars and not field.default:
-
-            # Inherit person_id from the case activity
-            atable = s3db.dvr_case_activity
-            query = (etable.id == record_id) & \
-                    (atable.id == etable.case_activity_id)
-            row = current.db(query).select(etable.id,
-                                           etable.person_id,
-                                           atable.person_id,
-                                           limitby = (0, 1),
-                                           ).first()
-            if row:
-                effort = row.dvr_case_effort
-                activity = row.dvr_case_activity
-
-                if not effort.person_id:
-                    effort.update_record(person_id = activity.person_id)
 
 # =============================================================================
 class DVRCaseAppointmentModel(DataModel):
@@ -5072,6 +4942,168 @@ class DVRVulnerabilityModel(DataModel):
                 form.errors.vulnerability_type_id = error
 
 # =============================================================================
+class DVRDistributionModel(DataModel):
+    # TODO docstring
+
+    names = ("dvr_distribution_template",
+             "dvr_distribution_template_item",
+             "dvr_distribution",
+             "dvr_distribution_item",
+             )
+
+    def model(self):
+
+        T = current.T
+
+        define_table = self.define_table
+        super_link = self.super_link
+
+        organisation_id = self.org_organisation_id
+        case_flag_id = self.dvr_case_flag_id
+
+        site_represent = self.org_SiteRepresent(show_type=False)
+
+        # ---------------------------------------------------------------------
+        # Distribution template
+        #
+        tablename = "dvr_distribution_template"
+        define_table(tablename,
+                     organisation_id(
+                         comment = None,
+                         ),
+                     super_link("site_id", "org_site",
+                                label = T("Place"),
+                                represent = site_represent,
+                                ),
+                     Field("name",
+                           label = T("Title"),
+                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
+                           # TODO onvalidation to ensure uniqueness?
+                           ),
+                     Field("max_per_day", "integer",
+                           label = T("Maximum Number per Day"),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, None)),
+                           # TODO comment
+                           ),
+                     Field("min_interval", "double",
+                           label = T("Minimum Interval (Hours)"),
+                           requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
+                           widget = S3HoursWidget(precision=2),
+                           # TODO comment
+                           ),
+                     Field("residents_only", "boolean",
+                           label = T("Current residents only"),
+                           default = True,
+                           represent = BooleanRepresent(icons=True, colors=True),
+                           comment = T("Registration requires that the person is checked-in at a shelter"),
+                           ),
+                     # TODO consider explicit active-field (instead of obsolete? or additionally?)
+                     Field("obsolete", "boolean",
+                           label = T("Obsolete"),
+                           default = False,
+                           represent = BooleanRepresent(labels = False,
+                                                        # Reverse icons semantics
+                                                        icons = (BooleanRepresent.NEG,
+                                                                 BooleanRepresent.POS,
+                                                                 ),
+                                                        flag = True,
+                                                        ),
+                           ),
+                     CommentsField(),
+                     )
+
+        # TODO CRUD Strings
+
+        # TODO Standard List Fields
+
+        # TODO Field template?
+
+        # ---------------------------------------------------------------------
+        # Distribution template item
+        #
+        # TODO implement
+        tablename = "dvr_distribution_template_item"
+        define_table(tablename,
+                     # template_id
+                     # mode (LOAN, RETURN, LOSS, TRANSFER)
+                     # item_id
+                     # item_pack_id
+                     # quantity
+                     # quantity_min
+                     # quantity_max
+                     # optional
+                     # obsolete
+                     )
+
+        # ---------------------------------------------------------------------
+        # Flags required for a distribution template to apply
+        #
+        # TODO implement
+        tablename = "dvr_distribution_flag_required"
+        define_table(tablename,
+                     #template_id,
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Flags forbidden for a distribution template to apply
+        #
+        # TODO implement
+        tablename = "dvr_distribution_flag_forbidden"
+        define_table(tablename,
+                     #template_id,
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Distribution
+        #
+        # TODO implement
+        tablename = "dvr_distribution"
+        define_table(tablename,
+                     organisation_id(
+                         comment = None,
+                         ),
+                     super_link("site_id", "org_site",
+                                label = T("Place"),
+                                represent = site_represent,
+                                ),
+                     DateTimeField(
+                         default="now",
+                         ),
+                     # person_id (recipient)
+                     # human_resource_id (staff member responsible)
+                     # template_id
+                     )
+
+        # ---------------------------------------------------------------------
+        # Distribution Item
+        #
+        # TODO implement
+        tablename = "dvr_distribution_item"
+        define_table(tablename,
+                     # distribution_id
+                     # template_item_id?
+                     # mode (LOAN, RETURN, LOSS, TRANSFER)
+                     # item_id
+                     # item_pack_id
+                     # quantity
+                     )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
+
+# =============================================================================
 class DVRDiagnosisModel(DataModel):
     """ Diagnoses, e.g. in Psychosocial Support """
 
@@ -5297,137 +5329,6 @@ class DVRServiceContactModel(DataModel):
         """ Safe defaults for names in case the module is disabled """
 
         return None
-
-# =============================================================================
-class DVRSiteActivityModel(DataModel):
-    """ Model to record the activity of a site over time """
-
-    names = ("dvr_site_activity",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        s3 = current.response.s3
-        settings = current.deployment_settings
-
-        crud_strings = s3.crud_strings
-
-        configure = self.configure
-        define_table = self.define_table
-
-        SITE = settings.get_org_site_label()
-        site_represent = self.org_SiteRepresent(show_link=False)
-
-        default_site = settings.get_org_default_site()
-        permitted_facilities = current.auth.permitted_facilities(redirect_on_error=False)
-
-        # ---------------------------------------------------------------------
-        # Site Activity
-        #
-        tablename = "dvr_site_activity"
-        define_table(tablename,
-                     self.super_link("site_id", "org_site",
-                                     default = default_site,
-                                     filterby = "site_id",
-                                     filter_opts = permitted_facilities,
-                                     label = SITE,
-                                     readable = not default_site,
-                                     writable = not default_site,
-                                     represent = site_represent,
-                                     updateable = True,
-                                     ),
-                     DateField(future=0),
-                     Field("old_total", "integer",
-                           default = 0,
-                           label = T("Previous Total"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("cases_new", "integer",
-                           default = 0,
-                           label = T("Admissions"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("cases_closed", "integer",
-                           default = 0,
-                           label = T("Departures"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("new_total", "integer",
-                           default = 0,
-                           label = T("Current Total"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("report", "upload",
-                           autodelete = True,
-                           label = T("Report"),
-                           length = current.MAX_FILENAME_LENGTH,
-                           represent = self.report_represent,
-                           uploadfolder = os.path.join(current.request.folder,
-                                                       "uploads",
-                                                       "dvr",
-                                                       ),
-                           ),
-                     CommentsField(),
-                     )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Activity Report"),
-            title_display = T("Activity Report"),
-            title_list = T("Activity Reports"),
-            title_update = T("Edit Activity Report"),
-            label_list_button = T("List Activity Reports"),
-            label_delete_button = T("Delete Activity Report"),
-            msg_record_created = T("Activity Report created"),
-            msg_record_modified = T("Activity Report updated"),
-            msg_record_deleted = T("Activity Report deleted"),
-            msg_list_empty = T("No Activity Reports found"),
-        )
-
-        # Filter widgets
-        date_filter = DateFilter("date")
-        date_filter.operator = ["eq"]
-        filter_widgets = [date_filter]
-        if not default_site:
-            site_filter = OptionsFilter("site_id",
-                                        label = SITE,
-                                        )
-            filter_widgets.insert(0, site_filter)
-
-        # Table configuration
-        configure(tablename,
-                  filter_widgets = filter_widgets,
-                  )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-    # -------------------------------------------------------------------------
-    def defaults(self):
-        """ Safe defaults for names in case the module is disabled """
-
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def report_represent(value):
-        """ File representation """
-
-        if value:
-            try:
-                # Read the filename from the file
-                filename = current.db.dvr_site_activity.report.retrieve(value)[0]
-            except IOError:
-                return current.T("File not found")
-            else:
-                return A(filename,
-                         _href=URL(c="default", f="download", args=[value]))
-        else:
-            return current.messages["NONE"]
 
 # =============================================================================
 def dvr_case_organisation(person_id):
