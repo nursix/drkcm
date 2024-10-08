@@ -468,49 +468,6 @@
     </xsl:template>
 
     <!-- ****************************************************************** -->
-    <xsl:template name="Distribution">
-        <xsl:variable name="DistributionItem" select="normalize-space(substring-after(@field, ':'))"/>
-        <xsl:variable name="ItemNumber" select="text()"/>
-
-        <xsl:if test="$ItemNumber!=''">
-            <resource name="supply_distribution">
-                <reference field="parameter_id" resource="supply_distribution_item">
-                    <xsl:attribute name="tuid">
-                        <xsl:value-of select="concat('DITEM:', $DistributionItem)"/>
-                    </xsl:attribute>
-                </reference>
-                <data field="value"><xsl:value-of select="$ItemNumber"/></data>
-            </resource>
-        </xsl:if>
-
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
-    <xsl:template name="DistributionItem">
-        <xsl:variable name="DistributionItem" select="normalize-space(substring-after(@field, ':'))"/>
-
-        <resource name="supply_item">
-            <xsl:attribute name="tuid">
-                <xsl:value-of select="concat('ITEM:', $DistributionItem)"/>
-            </xsl:attribute>
-            <data field="name"><xsl:value-of select="$DistributionItem"/></data>
-        </resource>
-
-        <resource name="supply_distribution_item">
-            <xsl:attribute name="tuid">
-                <xsl:value-of select="concat('DITEM:', $DistributionItem)"/>
-            </xsl:attribute>
-            <data field="name"><xsl:value-of select="$DistributionItem"/></data>
-            <reference field="item_id" resource="supply_item">
-                <xsl:attribute name="tuid">
-                    <xsl:value-of select="concat('ITEM:', $DistributionItem)"/>
-                </xsl:attribute>
-            </reference>
-        </resource>
-
-    </xsl:template>
-
-    <!-- ****************************************************************** -->
     <xsl:template name="Event">
         <xsl:variable name="Event" select="col[@field='Event']/text()"/>
 

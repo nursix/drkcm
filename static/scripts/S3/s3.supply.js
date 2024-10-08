@@ -68,7 +68,7 @@ $(function() {
 
             var Quantity = (InvQuantity * InvPackQuantity) / PackQuantity;
 
-            TotalQuantity = '<span id="TotalQuantity"> / ' + Quantity.toFixed(2) + ' ' + PackName + ' (' + i18n.in_inv + ')</span>';
+            TotalQuantity = '<span id="TotalQuantity"> / ' + Quantity.toFixed(2) + ' ' + PackName + ' (' + i18n.in_stock + ')</span>';
             $('#inv_quantity_throbber').remove();
             $('[name="quantity"]').after(TotalQuantity);
         });

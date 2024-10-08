@@ -2828,8 +2828,6 @@ class ProjectActivityModel(DataModel):
                        project_activity_data = "activity_id",
                        # Demographic
                        project_activity_demographic = "activity_id",
-                       # Distributions
-                       supply_distribution = "activity_id",
                        # Events
                        event_event = {"link": "event_activity",
                                       "joinby": "activity_id",

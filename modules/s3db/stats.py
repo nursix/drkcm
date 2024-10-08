@@ -76,7 +76,6 @@ class StatsParameterModel(DataModel):
                     "stats_impact_type": T("Impact Type"),
                     # @ToDo; Deprecate
                     "stats_people_type": T("Types of People"),
-                    "supply_distribution_item": T("Distribution Item"),
                     }
 
         tablename = "stats_parameter"
@@ -136,7 +135,6 @@ class StatsDataModel(DataModel):
                     "stats_impact": T("Impact"),
                     # @ToDo: Deprecate
                     "stats_people": T("People"),
-                    "supply_distribution": T("Distribution"),
                     }
 
         accuracy_opts = {1 : T("Official Measurement"),

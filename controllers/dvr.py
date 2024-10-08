@@ -1163,19 +1163,6 @@ def vulnerability_type():
     return crud_controller()
 
 # =============================================================================
-# Distributions
-#
-def distribution_template():
-    """ Distribution Templates: CRUD Controller """
-
-    return crud_controller()
-
-def distribution():
-    """ Distributions: CRUD Controller """
-
-    return crud_controller()
-
-# =============================================================================
 # Notes
 #
 def note():

@@ -47,6 +47,7 @@ __all__ = ("S3AgeWidget",
            "S3PhoneWidget",
            "S3QRInput",
            "S3MultiSelectWidget",
+           "EmptyOptionsWidget",
            "S3SelectWidget",
            "S3SliderWidget",
            "S3StringWidget",
@@ -2838,6 +2839,23 @@ class S3LocationLatLonWidget(EdenFormWidget):
                        *rows,
                        requires = requires
                        )
+
+# =============================================================================
+class EmptyOptionsWidget(OptionsWidget):
+    """
+        Version of OptionsWidget that passes the currently selected option
+        additionally as data-attribute; required for IS_ONE_OF_EMPTY_SELECT
+        with filterOptionsS3
+    """
+
+    @classmethod
+    def widget(cls, field, value, **attributes):
+
+        widget = super().widget(field, value, **attributes)
+        if value is not None:
+            widget["data"] = {"selected": s3_str(value)}
+
+        return widget
 
 # =============================================================================
 class S3SelectWidget(OptionsWidget):

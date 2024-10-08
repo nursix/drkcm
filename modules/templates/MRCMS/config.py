@@ -559,10 +559,10 @@ def config(settings):
             module_type = 1
         )),
         ("hrm", Storage(
-           name_nice = T("Staff"),
-           #description = "Human Resources Management",
-           restricted = True,
-           module_type = 2,
+            name_nice = T("Staff"),
+            #description = "Human Resources Management",
+            restricted = True,
+            module_type = 2,
         )),
         #("vol", Storage(
         #   name_nice = T("Volunteers"),
@@ -571,16 +571,16 @@ def config(settings):
         #   module_type = 2,
         #)),
         ("cms", Storage(
-         name_nice = T("Content Management"),
-        #description = "Content Management System",
-         restricted = True,
-         module_type = 10,
+            name_nice = T("Content Management"),
+            #description = "Content Management System",
+            restricted = True,
+            module_type = 10,
         )),
         ("doc", Storage(
-           name_nice = T("Documents"),
-           #description = "A library of digital resources, such as photos, documents and reports",
-           restricted = True,
-           module_type = 10,
+            name_nice = T("Documents"),
+            #description = "A library of digital resources, such as photos, documents and reports",
+            restricted = True,
+            module_type = 10,
         )),
         #("msg", Storage(
         #   name_nice = T("Messaging"),
@@ -589,12 +589,12 @@ def config(settings):
         #   # The user-visible functionality of this module isn't normally required. Rather it's main purpose is to be accessed from other modules.
         #   module_type = None,
         #)),
-        #("supply", Storage(
-        #   name_nice = T("Supply Chain Management"),
-        #   #description = "Used within Inventory Management, Request Management and Asset Management",
-        #   restricted = True,
-        #   module_type = None, # Not displayed
-        #)),
+        ("supply", Storage(
+            name_nice = T("Supply Chain Management"),
+            #description = "Used within Inventory Management, Request Management and Asset Management",
+            restricted = True,
+            module_type = None, # Not displayed
+        )),
         #("inv", Storage(
         #   name_nice = T("Warehouses"),
         #   #description = "Receiving and Sending Items",
@@ -632,14 +632,14 @@ def config(settings):
             module_type = 10
         )),
         ("dvr", Storage(
-          name_nice = T("Clients"),
-          restricted = True,
-          module_type = 10,
+            name_nice = T("Clients"),
+            restricted = True,
+            module_type = 10,
         )),
         ("counsel", Storage(
-          name_nice = T("Counseling"),
-          restricted = True,
-          module_type = 10,
+            name_nice = T("Counseling"),
+            restricted = True,
+            module_type = 10,
         )),
         #("event", Storage(
         #   name_nice = T("Events"),
@@ -648,16 +648,16 @@ def config(settings):
         #   module_type = 10,
         #)),
         ("security", Storage(
-           name_nice = T("Security"),
-           restricted = True,
-           module_type = 10,
+            name_nice = T("Security"),
+            restricted = True,
+            module_type = 10,
         )),
-        #("stats", Storage(
-        #   name_nice = T("Statistics"),
-        #   #description = "Manages statistics",
-        #   restricted = True,
-        #   module_type = None,
-        #)),
+        ("stats", Storage(
+            name_nice = T("Statistics"),
+            #description = "Manages statistics",
+            restricted = True,
+            module_type = None,
+        )),
     ])
 
 # END =========================================================================

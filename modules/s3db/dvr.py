@@ -27,6 +27,7 @@
 
 __all__ = ("DVRCaseModel",
            "DVRCaseFlagModel",
+           "DVRCaseFlagDistributionModel",
            "DVRCaseActivityModel",
            "DVRCaseAllowanceModel",
            "DVRCaseAppointmentModel",
@@ -37,7 +38,6 @@ __all__ = ("DVRCaseModel",
            "DVRReferralModel",
            "DVRResponseModel",
            "DVRVulnerabilityModel",
-           "DVRDistributionModel",
            "DVRDiagnosisModel",
            "DVRServiceContactModel",
            "dvr_CaseActivityRepresent",
@@ -1064,6 +1064,55 @@ class DVRCaseFlagModel(DataModel):
 
         return {"dvr_case_flag_id": FieldTemplate.dummy("flag_id"),
                 }
+
+# =============================================================================
+class DVRCaseFlagDistributionModel(DataModel):
+    """
+        Model to control applicability of supply item distribution types
+        by case flags
+    """
+
+    names = ("dvr_distribution_flag_forbidden",
+             "dvr_distribution_flag_required",
+             )
+
+    def model(self):
+
+        define_table = self.define_table
+
+        case_flag_id = self.dvr_case_flag_id
+        distribution_type_id = self.supply_distribution_type_id
+
+        # ---------------------------------------------------------------------
+        # Flags required for a distribution type
+        #
+        tablename = "dvr_distribution_flag_required"
+        define_table(tablename,
+                     distribution_type_id(),
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Flags forbidden for a distribution type
+        #
+        tablename = "dvr_distribution_flag_forbidden"
+        define_table(tablename,
+                     distribution_type_id(),
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
 
 # =============================================================================
 class DVRNeedsModel(DataModel):
@@ -2927,11 +2976,6 @@ class DVRCaseActivityModel(DataModel):
                                                  "joinby": "case_activity_id",
                                                  "key": "vulnerability_id",
                                                  },
-                            supply_distribution = {
-                                "link": "supply_distribution_case_activity",
-                                "joinby": "case_activity_id",
-                                "key": "distribution_id",
-                                },
                             )
 
         # List fields
@@ -4940,168 +4984,6 @@ class DVRVulnerabilityModel(DataModel):
             if duplicate:
                 error = T("This vulnerability is already registered for this person")
                 form.errors.vulnerability_type_id = error
-
-# =============================================================================
-class DVRDistributionModel(DataModel):
-    # TODO docstring
-
-    names = ("dvr_distribution_template",
-             "dvr_distribution_template_item",
-             "dvr_distribution",
-             "dvr_distribution_item",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        define_table = self.define_table
-        super_link = self.super_link
-
-        organisation_id = self.org_organisation_id
-        case_flag_id = self.dvr_case_flag_id
-
-        site_represent = self.org_SiteRepresent(show_type=False)
-
-        # ---------------------------------------------------------------------
-        # Distribution template
-        #
-        tablename = "dvr_distribution_template"
-        define_table(tablename,
-                     organisation_id(
-                         comment = None,
-                         ),
-                     super_link("site_id", "org_site",
-                                label = T("Place"),
-                                represent = site_represent,
-                                ),
-                     Field("name",
-                           label = T("Title"),
-                           requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
-                           # TODO onvalidation to ensure uniqueness?
-                           ),
-                     Field("max_per_day", "integer",
-                           label = T("Maximum Number per Day"),
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, None)),
-                           # TODO comment
-                           ),
-                     Field("min_interval", "double",
-                           label = T("Minimum Interval (Hours)"),
-                           requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
-                           widget = S3HoursWidget(precision=2),
-                           # TODO comment
-                           ),
-                     Field("residents_only", "boolean",
-                           label = T("Current residents only"),
-                           default = True,
-                           represent = BooleanRepresent(icons=True, colors=True),
-                           comment = T("Registration requires that the person is checked-in at a shelter"),
-                           ),
-                     # TODO consider explicit active-field (instead of obsolete? or additionally?)
-                     Field("obsolete", "boolean",
-                           label = T("Obsolete"),
-                           default = False,
-                           represent = BooleanRepresent(labels = False,
-                                                        # Reverse icons semantics
-                                                        icons = (BooleanRepresent.NEG,
-                                                                 BooleanRepresent.POS,
-                                                                 ),
-                                                        flag = True,
-                                                        ),
-                           ),
-                     CommentsField(),
-                     )
-
-        # TODO CRUD Strings
-
-        # TODO Standard List Fields
-
-        # TODO Field template?
-
-        # ---------------------------------------------------------------------
-        # Distribution template item
-        #
-        # TODO implement
-        tablename = "dvr_distribution_template_item"
-        define_table(tablename,
-                     # template_id
-                     # mode (LOAN, RETURN, LOSS, TRANSFER)
-                     # item_id
-                     # item_pack_id
-                     # quantity
-                     # quantity_min
-                     # quantity_max
-                     # optional
-                     # obsolete
-                     )
-
-        # ---------------------------------------------------------------------
-        # Flags required for a distribution template to apply
-        #
-        # TODO implement
-        tablename = "dvr_distribution_flag_required"
-        define_table(tablename,
-                     #template_id,
-                     case_flag_id(
-                         empty = False,
-                         ondelete = "CASCADE",
-                         comment = None,
-                         ),
-                     )
-
-        # ---------------------------------------------------------------------
-        # Flags forbidden for a distribution template to apply
-        #
-        # TODO implement
-        tablename = "dvr_distribution_flag_forbidden"
-        define_table(tablename,
-                     #template_id,
-                     case_flag_id(
-                         empty = False,
-                         ondelete = "CASCADE",
-                         comment = None,
-                         ),
-                     )
-
-        # ---------------------------------------------------------------------
-        # Distribution
-        #
-        # TODO implement
-        tablename = "dvr_distribution"
-        define_table(tablename,
-                     organisation_id(
-                         comment = None,
-                         ),
-                     super_link("site_id", "org_site",
-                                label = T("Place"),
-                                represent = site_represent,
-                                ),
-                     DateTimeField(
-                         default="now",
-                         ),
-                     # person_id (recipient)
-                     # human_resource_id (staff member responsible)
-                     # template_id
-                     )
-
-        # ---------------------------------------------------------------------
-        # Distribution Item
-        #
-        # TODO implement
-        tablename = "dvr_distribution_item"
-        define_table(tablename,
-                     # distribution_id
-                     # template_item_id?
-                     # mode (LOAN, RETURN, LOSS, TRANSFER)
-                     # item_id
-                     # item_pack_id
-                     # quantity
-                     )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
 
 # =============================================================================
 class DVRDiagnosisModel(DataModel):

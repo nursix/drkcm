@@ -39,78 +39,6 @@ def catalog_item():
     return crud_controller()
 
 # -----------------------------------------------------------------------------
-def distribution_rheader(r):
-    if r.representation == "html":
-        distribution = r.record
-        if distribution:
-            T = current.T
-            tabs = [(T("Edit Details"), None),
-                    (T("Beneficiaries"), "person"),
-                    ]
-            rheader_tabs = s3_rheader_tabs(r, tabs)
-
-            table = r.table
-
-            rheader = DIV(TABLE(TR(TH("%s: " % table.parameter_id.label),
-                                   table.parameter_id.represent(distribution.parameter_id),
-                                   ),
-                                TR(TH("%s: " % table.date.label),
-                                   table.date.represent(distribution.date),
-                                   ),
-                                #TR(TH("%s: " % table.location_id.label),
-                                #   table.location_id.represent(distribution.location_id),
-                                #   ),
-                                #TR(TH("%s: " % table.organisation_id.label),
-                                #   table.organisation_id.represent(distribution.organisation_id),
-                                #   ),
-                                ),
-                          rheader_tabs
-                          )
-            return rheader
-    return None
-
-# -----------------------------------------------------------------------------
-def distribution():
-    """ RESTful CRUD controller """
-
-    #def prep(r):
-    #    if r.method in ("create", "create.popup", "update", "update.popup"):
-    #        # Coming from Profile page?
-    #        location_id = r.get_vars.get("~.(location)", None)
-    #        if location_id:
-    #            field = r.table.location_id
-    #            field.default = location_id
-    #            field.readable = field.writable = False
-    #    if r.record:
-    #        field = r.table.location_id
-    #        field.comment = None
-    #        field.writable = False
-    #    return True
-    #s3.prep = prep
-
-    return crud_controller(rheader=distribution_rheader)
-
-# -----------------------------------------------------------------------------
-def distribution_report():
-    """
-        RESTful CRUD controller for Supply Distributions
-        - limited to just seeing aggregated data for differential permissions
-    """
-
-    def prep(r):
-        r.method = "report"
-        return True
-    s3.prep = prep
-
-    return crud_controller("supply", "distribution")
-
-# -----------------------------------------------------------------------------
-def distribution_item():
-    """ RESTful CRUD controller """
-
-    return crud_controller()
-
-# -----------------------------------------------------------------------------
 def item():
     """ RESTful CRUD controller """
 
@@ -179,5 +107,18 @@ def person_item_status():
     """ RESTful CRUD controller """
 
     return crud_controller()
+
+# =============================================================================
+# Distributions
+#
+def distribution_type():
+    """ Distribution Types: CRUD Controller """
+
+    return crud_controller(rheader=s3db.supply_distribution_rheader)
+
+def distribution():
+    """ Distributions: CRUD Controller """
+
+    return crud_controller(rheader=s3db.supply_distribution_rheader)
 
 # END =========================================================================

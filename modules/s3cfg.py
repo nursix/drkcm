@@ -326,8 +326,7 @@ class S3Config(Storage):
                 template = getattr(__import__(package, fromlist=[config]), config)
             except ImportError as e:
                 raise RuntimeError("Template not found: %s" % name) from e
-            else:
-                template.config(self)
+            template.config(self)
 
         return self
 
@@ -2516,10 +2515,10 @@ class S3Config(Storage):
             'css' is a folder relative to static/styles
             - /jstree.css or /jstree.min.css is added as-required
         """
-        return self.ui.get("hierarchy_theme", dict(css = "plugins",
-                                                   icons = False,
-                                                   stripes = True,
-                                                   ))
+        return self.ui.get("hierarchy_theme", {"css": "plugins",
+                                               "icons": False,
+                                               "stripes": True,
+                                               })
 
     def get_ui_hierarchy_cascade_option_in_tree(self):
         """
@@ -5519,6 +5518,12 @@ class S3Config(Storage):
             Whether to use Multiple Item Catalogs
         """
         return self.supply.get("catalog_multi", True)
+
+    def get_supply_item_category_hierarchy(self):
+        """
+            Whether supply item categories are hierarchical
+        """
+        return self.supply.get("item_category_hierarchy", False)
 
     def get_supply_use_alt_name(self):
         """

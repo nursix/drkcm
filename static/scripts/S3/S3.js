@@ -1167,7 +1167,7 @@ S3.openPopup = function(url, center) {
                     currentValue = widget.prop('value');
                 }
                 if (!currentValue) {
-                    currentValue = widget.data('initialValue');
+                    currentValue = widget.data('selected');
                 }
                 if (!Array.isArray(currentValue)) {
                     currentValue = currentValue ? [currentValue] : [];
@@ -1307,10 +1307,10 @@ S3.openPopup = function(url, center) {
 
         if (!multiple && !userChange) {
             // Store initial value
-            var initialValue = target.val(),
-                storedInitialValue = target.data('initialValue');
-            if (storedInitialValue == undefined) {
-                target.data('initialValue', initialValue);
+            var selected = target.val(),
+                storedInitialValue = target.data('selected');
+            if (storedInitialValue === undefined) {
+                target.data('selected', selected);
             }
         }
 

@@ -1253,7 +1253,13 @@ class IS_ONE_OF_EMPTY(Validator):
 # =============================================================================
 class IS_ONE_OF_EMPTY_SELECT(IS_ONE_OF_EMPTY):
     """
-        Extends IS_ONE_OF_EMPTY by displaying an empty SELECT (instead of INPUT)
+        Extends IS_ONE_OF_EMPTY by displaying an empty SELECT
+        (instead of INPUT).
+
+        Note:
+            Fields with this validator should also use the EmptyOptionsWidget
+            to ensure the previously selected option is passed to filterOptionsS3
+            in order to be re-selected after the initial options lookup
     """
 
     @staticmethod

@@ -1020,7 +1020,6 @@ class PRPersonModel(DataModel):
                                                   },
                        cr_shelter_registration_history = "person_id",
                        org_site_event = "person_id",
-                       supply_distribution_person = "person_id",
                        event_incident = {"link": "event_human_resource",
                                          "joinby": "person_id",
                                          "key": "incident_id",
@@ -1160,6 +1159,10 @@ class PRPersonModel(DataModel):
                                       "actuate": "hide",
                                       },
                        supply_person_item = "person_id",
+
+                       # Supply item distributions
+                       supply_distribution = "person_id",
+                       supply_distribution_item = "person_id",
                        )
 
         # Beneficiary/Case Management
