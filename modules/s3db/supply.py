@@ -1511,13 +1511,22 @@ class SupplyDistributionModel(DataModel):
 
         site_represent = self.org_SiteRepresent(show_type=False)
 
+        # ---------------------------------------------------------------------
         # Distribution Modes
-        # TODO translation
-        distribution_mode = {"LOAN": T("Loan"),
-                             "RETURN": T("Return"),     # TODO not in templates
-                             "TRANSFER": T("Transfer"),
-                             "LOSS": T("Loss"),         # TODO not in templates
-                             }
+        #
+        base_modes = (("GRA", T("Grant##distribution")),
+                      ("LOA", T("Loan##distribution")),
+                      )
+        dist_modes = base_modes + \
+                     (("RET", T("Return##distribution")),
+                      ("LOS", T("Loss##distribution")),
+                      )
+
+        mode_represent = S3PriorityRepresent(dist_modes, {"GRA": "blue",
+                                                          "LOA": "amber",
+                                                          "RET": "green",
+                                                          "LOS": "black",
+                                                          }).represent
 
         # ---------------------------------------------------------------------
         # Distribution type
@@ -1616,8 +1625,10 @@ class SupplyDistributionModel(DataModel):
                      distribution_type_id(),
                      Field("mode",
                            label = T("Mode"),
-                           default = "TRANSFER",
-                           requires = IS_IN_SET(distribution_mode,
+                           default = "GRANT",
+                           represent = mode_represent,
+                           requires = IS_IN_SET(base_modes,
+                                                sort = False,
                                                 zero = None,
                                                 ),
                            ),
@@ -1630,7 +1641,6 @@ class SupplyDistributionModel(DataModel):
                            default = 1,
                            requires = IS_INT_IN_RANGE(1),
                            ),
-                     # TODO not relevant for returns|losses (determined from haves)
                      Field("quantity_max", "integer",
                            label = T("Maximum Quantity"),
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0)),
@@ -1648,6 +1658,7 @@ class SupplyDistributionModel(DataModel):
 
         # ---------------------------------------------------------------------
         # Distribution
+        # - an actual distribution event
         #
         tablename = "supply_distribution"
         define_table(tablename,
@@ -1665,7 +1676,7 @@ class SupplyDistributionModel(DataModel):
                          label = T("Recipient"),
                          ),
                      self.hrm_human_resource_id(
-                         label = T("Staff Member in charge"),
+                         label = T("Staff Member in Charge"),
                          ),
                      )
 
@@ -1673,6 +1684,10 @@ class SupplyDistributionModel(DataModel):
         add_components(tablename,
                        supply_distribution_item = "distribution_id",
                        )
+
+        # TODO Standard List Fields
+
+        # TODO CRUD strings
 
         # ---------------------------------------------------------------------
         # Distribution Item
@@ -1688,8 +1703,10 @@ class SupplyDistributionModel(DataModel):
                          ),
                      Field("mode",
                            label = T("Mode"),
-                           default = "TRANSFER",
-                           requires = IS_IN_SET(distribution_mode,
+                           default = "GRANT",
+                           represent = mode_represent,
+                           requires = IS_IN_SET(dist_modes,
+                                                sort = False,
                                                 zero = None,
                                                 ),
                            ),
@@ -1704,10 +1721,14 @@ class SupplyDistributionModel(DataModel):
                            ),
                      )
 
+        # TODO Standard list fields
+
         # Table configuration
         configure(tablename,
                   onaccept = self.distribution_item_onaccept,
                   )
+
+        # TODO CRUD Strings
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
