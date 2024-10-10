@@ -30,6 +30,25 @@ def brand():
 def catalog():
     """ RESTful CRUD controller """
 
+    def prep(r):
+
+        if r.component_name == "catalog_item":
+
+            table = r.component.table
+            field = table.item_category_id
+
+            # Filter selectable categories to current catalog
+            ctable = s3db.supply_item_category
+            dbset = db(ctable.catalog_id == r.record.id)
+            field.requires = IS_EMPTY_OR(
+                                IS_ONE_OF(dbset, "supply_item_category.id",
+                                          field.represent,
+                                          sort = True,
+                                          ))
+
+        return True
+    s3.prep = prep
+
     return crud_controller(rheader=s3db.supply_catalog_rheader)
 
 # -----------------------------------------------------------------------------

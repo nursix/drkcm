@@ -1742,6 +1742,7 @@
 'Delete Item Type': 'Gegenstandsart löschen',
 'Delete Item from Request': 'Artikel aus Anfrage entfernen',
 'Delete Item': 'Eintrag löschen',
+'Delete Item##supply': 'Artikel löschen',
 'Delete Job Role': 'Tätigkeit löschen',
 'Delete Job Title': 'Tätigkeit löschen',
 'Delete Key': 'Schlüssel löschen',

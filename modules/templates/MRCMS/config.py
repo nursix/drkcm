@@ -501,6 +501,14 @@ def config(settings):
 
 
     # -------------------------------------------------------------------------
+    # Supply module settings
+    #
+    settings.supply.generic_items = True
+    settings.supply.kits = False
+    settings.supply.track_pack_values = False
+    settings.supply.track_pack_dimensions = False
+
+    # -------------------------------------------------------------------------
     # Security settings
     #
     from .customise.security import security_seized_item_resource, \

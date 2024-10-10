@@ -4395,12 +4395,6 @@ class S3Config(Storage):
         """
         return self.inv.get("stock_count", True)
 
-    def get_inv_track_pack_values(self):
-        """
-            Whether or not Pack values are tracked
-        """
-        return self.inv.get("track_pack_values", True)
-
     def get_inv_item_status(self):
         """
             Item Statuses which can also be Sent Shipment Types
@@ -5394,7 +5388,8 @@ class S3Config(Storage):
         """
             Do we show pack values in Requests?
         """
-        return self.req.get("pack_values", True)
+        return self.get_supply_track_pack_values() and \
+               self.req.get("pack_values", True)
 
     def get_req_multiple_req_items(self):
         """
@@ -5525,11 +5520,36 @@ class S3Config(Storage):
         """
         return self.supply.get("item_category_hierarchy", False)
 
+    def get_supply_track_pack_values(self):
+        """
+            Whether to track pack values
+        """
+        return self.supply.get("track_pack_values", False)
+
+    def get_supply_track_pack_dimensions(self):
+        """
+            Whether to track pack dimensions
+        """
+        return self.supply.get("track_pack_dimensions", False)
+
+    def get_supply_generic_items(self):
+        """
+            Track only generic items, i.e. without manufacturing
+            details such as brand, or model/year
+        """
+        return self.supply.get("generic_items", False)
+
+    def get_supply_kits(self):
+        """
+            Supply items can be kits
+        """
+        return self.supply.get("kits", False)
+
     def get_supply_use_alt_name(self):
         """
             Whether to allow Alternative Items to be defined
         """
-        return self.supply.get("use_alt_name", True)
+        return self.supply.get("use_alt_name", False)
 
     def get_supply_shipping_code(self):
         """

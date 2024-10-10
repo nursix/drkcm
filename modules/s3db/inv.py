@@ -433,7 +433,7 @@ class InventoryModel(DataModel):
 
         settings = current.deployment_settings
         direct_stock_edits = settings.get_inv_direct_stock_edits()
-        track_pack_values = settings.get_inv_track_pack_values()
+        track_pack_values = settings.get_supply_track_pack_values()
         WAREHOUSE = T(settings.get_inv_facility_label())
 
         inv_source_type = {0: None,
@@ -2259,7 +2259,7 @@ $.filterOptionsS3({
             # This Shipment relates to a request
             # - show the req_item comments
             list_fields.append("req_item_id$comments")
-        if settings.get_inv_track_pack_values():
+        if settings.get_supply_track_pack_values():
             list_fields.extend(("currency",
                                 "pack_value",
                                 ))
@@ -3885,7 +3885,7 @@ class InventoryAdjustModel(DataModel):
         auth = current.auth
 
         settings = current.deployment_settings
-        track_pack_values = settings.get_inv_track_pack_values()
+        track_pack_values = settings.get_supply_track_pack_values()
 
         organisation_id = self.org_organisation_id
         org_site_represent = self.org_site_represent
@@ -4742,7 +4742,7 @@ def inv_send_controller():
 
             elif r.component_name == "track_item":
                 record = r.record
-                values = current.deployment_settings.get_inv_track_pack_values()
+                values = current.deployment_settings.get_supply_track_pack_values()
                 if status in (SHIP_STATUS_RECEIVED, SHIP_STATUS_CANCEL):
                     list_fields = ["status",
                                    "item_id",

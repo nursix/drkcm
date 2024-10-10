@@ -1,7 +1,7 @@
 """
     Supply Model
 
-    Copyright: 2009-2022 (c) Sahana Software Foundation
+    Copyright: 2009-2024 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -336,6 +336,7 @@ class SupplyCatalogModel(DataModel):
 
 # =============================================================================
 class SupplyItemModel(DataModel):
+    # TODO docstring
 
     names = ("supply_item",
              "supply_catalog_item",
@@ -370,12 +371,12 @@ class SupplyItemModel(DataModel):
 
         brand_id = self.supply_brand_id
         catalog_id = self.supply_catalog_id
+
         item_category_id = self.supply_item_category_id
-
-        # TODO Duplicated code (also in SupplyCatalogModel)
-        item_category_represent_nocodes = \
-            supply_ItemCategoryRepresent(translate=translate, use_code=False)
-
+        item_category_represent = supply_ItemCategoryRepresent(show_catalog = False,
+                                                               translate = translate,
+                                                               use_code=False,
+                                                               )
         item_category_script = '''
 $.filterOptionsS3({
  'trigger':'catalog_id',
@@ -390,15 +391,22 @@ $.filterOptionsS3({
         #  These are Template items
         #  Instances of these become Inventory Items & Request items
         #
-
-        track_pack_values = settings.get_inv_track_pack_values()
+        generic_items = settings.get_supply_generic_items()
+        use_kits = settings.get_supply_kits()
+        track_pack_values = settings.get_supply_track_pack_values()
 
         tablename = "supply_item"
         define_table(tablename,
                      catalog_id(),
                      # Needed to auto-create a catalog_item
                      item_category_id(script = item_category_script,
+                                      represent = item_category_represent,
                                       ),
+                     Field("code", length=16,
+                           label = T("Code"),
+                           represent = lambda v: v or NONE,
+                           requires = IS_LENGTH(16),
+                           ),
                      Field("name", length=128, notnull=True,
                            label = T("Name"),
                            represent = translate_represent,
@@ -406,11 +414,7 @@ $.filterOptionsS3({
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     Field("code", length=16,
-                           label = T("Code"),
-                           represent = lambda v: v or NONE,
-                           requires = IS_LENGTH(16),
-                           ),
+                     # TODO should reference another table for normalising unit names
                      Field("um", length=128, notnull=True,
                            default = "piece",
                            label = T("Unit of Measure"),
@@ -419,6 +423,8 @@ $.filterOptionsS3({
                                        IS_LENGTH(128),
                                        ],
                            ),
+
+                     # Unit value (for tracking pack values)
                      Field("unit_value", "double",
                            label = T("Value per Unit"),
                            represent = lambda v: \
@@ -426,22 +432,30 @@ $.filterOptionsS3({
                            readable = track_pack_values,
                            writable = track_pack_values,
                            ),
-                     # @ToDo: Move this into a Currency Widget for the pack_value field
                      CurrencyField(readable = track_pack_values,
                                    writable = track_pack_values,
                                    ),
+
+                     # Is the item a kit?
                      Field("kit", "boolean",
                            default = False,
                            label = T("Kit?"),
                            represent = lambda opt: YES if opt else NONE,
+                           readable = use_kits,
+                           writable = use_kits,
                            ),
 
-                     # TODO make optional
-                     brand_id(),
+                     # Manufacturing details (optional)
+                     brand_id(
+                         readable = not generic_items,
+                         writable = not generic_items,
+                         ),
                      Field("model", length=128,
                            label = T("Model/Type"),
                            represent = lambda v: v or NONE,
                            requires = IS_LENGTH(128),
+                           readable = not generic_items,
+                           writable = not generic_items,
                            ),
                      Field("year", "integer",
                            label = T("Year of Manufacture"),
@@ -449,38 +463,8 @@ $.filterOptionsS3({
                            requires = IS_EMPTY_OR(
                                         IS_INT_IN_RANGE(1900, current.request.now.year + 1)
                                         ),
-                           ),
-
-                     # TODO make optional
-                     Field("weight", "double",
-                           label = T("Weight (kg)"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=2),
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("length", "double",
-                           label = T("Length (m)"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=2),
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("width", "double",
-                           label = T("Width (m)"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=2),
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("height", "double",
-                           label = T("Height (m)"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=2),
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
-                           ),
-                     Field("volume", "double",
-                           label = T("Volume (m3)"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=3),
-                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = not generic_items,
+                           writable = not generic_items,
                            ),
 
                      Field("obsolete", "boolean",
@@ -488,16 +472,8 @@ $.filterOptionsS3({
                            readable = False,
                            writable = False,
                            ),
-
-                     # These comments do *not* pull through to an Inventory's Items or a Request's Items
                      CommentsField(),
                      )
-
-        # Categories in Progress
-        # TODO Remove this? (makes no sense in any way)
-        #table.item_category_id_0.label = T("Category")
-        #table.item_category_id_1.readable = table.item_category_id_1.writable = False
-        #table.item_category_id_2.readable = table.item_category_id_2.writable = False
 
         # CRUD strings
         ADD_ITEM = T("Create Item")
@@ -507,7 +483,7 @@ $.filterOptionsS3({
             title_list = T("Items"),
             title_update = T("Edit Item"),
             label_list_button = T("List Items"),
-            label_delete_button = T("Delete Item"),
+            label_delete_button = T("Delete Item##supply"),
             msg_record_created = T("Item added"),
             msg_record_modified = T("Item updated"),
             msg_record_deleted = T("Item deleted"),
@@ -516,14 +492,13 @@ $.filterOptionsS3({
             msg_no_match = T("No Matching Items")
             )
 
-        supply_item_represent = supply_ItemRepresent(show_link = True,
-                                                     translate = translate)
 
         # Foreign Key Template
-        # TODO Drop popup-link?
-        supply_item_tooltip = T("Type the name of an existing catalog item OR Click 'Create Item' to add an item which is not in the catalog.")
+        supply_item_represent = supply_ItemRepresent(show_link = True,
+                                                     translate = translate,
+                                                     )
         supply_item_id = FieldTemplate("item_id",
-                                       "reference %s" % tablename, # 'item_id' for backwards-compatibility
+                                       "reference %s" % tablename,
                                        label = T("Item"),
                                        ondelete = "RESTRICT",
                                        represent = supply_item_represent,
@@ -533,12 +508,6 @@ $.filterOptionsS3({
                                                             ),
                                        sortby = "name",
                                        widget = S3AutocompleteWidget("supply", "item"),
-                                       comment = PopupLink(c = "supply",
-                                                           f = "item",
-                                                           label = ADD_ITEM,
-                                                           title = T("Item"),
-                                                           tooltip = supply_item_tooltip,
-                                                           ),
                                        )
 
         # ---------------------------------------------------------------------
@@ -594,6 +563,7 @@ $.filterOptionsS3({
         configure(tablename,
                   deduplicate = self.supply_item_duplicate,
                   filter_widgets = filter_widgets,
+                  onvalidation = self.supply_item_onvalidation,
                   onaccept = self.supply_item_onaccept,
                   orderby = "supply_item.name",
                   report_options = report_options,
@@ -641,7 +611,8 @@ $.filterOptionsS3({
         tablename = "supply_catalog_item"
         define_table(tablename,
                      catalog_id(),
-                     item_category_id(script = item_category_script,
+                     item_category_id(represent = item_category_represent,
+                                      script = item_category_script,
                                       ),
                      supply_item_id(script = None), # No Item Pack Filter
                      CommentsField(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
@@ -691,7 +662,7 @@ $.filterOptionsS3({
             OptionsFilter("item_category_id",
                           label = T("Category"),
                           comment = T("Search for an item by category."),
-                          represent = item_category_represent_nocodes,
+                          represent = item_category_represent,
                           cols = 3,
                           hidden = True,
                           ),
@@ -705,20 +676,23 @@ $.filterOptionsS3({
             ]
 
         configure(tablename,
-                  deduplicate = self.supply_catalog_item_duplicate,
+                  deduplicate = self.catalog_item_deduplicate,
                   filter_widgets = filter_widgets,
+                  onvalidation = self.catalog_item_onvalidation,
                   )
 
         # =====================================================================
         # Item Pack
+        # - items can be distributed in different containers
         #
-        #  Items can be distributed in different containers
-        #
+        track_pack_dimensions = settings.get_supply_track_pack_dimensions()
+
         tablename = "supply_item_pack"
         define_table(tablename,
                      supply_item_id(empty = False),
+                     # TODO should reference another table for normalising pack names
                      Field("name", length=128,
-                           notnull=True, # Ideally this would reference another table for normalising Pack names
+                           notnull=True,
                            default = T("piece"),
                            label = T("Name"),
                            represent = translate_represent,
@@ -729,11 +703,10 @@ $.filterOptionsS3({
                      Field("quantity", "double", notnull=True,
                            default = 1,
                            label = T("Quantity"),
-                           represent = lambda v: \
-                                       float_represent(v, precision=2),
+                           represent = lambda v: float_represent(v, precision=2),
                            ),
 
-                     # TODO optional
+                     # Pack value (optional)
                      Field("pack_value", "double",
                            label = T("Value per Pack"),
                            represent = lambda v: \
@@ -745,8 +718,68 @@ $.filterOptionsS3({
                      CurrencyField(readable = track_pack_values,
                                    writable = track_pack_values,
                                    ),
+
+                     # Pack dimensions (optional)
+                     Field("weight", "double",
+                           label = T("Weight (kg)"),
+                           represent = lambda v: \
+                                       float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = track_pack_dimensions,
+                           writable = track_pack_dimensions,
+                           ),
+                     Field("length", "double",
+                           label = T("Length (m)"),
+                           represent = lambda v: \
+                                       float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = track_pack_dimensions,
+                           writable = track_pack_dimensions,
+                           ),
+                     Field("width", "double",
+                           label = T("Width (m)"),
+                           represent = lambda v: \
+                                       float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = track_pack_dimensions,
+                           writable = track_pack_dimensions,
+                           ),
+                     Field("height", "double",
+                           label = T("Height (m)"),
+                           represent = lambda v: \
+                                       float_represent(v, precision=2),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = track_pack_dimensions,
+                           writable = track_pack_dimensions,
+                           ),
+                     Field("volume", "double",
+                           label = T("Volume (m3)"),
+                           represent = lambda v: \
+                                       float_represent(v, precision=3),
+                           requires = IS_EMPTY_OR(IS_FLOAT_AMOUNT(minimum=0.0)),
+                           readable = track_pack_dimensions,
+                           writable = track_pack_dimensions,
+                           ),
+
                      CommentsField(),
                      )
+
+        # List fields
+        list_fields = ["item_id",
+                       "name",
+                       "quantity",
+                       "item_id$um",
+                       "comments",
+                       ]
+        if track_pack_values:
+            list_fields[-1:-1] = ["value", "currency"]
+        if track_pack_dimensions:
+            list_fields[-1:-1] = ["weight", "length", "width", "height", "volume"]
+
+        # Table configuration
+        configure(tablename,
+                  list_fields = list_fields,
+                  )
 
         # CRUD strings
         ADD_ITEM_PACK = T("Create Item Pack")
@@ -866,33 +899,73 @@ $.filterOptionsS3({
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def supply_item_pack_duplicate(item):
+    def supply_item_onvalidation(form):
         """
-            Callback function used to look for duplicates during
-            the import process
+            Form validation of supply item
+            - item code/name must be unique within local catalogs (i.e. all
+              catalogs of the same organisation)
+            - item code/name must not match global items (i.e. items not
+              linked to any catalog, or to not organisation-specific catalogs)
 
             Args:
-                item: the ImportItem to check
+                form: the FORM
         """
 
-        data = item.data
-        table = item.table
-        query = (table.deleted != True)
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.supply_item
+        ctable = s3db.supply_catalog
+
+        # Get form record ID
+        record_id = get_form_record_id(form)
+
+        # Get form record data
+        data = get_form_record_data(form, table, ["catalog_id", "code", "name"])
+        catalog_id = data.get("catalog_id")
+        code = data.get("code")
         name = data.get("name")
+
+        # Organisation the catalog belongs to
+        organisation_id = None
+        if catalog_id:
+            catalog = db(ctable.id == catalog_id).select(ctable.organisation_id,
+                                                         limitby = (0, 1),
+                                                         ).first()
+            if catalog:
+                organisation_id = catalog.organisation_id
+
+        # Items in relevant catalogs
+        query = (ctable.organisation_id == None)
+        if organisation_id:
+            query |= (ctable.organisation_id == organisation_id)
+        query &= (ctable.deleted == False)
+        catalog_set = db(query)._select(ctable.id)
+        is_relevant_item = (table.catalog_id == None) | \
+                           (table.catalog_id.belongs(catalog_set))
+
+        # Check for code duplicates
+        if code:
+            query = is_relevant_item & \
+                    (table.code == code) & \
+                    (table.deleted == False)
+            if record_id:
+                query = (table.id != record_id) & query
+            row = db(query).select(table.id, limitby=(0, 1)).first()
+            if row:
+                form.errors["code"] = T("Item with code %(code)s already exists") % {"code": code}
+
+        # Check for name duplicates
         if name:
-            query &= (table.name.lower() == name.lower())
-        item_id = data.get("item_id")
-        if item_id:
-            query &= (table.item_id == item_id)
-        quantity = data.get("quantity")
-        if quantity:
-            query &= (table.quantity == quantity)
-        duplicate = current.db(query).select(table.id,
-                                             limitby = (0, 1)
-                                             ).first()
-        if duplicate:
-            item.id = duplicate.id
-            item.method = item.METHOD.UPDATE
+            query = is_relevant_item & \
+                    (table.name == name) & \
+                    (table.deleted == False)
+            if record_id:
+                query = (table.id != record_id) & query
+            row = db(query).select(table.id, limitby=(0, 1)).first()
+            if row:
+                form.errors["name"] = T("Item with name %(name)s already exists") % {"name": name}
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -975,6 +1048,77 @@ $.filterOptionsS3({
                                    create_next = url,
                                    update_next = url,
                                    )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def catalog_item_onvalidation(form):
+        """
+            Form validation of catalog items
+            - same item can be added only once to a catalog
+            - item code and name must be unique within a catalog
+
+            Args:
+                form: the FORM
+        """
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.supply_catalog_item
+
+        # Get form record ID
+        record_id = get_form_record_id(form)
+
+        # Field to show errors on
+        fn = "item_id" if "item_id" in form.vars else "catalog_id"
+
+        # Get form record data
+        data = get_form_record_data(form, table, ["catalog_id", "item_id"])
+        catalog_id = data.get("catalog_id")
+        item_id = data.get("item_id")
+
+        # Check if item already linked to this catalog
+        query = (table.catalog_id == catalog_id) & \
+                (table.item_id == item_id) & \
+                (table.deleted == False)
+        if record_id:
+            query = (table.id != record_id) & query
+        row = db(query).select(table.id, limitby=(0, 1)).first()
+        if row:
+            form.errors[fn] = T("Item already in catalog")
+            return
+
+        # Get item code and name
+        itable = s3db.supply_item
+        item = db(itable.id == item_id).select(itable.code,
+                                               itable.name,
+                                               limitby = (0, 1),
+                                               ).first()
+        if item:
+            # Check if the catalog already has an item with the same code or name
+            query = (table.catalog_id == catalog_id) & \
+                    (table.deleted == False)
+            if record_id:
+                query = (table.id != record_id)
+
+            for k in ("code", "name"):
+                join = itable.on((itable.id == table.item_id) & \
+                                 (itable[k] == item[k]))
+                row = db(query).select(table.id, join=join, limitby=(0, 1)).first()
+                if row:
+                    form.errors[fn] = T("An item with the same code or name already exists in catalog")
+                    break
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def catalog_item_onaccept(form):
+
+        # TODO implement
+        # - verify that the item is still linked to its original catalog/category
+        #   or otherwise, update the item
+        # - do this also ondelete
+        pass
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1092,7 +1236,37 @@ $.filterOptionsS3({
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def supply_catalog_item_duplicate(item):
+    def supply_item_pack_duplicate(item):
+        """
+            Callback function used to look for duplicates during
+            the import process
+
+            Args:
+                item: the ImportItem to check
+        """
+
+        data = item.data
+        table = item.table
+        query = (table.deleted != True)
+        name = data.get("name")
+        if name:
+            query &= (table.name.lower() == name.lower())
+        item_id = data.get("item_id")
+        if item_id:
+            query &= (table.item_id == item_id)
+        quantity = data.get("quantity")
+        if quantity:
+            query &= (table.quantity == quantity)
+        duplicate = current.db(query).select(table.id,
+                                             limitby = (0, 1)
+                                             ).first()
+        if duplicate:
+            item.id = duplicate.id
+            item.method = item.METHOD.UPDATE
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def catalog_item_deduplicate(item):
         """
             Callback function used to look for duplicates during
             the import process
@@ -2249,42 +2423,52 @@ def supply_catalog_rheader(r):
     return None
 
 # =============================================================================
-def supply_item_rheader(r):
+def supply_item_rheader(r, tabs=None):
     """ Resource Header for Items """
 
-    if r.representation == "html":
-        item = r.record
-        if item:
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
 
-            T = current.T
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
 
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+        settings = current.deployment_settings
+
+        if not tabs:
             tabs = [(T("Edit Details"), None),
                     (T("Packs"), "item_pack"),
-                    (T("Alternative Items"), "item_alt"),
+                    #(T("Alternative Items"), "item_alt"),
                     (T("In Inventories"), "inv_item"),
                     (T("Requested"), "req_item"),
                     (T("In Catalogs"), "catalog_item"),
+                    #(T("Kit Items"), "kit_item")
                     ]
-            if item.kit == True:
-                tabs.append((T("Kit Items"), "kit_item"))
-            rheader_tabs = s3_rheader_tabs(r, tabs)
+        if settings.get_supply_use_alt_name():
+            tabs.insert(2, (T("Alternative Items"), "item_alt"))
+        if settings.get_supply_kits() and record.kit:
+            tabs.append((T("Kit Items"), "kit_item"))
 
-            table = r.table
+        rheader_fields = [["catalog_id"],
+                          ["item_category_id"],
+                          ["code"],
+                          ]
+        rheader_title = "name"
 
-            rheader = DIV(TABLE(TR( TH("%s: " % table.name.label),
-                                    item.name,
-                                  ),
-                                TR( TH("%s: " % table.brand_id.label),
-                                    table.brand_id.represent(item.brand_id),
-                                  ),
-                                TR( TH("%s: " % table.model.label),
-                                    item.model or current.messages["NONE"],
-                                  ),
-                               ),
-                          rheader_tabs
-                         )
-            return rheader
-    return None
+        # Generate rheader XML
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
+
+    return rheader
 
 # =============================================================================
 def supply_distribution_rheader(r, tabs=None):
