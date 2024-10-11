@@ -117,8 +117,8 @@ class SupplyCatalogModel(DataModel):
                            ),
                      Field("active", "boolean",
                            label = T("Active"),
-                           # TODO BooleanRepresent
                            default = True,
+                           represent = BooleanRepresent(icons=True, colors=True),
                            ),
                      CommentsField(),
                      )
@@ -163,7 +163,11 @@ class SupplyCatalogModel(DataModel):
                        supply_catalog_item = "catalog_id",
                        )
 
+        # Table configuration
         # TODO onvalidation to enforce unique catalog name within organisation
+        configure(tablename,
+                  deletable = False,
+                  )
 
         # =====================================================================
         # Item Category
@@ -510,25 +514,24 @@ $.filterOptionsS3({
                                        widget = S3AutocompleteWidget("supply", "item"),
                                        )
 
-        # ---------------------------------------------------------------------
+        # Filter Widgets
         filter_widgets = [
             TextFilter(["code",
                         "name",
-                        "model",
-                        #"item_category_id$name",
+                        "model", # TODO not with generic items
+                        #"item_category_id$name", # TODO make OptionsFilter
                         "comments",
                         ],
                        label = T("Search"),
-                       comment = T("Search for an item by its code, name, model and/or comment."),
                        ),
-            OptionsFilter("brand_id",
+            OptionsFilter("brand_id", # TODO not with generic items
                           # @ToDo: Introspect need for header based on # records
                           #header = True,
                           #label = T("Brand"),
                           represent = "%(name)s",
                           widget = "multiselect",
                           ),
-            OptionsFilter("year",
+            OptionsFilter("year", # TODO not with generic items
                           comment = T("Search for an item by Year of Manufacture."),
                           # @ToDo: Introspect need for header based on # records
                           #header = True,
@@ -636,6 +639,7 @@ $.filterOptionsS3({
             )
 
         # Filter Widgets
+        # TODO remove (no separate controller that uses these)
         filter_widgets = [
             TextFilter([#These lines are causing issues...very slow - perhaps broken
                         #"comments",
@@ -678,6 +682,8 @@ $.filterOptionsS3({
         configure(tablename,
                   deduplicate = self.catalog_item_deduplicate,
                   filter_widgets = filter_widgets,
+                  onaccept = self.catalog_item_onaccept,
+                  ondelete = self.catalog_item_ondelete,
                   onvalidation = self.catalog_item_onvalidation,
                   )
 
@@ -1111,14 +1117,29 @@ $.filterOptionsS3({
                     break
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def catalog_item_onaccept(form):
+    @classmethod
+    def catalog_item_onaccept(cls, form):
+        """
+            Onaccept of catalog item:
+            - handle possible removal from original catalog
+        """
 
-        # TODO implement
-        # - verify that the item is still linked to its original catalog/category
-        #   or otherwise, update the item
-        # - do this also ondelete
-        pass
+        table = current.s3db.supply_catalog_item
+
+        data = get_form_record_data(form, table, ["item_id"])
+        item_id = data.get("item_id")
+
+        cls.supply_item_update_catalog(item_id)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def catalog_item_ondelete(cls, row):
+        """
+            Ondelete of catalog item:
+            - handle possible removal from original catalog
+        """
+
+        cls.supply_item_update_catalog(row.item_id)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1142,49 +1163,82 @@ $.filterOptionsS3({
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def item_represent(record_id):
+    def supply_item_update_catalog(item_id):
         """
-            Represent an item entity in option fields or list views
-            - unused, we use VirtualField instead
-            @ToDo: Migrate to S3Represent
-        """
+            Make sure there always is a catalog item for the original
+            catalog/category of a supply item
 
-        if not record_id:
-            return current.messages["NONE"]
+            Args:
+                item_id: the supply item ID
+        """
 
         db = current.db
+        s3db = current.s3db
 
-        if isinstance(record_id, Row) and "instance_type" in record_id:
-            # Do not repeat the lookup if already done by IS_ONE_OF
-            item = record_id
-            instance_type = item.instance_type
-        else:
-            item_table = db.supply_item_entity
-            item = db(item_table._id == record_id).select(
-                                            item_table.instance_type,
-                                            limitby = (0, 1),
-                                            ).first()
-            try:
-                instance_type = item.instance_type
-            except AttributeError:
-                return current.messages.UNKNOWN_OPT
+        table = s3db.supply_item
+        ctable = s3db.supply_catalog
+        citable = s3db.supply_catalog_item
 
-        T = current.T
-        if instance_type == "inv_inv_item":
-            item_str = T("In Stock")
-        elif instance_type == "inv_track_item":
-            s3db = current.s3db
-            itable = s3db[instance_type]
-            rtable = s3db.inv_recv
-            query = (itable.item_entity_id == record_id) & \
-                    (rtable.id == itable.recv_id)
-            eta = db(query).select(rtable.eta,
-                                   limitby=(0, 1)).first().eta
-            item_str = T("Due %(date)s") % {"date": eta}
-        else:
-            return current.messages.UNKNOWN_OPT
+        # Look up the original catalog/category of the supply item
+        query = (table.id == item_id) & (table.deleted==False)
+        item = db(query).select(table.id,
+                                table.catalog_id,
+                                table.item_category_id,
+                                limitby = (0, 1),
+                                ).first()
 
-        return item_str
+        if item and item.catalog_id:
+            # Check if a catalog item for this original catalog still exists
+            query = (citable.item_id == item.id) & \
+                    (citable.catalog_id == item.catalog_id) & \
+                    (citable.deleted == False)
+            row = db(query).select(citable.id, limitby=(0, 1)).first()
+            if not row:
+                # Item has been removed from its original catalog
+
+                # Look up the organisation_id of the original catalog
+                query = (ctable.id == item.catalog_id) & \
+                        (ctable.deleted == False)
+                catalog = db(query).select(ctable.organisation_id,
+                                           limitby= (0, 1),
+                                           ).first()
+                organisation_id = catalog.organisation_id if catalog else None
+
+                # All other catalogs of the same organisation
+                query = (ctable.organisation_id == organisation_id) & \
+                        (ctable.deleted == False)
+                catalogs = db(query)._select(ctable.id)
+
+                # Check if the item is still linked to another catalog of this
+                # organisation
+                query = (citable.item_id == item.id) & \
+                        (citable.catalog_id.belongs(catalogs)) & \
+                        (citable.deleted == False)
+                citem = db(query).select(citable.catalog_id,
+                                         citable.item_category_id,
+                                         limitby = (0, 1),
+                                         orderby = citable.created_on,
+                                         ).first()
+                if citem:
+                    # Yes: update the original catalog/category from this link
+                    item.update_record(catalog_id = citem.catalog_id,
+                                       item_category_id = citem.item_category_id,
+                                       modified_on = table.modified_on,
+                                       modified_by = table.modified_by,
+                                       )
+                else:
+                    # No: restore the original catalog item
+                    citem = {"item_id": item.id,
+                             "catalog_id": item.catalog_id,
+                             "item_category_id": item.item_category_id,
+                             }
+                    citem_id = citem["id"] = citable.insert(**citem)
+                    s3db.update_super(citable, citem)
+                    current.auth.s3_set_record_owner(citable, citem_id)
+                    # No onaccept to avoid infinite recursion
+
+                    # Warning to the user
+                    current.response.warning = current.T("Catalog Item restored")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1393,6 +1447,52 @@ class SupplyItemEntityModel(DataModel):
 
         return {"supply_item_entity_id": dummy("item_entity_id"),
                 }
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def item_represent(record_id):
+        """
+            Represent an item entity in option fields or list views
+            - unused, we use VirtualField instead
+            @ToDo: Migrate to S3Represent
+        """
+
+        if not record_id:
+            return current.messages["NONE"]
+
+        db = current.db
+
+        if isinstance(record_id, Row) and "instance_type" in record_id:
+            # Do not repeat the lookup if already done by IS_ONE_OF
+            item = record_id
+            instance_type = item.instance_type
+        else:
+            item_table = db.supply_item_entity
+            item = db(item_table._id == record_id).select(
+                                            item_table.instance_type,
+                                            limitby = (0, 1),
+                                            ).first()
+            try:
+                instance_type = item.instance_type
+            except AttributeError:
+                return current.messages.UNKNOWN_OPT
+
+        T = current.T
+        if instance_type == "inv_inv_item":
+            item_str = T("In Stock")
+        elif instance_type == "inv_track_item":
+            s3db = current.s3db
+            itable = s3db[instance_type]
+            rtable = s3db.inv_recv
+            query = (itable.item_entity_id == record_id) & \
+                    (rtable.id == itable.recv_id)
+            eta = db(query).select(rtable.eta,
+                                   limitby=(0, 1)).first().eta
+            item_str = T("Due %(date)s") % {"date": eta}
+        else:
+            return current.messages.UNKNOWN_OPT
+
+        return item_str
 
 # =============================================================================
 class SupplyItemAlternativesModel(DataModel):
@@ -2394,33 +2494,42 @@ def item_um_from_name(name):
     return (name, None)
 
 # =============================================================================
-# TODO cleanup rheaders
-def supply_catalog_rheader(r):
+def supply_catalog_rheader(r, tabs=None):
     """ Resource Header for Catalogs """
 
-    if r.representation == "html":
-        catalog = r.record
-        if catalog:
-            T = current.T
+    if r.representation != "html":
+        # Resource headers only used in interactive views
+        return None
+
+    tablename, record = s3_rheader_resource(r)
+    if tablename != r.tablename:
+        resource = current.s3db.resource(tablename, id=record.id)
+    else:
+        resource = r.resource
+
+    rheader = None
+    rheader_fields = []
+
+    if record:
+
+        T = current.T
+
+        if not tabs:
             tabs = [(T("Edit Details"), None),
                     (T("Categories"), "item_category"),
                     (T("Items"), "catalog_item"),
                     ]
-            rheader_tabs = s3_rheader_tabs(r, tabs)
 
-            table = r.table
+        rheader_fields = [["organisation_id"],
+                          ["active"],
+                          ]
+        rheader_title = "name"
 
-            rheader = DIV(TABLE(TR(TH("%s: " % table.name.label),
-                                   catalog.name,
-                                   ),
-                                TR(TH("%s: " % table.organisation_id.label),
-                                   table.organisation_id.represent(catalog.organisation_id),
-                                   ),
-                                ),
-                          rheader_tabs
-                          )
-            return rheader
-    return None
+        # Generate rheader XML
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
+
+    return rheader
 
 # =============================================================================
 def supply_item_rheader(r, tabs=None):
