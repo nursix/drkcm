@@ -1077,7 +1077,7 @@ S3.openPopup = function(url, center) {
     var renderOptions = function(data, settings) {
 
         var options = [],
-            defaultValue = 0;
+            defaultValue = '';
 
         if (data.length === 0) {
             // No options available
@@ -1108,7 +1108,7 @@ S3.openPopup = function(url, center) {
             for (var i = 0; i < data.length; i++) {
                 record = data[i];
                 value = record[lookupField];
-                if (i === 0) {
+                if (i === 0 && !settings.multiple) {
                     defaultValue = value;
                 }
                 name = fncRepresent ? fncRepresent(record, prepResult) : record.name;
@@ -1392,7 +1392,9 @@ S3.openPopup = function(url, center) {
                 var widget = $(this),
                     visible = true;
                 if (widget.hasClass('groupedopts-widget')) {
-                    visible = widget.groupedopts('visible');
+                    visible = widget.groupedopts('instance') ? widget.groupedopts('visible') : false;
+                } else if (widget.hasClass('multiselect-widget')) {
+                    visible = widget.multiselect('instance') ? widget.multiselect('visible') : false;
                 } else {
                     visible = widget.data('visible') || widget.is(':visible');
                 }
@@ -1400,6 +1402,8 @@ S3.openPopup = function(url, center) {
                     widget.data('visible', true);
                     if (widget.hasClass('groupedopts-widget')) {
                         widget.groupedopts('hide');
+                    } else if (widget.hasClass('groupedopts-widget')) {
+                        widget.multiselect('hide');
                     } else {
                         widget.hide();
                     }
@@ -1617,6 +1621,9 @@ S3.openPopup = function(url, center) {
             targetField = $(targetSelector);
             if (!targetField.length) {
                 return;
+            }
+            if (targetField.attr('multiple') !== undefined) {
+                settings.multiple = true;
             }
             targetForm = targetField.closest('form');
         }

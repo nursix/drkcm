@@ -473,6 +473,13 @@ $.filterOptionsS3({
 
                      Field("obsolete", "boolean",
                            default = False,
+                           represent = BooleanRepresent(labels = False,
+                                                        # Reverse icons semantics
+                                                        icons = (BooleanRepresent.NEG,
+                                                                 BooleanRepresent.POS,
+                                                                 ),
+                                                        flag = True,
+                                                        ),
                            readable = False,
                            writable = False,
                            ),
@@ -1380,9 +1387,6 @@ class SupplyItemEntityModel(DataModel):
 
         tablename = "supply_item_entity"
         self.super_entity(tablename, "item_entity_id", item_types,
-                          # @ToDo: Make Items Trackable?
-                          #super_link("track_id", "sit_trackable"),
-                          #location_id(),
                           supply_item_id(),
                           item_pack_id(),
                           Field("quantity", "double", notnull=True,
@@ -1392,17 +1396,7 @@ class SupplyItemEntityModel(DataModel):
                           *MetaFields.owner_meta_fields())
 
         # Foreign Key Template
-        item_id = lambda: super_link("item_entity_id", "supply_item_entity",
-                                     #writable = True,
-                                     #readable = True,
-                                     #label = T("Status"),
-                                     #represent = item_represent,
-                                     # Comment these to use a Dropdown & not an Autocomplete
-                                     #widget = S3ItemAutocompleteWidget(),
-                                     #comment = DIV(_class="tooltip",
-                                     #              _title="%s|%s" % (T("Item"),
-                                     #                                current.messages.AUTOCOMPLETE_HELP))
-                                     )
+        item_id = lambda: super_link("item_entity_id", "supply_item_entity")
 
         # Filter Widgets
         filter_widgets = [
@@ -1420,12 +1414,6 @@ class SupplyItemEntityModel(DataModel):
                           #represent = "%(name)s",
                           cols = 2,
                           ),
-            #OptionsFilter("country",
-            #              label = current.messages.COUNTRY,
-            #              comment = T("If none are selected, then all are searched."),
-            #              #represent = "%(name)s",
-            #              cols = 2,
-            #              ),
         ]
 
         # Configuration
@@ -1447,52 +1435,6 @@ class SupplyItemEntityModel(DataModel):
 
         return {"supply_item_entity_id": dummy("item_entity_id"),
                 }
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def item_represent(record_id):
-        """
-            Represent an item entity in option fields or list views
-            - unused, we use VirtualField instead
-            @ToDo: Migrate to S3Represent
-        """
-
-        if not record_id:
-            return current.messages["NONE"]
-
-        db = current.db
-
-        if isinstance(record_id, Row) and "instance_type" in record_id:
-            # Do not repeat the lookup if already done by IS_ONE_OF
-            item = record_id
-            instance_type = item.instance_type
-        else:
-            item_table = db.supply_item_entity
-            item = db(item_table._id == record_id).select(
-                                            item_table.instance_type,
-                                            limitby = (0, 1),
-                                            ).first()
-            try:
-                instance_type = item.instance_type
-            except AttributeError:
-                return current.messages.UNKNOWN_OPT
-
-        T = current.T
-        if instance_type == "inv_inv_item":
-            item_str = T("In Stock")
-        elif instance_type == "inv_track_item":
-            s3db = current.s3db
-            itable = s3db[instance_type]
-            rtable = s3db.inv_recv
-            query = (itable.item_entity_id == record_id) & \
-                    (rtable.id == itable.recv_id)
-            eta = db(query).select(rtable.eta,
-                                   limitby=(0, 1)).first().eta
-            item_str = T("Due %(date)s") % {"date": eta}
-        else:
-            return current.messages.UNKNOWN_OPT
-
-        return item_str
 
 # =============================================================================
 class SupplyItemAlternativesModel(DataModel):
@@ -1774,6 +1716,9 @@ class SupplyDistributionModel(DataModel):
         T = current.T
         db = current.db
 
+        s3 = current.response.s3
+        crud_strings = s3.crud_strings
+
         define_table = self.define_table
         super_link = self.super_link
         add_components = self.add_components
@@ -1811,10 +1756,6 @@ class SupplyDistributionModel(DataModel):
                      organisation_id(
                          comment = None,
                          ),
-                     super_link("site_id", "org_site",
-                                label = T("Place"),
-                                represent = site_represent,
-                                ),
                      Field("name",
                            label = T("Title"),
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(512, minsize=1)],
@@ -1822,13 +1763,13 @@ class SupplyDistributionModel(DataModel):
                      Field("max_per_day", "integer",
                            label = T("Maximum Number per Day"),
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, None)),
-                           # TODO comment
+                           comment = T("Maximum number of distributions of this type per client and day"),
                            ),
                      Field("min_interval", "double",
                            label = T("Minimum Interval (Hours)"),
                            requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
                            widget = S3HoursWidget(precision=2),
-                           # TODO comment
+                           comment = T("Minimum time interval between two consecutive distributions of this type to the same client"),
                            ),
                      Field("residents_only", "boolean",
                            label = T("Current residents only"),
@@ -1838,7 +1779,9 @@ class SupplyDistributionModel(DataModel):
                                                         colors = True,
                                                         flag = True,
                                                         ),
-                           comment = T("Registration requires that the person is checked-in at a shelter"),
+                           comment = T("Distribution requires that the person is checked-in at a shelter"),
+                           readable = False,
+                           writable = False,
                            ),
                      Field("active", "boolean",
                            label = T("Active"),
@@ -1856,27 +1799,35 @@ class SupplyDistributionModel(DataModel):
                        supply_distribution_type_item = "distribution_type_id",
                        dvr_case_flag = ({"name": "flag_required",
                                          "link": "dvr_distribution_flag_required",
-                                         "joinby": "case_id",
-                                         "key": "need_id",
+                                         "joinby": "distribution_type_id",
+                                         "key": "flag_id",
                                          },
-                                        {"name": "flag_forbidden",
-                                         "link": "dvr_distribution_flag_required",
-                                         "joinby": "case_id",
-                                         "key": "need_id",
+                                        {"name": "flag_debarring",
+                                         "link": "dvr_distribution_flag_debarring",
+                                         "joinby": "distribution_type_id",
+                                         "key": "flag_id",
                                          },
                                         ),
                        )
-
-        # TODO CRUD Form to include flags required/forbidden
-
-        # TODO Standard List Fields
 
         # Table configuration
         configure(tablename,
                   onvalidation = self.distribution_type_onvalidation,
                   )
 
-        # TODO CRUD Strings
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Create Distribution Type"),
+            title_display = T("Distribution Type"),
+            title_list = T("Distribution Types"),
+            title_update = T("Edit Distribution Type"),
+            label_list_button = T("List Distribution Types"),
+            label_delete_button = T("Delete Distribution Type"),
+            msg_record_created = T("Distribution Type added"),
+            msg_record_modified = T("Distribution Type updated"),
+            msg_record_deleted = T("Distribution Type deleted"),
+            msg_list_empty = T("No Distribution Types currently registered"),
+            )
 
         # Field template
         represent = S3Represent(lookup=tablename)
@@ -1921,14 +1872,24 @@ class SupplyDistributionModel(DataModel):
                            ),
                      )
 
-        # TODO Standard List Fields
-
         # Table configuration
         configure(tablename,
                   onvalidation = self.distribution_type_item_onvalidation,
                   )
 
-        # TODO CRUD Strings
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Add Item"),
+            title_display = T("Item Details"),
+            title_list = T("Items"),
+            title_update = T("Edit Item"),
+            label_list_button = T("List Items"),
+            label_delete_button = T("Delete Item##supply"),
+            msg_record_created = T("Item added"),
+            msg_record_modified = T("Item updated"),
+            msg_record_deleted = T("Item deleted"),
+            msg_list_empty = T("No Items currently registered"),
+            )
 
         # ---------------------------------------------------------------------
         # Distribution
@@ -1959,9 +1920,19 @@ class SupplyDistributionModel(DataModel):
                        supply_distribution_item = "distribution_id",
                        )
 
-        # TODO Standard List Fields
-
-        # TODO CRUD strings
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            label_create = T("Register Distribution"),
+            title_display = T("Distribution"),
+            title_list = T("Distributions"),
+            title_update = T("Edit Distribution"),
+            label_list_button = T("List Distributions"),
+            label_delete_button = T("Delete Distribution"),
+            msg_record_created = T("Distribution added"),
+            msg_record_modified = T("Distribution updated"),
+            msg_record_deleted = T("Distribution deleted"),
+            msg_list_empty = T("No Distributions currently registered"),
+            )
 
         # ---------------------------------------------------------------------
         # Distribution Item
@@ -1970,6 +1941,8 @@ class SupplyDistributionModel(DataModel):
         define_table(tablename,
                      Field("distribution_id", "reference supply_distribution",
                            label = T("Distribution"),
+                           readable = False,
+                           writable = False,
                            ),
                      self.pr_person_id(
                          readable = False,
@@ -1995,14 +1968,21 @@ class SupplyDistributionModel(DataModel):
                            ),
                      )
 
-        # TODO Standard list fields
+        # Standard list fields
+        list_fields = ["mode",
+                       "item_id",
+                       "item_pack_id",
+                       "quantity",
+                       ]
 
         # Table configuration
         configure(tablename,
+                  list_fields = list_fields,
                   onaccept = self.distribution_item_onaccept,
                   )
 
-        # TODO CRUD Strings
+        # CRUD Strings
+        crud_strings[tablename] = crud_strings["supply_distribution_type_item"]
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -2019,7 +1999,10 @@ class SupplyDistributionModel(DataModel):
     # -------------------------------------------------------------------------
     @staticmethod
     def distribution_type_onvalidation(form):
-        # TODO docstring
+        """
+            Form validation of distribution types:
+            - title must be unique within organisation
+        """
 
         T = current.T
         db = current.db
@@ -2048,7 +2031,11 @@ class SupplyDistributionModel(DataModel):
     # -------------------------------------------------------------------------
     @staticmethod
     def distribution_type_item_onvalidation(form):
-        # TODO docstring
+        """
+            Form validation of distribution type items
+            - items must appear only once per distribution type
+            - standard quantity must be less than (or equal) maximum quantity
+        """
 
         T = current.T
         db = current.db
@@ -2084,7 +2071,7 @@ class SupplyDistributionModel(DataModel):
         quantity = data.get("quantity")
         quantity_max = data.get("quantity_max")
         if quantity_max is not None and quantity > quantity_max:
-            form.errors.quantity = T("Standard quantity must be less or equal maximum quantity")
+            form.errors.quantity = T("Standard quantity must be less than or equal maximum quantity")
 
     # -------------------------------------------------------------------------
     @staticmethod

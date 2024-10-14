@@ -1072,7 +1072,7 @@ class DVRCaseFlagDistributionModel(DataModel):
         by case flags
     """
 
-    names = ("dvr_distribution_flag_forbidden",
+    names = ("dvr_distribution_flag_debarring",
              "dvr_distribution_flag_required",
              )
 
@@ -1097,9 +1097,9 @@ class DVRCaseFlagDistributionModel(DataModel):
                      )
 
         # ---------------------------------------------------------------------
-        # Flags forbidden for a distribution type
+        # Flags debarring from a distribution type
         #
-        tablename = "dvr_distribution_flag_forbidden"
+        tablename = "dvr_distribution_flag_debarring"
         define_table(tablename,
                      distribution_type_id(),
                      case_flag_id(
