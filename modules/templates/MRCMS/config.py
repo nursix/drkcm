@@ -37,6 +37,7 @@ def config(settings):
                                       ("counsel", "response_type"): ("dvr", "response_type"),
                                       ("counsel", "response_theme"): ("dvr", "response_theme"),
                                       ("counsel", "vulnerability_type"): ("dvr", "vulnerability_type"),
+                                      ("supply", "person"): ("pr", "person"),
                                       }
 
     # Authentication settings
@@ -148,13 +149,15 @@ def config(settings):
                                 auth_user_resource
 
     settings.auth.privileged_roles = {"NEWSLETTER_AUTHOR": "ADMIN",
-                                      "SHELTER_ADMIN": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
-                                      "SHELTER_MANAGER": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
                                       "STAFF": ("ORG_GROUP_ADMIN", "ORG_ADMIN"),
                                       "CASE_ADMIN": "ORG_ADMIN",
                                       "CASE_MANAGER": "ORG_ADMIN",
                                       "SECURITY": "ORG_ADMIN",
                                       "CATERING": "ORG_ADMIN",
+                                      "SHELTER_ADMIN": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
+                                      "SHELTER_MANAGER": ("ORG_GROUP_ADMIN", "SHELTER_ADMIN"),
+                                      "SUPPLY_ADMIN": ("ORG_GROUP_ADMIN", "SUPPLY_ADMIN"),
+                                      "SUPPLY_MANAGER": ("ORG_GROUP_ADMIN", "SUPPLY_ADMIN"),
                                       # These are restricted for now until better-defined
                                       "CASE_ASSISTANT": "ADMIN",
                                       "QUARTERMASTER": "ADMIN",

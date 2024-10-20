@@ -6025,6 +6025,7 @@
 'Supplier/Donor': 'Lieferant/Spender',
 'Suppliers': 'Lieferanten',
 'Supply Chain Management': 'Versorgungsketten-Management',
+'Supply': 'Versorgung',
 'Support Request': 'Unterstützungsanforderung',
 'Support Requests': 'Unterstützungsanforderungen',
 'Support provided': 'Durchgeführte Maßnahmen',

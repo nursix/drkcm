@@ -154,7 +154,7 @@ def pr_person_resource(r, tablename):
     has_permission = auth.s3_has_permission
 
     controller = r.controller
-    if controller in ("dvr", "counsel"):
+    if controller in ("dvr", "counsel", "supply"):
 
         case_administration = has_permission("create", "pr_person")
 
@@ -1369,7 +1369,7 @@ def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False)
     component_name = r.component_name
 
     controller = r.controller
-    if controller in ("dvr", "counsel"):
+    if controller in ("dvr", "counsel", "supply"):
 
         if not r.component:
 
@@ -1480,7 +1480,7 @@ def pr_person_controller(**attr):
     # Add custom components
     # - must happen before prep, so selectors from filters do not
     #   get resolved as virtual fields prematurely
-    if current.request.controller in ("dvr", "counsel"):
+    if current.request.controller in ("dvr", "counsel", "supply"):
         configure_person_tags()
 
     # Only one staff record per person
@@ -1499,7 +1499,7 @@ def pr_person_controller(**attr):
             r.vars["closed"] = r.get_vars["closed"] = "0"
 
         # Call standard prep
-        if r.controller in ("dvr", "counsel"):
+        if r.controller in ("dvr", "counsel", "supply"):
             from .dvr import dvr_person_prep
             result = dvr_person_prep(r)
         else:
@@ -1514,7 +1514,7 @@ def pr_person_controller(**attr):
             crud_strings["title_list"] = T("Invalid Cases")
 
         controller = r.controller
-        if controller in ("dvr", "counsel"):
+        if controller in ("dvr", "counsel", "supply"):
             configure_dvr_person_controller(r,
                                             privileged = privileged,
                                             administration = administration,
@@ -1581,7 +1581,7 @@ def pr_person_controller(**attr):
 
     # Custom rheader tabs
     from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
-    if current.request.controller in ("dvr", "counsel"):
+    if current.request.controller in ("dvr", "counsel", "supply"):
 
         attr["rheader"] = dvr_rheader
         attr["variable_columns"] = True

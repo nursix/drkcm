@@ -167,6 +167,8 @@ class SupplyCatalogModel(DataModel):
         # TODO onvalidation to enforce unique catalog name within organisation
         configure(tablename,
                   deletable = False,
+                  realm_components = ("item_category", "catalog_item"),
+                  update_realm = True,
                   )
 
         # =====================================================================
@@ -1813,6 +1815,8 @@ class SupplyDistributionModel(DataModel):
         # Table configuration
         configure(tablename,
                   onvalidation = self.distribution_type_onvalidation,
+                  realm_components = ("distribution_type_item",),
+                  update_realm = True,
                   )
 
         # CRUD strings
@@ -1919,6 +1923,12 @@ class SupplyDistributionModel(DataModel):
         add_components(tablename,
                        supply_distribution_item = "distribution_id",
                        )
+
+        # Table configuration
+        configure(tablename,
+                  realm_components = ("distribution_item",),
+                  update_realm = True,
+                  )
 
         # CRUD strings
         crud_strings[tablename] = Storage(

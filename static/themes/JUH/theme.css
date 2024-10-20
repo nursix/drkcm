@@ -5375,36 +5375,61 @@ h4.profile-sub-header {
 }
 
 /* line 655, ../scss/theme/_misc.scss */
+.case-file-perspectives {
+  font-size: 0.7rem;
+  vertical-align: top;
+  border: 1px solid #ccc;
+  padding: 0.2rem 0;
+  margin-top: -0.3rem;
+  margin-bottom: 0.5rem;
+  background-color: #eeeeee;
+}
+/* line 663, ../scss/theme/_misc.scss */
+.case-file-perspectives i.fa {
+  font-size: 0.8rem;
+  margin-right: 0.2rem;
+  vertical-align: middle;
+}
+/* line 668, ../scss/theme/_misc.scss */
+.case-file-perspectives a, .case-file-perspectives span {
+  margin: 0 0.4rem;
+}
+/* line 671, ../scss/theme/_misc.scss */
+.case-file-perspectives .current-perspective {
+  color: #970000;
+}
+
+/* line 677, ../scss/theme/_misc.scss */
 .bulk-checkout-form {
   padding: 1rem;
 }
-/* line 658, ../scss/theme/_misc.scss */
+/* line 680, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-info {
   font-size: 0.8rem;
   font-weight: bold;
 }
-/* line 662, ../scss/theme/_misc.scss */
+/* line 684, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-question {
   font-size: 0.8rem;
   font-weight: bold;
   border-top: 1px solid #eee;
   padding-top: 0.5rem;
 }
-/* line 668, ../scss/theme/_misc.scss */
+/* line 690, ../scss/theme/_misc.scss */
 .bulk-checkout-form label {
   font-size: 0.825rem;
 }
-/* line 671, ../scss/theme/_misc.scss */
+/* line 693, ../scss/theme/_misc.scss */
 .bulk-checkout-form .label-above {
   font-weight: bold;
 }
-/* line 673, ../scss/theme/_misc.scss */
+/* line 695, ../scss/theme/_misc.scss */
 .bulk-checkout-form .label-above select {
   display: block;
   margin-bottom: 1rem;
   min-width: 12rem;
 }
-/* line 680, ../scss/theme/_misc.scss */
+/* line 702, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-buttons button, .bulk-checkout-form .checkout-buttons a.cancel-form-btn {
   margin-bottom: 0;
 }
