@@ -205,7 +205,7 @@ def realm_entity(table, row):
     #    pass
 
     #elif tablename in ("supply_catalog",
-    #                   "supply_distribution_type",
+    #                   "supply_distribution_set",
     #                   "supply_distribution",
     #                   ):
     #    # Owned by the managing organisation (default ok)
@@ -217,9 +217,9 @@ def realm_entity(table, row):
         # Inherit from catalog via catalog_id
         realm_entity = inherit_realm(tablename, row, "supply_catalog", "catalog_id")
 
-    elif tablename == "supply_distribution_type_item":
-        # Inherit from distribution type via distribution_type_id
-        realm_entity = inherit_realm(tablename, row, "supply_distribution_type", "distribution_type_id")
+    elif tablename == "supply_distribution_set_item":
+        # Inherit from distribution set via distribution_set_id
+        realm_entity = inherit_realm(tablename, row, "supply_distribution_set", "distribution_set_id")
 
 
     elif tablename == "supply_distribution_item":

@@ -111,7 +111,7 @@ def dvr_rheader(r, tabs=None):
 
                     elif c == "supply":
                         # Supply Perspective
-                        tabs.extend([(T("Distributions"), "distribution_item"),
+                        tabs.extend([(T("Supply Items Received"), "distribution_item"),
                                      ])
 
                     else:

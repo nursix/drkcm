@@ -130,8 +130,8 @@ def person_item_status():
 # =============================================================================
 # Distributions
 #
-def distribution_type():
-    """ Distribution Types: CRUD Controller """
+def distribution_set():
+    """ Distribution Sets: CRUD Controller """
 
     return crud_controller(rheader=s3db.supply_distribution_rheader)
 

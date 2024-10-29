@@ -1068,7 +1068,7 @@ class DVRCaseFlagModel(DataModel):
 # =============================================================================
 class DVRCaseFlagDistributionModel(DataModel):
     """
-        Model to control applicability of supply item distribution types
+        Model to control applicability of supply item distribution sets
         by case flags
     """
 
@@ -1081,14 +1081,14 @@ class DVRCaseFlagDistributionModel(DataModel):
         define_table = self.define_table
 
         case_flag_id = self.dvr_case_flag_id
-        distribution_type_id = self.supply_distribution_type_id
+        distribution_set_id = self.supply_distribution_set_id
 
         # ---------------------------------------------------------------------
-        # Flags required for a distribution type
+        # Flags required for a distribution set
         #
         tablename = "dvr_distribution_flag_required"
         define_table(tablename,
-                     distribution_type_id(),
+                     distribution_set_id(),
                      case_flag_id(
                          empty = False,
                          ondelete = "CASCADE",
@@ -1097,11 +1097,11 @@ class DVRCaseFlagDistributionModel(DataModel):
                      )
 
         # ---------------------------------------------------------------------
-        # Flags debarring from a distribution type
+        # Flags debarring from a distribution set
         #
         tablename = "dvr_distribution_flag_debarring"
         define_table(tablename,
-                     distribution_type_id(),
+                     distribution_set_id(),
                      case_flag_id(
                          empty = False,
                          ondelete = "CASCADE",

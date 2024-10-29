@@ -312,30 +312,35 @@ class Checkpoint(CRUDMethod):
 
             Returns:
                 a JSON object like:
-                    {"l": the actual PE label (to update the input field),
+                    {// Person details
+                     "l": the actual PE label (to update the input field),
                      "p": the person details (HTML),
                      "f": flags instructions
                           [{"n": the flag name, "i": flag instructions},...],
-                     "x": the family details,
-                     "d": action details,       # TODO proper explanation
                      "b": profile picture URL,  # TODO Change into i(mage)
+                     "x": the family details,
+
+                     // Transaction details
+                     "d": action details,       # TODO proper explanation
                      "i": blocked events        # TODO Change into "r" (=rules)
                           {<event_code>: [<msg>, <blocked_until_datetime>]},
                      "u": actionable info (e.g. which payment to pay out)
                      "s": whether the action is permitted or not
-                     "e": form error (for label field)  # TODO use "a" instead
-                     "a": error message                 # TODO use "e" instead
+
+                     // Messages
+                     "a": form error (for label field)
+                     "e": error message
                      "w": warning message
-                     "m": success message               # TODO use "c" instead
+                     "c": success message
                      }
 
             Note:
                 Request body is expected to contain a JSON-object like:
                     {"a": the action ("check"|"register")
+                     "k": XSRF token
                      "l": the PE label(s)
                      "o": the organisation ID
-                     "e": the event type code
-                     "k": XSRF token
+                     "t": the event type code
                      }
         """
 
@@ -480,7 +485,7 @@ class Checkpoint(CRUDMethod):
         error = None
 
         # Identify the event type
-        code = json_data.get("e")
+        code = json_data.get("t")
         event_type = self.get_event_type(code, organisation_id)
         if event_type:
             # Identify the person(s)
@@ -528,9 +533,9 @@ class Checkpoint(CRUDMethod):
             error = T("Person not found")
 
         if error:
-            output = {"a": s3_str(error)}
+            output = {"e": s3_str(error)}
         else:
-            output = {"m": s3_str(T("Event registered"))}
+            output = {"c": s3_str(T("Event registered"))}
 
         return output
 
@@ -1150,7 +1155,7 @@ class Checkpoint(CRUDMethod):
     # Helper functions
     # -------------------------------------------------------------------------
     @classmethod
-    def get_organisations(cls):
+    def get_organisations(cls, tablename="dvr_case_event"):
         """
             Looks up all organisations the user is permitted to register
             case events for
@@ -1165,7 +1170,7 @@ class Checkpoint(CRUDMethod):
         otable = s3db.org_organisation
 
         permissions = current.auth.permission
-        permitted_realms = permissions.permitted_realms("dvr_case_event", "create")
+        permitted_realms = permissions.permitted_realms(tablename, "create")
         if permitted_realms is not None:
             query = (otable.pe_id.belongs(permitted_realms)) & \
                     (otable.deleted == False)
@@ -1526,7 +1531,7 @@ class Checkpoint(CRUDMethod):
 
         # Last registration of types with a minimum interval
         join = ttable.on((ttable.id == etable.type_id) & \
-                         (ttable.max_per_day != None))
+                         (ttable.min_interval != None))
         query = (etable.person_id == person_id) & \
                 (etable.type_id.belongs(check)) & \
                 (etable.deleted == False)

@@ -4,6 +4,7 @@ from .anonymize import *
 from .cico import *
 from .crud import *
 from .checkpoint import Checkpoint
+from .distribution import Distribution
 from .filtermgr import *
 from .gendoc import GenerateDocument
 from .grouped import *

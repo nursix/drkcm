@@ -165,10 +165,10 @@
 
             let formKey = $('input[type=hidden][name="_formkey"]', form).val();
             var input = {'a': 'check',
+                         'k': formKey,
                          'l': label,
                          'o': orgID,
-                         'e': null,
-                         'k': formKey,
+                         't': null
                          },
                 ajaxURL = this.options.ajaxURL,
                 // Show a throbber
@@ -188,11 +188,9 @@
                     throbber.remove();
 
                     if (data.a) {
-                        // Show error message on ID field
-                        // TODO move into function _showInputAdvice
+                        // Show advice on ID field
                         var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.a + '</div></div>').hide();
                         msg.insertAfter($(prefix + '_label').closest('.controls')).slideDown('fast');
-
                     }
 
                     if (data.p) {
@@ -266,8 +264,8 @@
                     if (data.w) {
                         S3.showAlert(data.w, 'warning');
                     }
-                    if (data.m) {
-                        S3.showAlert(data.m, 'success');
+                    if (data.c) {
+                        S3.showAlert(data.c, 'success');
                     }
                 },
                 'error': function () {
@@ -306,11 +304,11 @@
 
             let formKey = $('input[type=hidden][name="_formkey"]', form).val(),
                 input = {'a': 'register',
+                         'k': formKey,
                          'l': label,
                          'o': orgID,
-                         'e': eventTypeCode,
-                         'k': formKey,
-                         }, //{'l': label, 't': event},
+                         't': eventTypeCode
+                         },
                 ajaxURL = this.options.ajaxURL,
                 // Don't clear the person info just yet
                 personInfo = $(prefix + '_person__row .controls'),
@@ -364,21 +362,20 @@
                     // Remove the throbber
                     throbber.remove();
 
-                    if (data.e) {
-                        // Show error message on ID field
-                        var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.e + '</div></div>').hide();
+                    if (data.a) {
+                        // Show advice on ID field
+                        var msg = $('<div class="error_wrapper"><div id="label__error" class="error" style="display: block;">' + data.a + '</div></div>').hide();
                         msg.insertAfter($(prefix + '_label')).slideDown('fast');
-
                     } else {
                         // Done - clear the form
                         self._clearForm();
                     }
 
-                    // Show alert/confirmation message
-                    if (data.a) {
-                        S3.showAlert(data.a, 'error', false);
-                    } else if (data.m) {
-                        S3.showAlert(data.m, 'success', false);
+                    // Show error/confirmation message
+                    if (data.e) {
+                        S3.showAlert(data.e, 'error', false);
+                    } else if (data.c) {
+                        S3.showAlert(data.c, 'success', false);
                     }
                 },
                 'error': function () {

@@ -443,9 +443,11 @@ class OptionsMenu(default.OptionsMenu):
 
         return M(c="supply")(
                 M("Current Cases", c=("supply", "pr"), f="person"),
-                M("Distributions", f="distribution"),
+                M("Distributions", link=False)(
+                    M("Register", f="distribution", m="register", p="create"),
+                    ),
                 M("Administration", link=False, restrict=["ADMIN", "ORG_ADMIN"])(
-                    M("Distribution Types", f="distribution_type"),
+                    M("Distribution Item Sets", f="distribution_set"),
                     M("Catalogs", f="catalog"),
                     M("Items", f="item"),
                     ),

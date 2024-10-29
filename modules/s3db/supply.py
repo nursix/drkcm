@@ -1706,9 +1706,9 @@ class SupplyPersonModel(DataModel):
 class SupplyDistributionModel(DataModel):
     """ Model to register supply item distributions to beneficiaries """
 
-    names = ("supply_distribution_type",
-             "supply_distribution_type_id",
-             "supply_distribution_type_item",
+    names = ("supply_distribution_set",
+             "supply_distribution_set_id",
+             "supply_distribution_set_item",
              "supply_distribution",
              "supply_distribution_item",
              )
@@ -1735,12 +1735,12 @@ class SupplyDistributionModel(DataModel):
         # ---------------------------------------------------------------------
         # Distribution Modes
         #
-        base_modes = (("GRA", T("Grant##distribution")),
-                      ("LOA", T("Loan##distribution")),
-                      )
-        dist_modes = base_modes + \
-                     (("RET", T("Return##distribution")),
-                      ("LOS", T("Loss##distribution")),
+        set_modes = (("GRA", T("Grant##distribution")),
+                     ("LOA", T("Loan##distribution")),
+                     ("RET", T("Return##distribution")),
+                     )
+        dist_modes = set_modes + \
+                     (("LOS", T("Loss##distribution")),
                       )
 
         mode_represent = S3PriorityRepresent(dist_modes, {"GRA": "blue",
@@ -1750,10 +1750,10 @@ class SupplyDistributionModel(DataModel):
                                                           }).represent
 
         # ---------------------------------------------------------------------
-        # Distribution type
-        # - templates for supply item distributions
+        # Distribution item set
+        # - set of items to be distributed to beneficiaries
         #
-        tablename = "supply_distribution_type"
+        tablename = "supply_distribution_set"
         define_table(tablename,
                      organisation_id(
                          comment = None,
@@ -1765,13 +1765,13 @@ class SupplyDistributionModel(DataModel):
                      Field("max_per_day", "integer",
                            label = T("Maximum Number per Day"),
                            requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1, None)),
-                           comment = T("Maximum number of distributions of this type per client and day"),
+                           comment = T("Maximum number of distributions per client and day"),
                            ),
                      Field("min_interval", "double",
                            label = T("Minimum Interval (Hours)"),
                            requires = IS_EMPTY_OR(IS_FLOAT_IN_RANGE(0.0, None)),
                            widget = S3HoursWidget(precision=2),
-                           comment = T("Minimum time interval between two consecutive distributions of this type to the same client"),
+                           comment = T("Minimum time interval between two consecutive distributions to the same client"),
                            ),
                      Field("residents_only", "boolean",
                            label = T("Current residents only"),
@@ -1798,15 +1798,15 @@ class SupplyDistributionModel(DataModel):
 
         # Components
         add_components(tablename,
-                       supply_distribution_type_item = "distribution_type_id",
+                       supply_distribution_set_item = "distribution_set_id",
                        dvr_case_flag = ({"name": "flag_required",
                                          "link": "dvr_distribution_flag_required",
-                                         "joinby": "distribution_type_id",
+                                         "joinby": "distribution_set_id",
                                          "key": "flag_id",
                                          },
                                         {"name": "flag_debarring",
                                          "link": "dvr_distribution_flag_debarring",
-                                         "joinby": "distribution_type_id",
+                                         "joinby": "distribution_set_id",
                                          "key": "flag_id",
                                          },
                                         ),
@@ -1814,49 +1814,49 @@ class SupplyDistributionModel(DataModel):
 
         # Table configuration
         configure(tablename,
-                  onvalidation = self.distribution_type_onvalidation,
-                  realm_components = ("distribution_type_item",),
+                  onvalidation = self.distribution_set_onvalidation,
+                  realm_components = ("distribution_set_item",),
                   update_realm = True,
                   )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
-            label_create = T("Create Distribution Type"),
-            title_display = T("Distribution Type"),
-            title_list = T("Distribution Types"),
-            title_update = T("Edit Distribution Type"),
-            label_list_button = T("List Distribution Types"),
-            label_delete_button = T("Delete Distribution Type"),
-            msg_record_created = T("Distribution Type added"),
-            msg_record_modified = T("Distribution Type updated"),
-            msg_record_deleted = T("Distribution Type deleted"),
-            msg_list_empty = T("No Distribution Types currently registered"),
+            label_create = T("Create Distribution Item Set"),
+            title_display = T("Distribution Item Set"),
+            title_list = T("Distribution Item Sets"),
+            title_update = T("Edit Distribution Item Set"),
+            label_list_button = T("List Distribution Item Sets"),
+            label_delete_button = T("Delete Distribution Item Set"),
+            msg_record_created = T("Distribution Item Set added"),
+            msg_record_modified = T("Distribution Item Set updated"),
+            msg_record_deleted = T("Distribution Item Set deleted"),
+            msg_list_empty = T("No Distribution Item Sets currently registered"),
             )
 
         # Field template
         represent = S3Represent(lookup=tablename)
-        distribution_type_id = FieldTemplate("distribution_type_id",
-                                             "reference %s" % tablename,
-                                             label = T("Template"),
-                                             represent = represent,
-                                             requires = IS_EMPTY_OR(
-                                                            IS_ONE_OF(db, "%s.id" % tablename,
-                                                                      represent,
-                                                                      )),
-                                             sortby = "name",
-                                             )
+        distribution_set_id = FieldTemplate("distribution_set_id",
+                                            "reference %s" % tablename,
+                                            label = T("Template"),
+                                            represent = represent,
+                                            requires = IS_EMPTY_OR(
+                                                        IS_ONE_OF(db, "%s.id" % tablename,
+                                                                  represent,
+                                                                  )),
+                                            sortby = "name",
+                                            )
 
         # ---------------------------------------------------------------------
-        # Distribution type item
+        # Distribution set item
         #
-        tablename = "supply_distribution_type_item"
+        tablename = "supply_distribution_set_item"
         define_table(tablename,
-                     distribution_type_id(),
+                     distribution_set_id(),
                      Field("mode",
                            label = T("Mode"),
-                           default = "GRANT",
+                           default = "GRA",
                            represent = mode_represent,
-                           requires = IS_IN_SET(base_modes,
+                           requires = IS_IN_SET(set_modes,
                                                 sort = False,
                                                 zero = None,
                                                 ),
@@ -1872,13 +1872,13 @@ class SupplyDistributionModel(DataModel):
                            ),
                      Field("quantity_max", "integer",
                            label = T("Maximum Quantity"),
-                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(0)),
+                           requires = IS_EMPTY_OR(IS_INT_IN_RANGE(1)),
                            ),
                      )
 
         # Table configuration
         configure(tablename,
-                  onvalidation = self.distribution_type_item_onvalidation,
+                  onvalidation = self.distribution_set_item_onvalidation,
                   )
 
         # CRUD strings
@@ -1903,6 +1903,10 @@ class SupplyDistributionModel(DataModel):
         define_table(tablename,
                      organisation_id(
                          comment = None,
+                         ),
+                     distribution_set_id(
+                         readable=False,
+                         writable=False,
                          ),
                      super_link("site_id", "org_site",
                                 label = T("Place"),
@@ -1929,6 +1933,12 @@ class SupplyDistributionModel(DataModel):
                   realm_components = ("distribution_item",),
                   update_realm = True,
                   )
+
+        # Method for distribution registration
+        self.set_method(tablename,
+                        method = "register",
+                        action = Distribution,
+                        )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -1979,7 +1989,8 @@ class SupplyDistributionModel(DataModel):
                      )
 
         # Standard list fields
-        list_fields = ["mode",
+        list_fields = ["distribution_id$date",
+                       "mode",
                        "item_id",
                        "item_pack_id",
                        "quantity",
@@ -1989,28 +2000,29 @@ class SupplyDistributionModel(DataModel):
         configure(tablename,
                   list_fields = list_fields,
                   onaccept = self.distribution_item_onaccept,
+                  orderby = "supply_distribution.date asc",
                   )
 
         # CRUD Strings
-        crud_strings[tablename] = crud_strings["supply_distribution_type_item"]
+        crud_strings[tablename] = crud_strings["supply_distribution_set_item"]
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
         #
-        return {"supply_distribution_type_id": distribution_type_id}
+        return {"supply_distribution_set_id": distribution_set_id}
 
     # -------------------------------------------------------------------------
     def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
-        return {"supply_distribution_type_id": FieldTemplate.dummy("distribution_type_id"),
+        return {"supply_distribution_set_id": FieldTemplate.dummy("distribution_set_id"),
                 }
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def distribution_type_onvalidation(form):
+    def distribution_set_onvalidation(form):
         """
-            Form validation of distribution types:
+            Form validation of distribution sets:
             - title must be unique within organisation
         """
 
@@ -2018,7 +2030,7 @@ class SupplyDistributionModel(DataModel):
         db = current.db
         s3db = current.s3db
 
-        table = s3db.supply_distribution_type
+        table = s3db.supply_distribution_set
 
         # Get form record ID
         record_id = get_form_record_id(form)
@@ -2036,14 +2048,14 @@ class SupplyDistributionModel(DataModel):
                 query = (table.id != record_id) & query
             row = db(query).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors["name"] = T('Distribution type "%(name)s" already exists') % {"name": name}
+                form.errors["name"] = T('Distribution set "%(name)s" already exists') % {"name": name}
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def distribution_type_item_onvalidation(form):
+    def distribution_set_item_onvalidation(form):
         """
-            Form validation of distribution type items
-            - items must appear only once per distribution type
+            Form validation of distribution set items
+            - items must appear only once per distribution set
             - standard quantity must be less than (or equal) maximum quantity
         """
 
@@ -2051,23 +2063,23 @@ class SupplyDistributionModel(DataModel):
         db = current.db
         s3db = current.s3db
 
-        table = s3db.supply_distribution_type_item
+        table = s3db.supply_distribution_set_item
 
         # Get the form record ID
         record_id = get_form_record_id(form)
 
         # Get form/default data
-        data = get_form_record_data(form, table, ["distribution_type_id",
+        data = get_form_record_data(form, table, ["distribution_set_id",
                                                   "mode",
                                                   "item_id",
                                                   "quantity",
                                                   "quantity_max",
                                                   ])
 
-        # Items may appear only once in the same distribution type
-        distribution_type_id = data.get("distribution_type_id")
-        if distribution_type_id:
-            query = (table.distribution_type_id == distribution_type_id) & \
+        # Items may appear only once in the same distribution set
+        distribution_set_id = data.get("distribution_set_id")
+        if distribution_set_id:
+            query = (table.distribution_set_id == distribution_set_id) & \
                     (table.item_id == data.get("item_id")) & \
                     (table.mode == data.get("mode")) & \
                     (table.deleted == False)
@@ -2075,7 +2087,7 @@ class SupplyDistributionModel(DataModel):
                 query = (table.id != record_id) & query
             row = db(query).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors.item_id = T("Item already registered for this distribution type")
+                form.errors.item_id = T("Item already registered for this distribution set")
 
         # Make sure standard quantity is in range
         quantity = data.get("quantity")
@@ -2597,11 +2609,11 @@ def supply_distribution_rheader(r, tabs=None):
 
         T = current.T
 
-        if tablename == "supply_distribution_type":
+        if tablename == "supply_distribution_set":
 
             if not tabs:
                 tabs = [(T("Basic Details"), None),
-                        (T("Items"), "distribution_type_item"),
+                        (T("Items"), "distribution_set_item"),
                         ]
 
         elif tablename == "supply_distribution":

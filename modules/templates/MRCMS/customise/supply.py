@@ -6,10 +6,10 @@
 
 from gluon import current
 
-from core import IS_ONE_OF, S3SQLCustomForm, S3SQLInlineLink
+from core import CustomController, IS_ONE_OF, S3SQLCustomForm, S3SQLInlineLink
 
 # -------------------------------------------------------------------------
-def supply_distribution_type_controller(**attr):
+def supply_distribution_set_controller(**attr):
 
     T = current.T
     db = current.db
@@ -35,7 +35,7 @@ def supply_distribution_type_controller(**attr):
 
             # Organisation is required
             from ..helpers import permitted_orgs
-            organisations = permitted_orgs("update", "supply_distribution_type")
+            organisations = permitted_orgs("update", "supply_distribution_set")
 
             otable = s3db.org_organisation
             dbset = db(otable.id.belongs(organisations))
@@ -117,5 +117,48 @@ $.filterOptionsS3({
     s3.prep = prep
 
     return attr
+
+# -------------------------------------------------------------------------
+def supply_distribution_resource(r, tablename):
+
+    s3db = current.s3db
+
+    # Read-only (except via registration UI)
+    s3db.configure("supply_distribution",
+                   insertable = False,
+                   editable = False,
+                   deletable = False,
+                   )
+
+# -------------------------------------------------------------------------
+def supply_distribution_controller(**attr):
+
+    s3 = current.response.s3
+
+    # Custom postp
+    standard_postp = s3.postp
+    def custom_postp(r, output):
+        # Call standard postp
+        if callable(standard_postp):
+            output = standard_postp(r, output)
+
+        if r.method == "register":
+            CustomController._view("MRCMS", "register_distribution.html")
+        return output
+    s3.postp = custom_postp
+
+    return attr
+
+# -------------------------------------------------------------------------
+def supply_distribution_item_resource(r, tablename):
+
+    s3db = current.s3db
+
+    # Read-only (except via registration UI)
+    s3db.configure("supply_distribution_item",
+                   insertable = False,
+                   editable = False,
+                   deletable = False,
+                   )
 
 # END =========================================================================

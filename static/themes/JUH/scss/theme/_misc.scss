@@ -94,7 +94,8 @@
 }
 
 // Event Registration UI ******************************************************
-.event-registration {
+.event-registration,
+.distribution-registration {
     .org-header {
         margin-top: 0.3rem;
         .org-name {
@@ -113,27 +114,31 @@
             color: #aaa;
         }
     }
-    .event-type-header {
+    .event-type-header, .distribution-set-header {
         margin-top: 0.3rem;
         text-align: center;
-        .event-type-name {
+        .event-type-name, .distribution-set-name {
             font-size: 1.2rem;
             padding: 0.3rem;
             border: 1px solid #43733f;
             background: #4a9d4f1a;
         }
-        &.challenge .event-type-name {
+        &.challenge .event-type-name,
+        &.challenge .distribution-set-name {
             border-color: red;
             background-color: #ffe0e0;
         }
-        &.empty .event-type-name {
+        &.empty .event-type-name,
+        &.empty .distribution-set-name {
             border-color: #ddd;
             background: transparent;
             color: #aaa;
         }
     }
-    .case-event-registration {
-        .event-registration-blocked {
+    .case-event-registration,
+    .distribution-registration {
+        .event-registration-blocked,
+        .distribution-registration-blocked {
             background-color: #ffaaaa;
             color: black;
             padding: 0.2rem 0.5rem;
@@ -198,11 +203,52 @@
             border: 1px solid black;
         }
     }
+    .distribution-details {
+        max-height: 80vh;
+        overflow: scroll;
+        padding: 0.5rem 0 0;
+        border-top: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        .item-table {
+            width: 100%;
+            .item-title {
+                background-color: #ebf4ec;
+                font-size: 1rem;
+                font-variant: all-small-caps;
+                line-height: 1;
+            }
+            .item-header {
+                line-height: 1;
+                th {
+                    color: #aaa;
+                    font-size: 0.7rem;
+                    font-style: italic;
+                    font-weight: normal;
+                }
+            }
+            .blocked-msg {
+                background-color: #ffcfcf;
+                text-align: center;
+                font-style: italic;
+            }
+            .dist-mode {
+                font-size: 0.7rem;
+                color: red;
+                font-style: italic;
+            }
+        }
+    }
     .profile-picture {
         margin: 1rem 0;
         max-width: 80%;
+        .image-row {
+            padding: 0 0 0.3rem;
+            img {
+                max-height: 80vh;
+            }
+        }
         .member-caption {
-            padding: 0.3rem 0;
+            padding: 0 0 0.3rem;
             font-size: 1.4rem;
         }
     }
