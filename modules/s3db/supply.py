@@ -1837,7 +1837,7 @@ class SupplyDistributionModel(DataModel):
         represent = S3Represent(lookup=tablename)
         distribution_set_id = FieldTemplate("distribution_set_id",
                                             "reference %s" % tablename,
-                                            label = T("Template"),
+                                            label = T("Distribution Item Set"),
                                             represent = represent,
                                             requires = IS_EMPTY_OR(
                                                         IS_ONE_OF(db, "%s.id" % tablename,
@@ -1948,7 +1948,7 @@ class SupplyDistributionModel(DataModel):
             title_update = T("Edit Distribution"),
             label_list_button = T("List Distributions"),
             label_delete_button = T("Delete Distribution"),
-            msg_record_created = T("Distribution added"),
+            msg_record_created = T("Distribution registered"),
             msg_record_modified = T("Distribution updated"),
             msg_record_deleted = T("Distribution deleted"),
             msg_list_empty = T("No Distributions currently registered"),
@@ -1970,7 +1970,7 @@ class SupplyDistributionModel(DataModel):
                          ),
                      Field("mode",
                            label = T("Mode"),
-                           default = "GRANT",
+                           default = "GRA",
                            represent = mode_represent,
                            requires = IS_IN_SET(dist_modes,
                                                 sort = False,
@@ -2048,7 +2048,7 @@ class SupplyDistributionModel(DataModel):
                 query = (table.id != record_id) & query
             row = db(query).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors["name"] = T('Distribution set "%(name)s" already exists') % {"name": name}
+                form.errors["name"] = T('Distribution item set "%(name)s" already exists') % {"name": name}
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -2087,7 +2087,7 @@ class SupplyDistributionModel(DataModel):
                 query = (table.id != record_id) & query
             row = db(query).select(table.id, limitby=(0, 1)).first()
             if row:
-                form.errors.item_id = T("Item already registered for this distribution set")
+                form.errors.item_id = T("Item already registered for this set")
 
         # Make sure standard quantity is in range
         quantity = data.get("quantity")
@@ -2526,7 +2526,7 @@ def supply_catalog_rheader(r, tabs=None):
         if not tabs:
             tabs = [(T("Edit Details"), None),
                     (T("Categories"), "item_category"),
-                    (T("Items"), "catalog_item"),
+                    (T("Catalog Items"), "catalog_item"),
                     ]
 
         rheader_fields = [["organisation_id"],

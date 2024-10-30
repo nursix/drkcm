@@ -218,24 +218,19 @@ class Distribution(Checkpoint):
 
         # Inject JS
         options = {"ajaxURL": self.ajax_url(r),
-
                    "tablename": resourcename,
-
                    "showPicture": show_picture,
-
-                   # TODO Translations
-                   "showPictureText": s3_str(T("Show Picture")),
-                   "hidePictureText": s3_str(T("Hide Picture")),
-                   "selectDistributionSetLabel": s3_str(T("Please select a distribution set")),
-                   "noDistributionSetsLabel": s3_str(T("No distribution sets available")),
-
-                   "distributeLabel": s3_str(T("Distribute")),
-                   "returnLabel": s3_str(T("Return")),
+                   "showPictureLabel": s3_str(T("Show Picture")),
+                   "hidePictureLabel": s3_str(T("Hide Picture")),
+                   "selectDistributionSetLabel": s3_str(T("Please select a distribution item set")),
+                   "noDistributionSetsLabel": s3_str(T("No distribution item sets available")),
+                   "distributeLabel": s3_str(T("Distribution")),
+                   "returnLabel": s3_str(T("Return##distribution")),
                    "itemLabel": s3_str(T("Item")),
                    "quantityLabel": s3_str(T("Quantity")),
                    "packLabel": s3_str(T("Pack")),
-                   "lossLabel": s3_str(T("Loss")),
-                   "loanLabel": s3_str(T("Loan")),
+                   "lossLabel": s3_str(T("Loss##distribution")),
+                   "loanLabel": s3_str(T("Loan##distribution")),
                    }
 
         self.inject_js(widget_id, options)
@@ -505,7 +500,7 @@ class Distribution(Checkpoint):
         set_id = json_data.get("t")
         distribution_set = self.get_distribution_set(set_id, organisation_id=organisation_id)
         if not distribution_set:
-            r.error(404, T("Invalid Distribution Set"))
+            r.error(404, T("Invalid Distribution Item Set"))
         organisation_id = distribution_set.organisation_id
 
         # Identify the client
@@ -752,9 +747,9 @@ class Distribution(Checkpoint):
                 if len(buttons) == 1:
                     classes.append("disabled")
             else:
-                name = T("Please select a distribution set")
+                name = T("Please select a distribution item set")
         else:
-            name = T("No distribution sets available")
+            name = T("No distribution item sets available")
             classes.append("empty")
             classes.append("disabled")
 
@@ -1147,7 +1142,7 @@ class Distribution(Checkpoint):
                 actionable = False
 
         if not actionable:
-            msg = current.T("%(set)s currently not permitted for this beneficiary") % \
+            msg = current.T('Distribution of "%(set)s" currently not permitted for this beneficiary') % \
                   {"set": distribution_set.name}
         else:
             msg = None
@@ -1200,8 +1195,8 @@ class Distribution(Checkpoint):
             latest = row[maxdate]
             if latest:
                 represent = dtable.date.represent
-                msg = T("%(event)s already registered on %(timestamp)s") % \
-                      {"event": T(distribution_set.name), "timestamp": represent(latest)}
+                msg = T('Distribution of "%(set)s" already registered on %(timestamp)s') % \
+                      {"set": T(distribution_set.name), "timestamp": represent(latest)}
                 result = (False, msg)
 
         return result
@@ -1256,11 +1251,11 @@ class Distribution(Checkpoint):
             # If maximum has been reached, report as not actionable
             if number >= max_per_day:
                 if number > 1:
-                    msg = T("%(event)s already registered %(number)s times today") % \
-                          {"event": T(distribution_set.name), "number": number}
+                    msg = T('Distribution of "%(set)s" already registered %(number)s times today') % \
+                          {"set": T(distribution_set.name), "number": number}
                 else:
-                    msg = T("%(event)s already registered today") % \
-                          {"event": T(distribution_set.name)}
+                    msg = T('Distribution of "%(set)s" already registered today') % \
+                          {"set": T(distribution_set.name)}
                 result = (False, msg)
 
         return result

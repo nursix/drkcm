@@ -33,10 +33,10 @@
             showPictureLabel: 'Show Picture',
             hidePictureLabel: 'Hide Picture',
             selectDistributionSetLabel: 'Select Distribution Set',
-            noDistributionSetsLabel: 'No Distribution Sets Available',
+            noDistributionSetsLabel: 'No distribution item sets available',
 
             // L10n table and columns titles/hints
-            distributeLabel: 'Distribute',
+            distributeLabel: 'Distribution',
             returnLabel: 'Return',
             itemLabel: 'Item',
             quantityLabel: 'Quantity',
@@ -596,7 +596,7 @@
             let lossHeader = $('<th>'),
                 itemHeader = $('<tr class="item-header">').append($('<th>'))
                                                           .append($('<th>').text(opts.itemLabel))
-                                                          .append($('<th>').text(opts.QuantityLabel))
+                                                          .append($('<th>').text(opts.quantityLabel))
                                                           .append(lossHeader)
                                                           .append($('<th>').text(opts.packLabel));
             if (mode == 'return') {
