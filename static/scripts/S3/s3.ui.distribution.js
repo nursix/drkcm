@@ -72,8 +72,8 @@
             // Control elements outside of the form
             this.orgHeader = $('#' + widgetID + '-org-header');
             this.orgSelect = $('#' + widgetID + '-org-select');
-            this.distributionSetHeader = $('#' + widgetID + '-distribution-set-header');
-            this.distributionSetSelect = $('#' + widgetID + '-distribution-set-select');
+            this.distributionSetHeader = $('#' + widgetID + '-event-type-header');
+            this.distributionSetSelect = $('#' + widgetID + '-event-type-select');
             this.pictureContainer = $('#' + widgetID + '-picture');
 
             // Form Rows
@@ -919,7 +919,7 @@
             }
 
             // Find the distribution set selector with this set ID
-            let selector = $('a.distribution-set-select', this.distributionSetSelect).filter(
+            let selector = $('a.event-type-select', this.distributionSetSelect).filter(
                 function() { return $(this).data('id') == setID; }
             );
             if (!selector.length) {
@@ -945,7 +945,7 @@
             this.distributionSet.val(setID);
 
             // Update event set in header
-            $('.distribution-set-name', this.distributionSetHeader).text(name);
+            $('.event-type-name', this.distributionSetHeader).text(name);
 
             this._updateDistributionSet();
 
@@ -981,7 +981,7 @@
 
             let distributionSetHeader = this.distributionSetHeader,
                 distributionSetSelect = this.distributionSetSelect,
-                numSelectable = $('a.distribution-set-select', distributionSetSelect).length,
+                numSelectable = $('a.event-type-select', distributionSetSelect).length,
                 selected = this.distributionSet.val(),
                 opts = this.options,
                 label;
@@ -992,7 +992,7 @@
                 } else {
                     label = opts.noDistributionSetsLabel;
                 }
-                $('.distribution-set-name', distributionSetHeader).text(label);
+                $('.event-type-name', distributionSetHeader).text(label);
             } else {
                 distributionSetHeader.removeClass('challenge');
             }
@@ -1031,7 +1031,7 @@
             distributionSets.forEach(function(distributionSet) {
                 let setID = distributionSet[0],
                     name = distributionSet[1],
-                    btn = $('<a class="secondary button distribution-set-select">');
+                    btn = $('<a class="secondary button event-type-select">');
 
                 btn.text(name)
                    .appendTo(distributionSetSelect)
@@ -1065,7 +1065,7 @@
 
             let throbber = $('<div class="inline-throbber">'),
                 distributionSetHeader = this.distributionSetHeader.addClass('disabled'),
-                distributionSetName = $('.distribution-set-name', distributionSetHeader).hide().after(throbber),
+                distributionSetName = $('.event-type-name', distributionSetHeader).hide().after(throbber),
                 ajaxURL = this.options.ajaxURL + '?org=' + organisationID,
                 self = this;
 
@@ -1157,7 +1157,7 @@
                     }
                 });
             });
-            distributionSetSelect.on('click' + ns, 'a.distribution-set-select', function(e) {
+            distributionSetSelect.on('click' + ns, 'a.event-type-select', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 self._selectDistributionSet($(this));

@@ -93,9 +93,10 @@
     }
 }
 
-// Event Registration UI ******************************************************
+// Event/Distribution Registration UI *****************************************
 .event-registration,
 .distribution-registration {
+
     .org-header {
         margin-top: 0.3rem;
         .org-name {
@@ -114,31 +115,29 @@
             color: #aaa;
         }
     }
-    .event-type-header, .distribution-set-header {
+
+    .event-type-header {
         margin-top: 0.3rem;
         text-align: center;
-        .event-type-name, .distribution-set-name {
+        .event-type-name {
             font-size: 1.2rem;
             padding: 0.3rem;
             border: 1px solid #43733f;
             background: #4a9d4f1a;
         }
-        &.challenge .event-type-name,
-        &.challenge .distribution-set-name {
+        &.challenge .event-type-name {
             border-color: red;
             background-color: #ffe0e0;
         }
-        &.empty .event-type-name,
-        &.empty .distribution-set-name {
+        &.empty .event-type-name {
             border-color: #ddd;
             background: transparent;
             color: #aaa;
         }
     }
-    .case-event-registration,
-    .distribution-registration {
-        .event-registration-blocked,
-        .distribution-registration-blocked {
+
+    .event-registration-form {
+        .event-registration-blocked {
             background-color: #ffaaaa;
             color: black;
             padding: 0.2rem 0.5rem;
@@ -159,85 +158,7 @@
             font-weight: bold;
         }
     }
-    .family-members {
-        width: 100%;
-        border-collapse: collapse;
-        div.member-show-picture {
-            height: 2.7rem;
-        }
-        .member-id {
-            color: #808080;
-            font-size: 0.8rem;
-            margin-bottom: 0.1rem;
-        }
-        .member-message {
-            margin: 0;
-            color: #e0767a;
-            font-size: 0.8rem;
-            font-style: normal;
-            .columns {
-                padding: 0;
-            }
-        }
-        .family-member {
-            td {
-                border-bottom: 1px solid #e0e0e0;
-                background-color: white;
-            }
-            &.member-blocked td {
-                background-color: #f6f6f6;
-                .member-id, .member-name {
-                    color: #b0b0b0;
-                }
-            }
-        }
-        .family-all {
-            td {
-                background-color: #f0f8f6;
-                color: #505050;
-                font-style: italic;
-                height: 2.7rem;
-            }
-        }
-        button.member-show-picture.showing {
-            border: 1px solid black;
-        }
-    }
-    .distribution-details {
-        max-height: 80vh;
-        overflow: scroll;
-        padding: 0.5rem 0 0;
-        border-top: 1px solid #ccc;
-        border-bottom: 1px solid #ccc;
-        .item-table {
-            width: 100%;
-            .item-title {
-                background-color: #ebf4ec;
-                font-size: 1rem;
-                font-variant: all-small-caps;
-                line-height: 1;
-            }
-            .item-header {
-                line-height: 1;
-                th {
-                    color: #aaa;
-                    font-size: 0.7rem;
-                    font-style: italic;
-                    font-weight: normal;
-                }
-            }
-            .blocked-msg {
-                background-color: #ffcfcf;
-                text-align: center;
-                font-style: italic;
-            }
-            .dist-mode {
-                font-size: 0.7rem;
-                color: red;
-                font-style: italic;
-            }
-        }
-    }
+
     .profile-picture {
         margin: 1rem 0;
         max-width: 80%;
@@ -250,6 +171,99 @@
         .member-caption {
             padding: 0 0 0.3rem;
             font-size: 1.4rem;
+        }
+    }
+}
+
+// Case Event Registration: family member selection
+.event-registration .family-members {
+    width: 100%;
+    border-collapse: collapse;
+    div.member-show-picture {
+        height: 2.7rem;
+    }
+    .member-id {
+        color: #808080;
+        font-size: 0.8rem;
+        margin-bottom: 0.1rem;
+    }
+    .member-message {
+        margin: 0;
+        color: #e0767a;
+        font-size: 0.8rem;
+        font-style: normal;
+        .columns {
+            padding: 0;
+        }
+    }
+    .family-member {
+        td {
+            border-bottom: 1px solid #e0e0e0;
+            background-color: white;
+        }
+        &.member-blocked td {
+            background-color: #f6f6f6;
+            .member-id, .member-name {
+                color: #b0b0b0;
+            }
+        }
+    }
+    .family-all {
+        td {
+            background-color: #f0f8f6;
+            color: #505050;
+            font-style: italic;
+            height: 2.7rem;
+        }
+    }
+    button.member-show-picture.showing {
+        border: 1px solid black;
+    }
+}
+
+// Supply Item Distribution: item selection
+.distribution-registration .distribution-details {
+    padding: 0.2rem 0.5rem;
+    border: 1px solid #ccc;
+    overflow: scroll;
+    .item-table {
+        width: 100%;
+        td {
+            height: 2.7rem;
+        }
+        .item-title {
+            font-size: 0.875rem;
+            th {
+                border: solid 1px $body-background;
+                padding: 0.3rem 0.2rem 0.7rem;
+            }
+            background-color: $body-background;
+            color: $primary-color;
+        }
+        .item-header {
+            line-height: 1;
+            th {
+                color: #aaa;
+                font-size: 0.7rem;
+                font-style: italic;
+                font-weight: normal;
+                padding: 0.3rem 0.1875rem;
+            }
+        }
+        .blocked-msg {
+            background-color: #ffcfcf;
+            text-align: center;
+            font-style: italic;
+        }
+        tr.dist-item {
+            .dist-mode {
+                font-size: 0.7rem;
+                color: #c41515;
+                font-style: italic;
+            }
+            &.selected {
+                background-color: #ebf4ec;
+            }
         }
     }
 }

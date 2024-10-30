@@ -231,7 +231,7 @@ class Checkpoint(CRUDMethod):
                                buttons = buttons,
                                hidden = hidden,
                                _id = widget_id,
-                               _class = "case-event-registration",
+                               _class = "event-registration-form",
                                *formfields)
         output["form"] = form
         output["picture"] = DIV(_class = "panel profile-picture",

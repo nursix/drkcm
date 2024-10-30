@@ -201,7 +201,7 @@ class Distribution(Checkpoint):
                                buttons = buttons,
                                hidden = hidden,
                                _id = widget_id,
-                               _class = "distribution-registration",
+                               _class = "event-registration-form",
                                *formfields)
         output["form"] = form
         output["picture"] = DIV(_class = "panel profile-picture",
@@ -732,13 +732,13 @@ class Distribution(Checkpoint):
             else:
                 name = T(v.name)
                 button = A(name,
-                           _class = "secondary button distribution-set-select",
+                           _class = "secondary button event-type-select",
                            data = {"id": s3_str(v.id), "name": s3_str(name)},
                            )
                 buttons.append(button)
 
         data = {}
-        classes = ["distribution-set-header"]
+        classes = ["event-type-header"]
         if buttons:
             if default:
                 distribution_set = distribution_sets.get(default)
@@ -753,15 +753,15 @@ class Distribution(Checkpoint):
             classes.append("empty")
             classes.append("disabled")
 
-        header = DIV(H4(name, _class="distribution-set-name"),
+        header = DIV(H4(name, _class="event-type-name"),
                      data = data,
                      _class = " ".join(classes),
-                     _id = "%s-distribution-set-header" % widget_id,
+                     _id = "%s-event-type-header" % widget_id,
                      )
 
         select = DIV(buttons,
-                     _class="button-group stacked hide distribution-set-select",
-                     _id="%s-distribution-set-select" % widget_id,
+                     _class="button-group stacked hide event-type-select",
+                     _id="%s-event-type-select" % widget_id,
                      )
 
         return {"distribution_set_header": header,
