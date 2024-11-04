@@ -32,6 +32,8 @@ def catalog():
 
     def prep(r):
 
+        record = r.record
+
         if r.component_name == "catalog_item":
 
             table = r.component.table
@@ -46,6 +48,15 @@ def catalog():
                                           sort = True,
                                           ))
 
+            # Filter items by context organisation
+            field = table.item_id
+            organisation_id = record.organisation_id if record else None
+            if organisation_id:
+                field = table.item_id
+                from core import S3AutocompleteWidget
+                field.widget = S3AutocompleteWidget("supply", "item",
+                                                    filter = "org=%s" % organisation_id,
+                                                    )
         return True
     s3.prep = prep
 
@@ -133,10 +144,40 @@ def person_item_status():
 def distribution_set():
     """ Distribution Sets: CRUD Controller """
 
+    def prep(r):
+
+        record = r.record
+        if r.component_name == "distribution_set_item" and record:
+            # Filter items by context organisation
+            organisation_id = record.organisation_id
+            if organisation_id:
+                field = r.component.table.item_id
+                from core import S3AutocompleteWidget
+                field.widget = S3AutocompleteWidget("supply", "item",
+                                                    filter = "org=%s" % organisation_id,
+                                                    )
+        return True
+    s3.prep = prep
+
     return crud_controller(rheader=s3db.supply_distribution_rheader)
 
 def distribution():
     """ Distributions: CRUD Controller """
+
+    def prep(r):
+
+        record = r.record
+        if r.component_name == "distribution_item" and record:
+            # Filter items by context organisation
+            organisation_id = record.organisation_id
+            if organisation_id:
+                field = r.component.table.item_id
+                from core import S3AutocompleteWidget
+                field.widget = S3AutocompleteWidget("supply", "item",
+                                                    filter = "org=%s" % organisation_id,
+                                                    )
+        return True
+    s3.prep = prep
 
     return crud_controller(rheader=s3db.supply_distribution_rheader)
 

@@ -2983,6 +2983,46 @@ def supply_item_entity_status(row):
     return status or current.messages["NONE"]
 
 # =============================================================================
+def supply_item_autocomplete_filter(organisation_id, inactive=False):
+    """
+        Returns a filter query for supply_items by context organisation;
+        for filtering of autocomplete-requests (search_ac)
+
+        Args:
+            organisation_id: the context organisation ID
+            inactive: whether to include inactive catalogs
+
+        Returns:
+            Query
+    """
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    # Sub-select for relevant catalogs
+    ctable = s3db.supply_catalog
+    query = auth.s3_accessible_query("read", ctable)
+    if organisation_id:
+        query &= (ctable.organisation_id == organisation_id) | \
+                 (ctable.organisation_id == None)
+    elif organisation_id == 0:
+        query &= (ctable.organisation_id == None)
+    if not inactive:
+        query &= (ctable.active == True)
+    query &= (ctable.deleted == False)
+    catalogs = db(query)._select(ctable.id)
+
+    # Sub-select for relevant entries
+    ltable = s3db.supply_catalog_item
+    query = (ltable.catalog_id.belongs(catalogs)) & \
+            (ltable.deleted == False)
+    entries = db(query)._select(ltable.item_id, distinct=True)
+
+    itable = s3db.supply_item
+    return itable.id.belongs(entries)
+
+# -----------------------------------------------------------------------------
 def supply_item_controller():
     """ RESTful CRUD controller """
 
@@ -2990,55 +3030,74 @@ def supply_item_controller():
     s3db = current.s3db
 
     def prep(r):
-        if r.component:
-            if r.component_name == "inv_item":
-                # Inventory Items need proper accountability so are edited through inv_adj
-                s3db.configure("inv_inv_item",
-                               listadd = False,
-                               deletable = False,
-                               )
-                # Filter to just item packs for this Item
-                s3db.inv_inv_item.item_pack_id.requires = IS_ONE_OF(current.db,
-                                                                    "supply_item_pack.id",
-                                                                    s3db.supply_item_pack_represent,
-                                                                    sort = True,
-                                                                    filterby = "item_id",
-                                                                    filter_opts = (r.record.id,),
-                                                                    )
 
-            elif r.component_name == "req_item":
-                # This is a report not a workflow
-                s3db.configure("req_req_item",
-                               listadd = False,
-                               deletable = False,
-                               )
+        if not r.component:
 
-        # Needs better workflow as no way to add the Kit Items
-        # else:
-            # caller = current.request.get_vars.get("caller", None)
-            # if caller == "inv_kit_item_id":
-                # field = r.table.kit
-                # field.default = True
-                # field.readable = field.writable = False
+            resource = r.resource
 
-        elif r.get_vars.get("caller") in ("event_asset_item_id", "event_scenario_asset_item_id"):
-            # Category is mandatory
-            f = s3db.supply_item.item_category_id
-            f.requires = f.requires.other
-            # Need to tell Item Category controller that new categories must be 'Can be Assets'
-            ADD_ITEM_CATEGORY = s3.crud_strings["supply_item_category"].label_create
-            f.comment = PopupLink(c = "supply",
-                                  f = "item_category",
-                                  vars = {"assets": 1},
-                                  label = ADD_ITEM_CATEGORY,
-                                  title = current.T("Item Category"),
-                                  tooltip = ADD_ITEM_CATEGORY,
-                                  )
+            if r.method == "search_ac":
 
-        elif r.representation in ("xlsx", "xls"):
-            # Use full Category names in XLS output
-            s3db.supply_item.item_category_id.represent = \
-                supply_ItemCategoryRepresent(use_code=False)
+                get_vars = r.get_vars
+                inactive = get_vars.get("inactive") == "1"
+                obsolete = get_vars.get("obsolete") == "1"
+
+                # Filter by context organisation
+                org = get_vars.get("org")
+                if org:
+                    try:
+                        organisation_id = int(org)
+                    except (ValueError, TypeError):
+                        r.error(400, "Invalid value for org-parameter")
+                else:
+                    organisation_id = None
+                resource.add_filter(supply_item_autocomplete_filter(organisation_id,
+                                                                    inactive = inactive,
+                                                                    ))
+                # Exclude items marked as obsolete
+                if not obsolete:
+                    resource.add_filter(FS("obsolete") == False)
+
+            if r.get_vars.get("caller") in ("event_asset_item_id", "event_scenario_asset_item_id"):
+                # Category is mandatory
+                f = s3db.supply_item.item_category_id
+                f.requires = f.requires.other
+                # Need to tell Item Category controller that new categories must be 'Can be Assets'
+                ADD_ITEM_CATEGORY = s3.crud_strings["supply_item_category"].label_create
+                f.comment = PopupLink(c = "supply",
+                                      f = "item_category",
+                                      vars = {"assets": 1},
+                                      label = ADD_ITEM_CATEGORY,
+                                      title = current.T("Item Category"),
+                                      tooltip = ADD_ITEM_CATEGORY,
+                                      )
+
+            if r.representation in ("xlsx", "xls"):
+                # Use full Category names in XLS output
+                s3db.supply_item.item_category_id.represent = \
+                    supply_ItemCategoryRepresent(use_code=False)
+
+
+        elif r.component_name == "inv_item":
+            # Inventory Items need proper accountability so are edited through inv_adj
+            s3db.configure("inv_inv_item",
+                           listadd = False,
+                           deletable = False,
+                           )
+            # Filter to just item packs for this Item
+            s3db.inv_inv_item.item_pack_id.requires = IS_ONE_OF(current.db,
+                                                                "supply_item_pack.id",
+                                                                s3db.supply_item_pack_represent,
+                                                                sort = True,
+                                                                filterby = "item_id",
+                                                                filter_opts = (r.record.id,),
+                                                                )
+
+        elif r.component_name == "req_item":
+            # This is a report not a workflow
+            s3db.configure("req_req_item",
+                           listadd = False,
+                           deletable = False,
+                           )
 
         return True
     s3.prep = prep
