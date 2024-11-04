@@ -102,6 +102,7 @@ $.filterOptionsS3({
                                         "comments",
                                         )
 
+            # Custom list fields
             list_fields = ["name",
                            "max_per_day",
                            "min_interval",
@@ -109,6 +110,9 @@ $.filterOptionsS3({
                            "active",
                            "comments",
                            ]
+            if table.organisation_id.readable:
+                list_fields.insert(0, "organisation_id")
+
             resource.configure(crud_form = crud_form,
                                list_fields = list_fields,
                                )

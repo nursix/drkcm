@@ -50,6 +50,8 @@ __all__ = ("SupplyCatalogModel",
 
 import re
 
+from collections import OrderedDict
+
 from gluon import *
 from gluon.storage import Storage
 
@@ -584,6 +586,13 @@ $.filterOptionsS3({
 
         # Components
         add_components(tablename,
+                       # Active catalogs
+                       supply_catalog = {"name": "active_catalog",
+                                         "link": "supply_catalog_item",
+                                         "joinby": "item_id",
+                                         "key": "catalog_id",
+                                         "filterby": {"active": True},
+                                         },
                        # Catalog Items
                        supply_catalog_item = "item_id",
                        # Packs
@@ -1118,6 +1127,8 @@ $.filterOptionsS3({
                 query = (table.id != record_id)
 
             for k in ("code", "name"):
+                if not item[k]:
+                    continue
                 join = itable.on((itable.id == table.item_id) & \
                                  (itable[k] == item[k]))
                 row = db(query).select(table.id, join=join, limitby=(0, 1)).first()
@@ -1812,8 +1823,22 @@ class SupplyDistributionModel(DataModel):
                                         ),
                        )
 
+        # Filter widgets
+        filter_widgets = [TextFilter(["name", "comments"],
+                                     label = T("Search"),
+                                     ),
+                          OptionsFilter("active",
+                                        options = OrderedDict([(True, T("Yes")),
+                                                               (False, T("No")),
+                                                               ]),
+                                        default = True,
+                                        cols = 2,
+                                        ),
+                          ]
+
         # Table configuration
         configure(tablename,
+                  filter_widgets = filter_widgets,
                   onvalidation = self.distribution_set_onvalidation,
                   realm_components = ("distribution_set_item",),
                   update_realm = True,
@@ -1851,7 +1876,9 @@ class SupplyDistributionModel(DataModel):
         #
         tablename = "supply_distribution_set_item"
         define_table(tablename,
-                     distribution_set_id(),
+                     distribution_set_id(
+                         ondelete = "CASCADE",
+                         ),
                      Field("mode",
                            label = T("Mode"),
                            default = "GRA",
@@ -1876,8 +1903,20 @@ class SupplyDistributionModel(DataModel):
                            ),
                      )
 
+        # List fields
+        # - including catalog status
+        list_fields = ["mode",
+                       "item_id",
+                       "item_pack_id",
+                       "quantity",
+                       "quantity_max",
+                       (T("Catalog"), "item_id$catalog_item.catalog_id"),
+                       "item_id$active_catalog.active",
+                       ]
+
         # Table configuration
         configure(tablename,
+                  list_fields = list_fields,
                   onvalidation = self.distribution_set_item_onvalidation,
                   )
 
@@ -1905,6 +1944,7 @@ class SupplyDistributionModel(DataModel):
                          comment = None,
                          ),
                      distribution_set_id(
+                         ondelete = "SET NULL",
                          readable=False,
                          writable=False,
                          ),
@@ -2604,6 +2644,7 @@ def supply_distribution_rheader(r, tabs=None):
 
     rheader = None
     rheader_fields = []
+    rheader_title = None
 
     if record:
 
@@ -2616,6 +2657,11 @@ def supply_distribution_rheader(r, tabs=None):
                         (T("Items"), "distribution_set_item"),
                         ]
 
+            rheader_fields = [["organisation_id"],
+                              ["active"],
+                              ]
+            rheader_title = "name"
+
         elif tablename == "supply_distribution":
 
             if not tabs:
@@ -2623,10 +2669,13 @@ def supply_distribution_rheader(r, tabs=None):
                         (T("Items"), "distribution_item"),
                         ]
 
-        rheader = S3ResourceHeader(rheader_fields, tabs)(r,
-                                                         table = resource.table,
-                                                         record = record,
-                                                         )
+            rheader_fields = [["organisation_id", "distribution_set_id"],
+                              ["site_id"],
+                              ["date"],
+                              ]
+
+        rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
+        rheader = rheader(r, table=resource.table, record=record)
 
     return rheader
 
