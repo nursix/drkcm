@@ -762,6 +762,9 @@ class S3SQLDefaultForm(S3SQLForm):
             success = False
 
             if form.errors:
+                # Indicate form error in response
+                # - so an otherwise hidden form can be made visible
+                current.response.s3.form_error = True
 
                 # Revert any records created within widgets/validators
                 current.db.rollback()
@@ -1179,6 +1182,10 @@ class S3SQLCustomForm(S3SQLForm):
             response.confirmation = message
 
         if form.errors:
+            # Indicate form error in response
+            # - so an otherwise hidden form can be made visible
+            current.response.s3.form_error = True
+
             # Revert any records created within widgets/validators
             db.rollback()
 

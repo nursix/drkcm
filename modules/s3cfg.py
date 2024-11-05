@@ -2016,6 +2016,21 @@ class S3Config(Storage):
         """
         return self.L10n.get("translate_supply_item", False)
 
+    def get_L10n_units_of_measure(self):
+
+        #default_units = {"pc": T("piece"),
+                         #"pair": T("pair"),
+                         #"set": T("set"),
+                         #"mg": T("milligram"),
+                         #"g": T("gram"),
+                         #"kg": T("kilogram"),
+                         #"ml": T("milliliter"),
+                         #"L": T("liter"),
+                         #"m": T("meter"),
+                         #}
+
+        return self.L10n.get("units_of_measure", None)
+
     def get_L10n_pootle_url(self):
         """ URL for Pootle server """
         return self.L10n.get("pootle_url", "http://pootle.sahanafoundation.org/")

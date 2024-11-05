@@ -125,6 +125,29 @@ class SupplyCatalogModel(DataModel):
                      CommentsField(),
                      )
 
+        # Components
+        add_components(tablename,
+                       # Categories
+                       supply_item_category = "catalog_id",
+                       # Catalog Items
+                       supply_catalog_item = "catalog_id",
+                       )
+
+        # Filter widgets
+        filter_widgets = [TextFilter(["name", "comments"],
+                                     label = T("Search"),
+                                     ),
+                          ]
+
+        # Table configuration
+        configure(tablename,
+                  deletable = False,
+                  filter_widgets = filter_widgets,
+                  onvalidation = self.catalog_onvalidation,
+                  realm_components = ("item_category", "catalog_item"),
+                  update_realm = True,
+                  )
+
         # CRUD strings
         ADD_CATALOG = T("Create Catalog")
         crud_strings[tablename] = Storage(
@@ -156,22 +179,6 @@ class SupplyCatalogModel(DataModel):
                                    readable = catalog_multi,
                                    writable = catalog_multi,
                                    )
-
-        # Components
-        add_components(tablename,
-                       # Categories
-                       supply_item_category = "catalog_id",
-                       # Catalog Items
-                       supply_catalog_item = "catalog_id",
-                       )
-
-        # Table configuration
-        # TODO onvalidation to enforce unique catalog name within organisation
-        configure(tablename,
-                  deletable = False,
-                  realm_components = ("item_category", "catalog_item"),
-                  update_realm = True,
-                  )
 
         # =====================================================================
         # Item Category
@@ -275,8 +282,8 @@ class SupplyCatalogModel(DataModel):
                            )
 
         configure(tablename,
-                  deduplicate = self.supply_item_category_duplicate,
-                  onvalidation = self.supply_item_category_onvalidation,
+                  deduplicate = self.item_category_duplicate,
+                  onvalidation = self.item_category_onvalidation,
                   )
 
         # ---------------------------------------------------------------------
@@ -299,7 +306,41 @@ class SupplyCatalogModel(DataModel):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def supply_item_category_onvalidation(form):
+    def catalog_onvalidation(form):
+        """
+            Form validation of catalogs
+                - name must be unique (within the organisation)
+
+            Args:
+                form: the FORM
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.supply_catalog
+
+        # Get form record ID
+        record_id = get_form_record_id(form)
+
+        # Get form record data
+        data = get_form_record_data(form, table, ["organisation_id", "name"])
+        organisation_id = data.get("organisation_id")
+        name = data.get("name")
+
+        query = (table.name == name)
+        if record_id:
+            query &= (table.id != record_id)
+        if organisation_id:
+            query &= (table.organisation_id == organisation_id) | \
+                     (table.organisation_id == None)
+        query &= (table.deleted == False)
+        if db(query).select(table.id, limitby=(0, 1)).first():
+            form.errors.name = current.T("A catalog with that name already exists")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def item_category_onvalidation(form):
         """
             Checks that either a Code OR a Name are entered
         """
@@ -312,7 +353,7 @@ class SupplyCatalogModel(DataModel):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def supply_item_category_duplicate(item):
+    def item_category_duplicate(item):
         """
             Callback function used to look for duplicates during
             the import process
@@ -394,6 +435,28 @@ $.filterOptionsS3({
 })'''
 
         # =====================================================================
+        # Units of measure
+        #
+        um = {"pc": T("piece##unit"),
+              "pair": T("pair##unit"),
+              "set": T("set##unit"),
+              "mg": T("mg##unit"),
+              "g": T("g##unit"),
+              "kg": T("kg##unit"),
+              "m": T("m##unit"),
+              "ml": T("ml##unit"),
+              "L": T("L##unit"),
+              }
+
+        l10n_units = settings.get_L10n_units_of_measure()
+        if l10n_units:
+            um.update(l10n_units)
+            um_requires = IS_IN_SET(l10n_units, sort=True)
+        else:
+            um_requires = IS_IN_SET(um, sort=True)
+        um_represent = lambda v, row=None: um.get(v, "-")
+
+        # =====================================================================
         # Item
         #
         #  These are Template items
@@ -405,7 +468,7 @@ $.filterOptionsS3({
 
         tablename = "supply_item"
         define_table(tablename,
-                     catalog_id(),
+                     catalog_id(empty=False),
                      # Needed to auto-create a catalog_item
                      item_category_id(script = item_category_script,
                                       represent = item_category_represent,
@@ -422,14 +485,11 @@ $.filterOptionsS3({
                                        IS_LENGTH(128),
                                        ],
                            ),
-                     # TODO should reference another table for normalising unit names
-                     Field("um", length=128, notnull=True,
-                           default = "piece",
+                     Field("um", length=16, notnull=True,
+                           default = "pc",
                            label = T("Unit of Measure"),
-                           represent = translate_represent,
-                           requires = [IS_NOT_EMPTY(),
-                                       IS_LENGTH(128),
-                                       ],
+                           represent = um_represent,
+                           requires = um_requires,
                            ),
 
                      # Unit value (for tracking pack values)
@@ -490,100 +550,6 @@ $.filterOptionsS3({
                      CommentsField(),
                      )
 
-        # CRUD strings
-        ADD_ITEM = T("Create Item")
-        crud_strings[tablename] = Storage(
-            label_create = ADD_ITEM,
-            title_display = T("Item Details"),
-            title_list = T("Items"),
-            title_update = T("Edit Item"),
-            label_list_button = T("List Items"),
-            label_delete_button = T("Delete Item##supply"),
-            msg_record_created = T("Item added"),
-            msg_record_modified = T("Item updated"),
-            msg_record_deleted = T("Item deleted"),
-            msg_list_empty = T("No Items currently registered"),
-            msg_match = T("Matching Items"),
-            msg_no_match = T("No Matching Items")
-            )
-
-
-        # Foreign Key Template
-        supply_item_represent = supply_ItemRepresent(show_link = True,
-                                                     translate = translate,
-                                                     )
-        supply_item_id = FieldTemplate("item_id",
-                                       "reference %s" % tablename,
-                                       label = T("Item"),
-                                       ondelete = "RESTRICT",
-                                       represent = supply_item_represent,
-                                       requires = IS_ONE_OF(db, "supply_item.id",
-                                                            supply_item_represent,
-                                                            sort = True,
-                                                            ),
-                                       sortby = "name",
-                                       widget = S3AutocompleteWidget("supply", "item"),
-                                       )
-
-        # Filter Widgets
-        filter_widgets = [
-            TextFilter(["code",
-                        "name",
-                        "model", # TODO not with generic items
-                        #"item_category_id$name", # TODO make OptionsFilter
-                        "comments",
-                        ],
-                       label = T("Search"),
-                       ),
-            OptionsFilter("brand_id", # TODO not with generic items
-                          # @ToDo: Introspect need for header based on # records
-                          #header = True,
-                          #label = T("Brand"),
-                          represent = "%(name)s",
-                          widget = "multiselect",
-                          ),
-            OptionsFilter("year", # TODO not with generic items
-                          comment = T("Search for an item by Year of Manufacture."),
-                          # @ToDo: Introspect need for header based on # records
-                          #header = True,
-                          label = T("Year"),
-                          widget = "multiselect",
-                          ),
-            ]
-
-        # TODO Default report options make no sense
-        report_options = Storage(defaults = Storage(rows = "name",
-                                                    cols = "item_category_id",
-                                                    fact = "count(brand_id)",
-                                                    ),
-                                 )
-
-        # Default summary
-        summary = [{"name": "addform",
-                    "common": True,
-                    "widgets": [{"method": "create"}],
-                    },
-                   {"name": "table",
-                    "label": "Table",
-                    "widgets": [{"method": "datatable"}]
-                    },
-                   {"name": "report",
-                    "label": "Report",
-                    "widgets": [{"method": "report",
-                                 "ajax_init": True}]
-                    },
-                   ]
-
-        configure(tablename,
-                  deduplicate = self.supply_item_duplicate,
-                  filter_widgets = filter_widgets,
-                  onvalidation = self.supply_item_onvalidation,
-                  onaccept = self.supply_item_onaccept,
-                  orderby = "supply_item.name",
-                  report_options = report_options,
-                  summary = summary,
-                  )
-
         # Components
         add_components(tablename,
                        # Active catalogs
@@ -623,6 +589,94 @@ $.filterOptionsS3({
                            supply_item_alt = "item_id",
                            )
 
+        # List Fields
+        list_fields = ["name",
+                       "code",
+                       "um",
+                       "catalog_id",
+                       "item_category_id",
+                       #"kit"
+                       #"brand_id"
+                       #"model"
+                       #"year"
+                       #"obsolete"
+                       "comments"
+                       ]
+        if use_kits:
+            list_fields[-1:-1] = ["kit"]
+        if not generic_items:
+            list_fields[-1:-1] = ["brand_id", "model", "year"]
+
+        # Filter Widgets
+        text_filter_fields = ["code", "name", "comments"]
+        if not generic_items:
+            text_filter_fields.append("model")
+
+        filter_widgets = [
+            TextFilter(text_filter_fields,
+                       label = T("Search"),
+                       ),
+            # TODO OptionsFilters for catalog/category
+            ]
+
+        if not generic_items:
+            filter_widgets.extend([
+                OptionsFilter("brand_id",
+                              represent = "%(name)s",
+                              widget = "multiselect",
+                              ),
+                # TODO this should be a range filter?
+                OptionsFilter("year",
+                              comment = T("Search for an item by Year of Manufacture."),
+                              label = T("Year"),
+                              widget = "multiselect",
+                              ),
+                ])
+
+        configure(tablename,
+                  deduplicate = self.supply_item_duplicate,
+                  filter_widgets = filter_widgets,
+                  list_fields = list_fields,
+                  onvalidation = self.supply_item_onvalidation,
+                  onaccept = self.supply_item_onaccept,
+                  orderby = "supply_item.name",
+                  )
+
+        # CRUD strings
+        ADD_ITEM = T("Create Item")
+        crud_strings[tablename] = Storage(
+            label_create = ADD_ITEM,
+            title_display = T("Item Details"),
+            title_list = T("Items"),
+            title_update = T("Edit Item"),
+            label_list_button = T("List Items"),
+            label_delete_button = T("Delete Item##supply"),
+            msg_record_created = T("Item added"),
+            msg_record_modified = T("Item updated"),
+            msg_record_deleted = T("Item deleted"),
+            msg_list_empty = T("No Items currently registered"),
+            msg_match = T("Matching Items"),
+            msg_no_match = T("No Matching Items")
+            )
+
+
+        # Foreign Key Template
+        supply_item_represent = supply_ItemRepresent(show_link = True,
+                                                     translate = translate,
+                                                     )
+        supply_item_id = FieldTemplate("item_id",
+                                       "reference %s" % tablename,
+                                       label = T("Item"),
+                                       ondelete = "RESTRICT",
+                                       represent = supply_item_represent,
+                                       requires = IS_ONE_OF(db, "supply_item.id",
+                                                            supply_item_represent,
+                                                            sort = True,
+                                                            ),
+                                       sortby = "name",
+                                       widget = S3AutocompleteWidget("supply", "item"),
+                                       )
+
         # =====================================================================
         # Catalog Item
         #
@@ -656,50 +710,8 @@ $.filterOptionsS3({
             msg_no_match = T("No Matching Catalog Items")
             )
 
-        # Filter Widgets
-        # TODO remove (no separate controller that uses these)
-        filter_widgets = [
-            TextFilter([#These lines are causing issues...very slow - perhaps broken
-                        #"comments",
-                        #"item_category_id$code",
-                        #"item_category_id$name",
-                        #"item_id$brand_id$name",
-                        #"item_category_id$parent_item_category_id$code"
-                        #"item_category_id$parent_item_category_id$name"
-                        "item_id$code",
-                        "item_id$name",
-                        "item_id$model",
-                        "item_id$comments"
-                        ],
-                       label = T("Search"),
-                       comment = T("Search for an item by its code, name, model and/or comment."),
-                       ),
-            OptionsFilter("catalog_id",
-                          label = T("Catalog"),
-                          comment = T("Search for an item by catalog."),
-                          #represent ="%(name)s",
-                          cols = 3,
-                          hidden = True,
-                          ),
-            OptionsFilter("item_category_id",
-                          label = T("Category"),
-                          comment = T("Search for an item by category."),
-                          represent = item_category_represent,
-                          cols = 3,
-                          hidden = True,
-                          ),
-            OptionsFilter("item_id$brand_id",
-                          label = T("Brand"),
-                          comment = T("Search for an item by brand."),
-                          #represent ="%(name)s",
-                          cols = 3,
-                          hidden = True,
-                          ),
-            ]
-
         configure(tablename,
                   deduplicate = self.catalog_item_deduplicate,
-                  filter_widgets = filter_widgets,
                   onaccept = self.catalog_item_onaccept,
                   ondelete = self.catalog_item_ondelete,
                   onvalidation = self.catalog_item_onvalidation,
@@ -717,7 +729,7 @@ $.filterOptionsS3({
                      # TODO should reference another table for normalising pack names
                      Field("name", length=128,
                            notnull=True,
-                           default = T("piece"),
+                           default = "piece",
                            label = T("Name"),
                            represent = translate_represent,
                            requires = [IS_NOT_EMPTY(),
@@ -1052,18 +1064,16 @@ $.filterOptionsS3({
             #current.auth.s3_set_record_owner(citable, catalog_item, force_update=True)
 
         # Update UM
-        um = form_vars.um or db.supply_item.um.default
-        table = db.supply_item_pack
-        # Try to update the existing record
-        query = (table.item_id == item_id) & \
-                (table.quantity == 1) & \
-                (table.deleted == False)
-        if db(query).update(name = um) == 0:
-            # Create a new item packet
-            table.insert(item_id = item_id,
-                         name = um,
-                         quantity = 1,
-                         )
+        um = form_vars.um or sitable.um.default
+        um_repr = s3_str(sitable.um.represent(um)) if um else None
+        if um_repr:
+            ptable = db.supply_item_pack
+            query = (ptable.item_id == item_id) & \
+                    (ptable.quantity == 1.0) & \
+                    (ptable.deleted == False)
+            if db(query).update(name=um_repr) == 0:
+                # Create a new item packet
+                ptable.insert(item_id=item_id, name=um_repr, quantity=1.0)
 
         if form_vars.kit:
             # Go to that tab afterwards
@@ -2310,8 +2320,6 @@ class supply_ItemPackRepresent(S3Represent):
 
             Args:
                 row: the Row (usually joined supply_item_pack/supply_item)
-
-            TODO implement translate option
         """
 
         try:
@@ -2319,19 +2327,23 @@ class supply_ItemPackRepresent(S3Represent):
             pack = row.supply_item_pack
         except AttributeError:
             # Missing join (external query?)
-            item = {"um": "Piece"}
+            item = {"um": "pc"}
             pack = row
 
         name = pack.get("name")
         if not name:
             return current.messages.UNKNOWN_OPT
 
+        itable = current.s3db.supply_item
+        um_represent = itable.um.represent
+
         quantity = pack.get("quantity")
         if quantity == 1 or quantity is None:
             return name
         else:
+            quantity = int(quantity) if float.is_integer(quantity) else quantity
             # Include pack description (quantity x units of measurement)
-            return "%s (%s x %s)" % (name, quantity, item.get("um"))
+            return "%s (%s %s)" % (name, quantity, um_represent(item.get("um")))
 
 # =============================================================================
 class supply_ItemCategoryRepresent(S3Represent):

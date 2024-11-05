@@ -927,7 +927,6 @@ class Distribution(Checkpoint):
                                                 )
         if actionable:
             itable = s3db.supply_item
-            ptable = s3db.supply_item_pack
             sitable = s3db.supply_distribution_set_item
 
             # Applicable catalogs
@@ -945,11 +944,8 @@ class Distribution(Checkpoint):
             active_items = db(query)._select(citable.item_id, distinct=True)
 
             # Look up selectable items
-            join = (itable.on((itable.id == sitable.item_id) & \
-                              (itable.obsolete == False)),
-                    ptable.on((ptable.id == sitable.item_pack_id) &
-                              (ptable.item_id == itable.id)),
-                    )
+            join = itable.on((itable.id == sitable.item_id) & \
+                             (itable.obsolete == False))
             query = (sitable.distribution_set_id == set_id) & \
                     (sitable.item_id.belongs(active_items)) & \
                     (sitable.mode.belongs(("GRA", "LOA"))) & \
@@ -959,25 +955,24 @@ class Distribution(Checkpoint):
                                     sitable.item_pack_id,
                                     sitable.quantity,
                                     sitable.quantity_max,
-                                    itable.name,
-                                    ptable.name,
                                     join = join,
                                     orderby = itable.name,
                                     )
 
+            represent = sitable.item_id.represent
+            item_repr = represent.bulk([row.item_id for row in rows], show_link=False)
+            represent = sitable.item_pack_id.represent
+            pack_repr = represent.bulk([row.item_pack_id for row in rows], show_link=False)
+
             distributable = []
             for row in rows:
-                item = row.supply_item
-                pack = row.supply_item_pack
-                dtitem = row.supply_distribution_set_item
-
-                distributable.append({"mode": dtitem.mode,
-                                      "id": dtitem.item_id,
-                                      "pack_id": dtitem.item_pack_id,
-                                      "name": item.name, # TODO use represent rather than name
-                                      "pack": pack.name, # TODO use represent rather than name
-                                      "quantity": dtitem.quantity,
-                                      "max": dtitem.quantity_max
+                distributable.append({"mode": row.mode,
+                                      "id": row.item_id,
+                                      "pack_id": row.item_pack_id,
+                                      "name": item_repr.get(row.item_id),
+                                      "pack": pack_repr.get(row.item_pack_id),
+                                      "quantity": row.quantity,
+                                      "max": row.quantity_max
                                       })
 
             result = distributable, None
@@ -1016,23 +1011,17 @@ class Distribution(Checkpoint):
 
         # Lookup returnable items for the distribution set
         itable = s3db.supply_item
-        ptable = s3db.supply_item_pack
         sitable = s3db.supply_distribution_set_item
-        join = (itable.on(itable.id == sitable.item_id),
-                ptable.on((ptable.id == sitable.item_pack_id) &
-                          (ptable.item_id == itable.id)),
-                )
+        join = itable.on(itable.id == sitable.item_id)
         query = (sitable.distribution_set_id == set_id) & \
                 (sitable.mode == "RET") & \
                 (sitable.deleted == False)
-        items = db(query).select(itable.id,
-                                 itable.name,
-                                 ptable.id,
-                                 ptable.name,
+        items = db(query).select(sitable.item_id,
+                                 sitable.item_pack_id,
                                  join = join,
                                  orderby = itable.name,
                                  )
-        item_ids = {i.supply_item.id for i in items}
+        item_ids = {i.item_id for i in items}
 
         # All distributions to this client by the organisation defining the set
         dtable = s3db.supply_distribution
@@ -1066,17 +1055,20 @@ class Distribution(Checkpoint):
             totals[key] = totals.get(key, 0) + quantity
 
         # Build list of items+quantities the client could return
+        represent = sitable.item_id.represent
+        item_repr = represent.bulk([row.item_id for row in items], show_link=False)
+        represent = sitable.item_pack_id.represent
+        pack_repr = represent.bulk([row.item_pack_id for row in items], show_link=False)
+
         returnable = []
         for row in items:
-            item = row.supply_item
-            pack = row.supply_item_pack
-
-            remaining = totals.get((item.id, pack.id), 0)
+            item_id, pack_id = row.item_id, row.item_pack_id
+            remaining = totals.get((item_id, pack_id), 0)
             if remaining > 0:
-                returnable.append({"id": item.id,
-                                   "pack_id": pack.id,
-                                   "name": item.name, # TODO use represent rather than name
-                                   "pack": pack.name, # TODO use represent rather than name
+                returnable.append({"id": item_id,
+                                   "pack_id": pack_id,
+                                   "name": item_repr.get(item_id),
+                                   "pack": pack_repr.get(pack_id),
                                    "max": remaining
                                    })
 

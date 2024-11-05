@@ -572,7 +572,7 @@ class BasicCRUD(CRUDMethod):
                                                              _id="show-add-btn")
                     addtitle = get_crud_string(tablename, "label_create")
                     output["addtitle"] = addtitle
-                    if r.http == "POST":
+                    if r.has_form_error():
                         # Always show the form if there was a form error
                         script = '''$('#list-add').show();$('#show-add-btn').hide()'''
                         s3.jquery_ready.append(script)
@@ -1315,6 +1315,10 @@ class BasicCRUD(CRUDMethod):
                                                        _id = "show-add-btn",
                                                        )
                         output["showadd_btn"] = showadd_btn
+                        if r.has_form_error():
+                            # Always show the form if there was a form error
+                            script = '''$('#list-add').show();$('#show-add-btn').hide()'''
+                            s3.jquery_ready.append(script)
 
                     # Restore the view
                     response.view = view

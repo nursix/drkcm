@@ -1001,6 +1001,18 @@ class CRUDRequest:
         return None
 
     # -------------------------------------------------------------------------
+    def has_form_error(self):
+        """
+            Checks for form errors in this request
+
+            Returns:
+                boolean
+        """
+
+        return (self.http == "POST" or self.env.request_method == "POST") and \
+               bool(current.response.s3.form_error)
+
+    # -------------------------------------------------------------------------
     def stylesheet(self, method=None, skip_error=False):
         """
             Find the XSLT stylesheet for this request
