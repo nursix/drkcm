@@ -91,7 +91,6 @@ class Distribution(Checkpoint):
             Returns:
                 dict with view elements
         """
-        # TODO implement styles
 
         if not current.auth.s3_has_permission("create", "supply_distribution"):
             r.unauthorised()
@@ -211,10 +210,8 @@ class Distribution(Checkpoint):
         # Custom view
         response.view = self._view(r, "supply/register_distribution.html")
 
-        # TODO corresponding setting for supply_distribution
         # Show profile picture by default or only on demand?
-        #show_picture = settings.get_dvr_event_registration_show_picture()
-        show_picture = True
+        show_picture = settings.get_ui_checkpoint_show_picture()
 
         # Inject JS
         options = {"ajaxURL": self.ajax_url(r),
@@ -297,11 +294,9 @@ class Distribution(Checkpoint):
                      "f": flags instructions
                           [{"n": the flag name, "i": flag instructions},...],
                      "b": profile picture URL,  # TODO Change into i(mage)
-                     "x": the family details,   # TODO remove? or replace by household size?
 
                      // Transaction details
                      "u": actionable info (e.g. which items to distribute/return)
-                          => an object
                      "s": whether the action is permitted or not
 
                      // messages
@@ -325,7 +320,6 @@ class Distribution(Checkpoint):
                            }
                      }
         """
-        # TODO update docstring, capture TODOs as tasks (fix JSON structure)
 
         # Load JSON data from request body
         s = r.body
@@ -394,14 +388,17 @@ class Distribution(Checkpoint):
             output["b"] = self.profile_picture(person)
 
             # Check if resident
-            is_resident, site_id = self.is_resident(person.id, organisation_id)
-            if is_resident and site_id:
-                # Absence warning
-                from .presence import SitePresence
-                status = SitePresence.status(person.id, site_id=site_id)[0]
-                if status == "OUT":
-                    warning = current.T("Person currently reported as absent")
-                    output["w"] = s3_str(warning)
+            if current.deployment_settings.get_supply_distribution_check_resident():
+                is_resident, site_id = self.is_resident(person.id, organisation_id)
+                if is_resident and site_id:
+                    # Absence warning
+                    from .presence import SitePresence
+                    status = SitePresence.status(person.id, site_id=site_id)[0]
+                    if status == "OUT":
+                        warning = current.T("Person currently reported as absent")
+                        output["w"] = s3_str(warning)
+            else:
+                is_resident = None
 
             # Flag instructions
             output["f"] = self.flag_instructions(person.id,
@@ -413,22 +410,10 @@ class Distribution(Checkpoint):
             if set_id:
                 distribution_sets = self.get_distribution_sets(organisation_id)
                 distribution_set = distribution_sets.get(set_id)
-                output["u"] = self.get_items(person.id, distribution_set)
-
-            # Family members
-            #family = self.get_family_members(person.id, organisation_id)
-            #if family:
-            #    output["x"] = family
-
-            # Blocked events
-            #blocked = self.get_blocked_events(person.id,
-            #                                  organisation_id,
-            #                                  is_resident = is_resident,
-            #                                  serializable = True,
-            #                                  )
-            #if blocked:
-            #    # TODO format as r: {event_code: {m: message, e: earliest}}
-            #    output["i"] = blocked
+                output["u"] = self.get_items(person.id,
+                                             distribution_set,
+                                             is_resident = is_resident,
+                                             )
 
             output["s"] = True
         else:
@@ -440,7 +425,16 @@ class Distribution(Checkpoint):
     # -------------------------------------------------------------------------
     @classmethod
     def identify_client(cls, label, organisation_id):
-        # TODO docstring
+        """
+            Identifies the client from the ID label
+
+            Args:
+                label: the ID label
+                organisation_id: the organisation ID
+
+            Returns:
+                a tuple (person Row, label, advice, error message)
+        """
 
         validate = current.deployment_settings.get_org_site_presence_validate_id()
         if callable(validate):
@@ -511,8 +505,10 @@ class Distribution(Checkpoint):
         person_id = person.id
 
         # Get resident status and site of the client
-        # TODO put behind setting, default to True if no shelter required
-        is_resident, site_id = self.is_resident(person_id, organisation_id)
+        if current.deployment_settings.get_supply_distribution_check_resident():
+            is_resident, site_id = self.is_resident(person.id, organisation_id)
+        else:
+            is_resident, site_id = None, None
 
         # Verify transaction details
         details = json_data.get("d")
@@ -560,20 +556,20 @@ class Distribution(Checkpoint):
         if not distributed and not returned:
             r.error(400, current.ERROR.BAD_REQUEST)
 
-        # 7) Create the distribution record
-        self.register_bare(person_id,
-                           distribution_set,
-                           items,
-                           site_id = site_id,
-                           staff_id = staff_id,
-                           )
+        # Create the distribution record
+        self.register_distribution(person_id,
+                                   distribution_set,
+                                   items,
+                                   site_id = site_id,
+                                   staff_id = staff_id,
+                                   )
 
         # Confirmation message
         return {"c": s3_str(T("Distribution registered"))}
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def register_bare(person_id, distribution_set, items, site_id=None, staff_id=None):
+    def register_distribution(person_id, distribution_set, items, site_id=None, staff_id=None):
         """
             Creates and post-processes distribution and distribution item
             records
@@ -777,7 +773,17 @@ class Distribution(Checkpoint):
     # -------------------------------------------------------------------------
     @staticmethod
     def get_distribution_set(set_id, organisation_id):
-        # TODO docstring
+        """
+            Looks up the distribution set by its ID; as input verification
+            during register().
+
+            Args:
+                set_id: the distribution set ID
+                organisation_id: the organisation ID
+
+            Returns:
+                the distribution set Row
+        """
 
         db = current.db
         s3db = current.s3db
@@ -838,13 +844,14 @@ class Distribution(Checkpoint):
 
     # -------------------------------------------------------------------------
     @classmethod
-    def get_items(cls, person_id, distribution_set):
+    def get_items(cls, person_id, distribution_set, is_resident=None):
         """
             Looks up all actionable items of the distribution set
 
             Args:
                 person_id: the beneficiary person ID
                 distribution_set: the supply_distribution_set Row
+                is_resident: whether the client is a shelter resident (if known)
 
             Returns:
                 a JSON-serializable dict like:
@@ -856,7 +863,7 @@ class Distribution(Checkpoint):
                                                "quantity": default quantity,
                                                "max": maximum quantity,
                                                }, ...],
-                                    "msg": error message,
+                                    "msg": error message (if not applicable),
                                     },
                      "return": [{"id": item_id,
                                  "pack_id": pack_id,
@@ -870,7 +877,10 @@ class Distribution(Checkpoint):
         output = {}
 
         # Look up distributable items
-        items, msg = cls.get_distributable_items(person_id, distribution_set)
+        items, msg = cls.get_distributable_items(person_id,
+                                                 distribution_set,
+                                                 is_resident = is_resident,
+                                                 )
         output["distribute"] = {"items": items, "msg": s3_str(msg)}
 
         # Look up returnable items
@@ -882,7 +892,26 @@ class Distribution(Checkpoint):
     # -------------------------------------------------------------------------
     @classmethod
     def get_distributable_items(cls, person_id, distribution_set, is_resident=None):
-        # TODO docstring
+        """
+            Returns the items and respective permissible quantities that
+            can be distributed to the client at this point
+
+            Args:
+                person_id: the client person ID
+                distribution_set: the distribution set Row
+                is_resident: whether the client is a shelter resident (if known)
+
+            Returns:
+                a JSON-serializable list of dicts:
+                [{"mode": the distribution mode GRA|LOA,
+                  "id": supply_item ID,
+                  "pack_id": supply_item_pack ID,
+                  "name": item name,
+                  "pack": pack name,
+                  "quantity": default quantity,
+                  "max": maximum permissible quantity,
+                  }, ...]
+        """
 
         db = current.db
         s3db = current.s3db
@@ -892,11 +921,14 @@ class Distribution(Checkpoint):
         organisation_id = distribution_set.organisation_id
 
         # Check whether distribution is actionable for the client
-        actionable, msg = cls.verify_actionable(person_id, distribution_set, is_resident=is_resident)
+        actionable, msg = cls.verify_actionable(person_id,
+                                                distribution_set,
+                                                is_resident = is_resident,
+                                                )
         if actionable:
             itable = s3db.supply_item
             ptable = s3db.supply_item_pack
-            dtitable = s3db.supply_distribution_set_item
+            sitable = s3db.supply_distribution_set_item
 
             # Applicable catalogs
             ctable = s3db.supply_catalog
@@ -913,20 +945,20 @@ class Distribution(Checkpoint):
             active_items = db(query)._select(citable.item_id, distinct=True)
 
             # Look up selectable items
-            join = (itable.on((itable.id == dtitable.item_id) & \
+            join = (itable.on((itable.id == sitable.item_id) & \
                               (itable.obsolete == False)),
-                    ptable.on((ptable.id == dtitable.item_pack_id) &
+                    ptable.on((ptable.id == sitable.item_pack_id) &
                               (ptable.item_id == itable.id)),
                     )
-            query = (dtitable.distribution_set_id == set_id) & \
-                    (dtitable.item_id.belongs(active_items)) & \
-                    (dtitable.mode.belongs(("GRA", "LOA"))) & \
-                    (dtitable.deleted == False)
-            rows = db(query).select(dtitable.mode,
-                                    dtitable.item_id,
-                                    dtitable.item_pack_id,
-                                    dtitable.quantity,
-                                    dtitable.quantity_max,
+            query = (sitable.distribution_set_id == set_id) & \
+                    (sitable.item_id.belongs(active_items)) & \
+                    (sitable.mode.belongs(("GRA", "LOA"))) & \
+                    (sitable.deleted == False)
+            rows = db(query).select(sitable.mode,
+                                    sitable.item_id,
+                                    sitable.item_pack_id,
+                                    sitable.quantity,
+                                    sitable.quantity_max,
                                     itable.name,
                                     ptable.name,
                                     join = join,
@@ -959,7 +991,23 @@ class Distribution(Checkpoint):
     # -------------------------------------------------------------------------
     @staticmethod
     def get_returnable_items(person_id, distribution_set):
-        # TODO docstring
+        """
+            Returns the quantities of all items on loan which the client
+            can return at this point
+
+            Args:
+                person_id: the client person ID
+                distribution_set: the distribution set Row
+
+            Returns:
+                a JSON-serializable list of dicts:
+                [{"id": supply_item ID,
+                  "pack_id": supply_item_pack ID,
+                  "name": item name,
+                  "pack": pack name,
+                  "max": returnable quantity,
+                  }, ...]
+        """
 
         db = current.db
         s3db = current.s3db
@@ -969,14 +1017,14 @@ class Distribution(Checkpoint):
         # Lookup returnable items for the distribution set
         itable = s3db.supply_item
         ptable = s3db.supply_item_pack
-        dtitable = s3db.supply_distribution_set_item
-        join = (itable.on(itable.id == dtitable.item_id),
-                ptable.on((ptable.id == dtitable.item_pack_id) &
+        sitable = s3db.supply_distribution_set_item
+        join = (itable.on(itable.id == sitable.item_id),
+                ptable.on((ptable.id == sitable.item_pack_id) &
                           (ptable.item_id == itable.id)),
                 )
-        query = (dtitable.distribution_set_id == set_id) & \
-                (dtitable.mode == "RET") & \
-                (dtitable.deleted == False)
+        query = (sitable.distribution_set_id == set_id) & \
+                (sitable.mode == "RET") & \
+                (sitable.deleted == False)
         items = db(query).select(itable.id,
                                  itable.name,
                                  ptable.id,
@@ -986,10 +1034,16 @@ class Distribution(Checkpoint):
                                  )
         item_ids = {i.supply_item.id for i in items}
 
-        # Lookup the total quantities of these items loaned/returned by the client
-        # TODO make sure the distribution belongs to the same organisation as set_id
+        # All distributions to this client by the organisation defining the set
+        dtable = s3db.supply_distribution
+        query = (dtable.person_id == person_id) & \
+                (dtable.organisation_id == distribution_set.organisation_id) & \
+                (dtable.deleted == False)
+        distributions = db(query)._select(dtable.id)
+
+        # Total quantities of these items loaned/returned by the client
         ditable = s3db.supply_distribution_item
-        query = (ditable.person_id == person_id) & \
+        query = (ditable.distribution_id.belongs(distributions)) & \
                 (ditable.item_id.belongs(item_ids)) & \
                 (ditable.mode.belongs(("LOA", "RET", "LOS"))) & \
                 (ditable.deleted == False)
@@ -1071,12 +1125,14 @@ class Distribution(Checkpoint):
     @classmethod
     def verify_actionable(cls, person_id, distribution_set, is_resident=None):
 
+        settings = current.deployment_settings
         now = current.request.utcnow
+
         actionable = True
 
         # Check whether the client is currently a resident
-        # TODO should be behind setting
-        if distribution_set.residents_only:
+        check_resident = settings.get_supply_distribution_check_resident()
+        if check_resident and distribution_set.residents_only:
             if is_resident is None:
                 is_resident = cls.is_resident(person_id, distribution_set.organisation_id)[0]
             if not is_resident:
@@ -1084,8 +1140,9 @@ class Distribution(Checkpoint):
 
         # Check whether distribution is permissible for the client
         if actionable:
-            # TODO should be behind setting
-            actionable, msg = cls.verify_flags(person_id, distribution_set)
+            check_flags = settings.get_supply_distribution_check_case_flags()
+            if check_flags:
+                actionable, msg = cls.verify_flags(person_id, distribution_set)
         if actionable:
             actionable, msg = cls.verify_min_interval(person_id, distribution_set, now)
         if actionable:
@@ -1107,7 +1164,6 @@ class Distribution(Checkpoint):
             Returns:
                 tuple (actionable, message)
         """
-        # TODO move this into a custom variant or behind a setting (DVR-specific)
 
         db = current.db
         s3db = current.s3db

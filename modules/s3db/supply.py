@@ -1731,6 +1731,7 @@ class SupplyDistributionModel(DataModel):
 
         s3 = current.response.s3
         crud_strings = s3.crud_strings
+        settings = current.deployment_settings
 
         define_table = self.define_table
         super_link = self.super_link
@@ -1741,6 +1742,7 @@ class SupplyDistributionModel(DataModel):
         supply_item_id = self.supply_item_id
         supply_item_pack_id = self.supply_item_pack_id
 
+        check_resident = settings.get_supply_distribution_check_resident()
         site_represent = self.org_SiteRepresent(show_type=False)
 
         # ---------------------------------------------------------------------
@@ -1793,8 +1795,8 @@ class SupplyDistributionModel(DataModel):
                                                         flag = True,
                                                         ),
                            comment = T("Distribution requires that the person is checked-in at a shelter"),
-                           readable = False,
-                           writable = False,
+                           readable = check_resident,
+                           writable = check_resident,
                            ),
                      Field("active", "boolean",
                            label = T("Active"),

@@ -242,7 +242,7 @@ class Checkpoint(CRUDMethod):
         response.view = self._view(r, "dvr/register_case_event.html")
 
         # Show profile picture by default or only on demand?
-        show_picture = settings.get_dvr_event_registration_show_picture()
+        show_picture = settings.get_ui_checkpoint_show_picture()
 
         # Inject JS
         options = {"tablename": resourcename,
@@ -522,7 +522,7 @@ class Checkpoint(CRUDMethod):
             for person in persons:
                 # TODO Check event type not blocked for that person
                 #      - GUI should prevent this, but need to catch forged requests
-                success = self.register_bare(person, event_type.id)
+                success = self.register_case_event(person, event_type.id)
                 if not success:
                     error = T("Event registration failed")
                     break
@@ -541,7 +541,7 @@ class Checkpoint(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def register_bare(person, event_type_id):
+    def register_case_event(person, event_type_id):
         """
             Registers an event for a person (low-level method)
 

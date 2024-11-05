@@ -474,6 +474,8 @@ def config(settings):
     #settings.ui.organizer_time_format = "H:mm"
     # Configure the snap raster width in organizer (hh:mm:ss)
     #settings.ui.organizer_snap_duration = "00:15:00"
+    # Uncomment this to show profile pictures in checkpoint UI only on demand
+    #settings.ui.checkpoint_show_picture = False
 
     # -------------------------------------------------------------------------
     # Sync
@@ -750,8 +752,6 @@ def config(settings):
     #settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
     # Uncomment this to show a warning during event registration if the person is not currently checked-in
     #settings.dvr.event_registration_checkin_warning = True
-    # Uncomment this to show profile pictures in event registration UI only on demand
-    #settings.dvr.event_registration_show_picture = False
 
     # -------------------------------------------------------------------------
     # Events

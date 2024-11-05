@@ -7953,7 +7953,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
         response.view = self._view(r, "dvr/register_case_event.html")
 
         # Show profile picture by default or only on demand?
-        show_picture = settings.get_dvr_event_registration_show_picture()
+        show_picture = settings.get_ui_checkpoint_show_picture()
 
         # Inject JS
         options = {"tablename": resourcename,

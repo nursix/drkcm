@@ -27,10 +27,6 @@ def supply_distribution_set_controller(**attr):
         resource = r.resource
         table = resource.table
 
-        # Enable residents_only flag
-        field = table.residents_only
-        field.readable = field.writable = True
-
         if not r.component:
 
             # Organisation is required

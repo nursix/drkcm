@@ -2648,6 +2648,15 @@ class S3Config(Storage):
         """
         return self.ui.get("organizer_year_view", False)
 
+    def get_ui_checkpoint_show_picture(self):
+        """
+            Checkpoint-type UI to show client profile picture
+            by default (True), or only on demand (False):
+            - can be set to False (selectively) in order to improve
+              responsiveness of the UI and reduce network traffic
+        """
+        return self.ui.get("checkpoint_show_picture", True)
+
     # =========================================================================
     # Messaging
     #
@@ -3448,15 +3457,6 @@ class S3Config(Storage):
             not checked-in
         """
         return self.dvr.get("event_registration_checkin_warning", False)
-
-    def get_dvr_event_registration_show_picture(self):
-        """
-            Event registration UI to show profile picture
-            by default (True), or only on demand (False):
-            - can be set to False (selectively) in order to improve
-              responsiveness of the UI and reduce network traffic
-        """
-        return self.dvr.get("event_registration_show_picture", True)
 
     def get_dvr_event_registration_exclude_codes(self):
         """
@@ -5557,6 +5557,22 @@ class S3Config(Storage):
             - function(prefix, site_id, field)
         """
         return self.supply.get("shipping_code")
+
+    def get_supply_distribution_check_case_flags(self):
+        """
+            Distribution UI to check for required/debarring case flags
+            - requires DVR module
+        """
+        return self.has_module("dvr") and \
+               self.supply.get("distribution_check_case_flags", True)
+
+    def get_supply_distribution_check_resident(self):
+        """
+            Distribution UI to check that client is shelter resident (if required)
+            - requires CR module
+        """
+        return self.has_module("cr") and \
+               self.supply.get("distribution_check_resident", True)
 
     # -------------------------------------------------------------------------
     # Transport
