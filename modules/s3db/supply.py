@@ -70,6 +70,7 @@ UM_PATTERNS = (r"\sper\s?(.*)$",                         # CHOCOLATE, per 100g
 
 # =============================================================================
 class SupplyCatalogModel(DataModel):
+    """ Catalogs and categories of supply items """
 
     names = ("supply_catalog",
              "supply_catalog_id",
@@ -342,14 +343,47 @@ class SupplyCatalogModel(DataModel):
     @staticmethod
     def item_category_onvalidation(form):
         """
-            Checks that either a Code OR a Name are entered
+            Category form validation:
+                - must have either a code or a name
+                - code and name must be unique within the catalog
+
+            Args:
+                form: the FORM
         """
 
-        # TODO name/code must be unique within the catalog
+        T = current.T
 
-        if not (form.vars.code or form.vars.name):
-            errors = form.errors
-            errors.code = errors.name = current.T("An Item Category must have a Code OR a Name.")
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.supply_item_category
+
+        # Get form record ID
+        record_id = get_form_record_id(form)
+
+        # Get form record data
+        data = get_form_record_data(form, table, ["catalog_id", "name", "code"])
+        catalog_id = data.get("catalog_id")
+        name = data.get("name")
+        code = data.get("code")
+
+        # Must have a code or a name
+        form_errors = form.errors
+        if not name and not code:
+            error = T("An Item Category must have a Code OR a Name.")
+            form_errors.code = form_errors.name = error
+
+        elif catalog_id:
+            query = (table.catalog_id == catalog_id)
+            if record_id:
+                query &= (table.id != record_id)
+            for fn in ("name", "code"):
+                value = data.get(fn)
+                if not value:
+                    continue
+                q = query & (table[fn] == value) & (table.deleted == False)
+                if db(q).select(table.id, limitby=(0, 1)).first():
+                    form_errors[fn] = T("A category with this label already exists in this catalog")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -385,7 +419,7 @@ class SupplyCatalogModel(DataModel):
 
 # =============================================================================
 class SupplyItemModel(DataModel):
-    # TODO docstring
+    """ Supply item descriptions and their links to catalogs """
 
     names = ("supply_item",
              "supply_catalog_item",
@@ -436,6 +470,7 @@ $.filterOptionsS3({
 
         # =====================================================================
         # Units of measure
+        # - can be adjusted/extended by settings.L10n.units_of_measure
         #
         um = {"pc": T("piece##unit"),
               "pair": T("pair##unit"),
@@ -457,10 +492,11 @@ $.filterOptionsS3({
         um_represent = lambda v, row=None: um.get(v, "-")
 
         # =====================================================================
-        # Item
+        # Supply item
         #
-        #  These are Template items
-        #  Instances of these become Inventory Items & Request items
+        # - these are catalog descriptions of supply items to be referenced
+        #   by item inventories/transactions that specify actual quantities
+        #   of such items
         #
         generic_items = settings.get_supply_generic_items()
         use_kits = settings.get_supply_kits()
@@ -633,6 +669,7 @@ $.filterOptionsS3({
                               ),
                 ])
 
+        # Table configuration
         configure(tablename,
                   deduplicate = self.supply_item_duplicate,
                   filter_widgets = filter_widgets,
@@ -679,9 +716,8 @@ $.filterOptionsS3({
 
         # =====================================================================
         # Catalog Item
-        #
-        # This resource is used to link Items with Catalogs (n-to-n)
-        # Item Categories are also Catalog specific
+        # - links supply item descriptions to catalogs (many-to-many), i.e.
+        #   every item description can appear in multiple catalogs
         #
         tablename = "supply_catalog_item"
         define_table(tablename,
@@ -692,6 +728,14 @@ $.filterOptionsS3({
                      supply_item_id(script = None), # No Item Pack Filter
                      CommentsField(), # These comments do *not* pull through to an Inventory's Items or a Request's Items
                      )
+
+        # Table configuration
+        configure(tablename,
+                  deduplicate = self.catalog_item_deduplicate,
+                  onaccept = self.catalog_item_onaccept,
+                  ondelete = self.catalog_item_ondelete,
+                  onvalidation = self.catalog_item_onvalidation,
+                  )
 
         # CRUD strings
         crud_strings[tablename] = Storage(
@@ -710,16 +754,9 @@ $.filterOptionsS3({
             msg_no_match = T("No Matching Catalog Items")
             )
 
-        configure(tablename,
-                  deduplicate = self.catalog_item_deduplicate,
-                  onaccept = self.catalog_item_onaccept,
-                  ondelete = self.catalog_item_ondelete,
-                  onvalidation = self.catalog_item_onvalidation,
-                  )
-
         # =====================================================================
         # Item Pack
-        # - items can be distributed in different containers
+        # - items can be distributed in several different packaging variants
         #
         track_pack_dimensions = settings.get_supply_track_pack_dimensions()
 
@@ -800,6 +837,12 @@ $.filterOptionsS3({
                      CommentsField(),
                      )
 
+        # Components
+        add_components(tablename,
+                       # Inventory Items
+                       inv_inv_item = "item_pack_id",
+                       )
+
         # List fields
         list_fields = ["item_id",
                        "name",
@@ -814,6 +857,7 @@ $.filterOptionsS3({
 
         # Table configuration
         configure(tablename,
+                  deduplicate = self.supply_item_pack_duplicate,
                   list_fields = list_fields,
                   )
 
@@ -831,10 +875,10 @@ $.filterOptionsS3({
             msg_record_deleted = T("Item Pack deleted"),
             msg_list_empty = T("No Item Packs currently registered"))
 
-        # ---------------------------------------------------------------------
         # Foreign Key Template
         item_pack_represent = supply_ItemPackRepresent(lookup = "supply_item_pack",
-                                                       translate = translate)
+                                                       translate = translate,
+                                                       )
         item_pack_id = FieldTemplate("item_pack_id", "reference %s" % tablename,
                                      label = T("Pack"),
                                      ondelete = "RESTRICT",
@@ -865,21 +909,10 @@ $.filterOptionsS3({
                                      sortby = "name",
                                      )
 
-        configure(tablename,
-                  deduplicate = self.supply_item_pack_duplicate,
-                  )
-
-        # Components
-        add_components(tablename,
-                       # Inventory Items
-                       inv_inv_item = "item_pack_id",
-                       )
-
         # =====================================================================
         # Supply Kit Item Table
+        # - for defining what items are in a kit
         #
-        # For defining what items are in a kit
-
         tablename = "supply_kit_item"
         define_table(tablename,
                      supply_item_id("parent_item_id",
