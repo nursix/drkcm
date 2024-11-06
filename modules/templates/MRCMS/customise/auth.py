@@ -211,7 +211,7 @@ def realm_entity(table, row):
     #    # Owned by the managing organisation (default ok)
     #    pass
 
-    elif tablename == ("supply_item_category",
+    elif tablename in ("supply_item_category",
                        "supply_catalog_item",
                        ):
         # Inherit from catalog via catalog_id
