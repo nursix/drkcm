@@ -100,10 +100,10 @@ $.filterOptionsS3({
 
             # Custom list fields
             list_fields = ["name",
+                           "active",
                            "max_per_day",
                            "min_interval",
                            "residents_only",
-                           "active",
                            "comments",
                            ]
             if table.organisation_id.readable:
@@ -182,5 +182,21 @@ def supply_item_resource(r, tablename):
             resource.add_filter(query)
 
             break
+
+    # TODO Move into prep:
+    list_fields = ["name",
+                   "code",
+                   "um",
+                   "item_category_id",
+                   "catalog_id",
+                   # TODO show catalog organisation only if user can access
+                   #      catalogs from multiple orgs?
+                   #      => also add filter for catalog organisation
+                   "catalog_id$organisation_id",
+                   ]
+
+    s3db.configure("supply_item",
+                   list_fields = list_fields,
+                   )
 
 # END =========================================================================
