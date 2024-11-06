@@ -161,4 +161,26 @@ def supply_distribution_item_resource(r, tablename):
                    deletable = False,
                    )
 
+# -------------------------------------------------------------------------
+def supply_item_resource(r, tablename):
+
+    db = current.db
+    s3db = current.s3db
+    auth = current.auth
+
+    # Filter to items linked to accessible catalogs
+    # => special multi-tenancy with catalog separation (TODO make this a generic option?)
+    for resource in (r.resource, r.component):
+        if resource and resource.tablename == "supply_item":
+
+            citable = s3db.supply_catalog_item
+            accessible = auth.s3_accessible_query("read", citable)
+            permitted_items = db(accessible)._select(citable.item_id, distinct=True)
+
+            table = resource.table
+            query = table.id.belongs(permitted_items)
+            resource.add_filter(query)
+
+            break
+
 # END =========================================================================

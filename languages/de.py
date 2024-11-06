@@ -3213,6 +3213,7 @@
 'Item(s) deleted from Request': 'Artikel aus der Anfrage entfernt',
 'Item(s) updated on Request': 'Artikel in der Anfrage aktualisiert',
 'Item/Description': 'Artikel/Beschreibung',
+'Items Received': 'Erhaltene Artikel',
 'Items in Category are Vehicles': 'Artikel in dieser Kategorie sind Fahrzeuge',
 'Items in Category can be Assets': 'Artikel in der Kategorie können als Anlagen verwendet werden',
 'Items in Request': 'Artikel in der Anfrage',

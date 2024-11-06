@@ -607,7 +607,7 @@ class Distribution(Checkpoint):
         dtable = s3db.supply_distribution
         distribution = {"organisation_id": organisation_id,
                         "distribution_set_id": set_id,
-                        "site_id": None,
+                        "site_id": site_id,
                         "date": now,
                         "person_id": person_id,
                         "human_resource_id": staff_id,

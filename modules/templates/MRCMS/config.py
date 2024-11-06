@@ -514,12 +514,14 @@ def config(settings):
     from .customise.supply import supply_distribution_set_controller, \
                                   supply_distribution_resource, \
                                   supply_distribution_controller, \
-                                  supply_distribution_item_resource
+                                  supply_distribution_item_resource, \
+                                  supply_item_resource
 
     settings.customise_supply_distribution_set_controller = supply_distribution_set_controller
     settings.customise_supply_distribution_resource = supply_distribution_resource
     settings.customise_supply_distribution_controller = supply_distribution_controller
     settings.customise_supply_distribution_item_resource = supply_distribution_item_resource
+    settings.customise_supply_item_resource = supply_item_resource
 
     # -------------------------------------------------------------------------
     # Security settings

@@ -2085,7 +2085,7 @@ class SupplyDistributionModel(DataModel):
         configure(tablename,
                   list_fields = list_fields,
                   onaccept = self.distribution_item_onaccept,
-                  orderby = "supply_distribution.date asc",
+                  orderby = "supply_distribution.date desc",
                   )
 
         # CRUD Strings
