@@ -812,7 +812,7 @@ def cr_shelter_registration_history_resource(r, tablename):
     list_fields = ["date",
                    (T("Status"), "status"),
                    "shelter_id",
-                   (T("Registered by"), "modified_by"),
+                   (T("Registered by"), "created_by"),
                    ]
 
     s3db.configure(tablename,
