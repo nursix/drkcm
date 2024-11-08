@@ -2672,6 +2672,14 @@ class S3Config(Storage):
         """
         return self.ui.get("checkpoint_show_picture", True)
 
+    def get_ui_checkpoint_multi_preselect_all(self):
+        """
+            Checkpoint-type UI to pre-select all eligible case group members
+            for multiple-registration (otherwise, only the present client
+            would be pre-selected)
+        """
+        return self.ui.get("checkpoint_multi_preselect_all", True)
+
     # =========================================================================
     # Messaging
     #

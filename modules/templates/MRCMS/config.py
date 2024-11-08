@@ -142,6 +142,8 @@ def config(settings):
     settings.ui.auth_user_represent = "name"
     settings.ui.datatables_responsive = False
 
+    # settings.ui.checkpoint_multi_preselect_all = False
+
     # -------------------------------------------------------------------------
     # AUTH Settings
     #

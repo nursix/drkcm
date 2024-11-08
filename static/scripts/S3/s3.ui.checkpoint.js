@@ -31,11 +31,12 @@
             tablename: 'case_event',
             ajaxURL: '',
 
+            multiPreselectAll: true,
             showPicture: true,
+
             showPictureText: 'Show Picture',
             hidePictureText: 'Hide Picture',
             selectAllText: 'Select All',
-
             noEventsLabel: 'No event types available',
             selectEventLabel: 'Please select an event type',
         },
@@ -794,11 +795,13 @@
 
             let family = this.familyContainer,
                 members = $('.family-member', family),
-                event = this.eventType.val(),
-                selectable = 0,
+                multiPreselectAll = this.options.multiPreselectAll,
+                selectable = 0;
+
+            let event = this.eventType.val(),
+                eventType = this._getEventType(),
                 now = new Date();
 
-            let eventType = this._getEventType();
             if (!eventType || !eventType.multiple) {
                 this._hideFamily();
                 this._updateSelectAll();
@@ -856,7 +859,7 @@
                     // => enable and select checkbox
                     $('.member-select', trow).each(function() {
                         $(this).prop('disabled', false)
-                               .prop('checked', true);
+                               .prop('checked', !!(multiPreselectAll || member.s));
                         trow.addClass('member-selected');
                     });
                 }

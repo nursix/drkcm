@@ -243,10 +243,12 @@ class Checkpoint(CRUDMethod):
 
         # Show profile picture by default or only on demand?
         show_picture = settings.get_ui_checkpoint_show_picture()
+        multi_preselect_all = settings.get_ui_checkpoint_multi_preselect_all()
 
         # Inject JS
         options = {"tablename": resourcename,
                    "ajaxURL": self.ajax_url(r),
+                   "multiPreselectAll": multi_preselect_all,
                    "showPicture": show_picture,
                    "showPictureText": s3_str(T("Show Picture")),
                    "hidePictureText": s3_str(T("Hide Picture")),
@@ -1045,6 +1047,8 @@ class Checkpoint(CRUDMethod):
                     "n": s3_fullname(member),
                     "d": S3DateTime.date_represent(member.date_of_birth),
                     }
+            if str(member.id) == str(person_id):
+                data["s"] = True
 
             # Profile picture URL
             picture = row.pr_image
