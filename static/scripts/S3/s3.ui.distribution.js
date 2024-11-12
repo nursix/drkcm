@@ -34,6 +34,7 @@
             hidePictureLabel: 'Hide Picture',
             selectDistributionSetLabel: 'Select Distribution Set',
             noDistributionSetsLabel: 'No distribution item sets available',
+            noItemsLabel: 'No items available',
 
             // L10n table and columns titles/hints
             distributeLabel: 'Distribution',
@@ -538,6 +539,10 @@
                 this._renderItemTable(opts.returnLabel,
                                       'return',
                                       returnable).appendTo(controls);
+            }
+            if (!controls.children().length) {
+                let msg = $('<span class="msg">').text(opts.noItemsLabel);
+                $('<div class="blocked">').append(msg).appendTo(controls);
             }
 
             // Update action details from table

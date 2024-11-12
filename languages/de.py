@@ -1550,6 +1550,7 @@
 'Currently no Skill Equivalences registered': 'Derzeit sind keine Fähigkeits-Vergleichbarkeiten registriert',
 'Currently no Trainings registered': 'Derzeit keine Schulungen registriert',
 'Currently no entries in the catalog': 'Derzeit keine Einträge im Katalog',
+'Currently no items to process for this beneficiary': 'Zurzeit keine Artikel für diesen Empfänger zu bearbeiten',
 'Cushitic languages': 'Kuschitische Sprachen',
 'Customer number, file reference or other reference number': 'Kunden-Nr., Aktenzeichen oder anderes GeschZ',
 'Customs Capacity': 'Zollkapazität',

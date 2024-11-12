@@ -221,6 +221,7 @@ class Distribution(Checkpoint):
                    "hidePictureLabel": s3_str(T("Hide Picture")),
                    "selectDistributionSetLabel": s3_str(T("Please select a distribution item set")),
                    "noDistributionSetsLabel": s3_str(T("No distribution item sets available")),
+                   "noItemsLabel": s3_str(T("Currently no items to process for this beneficiary")),
                    "distributeLabel": s3_str(T("Distribution")),
                    "returnLabel": s3_str(T("Return##distribution")),
                    "itemLabel": s3_str(T("Item")),
@@ -881,7 +882,7 @@ class Distribution(Checkpoint):
                                                  distribution_set,
                                                  is_resident = is_resident,
                                                  )
-        output["distribute"] = {"items": items, "msg": s3_str(msg)}
+        output["distribute"] = {"items": items, "msg": s3_str(msg) if msg else None}
 
         # Look up returnable items
         items = cls.get_returnable_items(person_id, distribution_set)

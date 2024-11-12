@@ -226,6 +226,16 @@
     padding: 0.2rem 0.5rem;
     border: 1px solid #ccc;
     overflow: scroll;
+    .blocked {
+        height: 2.7rem;
+        text-align: center;
+        background-color: #ffcfcf;
+        .msg {
+            display: inline-block;
+            font-style: italic;
+            margin: 0.7rem auto;
+        }
+    }
     .item-table {
         width: 100%;
         td {
