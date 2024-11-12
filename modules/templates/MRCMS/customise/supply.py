@@ -4,9 +4,12 @@
     License: MIT
 """
 
+from collections import OrderedDict
+
 from gluon import current
 
-from core import CustomController, IS_ONE_OF, S3SQLCustomForm, S3SQLInlineLink
+from core import CustomController, IS_ONE_OF, \
+                 DateFilter, OptionsFilter, S3SQLCustomForm, S3SQLInlineLink
 
 # -------------------------------------------------------------------------
 def supply_distribution_set_controller(**attr):
@@ -153,6 +156,57 @@ def supply_distribution_controller(**attr):
 def supply_distribution_item_resource(r, tablename):
 
     s3db = current.s3db
+
+    table = s3db.supply_distribution_item
+
+    resource = r.resource
+    if resource.tablename == "pr_person":
+        # On tab of case file
+
+        # If distributions of multiple organisations accessible
+        # => include organisation in filters and list fields
+        from ..helpers import permitted_orgs
+        if len(permitted_orgs("read", "supply_distribution")) > 1:
+            organisation_id = "distribution_id$organisation_id"
+            org_filter = OptionsFilter(organisation_id, hidden=True)
+        else:
+            organisation_id = org_filter = None
+
+        # Filter widgets
+        # - filterable by mode, distribution date and site
+        try:
+            filter_options = OrderedDict(table.mode.requires.options())
+            filter_options.pop(None, None)
+        except AttributeError:
+            filter_options = None
+        filter_widgets = [OptionsFilter("mode",
+                                        options = filter_options,
+                                        cols = 4,
+                                        sort = False,
+                                        ),
+                          DateFilter("distribution_id$date",
+                                     hidden = True,
+                                     ),
+                          org_filter,
+                          OptionsFilter("distribution_id$site_id",
+                                        hidden = True,
+                                        ),
+                          ]
+        # List fields
+        # - include distribution date and site
+        list_fields = ["distribution_id$date",
+                       organisation_id,
+                       "distribution_id$site_id",
+                       "mode",
+                       "item_id",
+                       "quantity",
+                       "item_pack_id",
+                       ]
+
+        s3db.configure("supply_distribution_item",
+                       filter_widgets = filter_widgets,
+                       list_fields = list_fields,
+                       )
 
     # Read-only (except via registration UI)
     s3db.configure("supply_distribution_item",

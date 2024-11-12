@@ -464,7 +464,8 @@ class CRUDRequest:
         if not search_id:
             array = [self.controller, self.function]
             if self.args:
-                array.extend(self.args)
+                # Drop format extensions from args
+                array.extend(arg.rsplit(".", 1)[0] for arg in self.args)
 
             string = "#".join(array)
             import hashlib

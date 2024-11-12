@@ -1600,6 +1600,7 @@ def pr_person_controller(**attr):
 
     # Activate filters on component tabs
     attr["hide_filter"] = {"response_action": False,
+                           "distribution_item": False,
                            }
 
     return attr

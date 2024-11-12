@@ -1471,16 +1471,18 @@ class S3ComponentTabs:
         if not record_id and r.record:
             record_id = r.record[r.table._id]
 
+        request = current.request
         for i, tab in enumerate(tabs):
 
             # Determine the query variables for the tab URL
-            vars_match = tab.vars_match(r)
+            # - applying original GET vars to prevent session filter creep
+            vars_match = tab.vars_match(request)
             if vars_match:
-                _vars = Storage(r.get_vars)
+                _vars = Storage(request.get_vars)
             else:
                 _vars = Storage(tab.vars)
-                if "viewing" in r.get_vars:
-                    _vars.viewing = r.get_vars.viewing
+                if "viewing" in request.get_vars:
+                    _vars.viewing = request.get_vars.viewing
 
             # Determine the controller function for the tab URL
             if tab.function is None:
