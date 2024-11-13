@@ -1757,4 +1757,280 @@ class ArrivalsDeparturesReport(BaseReport):
                                          ).with_alias("last_status")
         return latest
 
+# =============================================================================
+class GrantsTotalReport(BaseReport):
+    """ Report over total quantities of distributed supply items (grants) """
+
+    report_type = "grantstotal"
+
+    # -------------------------------------------------------------------------
+    @property
+    def report_title(self):
+        """ A title for this report """
+
+        return current.T("Grants Total##supplies")
+
+    # -------------------------------------------------------------------------
+    def json(self, r, **attr):
+        """
+            Returns the report as JSON object
+
+            Args:
+                r - the CRUDRequest
+                attr - controller parameters
+
+            Returns:
+                an array of JSON objects to construct a table like:
+                    [{"labels": [label, label, ...],
+                      "rows": [[value, value, ...], ...]
+                      "results": number
+                      }, ...]
+        """
+        # TODO update docstring
+
+        report_name = "%s_report" % self.report_type
+
+        # Read request parameters
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r, report_name)
+
+        # Check permissions
+        if not self.permitted(organisation_id=organisation_id):
+            r.unauthorised()
+
+        # Extract the data
+        data = self.extract(organisation_id, shelter_id, start_date, end_date)
+
+        # TODO Simplify (single table), or rename item/data variables
+        output = []
+        for item in data:
+
+            columns = item["columns"]
+            headers = item["headers"]
+            labels = [headers[colname] for colname in columns]
+
+            records, rows = [], item["rows"]
+            for row in rows:
+                records.append([s3_str(row[colname])
+                                if row[colname] is not None else ""
+                                for colname in columns
+                                ])
+
+            table = {"labels": labels,
+                     "records": records,
+                     "results": max(0, len(records)),
+                     "title": item.get("title"),
+                     }
+            output.append(table)
+
+        # Set Content Type
+        current.response.headers["Content-Type"] = "application/json"
+
+        return jsons(output)
+
+    # -------------------------------------------------------------------------
+    def xlsx(self, r, **attr):
+        """
+            Returns the report as XLSX file
+
+            Args:
+                r - the CRUDRequest
+                attr - controller parameters
+
+            Returns:
+                a XLSX file
+        """
+
+        report_name = "%s_report" % self.report_type
+
+        # Read request parameters
+        organisation_id, shelter_id, start_date, end_date = self.parameters(r, report_name)
+
+        # Check permissions
+        if not self.permitted(organisation_id=organisation_id):
+            r.unauthorised()
+
+        # Extract the data
+        datasets = self.extract(organisation_id, shelter_id, start_date, end_date)
+
+        output = None
+        # TODO simplify (single table)
+        for dataset in datasets:
+            # Use a title row (also includes exported-date)
+            current.deployment_settings.base.xls_title_row = True
+
+            subtitle = dataset.get("title")
+            if not subtitle:
+                subtitle = self.report_title
+            title = "%s %s -- %s" % (subtitle,
+                                     S3DateTime.date_represent(start_date, utc=True),
+                                     S3DateTime.date_represent(end_date, utc=True),
+                                     )
+
+            # Generate XLSX byte stream
+            output = XLSXWriter.encode(dataset,
+                                       title = title,
+                                       sheet_title = subtitle,
+                                       as_stream = True,
+                                       append_to = output,
+                                       )
+
+        # Set response headers
+        filename = "grants_total_%s_%s" % (start_date.strftime("%Y%m%d"),
+                                           end_date.strftime("%Y%m%d"),
+                                           )
+        disposition = "attachment; filename=\"%s\"" % filename
+        response = current.response
+        response.headers["Content-Type"] = contenttype(".xlsx")
+        response.headers["Content-disposition"] = disposition
+
+        # Return stream response
+        return response.stream(output,
+                               chunk_size = DEFAULT_CHUNK_SIZE,
+                               request = current.request
+                               )
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def permitted_orgs():
+        """
+            Returns the organisations the user is permitted to generate
+            the report for; to be adapted by subclass
+
+            Returns:
+                List of organisation IDs
+        """
+        # TODO update docstring
+
+        from .helpers import permitted_orgs
+        return permitted_orgs("read", "supply_distribution")
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def permitted(organisation_id=None):
+        """
+            Checks if the user is permitted to access relevant case
+            and event data of the organisation
+
+            Args:
+                organisation_id: the organisation record ID
+
+            Returns:
+                boolean
+        """
+        # TODO update docstring
+
+        # Determine the target realm
+        pe_id = current.s3db.pr_get_pe_id("org_organisation", organisation_id) \
+                if organisation_id else None
+
+        permitted = True
+        permitted_realms = current.auth.permission.permitted_realms
+
+        # Check permissions for this realm
+        realms = permitted_realms("supply_distribution")
+        if realms is not None:
+            permitted = permitted and (pe_id is None or pe_id in realms)
+
+        return permitted
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def extract(cls, organisation_id, shelter_id, start_date, end_date):
+        """
+            Extracts the data for the report
+
+            Args:
+                organisation_id: limit to cases of this organisation
+                shelter_id: limit to arrivals at/departures fromthis shelter
+                start_date: the start of the interval (datetime.datetime)
+                end_date: the end of the interval (datetime.datetime)
+
+            Returns:
+                a list of two dicts [arrivals, departures], like:
+                {"columns": [colname, ...],
+                 "headers": {colname: label, ...},
+                 "types": {colname: datatype, ...},
+                 "rows": [{colname: value, ...}, ...]
+                 }
+        """
+        # TODO Update docstring
+
+        T = current.T
+
+        db = current.db
+        s3db = current.s3db
+
+        # All relevant distributions
+        dtable = s3db.supply_distribution
+        query = (dtable.organisation_id == organisation_id)
+        if shelter_id:
+            site_id = cls.get_shelter_site_id(shelter_id)
+            query &= (dtable.site_id == site_id)
+        query &= (dtable.date >= start_date) & \
+                 (dtable.date <= end_date) & \
+                 (dtable.deleted == False)
+        distributions = db(query)._select(dtable.id)
+
+        # All items in those distributions with mode == GRA
+        ditable = s3db.supply_distribution_item
+        query = (ditable.distribution_id.belongs(distributions)) & \
+                (ditable.mode == "GRA") & \
+                (ditable.quantity != None) & \
+                (ditable.quantity > 0) & \
+                (ditable.deleted == False)
+        total_quantity = ditable.quantity.sum()
+        total_beneficiaries = ditable.person_id.count(distinct=True)
+        rows = db(query).select(ditable.item_id,
+                                ditable.item_pack_id,
+                                total_quantity,
+                                total_beneficiaries,
+                                groupby = (ditable.item_id, ditable.item_pack_id),
+                                )
+
+        # Item and pack representations
+        item_ids, pack_ids = set(), set()
+        for row in rows:
+            ditem = row.supply_distribution_item
+            item_ids.add(ditem.item_id)
+            pack_ids.add(ditem.item_pack_id)
+        item_repr = ditable.item_id.represent.bulk(list(item_ids), show_link=False)
+        pack_repr = ditable.item_pack_id.represent.bulk(list(pack_ids), show_link=False)
+
+        items = []
+        for row in rows:
+            ditem = row.supply_distribution_item
+            items.append({"item": item_repr.get(ditem.item_id, "-"),
+                          "pack": pack_repr.get(ditem.item_pack_id, "-"),
+                          "quantity": row[total_quantity],
+                          "beneficiaries": row[total_beneficiaries],
+                          })
+
+        output = {"title": T("Grants Total##supplies"),
+                  "columns": ["item", "pack", "quantity", "beneficiaries"],
+                  "headers": {"item": T("Item"),
+                              "pack": T("Pack"),
+                              "quantity": T("Quantity"),
+                              "beneficiaries": T("Number of Beneficiaries"),
+                              },
+                  "types": {"item": "string",
+                            "pack": "string",
+                            "quantity": "integer",
+                            "beneficiaries": "integer",
+                            },
+                  "rows": items,
+                  }
+
+        return [output]
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def get_shelter_site_id(shelter_id):
+        # TODO docstring
+
+        table = current.s3db.cr_shelter
+        query = (table.id == shelter_id) & (table.deleted == False)
+        row = current.db(query).select(table.site_id, limitby=(0, 1)).first()
+
+        return row.site_id if row else None
+
 # END =========================================================================

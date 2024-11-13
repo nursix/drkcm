@@ -445,6 +445,10 @@ class OptionsMenu(default.OptionsMenu):
                 M("Current Cases", c=("supply", "pr"), f="person"),
                 M("Distributions", link=False)(
                     M("Register", f="distribution", m="register", p="create"),
+                    M("Distributed Items", f="distribution_item"),
+                    ),
+                M("Reports", link=False)(
+                    M("Grants Total##supplies", f="distribution_item", m="grants_total"),
                     ),
                 M("Administration", link=False, restrict=["ADMIN", "ORG_ADMIN"])(
                     M("Distribution Item Sets", f="distribution_set"),

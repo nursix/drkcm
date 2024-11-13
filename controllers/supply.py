@@ -161,6 +161,7 @@ def distribution_set():
 
     return crud_controller(rheader=s3db.supply_distribution_rheader)
 
+# -----------------------------------------------------------------------------
 def distribution():
     """ Distributions: CRUD Controller """
 
@@ -178,6 +179,12 @@ def distribution():
                                                     )
         return True
     s3.prep = prep
+
+    return crud_controller(rheader=s3db.supply_distribution_rheader)
+
+# -----------------------------------------------------------------------------
+def distribution_item():
+    """ Distribution Items: CRUD Controller """
 
     return crud_controller(rheader=s3db.supply_distribution_rheader)
 

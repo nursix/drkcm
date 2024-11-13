@@ -6,10 +6,11 @@
 
 from collections import OrderedDict
 
-from gluon import current
+from gluon import current, URL
 
 from core import CustomController, IS_ONE_OF, \
-                 DateFilter, OptionsFilter, S3SQLCustomForm, S3SQLInlineLink
+                 DateFilter, OptionsFilter, TextFilter, \
+                 S3SQLCustomForm, S3SQLInlineLink
 
 # -------------------------------------------------------------------------
 def supply_distribution_set_controller(**attr):
@@ -155,65 +156,115 @@ def supply_distribution_controller(**attr):
 # -------------------------------------------------------------------------
 def supply_distribution_item_resource(r, tablename):
 
+    T = current.T
     s3db = current.s3db
 
-    table = s3db.supply_distribution_item
-
     resource = r.resource
-    if resource.tablename == "pr_person":
-        # On tab of case file
 
-        # If distributions of multiple organisations accessible
-        # => include organisation in filters and list fields
-        from ..helpers import permitted_orgs
-        if len(permitted_orgs("read", "supply_distribution")) > 1:
-            organisation_id = "distribution_id$organisation_id"
-            org_filter = OptionsFilter(organisation_id, hidden=True)
-        else:
-            organisation_id = org_filter = None
+    table = s3db.supply_distribution_item
+    field = table.item_id
+    field.represent = s3db.supply_ItemRepresent(show_link=False)
 
-        # Filter widgets
-        # - filterable by mode, distribution date and site
-        try:
-            filter_options = OrderedDict(table.mode.requires.options())
-            filter_options.pop(None, None)
-        except AttributeError:
-            filter_options = None
-        filter_widgets = [OptionsFilter("mode",
-                                        options = filter_options,
-                                        cols = 4,
-                                        sort = False,
-                                        ),
-                          DateFilter("distribution_id$date",
-                                     hidden = True,
-                                     ),
-                          org_filter,
-                          OptionsFilter("distribution_id$site_id",
-                                        hidden = True,
-                                        ),
-                          ]
-        # List fields
-        # - include distribution date and site
-        list_fields = ["distribution_id$date",
-                       organisation_id,
-                       "distribution_id$site_id",
-                       "mode",
-                       "item_id",
-                       "quantity",
-                       "item_pack_id",
-                       ]
+    text_filter_fields = ["item_id$name"]
 
-        s3db.configure("supply_distribution_item",
-                       filter_widgets = filter_widgets,
-                       list_fields = list_fields,
-                       )
+    # If distributions of multiple organisations accessible
+    # => include organisation in list_fields and filters
+    from ..helpers import permitted_orgs
+    if len(permitted_orgs("read", "supply_distribution")) > 1:
+        organisation_id = "distribution_id$organisation_id"
+        org_filter = OptionsFilter(organisation_id, hidden=True)
+    else:
+        organisation_id = org_filter = None
 
-    # Read-only (except via registration UI)
+    # If in primary distribution item controller
+    # => include beneficiary in list fields and filters
+    if resource.tablename == "supply_distribution_item":
+        pe_label = (T("ID"), "person_id$pe_label")
+        person_id = (T("Name"), "person_id")
+        # Show person name as link to case file (supply perspective)
+        field = table.person_id
+        field.represent = s3db.pr_PersonRepresent(show_link = True,
+                                                  linkto = URL(c = "supply",
+                                                               f = "person",
+                                                               args = ["[id]", "distribution_item"],
+                                                               ),
+                                                  )
+        text_filter_fields.extend(["person_id$pe_label",
+                                   "person_id$last_name",
+                                   "person_id$first_name",
+                                   ])
+    else:
+        pe_label = person_id = None
+
+    # Filter widgets
+    # - filterable by mode, distribution date and site
+    try:
+        filter_options = OrderedDict(table.mode.requires.options())
+        filter_options.pop(None, None)
+    except AttributeError:
+        filter_options = None
+    filter_widgets = [TextFilter(text_filter_fields,
+                                 label = T("Search"),
+                                 ),
+                      OptionsFilter("mode",
+                                    options = filter_options,
+                                    cols = 4,
+                                    sort = False,
+                                    hidden = True,
+                                    ),
+                      DateFilter("distribution_id$date",
+                                 hidden = True,
+                                 ),
+                      org_filter,
+                      OptionsFilter("distribution_id$site_id",
+                                    hidden = True,
+                                    ),
+                      ]
+
+    # List fields
+    # - include distribution date and site
+    list_fields = ["distribution_id$date",
+                   organisation_id,
+                   "distribution_id$site_id",
+                   pe_label,
+                   person_id,
+                   "mode",
+                   "item_id",
+                   "quantity",
+                   "item_pack_id",
+                   # TODO include staff member in charge?
+                   #"distribution_id$human_resource_id",
+                   ]
+
+    # Update table configuration
     s3db.configure("supply_distribution_item",
+                   filter_widgets = filter_widgets,
+                   list_fields = list_fields,
+                   # Read-only (except via registration UI)
                    insertable = False,
                    editable = False,
                    deletable = False,
                    )
+
+    # TODO Custom form to include distribution details?
+    # => requires a distribution_id representation (date, site, etc.)
+    # => alternatively, rheader to include these details
+
+    if resource.tablename == "supply_distribution_item":
+        # Install report method
+        from ..reports import GrantsTotalReport
+        s3db.set_method("supply_distribution_item",
+                        method = "grants_total",
+                        action = GrantsTotalReport,
+                        )
+
+        # Update CRUD strings for perspective
+        crud_strings = current.response.s3.crud_strings
+        crud_strings["supply_distribution_item"].update({
+            "title_list": T("Distributed Items"),
+            "title_display": T("Distributed Item"),
+            "label_list_button": T("List Distributed Items"),
+            })
 
 # -------------------------------------------------------------------------
 def supply_item_resource(r, tablename):
