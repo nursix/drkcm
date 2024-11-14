@@ -209,7 +209,9 @@ class OptionsMenu(default.OptionsMenu):
                     M("Current Cases", c=("counsel", "pr"), f="person"),
                     M("Actions", c="counsel", f="response_action")(
                         M("Overview"),
-                        M("Statistic", m="report"),
+                        ),
+                    M("Statistics", link=False)(
+                        M("Actions", f="response_action", m="report"),
                         ),
                     M("Administration", link=False, restrict=(ADMIN, ORG_GROUP_ADMIN))(
                         # Global types
@@ -307,12 +309,6 @@ class OptionsMenu(default.OptionsMenu):
                 #    ),
                 M("Appointments", f="case_appointment")(
                     M("Overview"),
-                    #M("Import Updates", m="import", p="create",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  ),
-                    #M("Bulk Status Update", m="manage", p="update",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  ),
                     ),
                 M("Registration", c="dvr", f="case_event", link=None)(
                     M("Checkpoint", c="dvr", f="case_event", m="register", p="create"),
@@ -443,10 +439,13 @@ class OptionsMenu(default.OptionsMenu):
 
         return M(c="supply")(
                 M("Current Cases", c=("supply", "pr"), f="person"),
-                M("Distributions", link=False)(
-                    M("Register", f="distribution", m="register", p="create"),
-                    M("Distributed Items", f="distribution_item"),
+                M("Distributed Items", f="distribution_item")(
+                    M("Overview"),
                     ),
+                M("Registration", link=False)(
+                    M("Distribution", f="distribution", m="register", p="create"),
+                    ),
+                #M("Statistics", link=False),
                 M("Reports", link=False)(
                     M("Grants Total##supplies", f="distribution_item", m="grants_total"),
                     ),
