@@ -2721,6 +2721,45 @@ def supply_distribution_rheader(r, tabs=None):
                               ["date"],
                               ]
 
+        elif tablename == "supply_distribution_item":
+
+            if not tabs:
+                tabs = [(T("Item Details"), None),
+                        ]
+
+            # Show distribution details in header
+            dist = resource.select(["distribution_id$person_id",
+                                    "distribution_id$organisation_id",
+                                    "distribution_id$site_id",
+                                    "distribution_id$distribution_set_id",
+                                    "distribution_id$date",
+                                    "distribution_id$human_resource_id",
+                                    ],
+                                   represent = True,
+                                   raw_data = True,
+                                   ).rows
+            if dist:
+                dist = dist[0]
+                #raw = dist._row
+
+                beneficiary = lambda row: dist["supply_distribution.person_id"]
+                organisation = lambda row: dist["supply_distribution.organisation_id"]
+                site = lambda row: dist["supply_distribution.site_id"]
+                staff = lambda row: dist["supply_distribution.human_resource_id"]
+                date = lambda row: dist["supply_distribution.date"]
+
+                rheader_fields = [[(T("Beneficiary"), beneficiary),
+                                   (T("Organization"), organisation),
+                                   ],
+                                  [(T("Place"), site),
+                                   (T("Staff Member in Charge"), staff),
+                                   ],
+                                  [(T("Date"), date),
+                                   ],
+                                  ]
+            else:
+                return None
+
         rheader = S3ResourceHeader(rheader_fields, tabs, title=rheader_title)
         rheader = rheader(r, table=resource.table, record=record)
 
