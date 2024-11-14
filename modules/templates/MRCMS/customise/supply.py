@@ -137,6 +137,7 @@ def supply_distribution_resource(r, tablename):
 # -------------------------------------------------------------------------
 def supply_distribution_controller(**attr):
 
+    auth = current.auth
     s3 = current.response.s3
 
     # Custom postp
@@ -146,7 +147,13 @@ def supply_distribution_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        if r.method == "register":
+        if r.interactive and \
+           r.method == "register":
+            if isinstance(output, dict):
+                if auth.permission.has_permission("read", c="supply", f="distribution_item"):
+                    output["return_url"] = URL(c="supply", f="distribution_item")
+                else:
+                    output["return_url"] = URL(c="default", f="index")
             CustomController._view("MRCMS", "register_distribution.html")
         return output
     s3.postp = custom_postp
@@ -232,8 +239,7 @@ def supply_distribution_item_resource(r, tablename):
                    "item_id",
                    "quantity",
                    "item_pack_id",
-                   # TODO include staff member in charge?
-                   #"distribution_id$human_resource_id",
+                   "distribution_id$human_resource_id",
                    ]
 
     # Update table configuration
@@ -245,10 +251,6 @@ def supply_distribution_item_resource(r, tablename):
                    editable = False,
                    deletable = False,
                    )
-
-    # TODO Custom form to include distribution details?
-    # => requires a distribution_id representation (date, site, etc.)
-    # => alternatively, rheader to include these details
 
     if resource.tablename == "supply_distribution_item":
         # Install report method
@@ -288,20 +290,55 @@ def supply_item_resource(r, tablename):
 
             break
 
-    # TODO Move into prep:
-    list_fields = ["name",
-                   "code",
-                   "um",
-                   "item_category_id",
-                   "catalog_id",
-                   # TODO show catalog organisation only if user can access
-                   #      catalogs from multiple orgs?
-                   #      => also add filter for catalog organisation
-                   "catalog_id$organisation_id",
-                   ]
+# -------------------------------------------------------------------------
+def supply_item_controller(**attr):
 
-    s3db.configure("supply_item",
-                   list_fields = list_fields,
-                   )
+    s3db = current.s3db
+
+    s3 = current.response.s3
+
+    # Custom postp
+    standard_prep = s3.prep
+    def prep(r):
+        # Call standard prep
+        result = standard_prep(r) if callable(standard_prep) else True
+
+        from ..helpers import permitted_orgs
+        organisation_ids = permitted_orgs("read", "supply_catalog")
+        if len(organisation_ids) > 1:
+            # Include organisation_id in list_fields
+            organisation_id = "catalog_id$organisation_id"
+        else:
+            organisation_id = None
+
+        if r.interactive:
+            # Add organisation filter if organisation_id is shown
+            filter_widgets = r.resource.get_config("filter_widgets")
+            if filter_widgets and organisation_id:
+                ctable = s3db.supply_catalog
+                filter_opts = ctable.organisation_id.represent.bulk(organisation_ids)
+                filter_opts.pop(None, None)
+                filter_widgets.append(OptionsFilter(organisation_id,
+                                                    options = filter_opts,
+                                                    hidden = True,
+                                                    ))
+
+        # Custom list fields
+        list_fields = ["name",
+                       "code",
+                       "um",
+                       "item_category_id",
+                       "catalog_id",
+                       organisation_id,
+                       ]
+
+        s3db.configure("supply_item",
+                       list_fields = list_fields,
+                       )
+
+        return result
+    s3.prep = prep
+
+    return attr
 
 # END =========================================================================

@@ -925,6 +925,7 @@ def dvr_case_event_resource(r, tablename):
 # -------------------------------------------------------------------------
 def dvr_case_event_controller(**attr):
 
+    auth = current.auth
     s3 = current.response.s3
 
     # Custom postp
@@ -934,7 +935,13 @@ def dvr_case_event_controller(**attr):
         if callable(standard_postp):
             output = standard_postp(r, output)
 
-        if r.method in ("register", "register_food", "register_activity"):
+        if r.interactive and \
+           r.method in ("register", "register_food", "register_activity"):
+            if isinstance(output, dict):
+                if auth.permission.has_permission("read", c="dvr", f="person"):
+                    output["return_url"] = URL(c="dvr", f="person")
+                else:
+                    output["return_url"] = URL(c="default", f="index")
             CustomController._view("MRCMS", "register_case_event.html")
         return output
     s3.postp = custom_postp
@@ -1312,8 +1319,10 @@ def dvr_person_prep(r):
 
 # =============================================================================
 def dvr_group_membership_prep(r):
-    # TODO docstring
-    # TODO integrate in pr_group_membership_controller?
+    """
+        Custom copy of dvr/group_membership prep(), so it can be called
+        in proxy controllers too (e.g. counsel/group_membership)
+    """
 
     db = current.db
     s3db = current.s3db
@@ -1327,20 +1336,15 @@ def dvr_group_membership_prep(r):
     settings.pr.request_home_phone = False
     settings.hrm.email_required = False
 
-    get_vars = r.get_vars
-    if "viewing" in get_vars:
-
-        try:
-            vtablename, record_id = get_vars["viewing"].split(".")
-        except ValueError:
-            return False
-
-        if vtablename == "pr_person":
+    viewing = r.viewing
+    if viewing:
+        if viewing[0] == "pr_person":
+            person_id = viewing[1]
 
             # Get all group_ids with this person_id
             gtable = s3db.pr_group
             join = gtable.on(gtable.id == table.group_id)
-            query = (table.person_id == record_id) & \
+            query = (table.person_id == person_id) & \
                     (gtable.group_type == 7) & \
                     (table.deleted != True)
             rows = db(query).select(table.group_id, join=join)
@@ -1351,16 +1355,15 @@ def dvr_group_membership_prep(r):
                 # Single group ID?
                 group_id = tuple(group_ids)[0] if len(group_ids) == 1 else None
             elif r.http == "POST":
-                name = s3_fullname(record_id)
+                name = s3_fullname(person_id)
                 group_id = gtable.insert(name=name, group_type=7)
                 s3db.update_super(gtable, {"id": group_id})
                 table.insert(group_id = group_id,
-                             person_id = record_id,
-                             group_head = True,
-                             )
+                                person_id = person_id,
+                                group_head = True,
+                                )
                 group_ids = {group_id}
-            resource.add_filter(FS("person_id") != record_id)
-
+            resource.add_filter(FS("person_id") != person_id)
         else:
             group_ids = set()
 
