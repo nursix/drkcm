@@ -171,12 +171,6 @@ class BaseReport(CRUDMethod):
                                                  ),
                             default = default_org,
                             ),
-                      Field("shelter_id",
-                            label = T("Shelter"),
-                            requires = IS_ONE_OF_EMPTY(db, "cr_shelter.id",
-                                                       rtable.shelter_id.represent,
-                                                       ),
-                            ),
                       DateField("start_date",
                                 label = T("From Date"),
                                 default = one_month_ago,
@@ -191,17 +185,26 @@ class BaseReport(CRUDMethod):
                                 ),
                       ]
 
-        # Filter shelter list to just those for organisation
-        options = {"trigger": "organisation_id",
-                   "target": "shelter_id",
-                   "lookupPrefix": "cr",
-                   "lookupResource": "shelter",
-                   "showEmptyField": False,
-                   "optional": True,
-                   }
-        jquery_ready = current.response.s3.jquery_ready
-        jquery_ready.append('''$.filterOptionsS3(%s)''' % \
-                            json.dumps(options, separators=JSONSEPARATORS))
+        # Allow shelter selection if user has permission
+        if current.auth.permission.has_permission("read", c="cr", f="shelter"):
+            formfields.insert(1, Field("shelter_id",
+                                       label = T("Shelter"),
+                                       requires = IS_ONE_OF_EMPTY(db, "cr_shelter.id",
+                                                                  rtable.shelter_id.represent,
+                                                                  ),
+                                       ))
+
+            # Filter shelter list to just those for organisation
+            options = {"trigger": "organisation_id",
+                       "target": "shelter_id",
+                       "lookupPrefix": "cr",
+                       "lookupResource": "shelter",
+                       "showEmptyField": False,
+                       "optional": True,
+                       }
+            jquery_ready = current.response.s3.jquery_ready
+            jquery_ready.append('''$.filterOptionsS3(%s)''' % \
+                               json.dumps(options, separators=JSONSEPARATORS))
 
         return formfields
 
@@ -2025,7 +2028,15 @@ class GrantsTotalReport(BaseReport):
     # -------------------------------------------------------------------------
     @staticmethod
     def get_shelter_site_id(shelter_id):
-        # TODO docstring
+        """
+            Returns the site_id for a shelter
+
+            Args:
+                shelter_id: the cr_shelter record ID
+
+            Returns:
+                site_id
+        """
 
         table = current.s3db.cr_shelter
         query = (table.id == shelter_id) & (table.deleted == False)
