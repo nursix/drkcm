@@ -38,7 +38,7 @@ class OrgMenuLayout(S3NavigationItem):
 
         if logo:
             path = URL(c="static", f="themes", args=list(logo))
-            logo = IMG(_src=path, _alt=name, _width=49)
+            logo = IMG(_src=path, _alt=name, _height=49, _class="org-menu-logo")
         else:
             logo = ""
 

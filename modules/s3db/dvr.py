@@ -4450,6 +4450,11 @@ class DVRCaseEventModel(DataModel):
                                    future = 0,
                                    writable = False,
                                    ),
+                     Field("present", "boolean",
+                           default = False,
+                           readable = False,
+                           writable = False,
+                           ),
                      # Field for quantitative recording of case events
                      # for statistical purposes (without linking them to
                      # individual cases)
@@ -4648,6 +4653,7 @@ class DVRCaseEventModel(DataModel):
 
         # Update last_seen (if event type requires personal presence)
         if event_type.presence_required:
+            db(table.id == record_id).update(present=True)
             dvr_update_last_seen(person_id)
 
         # Close appointment

@@ -1,5 +1,5 @@
 First Name,Last Name,Email,Password,Role,Organisation,Language
-Admin,JUH,juh_admin@example.com,eden,"ORG_GROUP_ADMIN/0, NEWSLETTER_AUTHOR/0,STAFF",Johanniter-Unfall-Hilfe,de
+Admin,LV,lv_admin@example.com,eden,"ORG_GROUP_ADMIN/0, NEWSLETTER_AUTHOR/0,STAFF",Landesverwaltung,de
 Admin,LUK RD,rd_admin@example.com,eden,"ORG_ADMIN, SHELTER_ADMIN, SUPPLY_ADMIN, STAFF",Betreuungsverband LUK Rendsburg,de
 Case Admin,LUK RD,rd_case_admin@example.com,eden,"CASE_ADMIN, SHELTER_MANAGER, SUPPLY_MANAGER, STAFF",Betreuungsverband LUK Rendsburg,de
 Case Manager,LUK RD,rd_case_manager@example.com,eden,"CASE_MANAGER, CHECKPOINT, STAFF",Betreuungsverband LUK Rendsburg,de

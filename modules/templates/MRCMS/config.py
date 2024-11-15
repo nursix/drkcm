@@ -14,15 +14,15 @@ def config(settings):
 
     T = current.T
 
-    settings.base.system_name = "Refugion"
-    settings.base.system_name_short = "Refugion"
+    settings.base.system_name = "MRCMS"
+    settings.base.system_name_short = "MRCMS"
 
     # PrePopulate data
     settings.base.prepopulate += ("MRCMS",)
-    settings.base.prepopulate_demo += ("MRCMS/Demo",)
+    #settings.base.prepopulate_demo += ("MRCMS/Demo",)
 
     # Theme (folder to use for views/layout.html)
-    settings.base.theme = "JUH"
+    settings.base.theme = "MRCMS"
     settings.base.theme_config = "MRCMS"
     settings.base.theme_layouts = "MRCMS"
 
@@ -129,11 +129,11 @@ def config(settings):
     #
     settings.custom.autogenerate_case_ids = True
 
-    settings.custom.context_org_name = "Johanniter-Unfall-Hilfe"
+    settings.custom.context_org_name = "Eden ASP"
 
-    settings.custom.org_menu_logo = ("JUH", "img", "logo_smaller.png")
-    settings.custom.homepage_logo = ("JUH", "img", "logo_small.svg")
-    settings.custom.idcard_default_logo = ("JUH", "img", "logo_small.png")
+    settings.custom.org_menu_logo = ("MRCMS", "img", "eden_asp_small.png")
+    settings.custom.homepage_logo = ("MRCMS", "img", "eden_asp_large.png")
+    settings.custom.idcard_default_logo = ("MRCMS", "img", "eden_asp_small.png")
 
     # -------------------------------------------------------------------------
     # General UI settings
