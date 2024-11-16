@@ -5965,43 +5965,44 @@ h4.profile-sub-header {
 /* line 1134, ../scss/theme/_misc.scss */
 .case-file-perspectives a, .case-file-perspectives span {
   margin: 0 0.4rem;
+  color: #004e9f;
 }
-/* line 1137, ../scss/theme/_misc.scss */
+/* line 1138, ../scss/theme/_misc.scss */
 .case-file-perspectives .current-perspective {
   color: #970000;
 }
 
-/* line 1143, ../scss/theme/_misc.scss */
+/* line 1144, ../scss/theme/_misc.scss */
 .bulk-checkout-form {
   padding: 1rem;
 }
-/* line 1146, ../scss/theme/_misc.scss */
+/* line 1147, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-info {
   font-size: 0.8rem;
   font-weight: bold;
 }
-/* line 1150, ../scss/theme/_misc.scss */
+/* line 1151, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-question {
   font-size: 0.8rem;
   font-weight: bold;
   border-top: 1px solid #eee;
   padding-top: 0.5rem;
 }
-/* line 1156, ../scss/theme/_misc.scss */
+/* line 1157, ../scss/theme/_misc.scss */
 .bulk-checkout-form label {
   font-size: 0.825rem;
 }
-/* line 1159, ../scss/theme/_misc.scss */
+/* line 1160, ../scss/theme/_misc.scss */
 .bulk-checkout-form .label-above {
   font-weight: bold;
 }
-/* line 1161, ../scss/theme/_misc.scss */
+/* line 1162, ../scss/theme/_misc.scss */
 .bulk-checkout-form .label-above select {
   display: block;
   margin-bottom: 1rem;
   min-width: 12rem;
 }
-/* line 1168, ../scss/theme/_misc.scss */
+/* line 1169, ../scss/theme/_misc.scss */
 .bulk-checkout-form .checkout-buttons button, .bulk-checkout-form .checkout-buttons a.cancel-form-btn {
   margin-bottom: 0;
 }
