@@ -372,7 +372,7 @@ class OrgMenuDefaultLayout(S3NavigationItem):
         logo = IMG(_src = "/%s/static/img/eden_asp_small.png" %
                           current.request.application,
                    _alt = name,
-                   _width = 38,
+                   _height = 49,
                    )
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]
