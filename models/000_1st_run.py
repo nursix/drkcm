@@ -11,7 +11,7 @@
 
 # Increment this when new dependencies are added
 # This will be compared to the version in the 0000_update_check.py 'canary' file.
-CURRENT_UPDATE_CHECK_ID = 4
+CURRENT_UPDATE_CHECK_ID = 5
 update_check_needed = False
 try:
     if CANARY_UPDATE_CHECK_ID != CURRENT_UPDATE_CHECK_ID:
@@ -29,11 +29,9 @@ if update_check_needed:
     settings = s3cfg.S3Config()
     # Run update checks
     from s3_update_check import update_check
-    errors = []
-    warnings = []
     messages = update_check(settings)
-    errors.extend(messages.get("error_messages", []))
-    warnings.extend(messages.get("warning_messages", []))
+    errors = messages.get("error_messages", [])
+    warnings = messages.get("warning_messages", [])
 
     # Catch-all check for dependency errors.
     # NB This does not satisfy the goal of calling out all the setup errors
@@ -60,9 +58,7 @@ if update_check_needed:
 
     # Create or update the canary file.
     from s3dal import portalocker
-    canary = open("applications/%s/models/0000_update_check.py" % appname, "w")
-    portalocker.lock(canary, portalocker.LOCK_EX)
-
+    canary = portalocker.LockedFile("applications/%s/models/0000_update_check.py" % appname, "w")
     statement = "CANARY_UPDATE_CHECK_ID = %s" % CURRENT_UPDATE_CHECK_ID
     canary.write(statement)
     canary.close()

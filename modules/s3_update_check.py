@@ -1,14 +1,7 @@
 import os
 import sys
 
-try:
-    from gluon import current
-except ImportError:
-    sys.stderr.write("""
-The installed version of Web2py is too old -- it does not define current.
-Please upgrade Web2py to a more recent version.
-""")
-    raise
+from gluon import current
 
 # Version of 000_config.py
 # Increment this if the user should update their running instance
@@ -96,7 +89,7 @@ def update_check(settings):
             web2py_version_ok = False
     if not web2py_version_ok:
         warnings.append(
-            "The installed version of Web2py is too old to support the current version of Sahana Eden."
+            "The installed version of Web2py is too old to support the current version of Eden."
             "\nPlease upgrade Web2py to at least version: %s" % \
             web2py_minimum_version)
 
@@ -239,62 +232,35 @@ def s3_check_python_lib(global_mandatory, template_mandatory, template_optional,
         checks for optional as well as mandatory python libraries
     """
 
-    errors = []
-    warnings = []
+    pyversion = sys.version_info[:2]
+    if pyversion[0] < 3 or pyversion[1] < 9:
+        remove_prefix = lambda d: d[7:] if d.startswith("python-") else d
+    else:
+        remove_prefix = lambda d: d.removeprefix("python-")
 
-    for dependency, err in global_mandatory.items():
-        try:
-            if "from" in dependency:
-                exec(dependency)
-            else:
-                exec("import %s" % dependency.lstrip("python-"))
-        except ImportError:
-            if err:
-                errors.append(err)
-            else:
-                errors.append("S3 unresolved dependency: %s required for Sahana to run" % dependency)
+    errors, warnings = [], []
 
-    for dependency, err in template_mandatory.items():
-        try:
-            if "from" in dependency:
-                exec(dependency)
-            else:
-                exec("import %s" % dependency)
-        except ImportError:
-            if err:
-                errors.append(err)
-            else:
-                errors.append("Unresolved template dependency: %s required" % dependency)
+    checks = ((global_mandatory, errors, "S3 unresolved dependency: %s required for Eden to run"),
+              (template_mandatory, errors, "Unresolved template dependency: %s required"),
+              (template_optional, warnings, "Unresolved optional dependency: %s required"),
+              (global_optional, warnings, "Unresolved optional dependency: %s required"),
+              )
 
-    for dependency, warn in template_optional.items():
-        try:
-            if "from" in dependency:
-                exec(dependency)
-            else:
-                exec("import %s" % dependency)
-        except ImportError:
-            if warn:
-                warnings.append(warn)
-            else:
-                warnings.append("Unresolved optional dependency: %s required" % dependency)
-        except Exception:
-            # Broken module, warn + pass for now
-            warnings.append("Error when loading optional dependency: %s" % dependency)
-
-    for dependency, warn in global_optional.items():
-        try:
-            if "from" in dependency:
-                exec(dependency)
-            else:
-                exec("import %s" % dependency)
-        except ImportError:
-            if warn:
-                warnings.append(warn)
-            else:
-                warnings.append("Unresolved optional dependency: %s required" % dependency)
-        except Exception:
-            # Broken module, warn + pass for now
-            warnings.append("Error when loading optional dependency: %s" % dependency)
+    for dependencies, messages, template in checks:
+        for dependency, error in dependencies.items():
+            try:
+                if "from" in dependency:
+                    exec(dependency)
+                else:
+                    __import__(remove_prefix(dependency))
+            except ImportError:
+                if error:
+                    messages.append(error)
+                else:
+                    messages.append(template % dependency)
+            except Exception:
+                # Broken module
+                messages.append("Error when loading optional dependency: %s" % dependency)
 
     return errors, warnings
 

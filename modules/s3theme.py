@@ -27,7 +27,6 @@
     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
     OTHER DEALINGS IN THE SOFTWARE.
 """
-from lxml.html import submit_form
 
 __all__ = ("formstyle_foundation",
            "formstyle_foundation_2col",
@@ -37,8 +36,7 @@ __all__ = ("formstyle_foundation",
            "FORMSTYLES",
            )
 
-from gluon import CAT, DIV, FIELDSET, INPUT, LABEL, SELECT, \
-                  TABLE, TAG, TD, TEXTAREA, TR
+from gluon import DIV, LABEL, TABLE, TAG, TD, TR
 from gluon.languages import lazyT
 
 # =============================================================================
