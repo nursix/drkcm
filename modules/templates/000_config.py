@@ -234,7 +234,7 @@ settings.import_template()
 #settings.base.prepopulate = 0
 
 # =============================================================================
-# A version number to tell update_check if there is a need to refresh the
+# A version number to tell UpdateCheck if there is a need to refresh the
 # running copy of this file
 VERSION = 1
 
