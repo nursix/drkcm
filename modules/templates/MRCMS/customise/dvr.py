@@ -842,8 +842,8 @@ def dvr_case_appointment_controller(**attr):
 
             # Custom list fields
             list_fields = [(T("ID"), "person_id$pe_label"),
-                           "person_id$first_name",
                            "person_id$last_name",
+                           "person_id$first_name",
                            "type_id",
                            #"date",
                            (T("Date"), "start_date"),
