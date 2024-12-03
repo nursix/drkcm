@@ -523,7 +523,7 @@
             navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: {
-                        ideal: ['environment', 'user']
+                        ideal: 'environment'
                     }
                 },
                 audio: false
