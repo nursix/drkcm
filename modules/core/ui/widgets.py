@@ -37,6 +37,7 @@ __all__ = ("S3AgeWidget",
            "S3HiddenWidget",
            "S3HierarchyWidget",
            "S3ImageCropWidget",
+           "ImageUploadWidget",
            "S3InvBinWidget",
            "S3KeyValueWidget",
            # Only used inside this module
@@ -65,6 +66,8 @@ import json
 import locale
 import os
 import re
+
+from io import BytesIO
 from uuid import uuid4
 
 try:
@@ -2447,6 +2450,235 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
             element.attributes["_data-uid"] = uid
 
         return DIV(elements)
+
+# =============================================================================
+class ImageUploadWidget(EdenFormWidget):
+    """
+        Allows the user to crop an image and uploads it.
+        Cropping & Scaling (if necessary) done client-side
+            - currently using JCrop (https://jcrop.com)
+
+        TODO Doesn't currently work with Inline Component Forms
+    """
+
+    def __init__(self,
+                 image_bounds = None,
+                 ):
+        """
+            Args:
+                image_bounds: Limits the Size of the Image that can be
+                              uploaded, tuple (MaxWidth, MaxHeight)
+        """
+        self.image_bounds = image_bounds
+
+        self.prefix = ""
+
+    # -------------------------------------------------------------------------
+    def __call__(self, field, value, download_url=None, **attributes):
+        """
+            Args:
+                field: Field using this widget
+                value: value if any
+                download_url: Download URL for saved Image
+        """
+        # TODO cleanup
+
+        T = current.T
+
+        # Script injection ----------------------------------------------------
+        # TODO move into separate function
+
+        script_dir = "/%s/static/scripts" % current.request.application
+
+        s3 = current.response.s3
+        debug = s3.debug
+        scripts = s3.scripts
+
+        if debug:
+            script = "%s/jquery.color.js" % script_dir
+            if script not in scripts:
+                scripts.append(script)
+            script = "%s/jquery.Jcrop.js" % script_dir
+            if script not in scripts:
+                scripts.append(script)
+            script = "%s/S3/s3.ui.imageupload.js" % script_dir
+            if script not in scripts:
+                scripts.append(script)
+        else:
+            # TODO configure minify
+            script = "%s/S3/s3.ui.imageupload.min.js" % script_dir
+            if script not in scripts:
+                scripts.append(script)
+
+        s3.js_global.append('''
+i18n.invalid_image='%s'
+i18n.supported_image_formats='%s'
+i18n.upload_new_image='%s'
+i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
+                              T("Supported formats"),
+                              T("Upload different Image"),
+                              T("Upload Image")))
+
+        # CSS injection -------------------------------------------------------
+        # TODO move into separate function
+
+        stylesheets = s3.stylesheets
+        sheet = "plugins/jquery.Jcrop.css"
+        if sheet not in stylesheets:
+            stylesheets.append(sheet)
+
+        # Input elements ------------------------------------------------------
+
+        postprocess = self.process_image
+        requires = field.requires
+        if isinstance(requires, (tuple, list)):
+            requires = [postprocess] + list(requires)
+        elif requires:
+            requires = [postprocess, requires]
+        else:
+            requires = postprocess
+
+        widget_id = "cropwidget-%s" % uuid4().hex
+        attr = self._attributes(field, {"_class": "imagecrop-upload",
+                                        "_id": widget_id,
+                                        "_type": "file",
+                                        }, **attributes)
+        attr["requires"] = requires
+
+        elements = [DIV(_class = "tooltip",
+                        _title = "%s|%s" % \
+                                 (T("Crop Image"),
+                                  T("Select an image to upload. You can crop this later by opening this record."),
+                                  ),
+                        ),
+                    ]
+        append = elements.append
+
+        # Set up the canvas
+        # Canvas is used to scale and crop the Image on the client side
+        canvas = TAG["canvas"](_class="image-input-canvas",
+                               _style="display:none",
+                               )
+
+        image_bounds = self.image_bounds
+        if image_bounds:
+            canvas.attributes["_width"] = image_bounds[0]
+            canvas.attributes["_height"] = image_bounds[1]
+        else:
+            # Images are not scaled and are uploaded as they are
+            canvas.attributes["_width"] = 0
+
+        append(canvas)
+
+        btn_class = "imagecrop-btn button"
+
+        buttons = [A(T("Enable Crop"),
+                     _class="select-crop-btn %s" % btn_class,
+                     _role="button"),
+                   A(T("Crop Image"),
+                     _class="crop-btn %s" % btn_class,
+                     _role="button"),
+                   A(T("Cancel"),
+                     _class="remove-btn %s" % btn_class,
+                     )
+                   ]
+
+        parts = [LEGEND(T("Uploaded Image"))] + buttons + \
+                [HR(_style="display:none"),
+                 IMG(#_id="uploaded-image",
+                     _class="uploaded-image",
+                     _style="display:none")
+                 ]
+
+        display_div = FIELDSET(parts, _class="image-container")
+
+        prefix = self.prefix = str(field).replace(".", "_")
+        crop_data_attr = {"_type": "hidden",
+                          # TODO this name needs to be specific per instance,
+                          #      e.g. using the field name as prefix
+                          "_name": "%s-imagecrop-data" % prefix,
+                          "_class": "imagecrop-data"
+                          }
+
+        if value and download_url:
+            # Set the download URL as imagecrop input value
+            if callable(download_url):
+                download_url = download_url()
+            url = crop_data_attr["_value"] = "%s/%s" % (download_url, value)
+
+            # Retain the original file name, if possible
+            filename = field.retrieve(value, nameonly=True)[0]
+            if filename:
+                crop_data_attr["data"] = {"filename": filename}
+        else:
+            url = None
+
+        upload_title = T("Upload different Image") if url else T("Upload Image")
+
+        # TODO proper label, icon and l10n + option to disable+hide
+        capture_btn = BUTTON("Capture Image",
+                             _type = "button",
+                             _class = "primary button action-btn capture-btn",
+                             # TODO move style into theme
+                             _style = "width:100%;"
+                             #_disabled = "disabled",
+                             )
+
+        append(FIELDSET(LEGEND(upload_title, _class = "upload-title"),
+                        DIV(INPUT(**attr),
+                            DIV(T("or Drop here"), _class="imagecrop-drag"),
+                            capture_btn,
+                            _class = "upload-container",
+                            _style = "display:none" if url else None,
+                            ),
+                        ))
+        append(INPUT(**crop_data_attr))
+        append(display_div)
+
+        widget_opts = {"field": prefix,
+                       }
+        jquery_ready = s3.jquery_ready
+        script = """$('#%s').imageUpload(%s);""" % (widget_id, json.dumps(widget_opts))
+        if script not in jquery_ready:
+            jquery_ready.append(script)
+
+        return DIV(elements, _class="image-input")
+
+    # -------------------------------------------------------------------------
+    def process_image(self, value):
+        """
+            Post-processes the uploaded (+cropped) image
+
+            Args:
+                value: the input value (=uploaded image)
+
+            Returns:
+                a tuple (value, error), with value being the processed
+                image as Storage {filename, file} (or a FieldStorage if
+                the input already contains a file)
+        """
+
+        # If there is an uploaded file, accept it as-is
+        if value not in (b"", None):
+            return value, None
+
+        # Check for cropped image
+        variable = "%s-imagecrop-data" % self.prefix
+        cropped_image = current.request.post_vars.get(variable)
+        if not cropped_image:
+            return None, current.T("No image was specified!")
+
+        # Parse the data
+        metadata, cropped_image = cropped_image.rsplit(",", 1)
+        filename = metadata.rsplit(";", 2)[0]
+
+        # Decode the base64-encoded image
+        import base64
+        f = Storage()
+        f.filename = filename
+        f.file = BytesIO(base64.b64decode(cropped_image))
+
+        return f, None
 
 # =============================================================================
 class S3InvBinWidget(FormWidget):

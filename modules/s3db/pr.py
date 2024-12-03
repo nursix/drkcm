@@ -3774,27 +3774,6 @@ class PRImageModel(DataModel):
             9:T("other")
         }
 
-        def get_file(table):
-            """ Decorator to return a table-specific file-callback """
-
-            def cb():
-                """ Callback to return the file field for our record """
-
-                if len(request.args) < 3:
-                    return None
-                try:
-                    record_id = int(request.args[2])
-                except ValueError:
-                    # Probably a 'create' method
-                    return None
-                query = (table.id == record_id)
-                record = db(query).select(table.image,
-                                          limitby = (0, 1)
-                                          ).first()
-                return record.image if record else None
-
-            return cb
-
         tablename = "pr_image"
         self.define_table(tablename,
                           # Component not Instance
@@ -3809,7 +3788,7 @@ class PRImageModel(DataModel):
                                 label = T("Image"),
                                 length = current.MAX_FILENAME_LENGTH,
                                 represent = self.pr_image_represent,
-                                widget = S3ImageCropWidget((600, 600)),
+                                widget = ImageUploadWidget((600,600)), #S3ImageCropWidget((600, 600)),
                                 comment =  DIV(_class = "tooltip",
                                                _title = "%s|%s" % (T("Image"),
                                                                    T("Upload an image file here. If you don't upload an image file, then you must specify its location in the URL field."),
@@ -3841,19 +3820,6 @@ class PRImageModel(DataModel):
                                                                           ),
                                                       ),
                                         ),
-                          # Image-validator needs the Table instance
-                          # => set it on-define to allow the table to be lazy
-                          on_define = lambda table: [
-                                        table.image.set_attributes(
-                                            requires = IS_PROCESSED_IMAGE(
-                                                        "image",
-                                                        get_file(table),
-                                                        upload_path = os.path.join(request.folder,
-                                                                                   "uploads",
-                                                                                   ),
-                                                        ),
-                                        ),
-                                       ]
                           )
 
         # CRUD Strings
