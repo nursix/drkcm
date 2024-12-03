@@ -520,8 +520,14 @@
                 }
             });
 
-            navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-                .then((stream) => {
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: {
+                        ideal: ['environment', 'user']
+                    }
+                },
+                audio: false
+            }).then((stream) => {
 
                     videoInput.show();
                     captureDialog.dialog('open');
