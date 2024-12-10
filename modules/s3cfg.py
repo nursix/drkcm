@@ -2680,6 +2680,14 @@ class S3Config(Storage):
         """
         return self.ui.get("checkpoint_multi_preselect_all", True)
 
+    def get_ui_image_upload_use_camera(self):
+        """
+            Enable ImageUploadWidgets to capture images from a built-in
+            or connected web camera
+            - this can still be disabled per individual widget instance
+        """
+        return self.ui.get("image_upload_use_camera", True)
+
     # =========================================================================
     # Messaging
     #

@@ -19,9 +19,6 @@
          */
         options: {
 
-            // Localized strings
-            videoDialogTitle: 'Capture Image',
-            shutterButtonLabel: 'OK'
         },
 
         /**
@@ -43,10 +40,10 @@
             const opts = this.options,
                   $el = $(this.element),
                   widgetID = $el.attr('id'),
-                  container = $el.closest('div.image-input');
+                  container = $el.closest('div.image-upload');
 
             // TODO proper naming and sorting of objects
-            this.canvas = $('.image-input-canvas', container);
+            this.canvas = $('.image-upload-canvas', container);
             this.canvasSize = [0, 0];
             this.toScale = true;
 
@@ -99,7 +96,7 @@
             this._removeVideoDialog();
 
             const $el = $(this.element),
-                  container = $el.closest('div.image-input'),
+                  container = $el.closest('div.image-upload'),
                   canvas = this.canvas,
                   self = this;
 
@@ -334,7 +331,7 @@
             let image = this.image;
 
             // Crop the Image
-            var $jcropHolder = $('.jcrop-holder', $(this.element).closest('div.image-input'));
+            var $jcropHolder = $('.jcrop-holder', $(this.element).closest('div.image-upload'));
             var width = parseInt($jcropHolder.css('width').split('px')[0]),
                 height = parseInt($jcropHolder.css('height').split('px')[0]);
             var scaleX = image.width / width,
@@ -466,33 +463,22 @@
          */
         _openVideoDialog: function() {
 
-            const opts = this.options,
-                  self = this,
+            const self = this,
                   ns = this.eventNamespace;
 
-            var videoForm = $('<div class="capture-form">').css({"overflow": "hidden", "max-width": "100%"}),
-                // TODO move styles into theme
-                videoInput = $('<video>').css({
-                    "width": "800px",
-                    "max-width": "100%",
-                    "display": "block",
-                    "margin-left": "auto",
-                    "margin-right": "auto",
-                }).appendTo(videoForm),
-                shutterButton = $('<button type="button">' + opts.shutterButtonLabel + '</button>');
+            var videoForm = $('<div class="capture-form">'),
+                videoInput = $('<video class="preview-video">').appendTo(videoForm),
+                shutterButton = $('<button type="button">' + i18n.capture_image_ok + '</button>');
+
+            shutterButton.addClass("primary button action-btn shutter-btn").appendTo(videoForm);
 
             this.videoForm = videoForm;
-
-            shutterButton.addClass("primary button action-btn").css({
-                "display": "block",
-                "width": "100%"
-            }).appendTo(videoForm);
 
             var captureButton = this.captureButton.hide(),
                 throbber = $('<div class="inline-throbber">').insertAfter(captureButton);
 
             var videoDialog = videoForm.dialog({
-                title: opts.videoDialogTitle,
+                title: i18n.capture_image_from_video,
                 width: 800,
                 //height: 600,
                 autoOpen: false,

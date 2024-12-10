@@ -501,6 +501,26 @@ div.s3-groupedopts-widget {
     margin-left: 0.2em;
     padding: 0.3em;
 }
+.image-upload {
+    .capture-btn {
+        width: 100%;
+    }
+}
+.capture-form {
+    overflow: hidden;
+    max-width: 100%;
+    .preview-video {
+        display: block;
+        width: 800px;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .shutter-btn {
+        display: block;
+        width: 100%;
+        margin: 1px 0;
+    }
+}
 
 // ----------------------------------------------------------------------------
 // Widget Advice

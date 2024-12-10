@@ -2454,22 +2454,31 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
 # =============================================================================
 class ImageUploadWidget(EdenFormWidget):
     """
-        Allows the user to crop an image and uploads it.
-        Cropping & Scaling (if necessary) done client-side
+        Allows the user to select and crop an image for upload
+            - cropping & scaling (if necessary) is done client-side
             - currently using JCrop (https://jcrop.com)
-
-        TODO Doesn't currently work with Inline Component Forms
     """
 
     def __init__(self,
                  image_bounds = None,
+                 use_camera = True,
                  ):
         """
             Args:
                 image_bounds: Limits the Size of the Image that can be
                               uploaded, tuple (MaxWidth, MaxHeight)
+                use_camera: activate option to capture images from built-in
+                            or connected web camera
         """
+
         self.image_bounds = image_bounds
+
+        if use_camera:
+            # Apply global setting
+            self.use_camera = current.deployment_settings.get_ui_image_upload_use_camera()
+        else:
+            # Never use camera, irrespective global setting
+            self.use_camera = False
 
         self.widget_id = None
 
@@ -2481,7 +2490,6 @@ class ImageUploadWidget(EdenFormWidget):
                 value: value if any
                 download_url: Download URL for saved Image
         """
-        # TODO cleanup
 
         T = current.T
 
@@ -2520,16 +2528,15 @@ class ImageUploadWidget(EdenFormWidget):
         file_input = INPUT(**attr)
 
         # The upload area
-        # - a normal file input, an area for drag&drop, and a button to capture
-        #   a still from the device camera or webcam
-        capture_btn = BUTTON(ICON("fa fa-video-camera"), T("Capture from Camera"),
-                             _type = "button",
-                             _class = "primary button action-btn capture-btn",
-                             # TODO move style into theme
-                             _style = "width:100%;"
-                             # TODO Option/setting to disable video capture
-                             #_disabled = "disabled",
-                             )
+        # - a normal file input, an area for drag&drop
+        if self.use_camera:
+            # Add button to capture image from built-in/connected web camera
+            capture_btn = BUTTON(ICON("fa fa-video-camera"), T("Capture Image from Video"),
+                                 _type = "button",
+                                 _class = "primary button action-btn capture-btn",
+                                 )
+        else:
+            capture_btn = ""
 
         upload_title = T("Upload different Image") if url else T("Upload Image")
         upload_area = FIELDSET(LEGEND(upload_title, _class = "upload-title"),
@@ -2543,7 +2550,7 @@ class ImageUploadWidget(EdenFormWidget):
 
         # Hidden canvas
         # - used to scale and crop the image on the client side
-        canvas = TAG["canvas"](_class="image-input-canvas",
+        canvas = TAG["canvas"](_class="image-upload-canvas",
                                _style="display:none",
                                )
 
@@ -2584,22 +2591,17 @@ class ImageUploadWidget(EdenFormWidget):
             crop_data_attr["data"] = {"url": url,
                                       "filename": filename,
                                       }
-        #     crop_data_attr["_value"] = url
-        # if filename:
-        #     crop_data_attr["data"] = {"filename": filename}
         crop_data = INPUT(**crop_data_attr)
 
         # Inject scripts + styles
-        widget_opts = {"videoDialogTitle": s3_str(T("Capture Image")),
-                       "shutterButtonLabel": s3_str(T("OK")),
-                       }
+        widget_opts = {}
         self.inject_script(widget_id, widget_opts)
 
         return DIV(upload_area,
                    canvas,
                    crop_area,
                    crop_data,
-                   _class = "image-input",
+                   _class = "image-upload",
                    )
 
     # -------------------------------------------------------------------------
@@ -2675,10 +2677,14 @@ class ImageUploadWidget(EdenFormWidget):
 
         # I18n strings
         s3.js_global.append('''
+i18n.capture_image_from_video='%s'
+i18n.capture_image_ok='%s'
 i18n.invalid_image='%s'
 i18n.supported_image_formats='%s'
 i18n.upload_new_image='%s'
-i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
+i18n.upload_image='%s' ''' % (T("Capture Image from Video"),
+                              T("OK"),
+                              T("Please select a valid image!"),
                               T("Supported formats"),
                               T("Upload different Image"),
                               T("Upload Image"),
