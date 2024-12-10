@@ -16,11 +16,12 @@
 
         /**
          * Default options
-         *
-         * TODO document options
          */
         options: {
-            field: "None"
+
+            // Localized strings
+            videoDialogTitle: 'Capture Image',
+            shutterButtonLabel: 'OK'
         },
 
         /**
@@ -41,6 +42,7 @@
 
             const opts = this.options,
                   $el = $(this.element),
+                  widgetID = $el.attr('id'),
                   container = $el.closest('div.image-input');
 
             // TODO proper naming and sorting of objects
@@ -55,8 +57,9 @@
             this.dropArea = $('.imagecrop-drag', container);
 
             this.captureButton = $('.capture-btn', container);
+            this.videoDialog = null;
 
-            this.imageCropData = $('input[name="' + opts.field + '-imagecrop-data"]', container);
+            this.imageData = $('input#' + widgetID + '-imagecrop-data', container);
 
             this.selectCrop = $('.select-crop-btn', container);
             this.crop = $('.crop-btn', container);
@@ -77,9 +80,8 @@
          */
         _destroy: function() {
 
-            // TODO destroy jCropAPI
-            // TODO destroy cameraDialog
-
+            this._removeCropAPI();
+            this._removeVideoDialog();
         },
 
         /**
@@ -94,6 +96,7 @@
             this.extension = 'png';
 
             this._removeCropAPI();
+            this._removeVideoDialog();
 
             const $el = $(this.element),
                   container = $el.closest('div.image-input'),
@@ -114,16 +117,15 @@
             }
             this.canvasSize = [widthLimit, heightLimit];
 
-            // Image already stored in DB ( Update form )
-            // load the Image
-
+            // Load previously uploaded image
             var img = this.image,
-                // TODO avoid double-use of imageCropData for both input and output
-                imgData = this.imageCropData.attr('value'),
-                fileName = this.imageCropData.data('filename');
-            if (imgData !== undefined) {
-                img.src = imgData;
+                imgData = this.imageData,
+                downloadURL = imgData.data('url');
+
+            if (downloadURL) {
+                img.src = downloadURL;
                 img.onload = function() {
+                    // Draw image on canvas
                     canvas.attr({
                         width: img.width,
                         height: img.height
@@ -131,7 +133,8 @@
                     canvas[0].getContext('2d')
                              .drawImage(img, 0, 0, img.width, img.height);
 
-                    var t = imgData.split('.'),
+                    // Determine file type/extension
+                    let t = downloadURL.split('.'),
                         extension = t[t.length - 1];
                     if (extension == 'jpg') {
                         extension = 'jpeg';
@@ -139,14 +142,16 @@
                     self.extension = extension;
 
                     // Retain the original file name if available
+                    let fileName = imgData.data('filename');
                     if (fileName) {
                         self.fileName = fileName;
                     } else {
-                        let now = new Date()
+                        let now = new Date();
                         self.fileName = 'upload_' + now.valueOf() + '.' + extension;
                     }
 
-                    var data = canvas[0].toDataURL('image/' + extension);
+                    // Re-write canvas data to image, and load into preview/crop area
+                    let data = canvas[0].toDataURL('image/' + extension, 0.99);
                     self._loadImage(data);
                 };
             }
@@ -193,14 +198,8 @@
          * @param {string} data: the image as dataURL
          */
         _loadImage: function(data) {
-            // TODO cleanup
-
-            // TODO make sure we do have a file name
-
-            const self = this;
-
-            let image = this.image,
-                scaledImage;
+            const self = this,
+                  image = this.image;
 
             // Image uploaded by user
             image.src = data;
@@ -209,21 +208,22 @@
                 var canvasSize = self.canvasSize, // the original canvas size
                     imageSize = [image.width, image.height];
 
-                let scale = self._calculateScale(canvasSize, imageSize);
+                let scale = self._calculateScale(canvasSize, imageSize),
+                    canvas = self.canvas[0];
 
-                let canvas = self.canvas[0];
                 canvas.width = scale[0];
                 canvas.height = scale[1];
+
                 canvas.getContext('2d')
                       .drawImage(image, 0, 0, scale[0], scale[1]);
 
-                scaledImage = canvas.toDataURL('image/' + self.extension);
+                let scaledImage = canvas.toDataURL('image/' + self.extension, 0.99);
                 if (self.toScale) {
-                    self.imageCropData.val(self.fileName + ';' + scaledImage);
+                    self.imageData.val(self.fileName + ';' + scaledImage);
                 }
                 else {
                     // Don't Scale
-                    self.imageCropData.val(self.fileName + ';' + data);
+                    self.imageData.val(self.fileName + ';' + data);
                 }
                 self.uploadedImage.attr({
                     src: scaledImage,
@@ -231,10 +231,7 @@
                 });
                 self.selectCrop.css({
                     display: 'inline'
-                });
-                $('hr').attr({ // TODO restrict to container resp. the particular separator
-                    style: 'display:block'
-                });
+                }).siblings('hr').show();
             };
         },
 
@@ -244,14 +241,12 @@
          * Initializes the crop function
          */
         _initCropAPI: function() {
-            // TODO cleanup
 
             const self = this;
 
             this._removeCropAPI();
 
             this.uploadedImage.Jcrop({
-                //onChange: updateCropPoints,
                 onChange: function(coords) {
                     self.cropPoints = [coords.x, coords.y, coords.x2, coords.y2];
                 },
@@ -271,8 +266,6 @@
          */
         _removeCropAPI: function() {
 
-            this._deactivateCrop();
-
             const jCropAPI = this.jCropAPI;
             if (jCropAPI) {
                 jCropAPI.destroy();
@@ -285,10 +278,8 @@
          * Enables (activates) the crop selection
          */
         _activateCrop: function() {
-            // TODO cleanup
 
             const jCropAPI = this.jCropAPI;
-
             if (!jCropAPI) {
                 return;
             }
@@ -296,11 +287,9 @@
             jCropAPI.enable();
 
             var b = jCropAPI.getBounds(),
-                midx = b[0]/2,
-                midy = b[1]/2,
-                addx = b[0]/4,
-                addy = b[1]/4,
-                defaultSelection = [midx - addx, midy - addy, midx + addx, midy + addy];
+                dx = b[0]/7,
+                dy = b[1]/7,
+                defaultSelection = [dx, dy, b[0] - dx, b[1] - dy];
 
             jCropAPI.animateTo(defaultSelection);
 
@@ -319,13 +308,8 @@
          * Disables (deactivates) the crop selection
          */
         _deactivateCrop: function() {
-            // TODO cleanup
-
-            // uses global vars
-            // $crop, $cancel, $selectCrop
 
             const jCropAPI = this.jCropAPI;
-
             if (jCropAPI) {
                 jCropAPI.release();
                 jCropAPI.disable();
@@ -371,6 +355,7 @@
             // calculate Canvas Height
             height = Math.round((y2 - y1) * scaleY);
 
+            this._deactivateCrop();
             this._removeCropAPI();
 
             let $canvas = this.canvas,
@@ -382,7 +367,7 @@
             canvas.getContext('2d')
                   .drawImage(image, Math.round(x1 * scaleX), Math.round(y1 * scaleX), width, height, 0, 0, width, height);
 
-            var data = canvas.toDataURL('image/' + this.extension);
+            var data = canvas.toDataURL('image/' + this.extension, 0.99);
             this._loadImage(data);
 
         },
@@ -397,7 +382,6 @@
          * @returns: boolean
          */
         _isValidImage: function(file) {
-            // TODO cleanup
 
             var info = file.type.split('/'),
                 filetype = info[0],
@@ -416,49 +400,39 @@
         },
 
         /**
-         * Handles hovering of a file over the drop area
-         *   - changes the CSS class of the target area to indicate the hovering
+         * Indicates whether there is a file over the drop area (or not)
+         *   - changes the CSS class of the target area
          *
          * @param {event} e: the event triggering the function call
          */
-        _FileHoverHandler: function(e) {
+        _indicateFileOver: function(e) {
 
             e.stopPropagation();
             e.preventDefault();
 
-            let $target = $(e.target);
-
-            $target.addClass('imagecrop-drag');
+            let dropArea = $(e.target);
             if (e.type == 'dragenter') {
-                $target.addClass('hover');
+                dropArea.addClass('hover');
             } else {
-                $target.removeClass('hover');
+                dropArea.removeClass('hover');
             }
         },
 
         /**
-         * Handles file selection
+         * Loads the selected file (either file input or drag&drop)
          *
          * @param {event} e: the event triggering the function call
          */
-        _FileSelectHandler: function(e) {
-            // TODO cleanup
+        _loadSelectedFile: function(e) {
 
             const $el = $(this.element),
                   self = this;
 
             this._removeCropAPI();
-            if (e.type == 'drop') {
-                // Remove file-over style
-                this._FileHoverHandler(e);
-            }
+            this._indicateFileOver(e);
 
             // Hide UploadContainer
-            setTimeout(function() {
-                self.uploadContainer.slideUp('fast', function() {
-                    self.uploadTitle.html('<a>' + i18n.upload_new_image + '</a>');
-                });
-            }, 500);
+            this._hideUpload(true);
 
             // Verify and load the uploaded file
             var files = e.target.files || e.originalEvent.dataTransfer.files,
@@ -476,7 +450,6 @@
                 reader.readAsDataURL(file);
 
             } else {
-
                 // TODO Replace ACCEPTED_FORMATS by i18n string
                 alert(i18n.invalid_image + '\n' + i18n.supported_image_formats + ': ' + ACCEPTED_FORMATS);
             }
@@ -491,28 +464,37 @@
         /**
          * Opens the camera dialog to capture an image
          */
-        _openCameraDialog: function() {
+        _openVideoDialog: function() {
 
-            const self = this,
+            const opts = this.options,
+                  self = this,
                   ns = this.eventNamespace;
 
-            // TODO move styles into theme
-            // TODO fixed video width, or default to some value (read what the device can do?)?
-            var captureForm = $('<div class="capture-form">').css({"overflow": "hidden", "max-width": "100%"}),
-                videoInput = $('<video>').css({"width":"640px","display":"block", "margin-left":"auto","margin-right":"auto"}).appendTo(captureForm),
-                // TODO i18n
-                shutterButton = $('<button type="button">' + 'Capture Image' + '</button>');
+            var videoForm = $('<div class="capture-form">').css({"overflow": "hidden", "max-width": "100%"}),
+                // TODO move styles into theme
+                videoInput = $('<video>').css({
+                    "width": "800px",
+                    "max-width": "100%",
+                    "display": "block",
+                    "margin-left": "auto",
+                    "margin-right": "auto",
+                }).appendTo(videoForm),
+                shutterButton = $('<button type="button">' + opts.shutterButtonLabel + '</button>');
+
+            this.videoForm = videoForm;
 
             shutterButton.addClass("primary button action-btn").css({
                 "display": "block",
                 "width": "100%"
-            }).appendTo(captureForm);
+            }).appendTo(videoForm);
 
+            var captureButton = this.captureButton.hide(),
+                throbber = $('<div class="inline-throbber">').insertAfter(captureButton);
 
-            var captureDialog = captureForm.dialog({
-                title: 'Capture Image', // TODO i18n
-                width: 640,
-//                 height: 480,
+            var videoDialog = videoForm.dialog({
+                title: opts.videoDialogTitle,
+                width: 800,
+                //height: 600,
                 autoOpen: false,
                 modal: true,
                 'classes': {'ui-dialog': 'capture-dialog'},
@@ -524,67 +506,128 @@
                 video: {
                     facingMode: {
                         ideal: 'environment'
-                    }
+                    },
+                    width: { ideal: 1280 },
+                    height: { ideal: 1280 },
                 },
                 audio: false
             }).then((stream) => {
 
-                    videoInput.show();
-                    captureDialog.dialog('open');
+                throbber.remove();
+                captureButton.show();
 
-                    let video = videoInput.get(0);
-                    video.srcObject = stream;
-                    video.play();
+                videoInput.show();
+                videoForm.dialog('open');
 
-                    videoInput.add(shutterButton).off(ns).on('click' + ns, function(e) {
-                        e.stopPropagation();
-                        e.preventDefault();
+                let video = videoInput.get(0);
+                video.srcObject = stream;
+                video.play();
 
-                        self._captureImage(video);
+                videoInput.add(shutterButton).off(ns).on('click' + ns, function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
 
-                        // TODO this needs to be done in self._destroy too
-                        // TODO this needs to be done before creating either, too
-                        captureDialog.dialog('close').dialog('destroy');
-                        captureForm.remove();
-                    });
-                })
-                .catch((err) => {
-                    alert(`An error occurred: ${err}`);
-                    captureForm.dialog('destroy');
-                    self.captureButton.prop('disabled', true).hide();
+                    self._captureImage(video, stream);
+                    self._removeVideoDialog();
                 });
+            }).catch((err) => {
+                alert(`An error occurred: ${err}`);
+
+                throbber.remove();
+                self.captureButton.prop('disabled', true).hide();
+
+                self._removeVideoDialog();
+            });
         },
 
         /**
-         * Takes a picture with the camera and loads it into the cropping area
+         * Captures a still image from the video stream and loads it into the cropping area
+         *
+         * @param {DOMElement} video: the video DOM node
          */
-        _captureImage: function(video) {
+        _captureImage: function(video, stream) {
 
-            // TODO can use this.canvas here too
-            let canvas = document.createElement('canvas');
+            const self = this;
 
-            // TODO Calculate from video (height may be unavailable)
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            var data,
+                useImageCapture = false;
+            if ("ImageCapture" in window) {
+                try {
+                    const track = stream.getVideoTracks()[0];
 
-            // TODO fallback for width/height
+                    let imageCapture = new ImageCapture(track);
+                    imageCapture.takePhoto().then(function(blob) {
 
-            let context = canvas.getContext("2d");
+                        data = URL.createObjectURL(blob);
 
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        self._hideUpload(true);
+                        if (data) {
+                            let now = new Date();
+                            self.fileName = 'capture_' + now.valueOf() + '.png';
+                            self.extension = 'png';
+                            self._loadImage(data);
+                        }
+                    });
 
-            let data = canvas.toDataURL("image/png");
-            if (data) {
-                let now = new Date();
-                this.fileName = 'capture_' + now.valueOf() + '.png';
-                this.extension = 'png';
-                this._loadImage(data);
+                    useImageCapture = True;
+
+                } catch(e) {
+                    // pass
+                }
             }
 
-            canvas.remove();
+            if (!useImageCapture) {
+                let canvas = document.createElement('canvas');
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext("2d")
+                      .drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                data = canvas.toDataURL("image/png", 0.99);
+                canvas.remove();
+
+                self._hideUpload(true);
+                if (data) {
+                    let now = new Date();
+                    self.fileName = 'capture_' + now.valueOf() + '.png';
+                    self.extension = 'png';
+                    self._loadImage(data);
+                }
+            }
+
+        },
+
+        /**
+         * Removes the video dialog
+         */
+        _removeVideoDialog: function() {
+
+            var videoForm = this.videoForm;
+            if (videoForm) {
+                videoForm.dialog('close').dialog('destroy').remove();
+                this.videoForm = null;
+            }
         },
 
         // Utilities ==========================================================
+
+        /**
+         * Hides the upload area after image upload/capture
+         *
+         * @param {bool} hasImage: whether an image has been loaded
+         */
+        _hideUpload: function(hasImage) {
+
+            const self = this;
+
+            var label = hasImage ? i18n.upload_new_image : i18n.upload_image;
+            setTimeout(function() {
+                self.uploadContainer.slideUp('fast', function() {
+                    self.uploadTitle.html('<a>' + label + '</a>');
+                });
+            }, 500);
+        },
 
         /**
          * Bind events to generated elements (after refresh)
@@ -596,7 +639,7 @@
                 self = this;
 
             $el.on('change' + ns, function(e) {
-                self._FileSelectHandler(e);
+                self._loadSelectedFile(e);
             });
 
             this.uploadTitle.on('click' + ns, function(e) {
@@ -621,20 +664,20 @@
             this.dropArea.on('dragenter' + ns, function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                self._FileHoverHandler(e);
+                self._indicateFileOver(e);
             }).on('dragover' + ns, function(e) {
                 e.stopPropagation();
                 e.preventDefault();
             }).on('dragleave' + ns, function(e) {
-                self._FileHoverHandler(e);
+                self._indicateFileOver(e);
             }).on('drop' + ns, function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                self._FileSelectHandler(e);
+                self._loadSelectedFile(e);
             });
 
             this.captureButton.on('click' + ns, function() {
-                self._openCameraDialog();
+                self._openVideoDialog();
             });
 
             return this;
