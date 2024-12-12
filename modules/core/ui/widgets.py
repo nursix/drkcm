@@ -2629,8 +2629,11 @@ class ImageUploadWidget(EdenFormWidget):
             return None, current.T("No image was specified!")
 
         # Parse the data
-        metadata, cropped_image = cropped_image.rsplit(",", 1)
-        filename = metadata.rsplit(";", 2)[0]
+        try:
+            metadata, cropped_image = cropped_image.rsplit(",", 1)
+            filename = metadata.rsplit(";", 2)[0]
+        except (ValueError, TypeError) as e:
+            return None, current.T("invalid value!")
 
         # Decode the base64-encoded image
         import base64
