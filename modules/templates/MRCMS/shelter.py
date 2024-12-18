@@ -1271,9 +1271,11 @@ class BulkRegistration(CRUDMethod):
         resource = self.resource
         table = resource.table
 
-        # Select-URL for redirections (retain closed/archived flags)
         get_vars = r.get_vars
-        select_vars = {k:get_vars[k] for k in get_vars.keys() & {"closed", "archived"}}
+
+        # Select-URL for redirections (retain closed/archived flags)
+        select_vars = {"$search": "session"}
+        select_vars.update({k:get_vars[k] for k in get_vars.keys() & {"closed", "archived"}})
         select_url = r.url(method="select", representation="", vars=select_vars)
 
         if any(key not in r.post_vars for key in ("selected", "mode")):

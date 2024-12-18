@@ -535,7 +535,7 @@ class DataTable:
                              select_url = attr_get("dt_select_url"),
                              )
         if elements:
-            elements.append(" | ")
+            elements.append(SPAN(" | ", _class="separator"))
 
         if not s3.no_formats:
             exports = cls.exports(base_url = attr_get("dt_base_url"),

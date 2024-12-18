@@ -285,9 +285,6 @@
             if (this.clearButton) {
                 this.clearButton.remove();
             }
-
-            // Call prototype method
-            $.Widget.prototype.destroy.call(this);
         },
 
         /**
@@ -1202,7 +1199,9 @@
 
             // Clear-button
             if (this.clearButton) {
-                this.clearButton.on('click' + ns, function() {
+                this.clearButton.on('click' + ns, function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
                     self.clear();
                 });
             }

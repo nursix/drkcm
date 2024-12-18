@@ -922,12 +922,14 @@
                 }
 
                 // Show/hide export options depending on whether there are data in the table
+                let exportOptions = $('.dt-export-options', outerForm),
+                    exportLinks = $('.list_formats, .separator', exportOptions);
                 if (numrows === 0) {
                     // Hide the export options (table is empty)
-                    outerForm.find('.dt-export-options').hide();
+                    exportLinks.hide();
                 } else {
                     // Show the export options (table has data)
-                    outerForm.find('.dt-export-options').show();
+                    exportLinks.show();
                 }
 
                 // Add modals if necessary

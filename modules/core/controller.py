@@ -147,8 +147,11 @@ class CRUDRequest:
         self.prefix = prefix or self.controller
         self.name = name or self.function
 
-        # Parse the request
+        # Session filters
         self._search_id = None
+        self.suppress_default_filters = False
+
+        # Parse the request
         self.__parse()
         self.custom_action = None
 
@@ -326,14 +329,18 @@ class CRUDRequest:
         else:
             self.representation = self.DEFAULT_REPRESENTATION
 
-        # Check for special URL variable $search, indicating that the request
-        # shall be filtered:
-        search = self.get_vars.get("$search")
-        if search and self.http == "POST" or search == "session":
-            self.__search()
+        # Check for special URL variable $search, indicating that
+        # the request explicitly specifies filters:
+        search_mode = self.get_vars.pop("$search", None)
+        if search_mode:
+            # Apply filter expressions from POST data or session?
+            if self.http == "POST" or search_mode == "session":
+                self.__search(search_mode)
+            # Suppress default filters in this case
+            self.suppress_default_filters = True
 
     # -------------------------------------------------------------------------
-    def __search(self):
+    def __search(self, mode):
         """
             Applies filter expressions
             - from session with $search=session
@@ -357,8 +364,7 @@ class CRUDRequest:
         get_vars = self.get_vars
         content_type = self.env.get("content_type") or ""
 
-        mode = get_vars.get("$search")
-        action = get_vars.get("$action")
+        action = get_vars.pop("$action", None)
 
         # Override request method (unless marked as submit-action)
         if mode and action != "submit":
@@ -396,9 +402,6 @@ class CRUDRequest:
             filters = self.post_vars
             decode = json.loads
 
-        # Forget search mode
-        del get_vars["$search"]
-
         if filters is None:
             # No filters found
             return
@@ -431,10 +434,6 @@ class CRUDRequest:
 
         # Move filter expressions into GET vars
         get_vars.update(filter_vars)
-
-        # Suppress filter defaults as this is a filtered request
-        if "default_filters" not in get_vars:
-            get_vars["default_filters"] = "0"
 
         # Store filters in session
         if search_id:

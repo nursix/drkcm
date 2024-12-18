@@ -595,8 +595,8 @@ class S3CalendarWidget(EdenFormWidget):
         return extremes
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def inject_script(selector, options):
+    @classmethod
+    def inject_script(cls, selector, options):
         """
             Helper function to inject the document-ready-JavaScript for
             this widget.
@@ -611,101 +611,13 @@ class S3CalendarWidget(EdenFormWidget):
             return
 
         s3 = current.response.s3
-        appname = current.request.application
 
-        request = current.request
-        s3 = current.response.s3
-
-        datepicker_l10n = None
-        timepicker_l10n = None
-        calendars_type = None
-        calendars_l10n = None
-        calendars_picker_l10n = None
-
-        # Paths to localization files
-        os_path_join = os.path.join
-        datepicker_l10n_path = os_path_join(request.folder, "static", "scripts", "ui", "i18n")
-        timepicker_l10n_path = os_path_join(request.folder, "static", "scripts", "ui", "i18n")
-        calendars_l10n_path = os_path_join(request.folder, "static", "scripts", "calendars", "i18n")
-
-        calendar = options["calendar"].lower()
-        if calendar != "gregorian":
-            # Include the right calendar script
-            filename = "jquery.calendars.%s.js" % calendar
-            lscript = os_path_join(calendars_l10n_path, filename)
-            if os.path.exists(lscript):
-                calendars_type = "calendars/i18n/%s" % filename
-
-        language = current.session.s3.language
-        if language in current.deployment_settings.date_formats:
-            # Localise if we have configured a Date Format and we have a jQueryUI options file
-
-            # Do we have a suitable locale file?
-            #if language in ("prs", "ps"):
-            #    # Dari & Pashto use Farsi
-            #    language = "fa"
-            #elif language == "ur":
-            #    # Urdu uses Arabic
-            #    language = "ar"
-            if "-" in language:
-                parts = language.split("-", 1)
-                language = "%s-%s" % (parts[0], parts[1].upper())
-
-            # datePicker regional
-            filename = "datepicker-%s.js" % language
-            path = os_path_join(timepicker_l10n_path, filename)
-            if os.path.exists(path):
-                timepicker_l10n = "ui/i18n/%s" % filename
-
-            # timePicker regional
-            filename = "jquery-ui-timepicker-%s.js" % language
-            path = os_path_join(datepicker_l10n_path, filename)
-            if os.path.exists(path):
-                datepicker_l10n = "ui/i18n/%s" % filename
-
-            if calendar != "gregorian" and language:
-                # calendars regional
-                filename = "jquery.calendars.%s-%s.js" % (calendar, language)
-                path = os_path_join(calendars_l10n_path, filename)
-                if os.path.exists(path):
-                    calendars_l10n = "calendars/i18n/%s" % filename
-                # calendarsPicker regional
-                filename = "jquery.calendars.picker-%s.js" % language
-                path = os_path_join(calendars_l10n_path, filename)
-                if os.path.exists(path):
-                    calendars_picker_l10n = "calendars/i18n/%s" % filename
-        else:
-            language = ""
-
+        scripts, language = cls.global_scripts(options.get("calendar"))
         options["language"] = language
 
-        # Global scripts
-        if s3.debug:
-            scripts = ("jquery.plugin.js",
-                       "calendars/jquery.calendars.all.js",
-                       "calendars/jquery.calendars.picker.ext.js",
-                       "S3/s3.ui.calendar.js",
-                       datepicker_l10n,
-                       timepicker_l10n,
-                       calendars_type,
-                       calendars_l10n,
-                       calendars_picker_l10n,
-                       )
-        else:
-            scripts = ("jquery.plugin.min.js",
-                       "S3/s3.ui.calendar.min.js",
-                       datepicker_l10n,
-                       timepicker_l10n,
-                       calendars_type,
-                       calendars_l10n,
-                       calendars_picker_l10n,
-                       )
         for script in scripts:
-            if not script:
-                continue
-            path = "/%s/static/scripts/%s" % (appname, script)
-            if path not in s3.scripts:
-                s3.scripts.append(path)
+            if script and script not in s3.scripts:
+                s3.scripts.append(script)
 
         # jQuery-ready script
         script = '''$('#%(selector)s').calendarWidget(%(options)s);''' % \
@@ -713,6 +625,71 @@ class S3CalendarWidget(EdenFormWidget):
                   "options": json.dumps(options, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def global_scripts(calendar="gregorian"):
+
+        s3 = current.response.s3
+        request = current.request
+
+        folder = request.folder
+        appname = request.application
+
+        # Basic scripts
+        if s3.debug:
+            scripts = ("jquery.plugin.js",
+                       "calendars/jquery.calendars.all.js",
+                       "calendars/jquery.calendars.picker.ext.js",
+                       "S3/s3.ui.calendar.js",
+                       )
+        else:
+            scripts = ("jquery.plugin.min.js",
+                       "S3/s3.ui.calendar.min.js",
+                       )
+        scripts = ["/%s/static/scripts/%s" % (appname, script) for script in scripts]
+        append = scripts.append
+
+        # Helper to append a script only if it exists
+        def append_if_exists(*plist):
+            path = os.path.join(folder, *plist)
+            if os.path.exists(path):
+                append("/%s/%s" % (appname, "/".join(plist)))
+
+        # Calendar variant
+        calendar = calendar.lower()
+        if calendar != "gregorian":
+            filename = "jquery.calendars.%s.js" % calendar
+            append_if_exists("static", "scripts", "calendars", "i18n", filename)
+
+        # Localization scripts
+        language = current.session.s3.language
+        if language in current.deployment_settings.date_formats:
+
+            if "-" in language:
+                parts = language.split("-", 1)
+                language = "%s-%s" % (parts[0], parts[1].upper())
+
+            # datePicker regional
+            filename = "datepicker-%s.js" % language
+            append_if_exists("static", "scripts", "ui", "i18n", filename)
+
+            # timePicker regional
+            filename = "jquery-ui-timepicker-%s.js" % language
+            append_if_exists("static", "scripts", "ui", "i18n", filename)
+
+            if calendar != "gregorian" and language:
+                # calendars regional
+                filename = "jquery.calendars.%s-%s.js" % (calendar, language)
+                append_if_exists("static", "scripts", "calendars", "i18n", filename)
+
+                # calendarsPicker regional
+                filename = "jquery.calendars.picker-%s.js" % language
+                append_if_exists("static", "scripts", "calendars", "i18n", filename)
+        else:
+            language = ""
+
+        return scripts, language
 
 # =============================================================================
 class S3DateWidget(EdenFormWidget):
@@ -2632,7 +2609,7 @@ class ImageUploadWidget(EdenFormWidget):
         try:
             metadata, cropped_image = cropped_image.rsplit(",", 1)
             filename = metadata.rsplit(";", 2)[0]
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             return None, current.T("invalid value!")
 
         # Decode the base64-encoded image
@@ -3301,10 +3278,7 @@ class S3MultiSelectWidget(MultipleOptionsWidget):
         if not isinstance(search_opt, bool) and \
            (search_opt == "auto" or isinstance(search_opt, int)):
             max_options = 10 if search_opt == "auto" else search_opt
-            if options_len > max_options:
-                search_opt = True
-            else:
-                search_opt = False
+            search_opt = bool(options_len > max_options)
         if search_opt is True and header_opt is False:
             # Must have at least "" as header to show the search field
             header_opt = ""

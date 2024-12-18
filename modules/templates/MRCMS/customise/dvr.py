@@ -10,7 +10,7 @@ from gluon import current, URL, A, TAG, IS_EMPTY_OR
 from gluon.storage import Storage
 
 from core import CRUDRequest, CustomController, FS, IS_ONE_OF, \
-                 S3HoursWidget, S3SQLCustomForm, S3SQLInlineLink, \
+                 S3CalendarWidget, S3HoursWidget, S3SQLCustomForm, S3SQLInlineLink, \
                  DateFilter, HierarchyFilter, OptionsFilter, TextFilter, \
                  get_filter_options, get_form_record_id, s3_redirect_default, \
                  represent_hours, set_default_filter, s3_fullname
@@ -696,7 +696,22 @@ def dvr_case_appointment_resource(r, tablename):
                                    },
                        )
 
-    if r.tablename != "dvr_case_appointment":
+    if r.tablename == "dvr_case_appointment":
+
+        from ..bulk import CompleteAppointments
+        s3db.set_method("dvr_case_appointment", method="complete", action=CompleteAppointments)
+
+        bulk_actions = [{"label": T("Mark Completed##appointment"),
+                         "mode": "ajax",
+                         "url": r.url(method="complete", representation="json", vars={}),
+                         "script": S3CalendarWidget.global_scripts(current.calendar.name)[0],
+                         }]
+
+        s3db.configure("dvr_case_appointment",
+                       bulk_actions = bulk_actions,
+                       )
+
+    else:
         s3db.configure("dvr_case_appointment",
                        list_fields = ["type_id",
                                       (T("Date"), "start_date"),
@@ -704,7 +719,6 @@ def dvr_case_appointment_resource(r, tablename):
                                       "comments",
                                       ],
                        )
-
 
 # -------------------------------------------------------------------------
 def dvr_case_appointment_controller(**attr):
