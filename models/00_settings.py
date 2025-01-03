@@ -54,22 +54,19 @@ s3.crud_labels = Storage(OPEN = OPEN,
                          NONE = NONE,
                          )
 
-# Error Messages
-ERROR["BAD_RECORD"] = "Record not found!"
-ERROR["BAD_METHOD"] = "Unsupported method!"
-ERROR["BAD_FORMAT"] = "Unsupported data format!"
+# Common Error Messages
+ERROR["BAD_RECORD"] = "Record not found"
+ERROR["BAD_ENDPOINT"] = "Endpoint not found"
+ERROR["BAD_METHOD"] = "Unsupported method"
+ERROR["BAD_FORMAT"] = "Unsupported data format"
 ERROR["BAD_REQUEST"] = "Invalid request"
-ERROR["BAD_SOURCE"] = "Invalid source"
-ERROR["BAD_TEMPLATE"] = "XSLT stylesheet not found"
-ERROR["BAD_RESOURCE"] = "Nonexistent or invalid resource"
-ERROR["DATA_IMPORT_ERROR"] = "Data import error"
+ERROR["BAD_SOURCE"] = "Invalid data source"
+ERROR["BAD_RESOURCE"] = "Resource not found or not valid"
 ERROR["INTEGRITY_ERROR"] = "Integrity error: record can not be deleted while it is referenced by other records"
 ERROR["METHOD_DISABLED"] = "Method disabled"
 ERROR["NO_MATCH"] = "No matching element found in the data source"
 ERROR["NOT_IMPLEMENTED"] = "Not implemented"
 ERROR["NOT_PERMITTED"] = "Operation not permitted"
-ERROR["PARSE_ERROR"] = "XML parse error"
-ERROR["TRANSFORMATION_ERROR"] = "XSLT transformation error"
 ERROR["UNAUTHORISED"] = "Not Authorized"
 ERROR["VALIDATION_ERROR"] = "Validation error"
 

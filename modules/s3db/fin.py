@@ -329,7 +329,7 @@ class FinVoucherModel(DataModel):
             msg_list_empty = T("No Programs currently registered"),
         )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename)
         program_id = FieldTemplate("program_id", "reference %s" % tablename,
                                    label = T("Program"),
@@ -428,7 +428,7 @@ class FinVoucherModel(DataModel):
                        onaccept = self.billing_onaccept,
                        )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 fields = ["date"],
                                 labels = lambda row: S3DateTime.date_represent(row.date,
@@ -654,7 +654,7 @@ class FinVoucherModel(DataModel):
             msg_list_empty = T("No Invoices currently registered"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = fin_VoucherInvoiceRepresent()
         invoice_id = FieldTemplate("invoice_id", "reference %s" % tablename,
                                    label = T("Invoice"),
@@ -819,7 +819,7 @@ class FinVoucherModel(DataModel):
             msg_list_empty = T("No Compensation Claims currently registered"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, fields=["refno", "date"])
         claim_id = FieldTemplate("claim_id", "reference %s" % tablename,
                                  label = T("Compensation Claim"),
@@ -983,7 +983,7 @@ class FinVoucherModel(DataModel):
             msg_list_empty = T("No Vouchers currently registered"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         voucher_id = FieldTemplate("voucher_id", "reference %s" % tablename,
                                    ondelete = "RESTRICT",
                                    requires = IS_ONE_OF(db, "%s.id" % tablename),
@@ -1093,7 +1093,7 @@ class FinVoucherModel(DataModel):
             msg_list_empty = T("No Accepted Vouchers currently registered"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         debit_id = FieldTemplate("debit_id", "reference %s" % tablename,
                                  ondelete = "RESTRICT",
                                  requires = IS_ONE_OF(db, "%s.id" % tablename),

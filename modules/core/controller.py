@@ -147,6 +147,10 @@ class CRUDRequest:
         self.prefix = prefix or self.controller
         self.name = name or self.function
 
+        # Session filters
+        self._search_id = None
+        self.suppress_default_filters = False
+
         # Parse the request
         self.__parse()
         self.custom_action = None
@@ -325,17 +329,24 @@ class CRUDRequest:
         else:
             self.representation = self.DEFAULT_REPRESENTATION
 
-        # Check for special URL variable $search, indicating
-        # that the request body contains filter queries:
-        if self.http == "POST" and "$search" in self.get_vars:
-            self.__search()
+        # Check for special URL variable $search, indicating that
+        # the request explicitly specifies filters:
+        search_mode = self.get_vars.pop("$search", None)
+        if search_mode:
+            # Apply filter expressions from POST data or session?
+            if self.http == "POST" or search_mode == "session":
+                self.__search(search_mode)
+            # Suppress default filters in this case
+            self.suppress_default_filters = True
 
     # -------------------------------------------------------------------------
-    def __search(self):
+    def __search(self, mode):
         """
-            Process filters in POST, interprets URL filter expressions
-            in POST vars (if multipart), or from JSON request body (if
-            not multipart or $search=ajax).
+            Applies filter expressions
+            - from session with $search=session
+            - from POST vars (if urlencoded), or
+            - from JSON request body (if $search=ajax or not multipart)
+            - from POST vars (if multipart)
 
             Note:
                 Overrides CRUDRequest method as GET (r.http) to trigger
@@ -343,20 +354,33 @@ class CRUDRequest:
                 current.request.env.request_method.
         """
 
+        # Get session filters and search ID
+        session = current.session
+        session_filters = session.s3.filters
+        if not session_filters:
+            session_filters = session.s3.filters = {}
+        search_id = self.search_id
+
         get_vars = self.get_vars
         content_type = self.env.get("content_type") or ""
 
-        mode = get_vars.get("$search")
+        action = get_vars.pop("$action", None)
 
-        # Override request method
-        if mode:
+        # Override request method (unless marked as submit-action)
+        if mode and action != "submit":
             self.http = "GET"
 
-        # Retrieve filters from request body
-        if content_type == "application/x-www-form-urlencoded":
+        # Retrieve filters
+        if mode == "session":
+            # Restore previous filters from session
+            filters = session_filters.get(search_id)
+            decode = None
+
+        elif content_type == "application/x-www-form-urlencoded":
             # Read POST vars (e.g. from S3.gis.refreshLayer)
             filters = self.post_vars
             decode = None
+
         elif mode == "ajax" or content_type[:10] != "multipart/":
             # Read body JSON (e.g. from $.searchS3)
             body = self.body
@@ -368,20 +392,24 @@ class CRUDRequest:
             try:
                 filters = json.loads(s)
             except ValueError:
-                filters = {}
+                filters = None
             if not isinstance(filters, dict):
-                filters = {}
+                filters = None
             decode = None
+
         else:
             # Read POST vars JSON (e.g. from $.searchDownloadS3)
             filters = self.post_vars
             decode = json.loads
 
-        # Move filters into GET vars
+        if filters is None:
+            # No filters found
+            return
+
+        # Retrieve filter expressions
         get_vars = Storage(get_vars)
         post_vars = Storage(self.post_vars)
-
-        del get_vars["$search"]
+        filter_vars = {}
         for k, v in filters.items():
             k0 = k[0]
             if k == "$filter" or k[0:2] == "$$" or k == "bbox" or \
@@ -398,10 +426,18 @@ class CRUDRequest:
                              ]
                 elif type(value) is not str:
                     value = s3_str(value)
-                get_vars[s3_str(k)] = value
+
+                filter_vars[s3_str(k)] = value
                 # Remove filter expression from POST vars
                 if k in post_vars:
                     del post_vars[k]
+
+        # Move filter expressions into GET vars
+        get_vars.update(filter_vars)
+
+        # Store filters in session
+        if search_id:
+            session_filters[search_id] = filter_vars
 
         # Override self.get_vars and self.post_vars
         self.get_vars = get_vars
@@ -410,6 +446,31 @@ class CRUDRequest:
         # Update combined vars
         self.vars = get_vars.copy()
         self.vars.update(self.post_vars)
+
+    # -------------------------------------------------------------------------
+    @property
+    def search_id(self):
+        """
+            The search ID for this request (lazy property);
+            the search ID can be used to restore previous filters applied
+            to this page, using $search=session
+
+            Returns:
+                the search ID (str)
+        """
+
+        search_id = self._search_id
+        if not search_id:
+            array = [self.controller, self.function]
+            if self.args:
+                # Drop format extensions from args
+                array.extend(arg.rsplit(".", 1)[0] for arg in self.args)
+
+            string = "#".join(array)
+            import hashlib
+            self._search_id = search_id = hashlib.md5(string.encode("utf-8")).hexdigest()
+
+        return search_id
 
     # -------------------------------------------------------------------------
     # Method handlers
@@ -426,7 +487,7 @@ class CRUDRequest:
             from .methods import RESTful, S3Filter, S3GroupedItemsReport, \
                                  S3HierarchyCRUD, S3Map, S3Merge, S3MobileCRUD, \
                                  S3Organizer, S3Profile, S3Report, S3Summary, \
-                                 TimePlot, S3XForms, SpreadsheetImporter
+                                 S3XForms, Select, SpreadsheetImporter, TimePlot
 
             methods = {"deduplicate": S3Merge,
                        "fields": RESTful,
@@ -440,6 +501,7 @@ class CRUDRequest:
                        "organize": S3Organizer,
                        "profile": S3Profile,
                        "report": S3Report,
+                       "select": Select,
                        "summary": S3Summary,
                        "sync": current.sync,
                        "timeplot": TimePlot,
@@ -495,8 +557,8 @@ class CRUDRequest:
             handler = self.default_methods.get(method)
 
         if handler is None:
-            from .methods import S3CRUD
-            handler = S3CRUD()
+            from .methods import BasicCRUD
+            handler = BasicCRUD()
 
         return handler() if isinstance(handler, type) else handler
 
@@ -588,8 +650,8 @@ class CRUDRequest:
                         from .methods import RESTful
                         handler = RESTful
                     elif http in HTTP_METHODS:
-                        from .methods import S3CRUD
-                        handler = S3CRUD
+                        from .methods import BasicCRUD
+                        handler = BasicCRUD
                     else:
                         self.error(405, current.ERROR.BAD_METHOD)
             if isinstance(handler, type):
@@ -735,22 +797,21 @@ class CRUDRequest:
                 tree: the tree causing the error
         """
 
-        if self.representation == "html":
+        if self.ajax or self.representation != "html":
+            headers = {"Content-Type":"application/json"}
+            current.log.error(message)
+            body = current.xml.json_message(success = False,
+                                            statuscode = status,
+                                            message = message,
+                                            tree = tree,
+                                            )
+            raise HTTP(status, body=body, web2py_error=message, **headers)
+        else:
             current.session.error = message
             if next is not None:
                 redirect(next)
             else:
                 redirect(URL(r=self, f="index"))
-        else:
-            headers = {"Content-Type":"application/json"}
-            current.log.error(message)
-            raise HTTP(status,
-                       body = current.xml.json_message(success = False,
-                                                       statuscode = status,
-                                                       message = message,
-                                                       tree = tree),
-                       web2py_error = message,
-                       **headers)
 
     # -------------------------------------------------------------------------
     def url(self,
@@ -940,6 +1001,18 @@ class CRUDRequest:
         return None
 
     # -------------------------------------------------------------------------
+    def has_form_error(self):
+        """
+            Checks for form errors in this request
+
+            Returns:
+                boolean
+        """
+
+        return (self.http == "POST" or self.env.request_method == "POST") and \
+               bool(current.response.s3.form_error)
+
+    # -------------------------------------------------------------------------
     def stylesheet(self, method=None, skip_error=False):
         """
             Find the XSLT stylesheet for this request
@@ -997,7 +1070,7 @@ class CRUDRequest:
 
         if not os.path.exists(stylesheet):
             if not skip_error:
-                self.error(501, "%s: %s" % (current.ERROR.BAD_TEMPLATE,
+                self.error(501, "%s: %s" % (current.T("XSLT stylesheet not found"),
                                             stylesheet,
                                             ))
             stylesheet = None
@@ -1227,7 +1300,7 @@ def crud_controller(prefix=None, resourcename=None, **attr):
     r.customise_resource()
 
     # List of methods rendering datatables with default action buttons
-    dt_methods = (None, "datatable", "datatable_f", "summary", "list")
+    dt_methods = (None, "datatable", "datatable_f", "select", "summary", "list")
 
     # List of methods rendering datatables with custom action buttons,
     # => for these, s3.actions must not be touched, see below
@@ -1236,6 +1309,7 @@ def crud_controller(prefix=None, resourcename=None, **attr):
                          "review",
                          "approve",
                          "reject",
+                         "select",
                          "deduplicate",
                          )
 
@@ -1282,22 +1356,22 @@ def crud_controller(prefix=None, resourcename=None, **attr):
             copyable = get_config(tablename, "copyable", False)
 
             # URL to open the resource
-            from .methods import S3CRUD
-            open_url = S3CRUD._linkto(r,
-                                      authorised = authorised,
-                                      update = editable,
-                                      native = native)("[id]")
+            from .methods import BasicCRUD
+            open_url = BasicCRUD._linkto(r,
+                                         authorised = authorised,
+                                         update = editable,
+                                         native = native)("[id]")
 
             # Add action buttons for Open/Delete/Copy as appropriate
-            S3CRUD.action_buttons(r,
-                                  deletable = deletable,
-                                  copyable = copyable,
-                                  editable = editable,
-                                  read_url = open_url,
-                                  update_url = open_url
-                                  # To use modals
-                                  #update_url = "%s.popup?refresh=list" % open_url
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     deletable = deletable,
+                                     copyable = copyable,
+                                     editable = editable,
+                                     read_url = open_url,
+                                     update_url = open_url
+                                     # To use modals
+                                     #update_url = "%s.popup?refresh=list" % open_url
+                                     )
 
             # Override Add-button, link to native controller and put
             # the primary key into get_vars for automatic linking

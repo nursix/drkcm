@@ -38,11 +38,11 @@ from ..resource import FS
 from ..tools import get_crud_string, s3_str
 from ..ui import ICON
 
-from .crud import S3CRUD
+from .crud import BasicCRUD
 from .report import S3Report
 
 # =============================================================================
-class S3Profile(S3CRUD):
+class S3Profile(BasicCRUD):
     """
         Interactive Method Handler for Profile Pages
 

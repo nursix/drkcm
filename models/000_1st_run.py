@@ -5,35 +5,24 @@
 #       - If needed, copy deployment templates to the live installation.
 # =============================================================================
 
+# Shortcut
+appname = request.application
+
 # -----------------------------------------------------------------------------
 # Perform update checks - will happen in 1st_run or on those upgrades when new
 # dependencies have been added.
-
-# Increment this when new dependencies are added
-# This will be compared to the version in the 0000_update_check.py 'canary' file.
-CURRENT_UPDATE_CHECK_ID = 4
+#
+from updatechk import UpdateCheck
 update_check_needed = False
 try:
-    if CANARY_UPDATE_CHECK_ID != CURRENT_UPDATE_CHECK_ID:
+    if REQUIREMENTS_VERSION != UpdateCheck.REQUIREMENTS:
         update_check_needed = True
 except NameError:
     update_check_needed = True
 
-# shortcut
-appname = request.application
-
 if update_check_needed:
-    # @ToDo: Load deployment_settings so that we can configure the update_check
-    # - need to rework so that 000_config.py is parsed 1st
-    import s3cfg
-    settings = s3cfg.S3Config()
     # Run update checks
-    from s3_update_check import update_check
-    errors = []
-    warnings = []
-    messages = update_check(settings)
-    errors.extend(messages.get("error_messages", []))
-    warnings.extend(messages.get("warning_messages", []))
+    errors, warnings = UpdateCheck.check_all()
 
     # Catch-all check for dependency errors.
     # NB This does not satisfy the goal of calling out all the setup errors
@@ -60,10 +49,8 @@ if update_check_needed:
 
     # Create or update the canary file.
     from s3dal import portalocker
-    canary = open("applications/%s/models/0000_update_check.py" % appname, "w")
-    portalocker.lock(canary, portalocker.LOCK_EX)
-
-    statement = "CANARY_UPDATE_CHECK_ID = %s" % CURRENT_UPDATE_CHECK_ID
+    canary = portalocker.LockedFile("applications/%s/models/0000_update_check.py" % appname, "w")
+    statement = "REQUIREMENTS_VERSION = %s" % UpdateCheck.REQUIREMENTS
     canary.write(statement)
     canary.close()
 

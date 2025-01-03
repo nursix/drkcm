@@ -33,7 +33,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from ..s3layouts import S3PopupLink
+from ..core.ui.layouts import PopupLink
 
 # =============================================================================
 class TransportModel(DataModel):
@@ -689,7 +689,7 @@ class TransportModel(DataModel):
                   list_fields = list_fields,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = transport_BorderCrossingRepresent(show_link=True)
         border_crossing_id = FieldTemplate("border_crossing_id", "reference %s" % tablename,
                                            label = T("Border Crossing"),
@@ -698,10 +698,10 @@ class TransportModel(DataModel):
                                                                 represent,
                                                                 ),
                                            sortby = "name",
-                                           comment = S3PopupLink(c="transport",
-                                                                 f="border_crossing",
-                                                                 tooltip=T("Create a new border crossing"),
-                                                                 ),
+                                           comment = PopupLink(c="transport",
+                                                               f="border_crossing",
+                                                               tooltip=T("Create a new border crossing"),
+                                                               ),
                                            )
 
         # ---------------------------------------------------------------------
@@ -814,10 +814,9 @@ class transport_BorderCrossingRepresent(S3Represent):
                 show_link: render as link to the border crossing
         """
 
-        super(transport_BorderCrossingRepresent, self).__init__(
-                                    lookup = "transport_border_crossing",
-                                    show_link = show_link,
-                                    )
+        super().__init__(lookup = "transport_border_crossing",
+                         show_link = show_link,
+                         )
 
     # -------------------------------------------------------------------------
     def represent_row(self, row):

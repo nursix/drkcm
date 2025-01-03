@@ -5,16 +5,20 @@
 """
 
 import datetime
+import json
 
 from dateutil.relativedelta import relativedelta
 
-from gluon import current, URL, \
-                  A, DIV, H4, H5, I, IMG, TABLE, TD, TR, TH
+from gluon import current, URL, redirect, IS_EMPTY_OR, \
+                  A, BUTTON, DIV, FORM, H4, H5, I, IMG, INPUT, LABEL, P, \
+                  SPAN, TABLE, TBODY, TD, TH, TR, TAG, SCRIPT
 from gluon.contenttype import contenttype
+from gluon.sqlhtml import OptionsWidget
 from gluon.streamer import DEFAULT_CHUNK_SIZE
 
-from core import BooleanRepresent, CRUDMethod, CustomController, XLSXWriter, \
-                 PresenceRegistration, s3_format_fullname, s3_str
+from core import BooleanRepresent, CRUDMethod, CustomController, FormKey, \
+                 FS, ICON, IS_ONE_OF, JSONSEPARATORS, PresenceRegistration, \
+                 XLSXWriter, s3_format_fullname, s3_str
 
 # =============================================================================
 class ShelterOverview(CRUDMethod):
@@ -325,13 +329,39 @@ class ResidentsList:
                 TABLE.residents-list
         """
 
+        T = current.T
+
         # TODO verify user is permitted to read cases of the shelter org
         # TODO if not permitted to read cases, show anonymous
         # TODO show_links always true if permitted
         show_links = current.auth.s3_has_permission("read", "pr_person", c="dvr", f="person")
 
-        # Generate residents list
-        residents_list = TABLE(_class="residents-list")
+        # Widget ID (to attach script)
+        widget_id = "residents-overview"
+
+        # Actions
+        search = DIV(LABEL("%s:" % T("Filter"),
+                           INPUT(_type = "text",
+                                 _length = "20",
+                                 ),
+                           ICON("fa fa-times", _class="clear-search"),
+                           ),
+                     _class = "units-search",
+                     )
+        expand = DIV(A(T("Collapse All"),
+                       _class = "action-lnk collapse-all",
+                       ),
+                     "|",
+                     A(T("Expand All"),
+                       _class = "action-lnk expand-all",
+                       ),
+                     _class = "units-expand",
+                     )
+
+        actions = DIV(search, expand, _class = "units-actions")
+
+        # Units list
+        residents_list = TABLE(_class="units-list")
 
         residents = self.residents
         units = self.units
@@ -339,35 +369,74 @@ class ResidentsList:
             unit_residents = residents.get(unit.id)
             if unit.status == 3 and not unit_residents:
                 continue
-            self.add_residents(residents_list, unit, unit_residents, show_links=show_links)
+            section = self.unit_section(unit, unit_residents, show_links=show_links)
+            residents_list.append(section)
 
         # Append residents not assigned to any housing unit
         unassigned = residents.get(None)
         if unassigned:
-            self.add_residents(residents_list, None, unassigned, show_links=show_links)
+            section = self.unit_section(None, unassigned, show_links=show_links)
+            residents_list.append(section)
 
-        return residents_list
+        # Inject script
+        self.inject_script(widget_id, {})
+
+        return DIV(actions, residents_list, _id=widget_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inject_script(widget_id, options):
+        """
+            Inject the necessary JavaScript for the widget
+
+            Args:
+                widget_id: the widget ID (=element ID of the person_id field)
+                options: JSON-serializable dict of widget options
+        """
+
+        s3 = current.response.s3
+
+        # Static script
+        script = "/%s/static/scripts/templates/MRCMS/residents.js" % current.request.application
+        scripts = s3.scripts
+        if script not in scripts:
+            scripts.append(script)
+
+        # Widget options
+        opts = {}
+        if options:
+            opts.update(options)
+
+        # Widget instantiation
+        script = '''$('#%(widget_id)s').residentsList(%(options)s)''' % \
+                 {"widget_id": widget_id,
+                  "options": json.dumps(opts, separators=JSONSEPARATORS),
+                  }
+        jquery_ready = s3.jquery_ready
+        if script not in jquery_ready:
+            jquery_ready.append(script)
 
     # -------------------------------------------------------------------------
     @classmethod
-    def add_residents(cls, overview, unit, residents, show_links=False):
+    def unit_section(cls, unit, residents, show_links=False):
         """
-            Adds the residents rows to a housing unit section in the
-            residents table
+            Builds a table section with resident data of a housing unit
 
             Args:
-                overview: the residents table
                 unit: the housing unit, cr_shelter_unit Row
                 residents: the residents, joined Rows
                 show_links: whether to show residents names as links to
                             their case files
 
             Returns:
-                the extended residents table (TODO why?)
+                the table section (TBODY.unit)
         """
 
-        unit_header = cls.unit_header(unit)
-        overview.append(unit_header)
+        T = current.T
+
+        unit_section = TBODY(cls.unit_header(unit),
+                             _class = "unit",
+                             )
 
         c, p = [], []
         if residents:
@@ -381,19 +450,21 @@ class ResidentsList:
         # Representation method for presence status
         presence_repr = BooleanRepresent(labels=False, icons=True, colors=True)
 
-        for i, persons in enumerate((c, p)):
+        total, occupied, free, blocked, planned = None, None, None, None, None
 
-            T = current.T
+        for i, persons in enumerate((c, p)):
 
             if i == 0:
                 # Checked-in residents
-                css = "resident-checked-in"
-                overview.append(cls.resident_header())
+                occupied = len(persons)
+                css = "checked-in"
+                unit_section.append(cls.resident_header())
             elif persons:
                 # Planned residents
-                css = "resident-planned"
-                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="residents-planned")
-                overview.append(subheader)
+                planned = len(persons)
+                css = "planned"
+                subheader = cls.unit_subheader(1, len(persons) if persons else 0, css="details residents-planned")
+                unit_section.append(subheader)
 
             group_id = None
             even, odd = "group-even", "group-odd"
@@ -402,19 +473,19 @@ class ResidentsList:
                 if not gid or gid != group_id:
                     group_id = gid
                     even, odd = odd, even
-                overview.append(cls.resident(person,
-                                             css = "resident-data %s %s" % (css, even),
+                unit_section.append(cls.resident(person,
+                                             css = "resident %s %s" % (css, even),
                                              show_link = show_links,
                                              presence_repr = presence_repr,
                                              ))
 
             # Render placeholder rows for unoccupied capacity
+            total = unit.capacity if unit else None
             if i == 0 and unit and not unit.transitory:
                 # Total and free capacity
-                total = unit.capacity
                 if total is None:
                     total = 0
-                free = max(total - len(persons), 0)
+                free = max(total - occupied, 0)
 
                 # Blocked capacity (can be at most all free capacity)
                 blocked = min(free, unit.blocked_capacity)
@@ -423,24 +494,33 @@ class ResidentsList:
                 if unit.status == 1:
                     free = free - blocked
                 else:
-                    blocked = 0
-                    free = 0
+                    free = blocked = 0
 
                 for _ in range(free):
-                    empty = TR(TD(I(_class="fa fa-bed")),
+                    empty = TR(TD(I(_class="fa fa-circle-o")),
                                TD(T("Allocable##shelter"), _colspan = 6),
-                               _class = "capacity-free",
+                               _class = "details capacity-free",
                                )
-                    overview.append(empty)
+                    unit_section.append(empty)
                 for _ in range(blocked):
-                    empty = TR(TD(I(_class="fa fa-times-circle")),
+                    empty = TR(TD(I(_class="fa fa-ban")),
                                TD(T("Not allocable"), _colspan = 6),
-                               _class = "capacity-blocked",
+                               _class = "details capacity-blocked",
                                )
-                    overview.append(empty)
+                    unit_section.append(empty)
 
-        overview.append(TR(TD(_colspan=8),_class="residents-list-spacer"))
-        return overview
+        unit_section["data"] = {"name": unit.name if unit else T("Not assigned"),
+                                "capacity": json.dumps([total,
+                                                        occupied,
+                                                        free,
+                                                        blocked,
+                                                        planned,
+                                                        ]),
+                                }
+
+        unit_section.append(TR(TD(_colspan=8), _class="unit-spacer"))
+
+        return unit_section
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -473,13 +553,19 @@ class ResidentsList:
                                 f = "shelter",
                                 args = [unit.shelter_id, "shelter_unit", unit.id],
                                 ),
-                      _class = "residents-unit-link",
+                      _class = "unit-link",
                       )
 
-        header = DIV(label, _class="residents-unit-header")
+        header = DIV(label, _class="unit-label")
 
-        return TR(TD(header, _colspan=7),
-                  _class = "residents-unit",
+        return TR(TD(header,
+                     SPAN(ICON("fa fa-caret-down expand"),
+                          ICON("fa fa-caret-up collapse"),
+                          _class="unit-expand",
+                          ),
+                     _colspan=7, _class="unit-data",
+                     ),
+                  _class = "unit-header",
                   )
 
     # -------------------------------------------------------------------------
@@ -496,21 +582,16 @@ class ResidentsList:
                 a TR element
         """
 
-        # TODO Lookup status label inline
         s3db = current.s3db
         rtable = s3db.cr_shelter_registration
 
         status_label = rtable.registration_status.represent(status)
 
-        css_class = "residents-status-header"
-        if css:
-            css_class = "%s %s" % (css_class, css)
-
         header = DIV("%s: %s" % (status_label, number),
-                     _class = css_class,
+                     _class = css,
                      )
 
-        return TR(TD(header, _colspan=7), _class="residents-status")
+        return TR(TD(header, _colspan=7), _class="details unit-subheader")
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -532,7 +613,7 @@ class ResidentsList:
                   TH(T("Age")),
                   TH(T("Nationality")),
                   TH(T("Presence")),
-                  _class = "residents-header",
+                  _class = "details resident-header",
                   )
 
     # -------------------------------------------------------------------------
@@ -603,7 +684,7 @@ class ResidentsList:
                   TD(age),
                   TD(nationality),
                   TD(p, _class="resident-presence"),
-                  _class = css,
+                  _class = "details " + css,
                   )
 
     # -------------------------------------------------------------------------
@@ -699,7 +780,7 @@ class ResidentsList:
 
         residents = self.residents
 
-        units = [row for row in self.units] + [None]
+        units = list(self.units) + [None]
         for unit in units:
             if unit:
                 unit_name = unit.name
@@ -1138,5 +1219,438 @@ class ShelterStatus:
         row = current.db(query).select(num_persons).first()
 
         return row[num_persons]
+
+# =============================================================================
+class BulkRegistration(CRUDMethod):
+    """ Bulk checkout method """
+
+    # -------------------------------------------------------------------------
+    def apply_method(self, r, **attr):
+        """
+            Entry point for CRUD controller
+
+            Args:
+                r: the CRUDRequest instance
+                attr: controller parameters
+
+            Returns:
+                output data (JSON)
+
+            # TODO extend for bulk check-in
+        """
+
+        output = {}
+
+        if r.http == "POST":
+            if r.ajax or r.representation in ("json", "html"):
+                output = self.checkout(r, **attr)
+            else:
+                r.error(415, current.ERROR.BAD_FORMAT)
+        else:
+            r.error(405, current.ERROR.BAD_METHOD)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def checkout(self, r, **attr):
+        """
+            Provide a dialog to confirm the check-out, and upon submission,
+            check-out the residents and close their cases (if requested).
+
+            Args:
+                r: the CRUDRequest
+                table: the target table
+
+            Returns:
+                a JSON object with the dialog HTML as string
+
+            Note:
+                redirects to /select upon completion
+        """
+
+        resource = self.resource
+        table = resource.table
+
+        get_vars = r.get_vars
+
+        # Select-URL for redirections (retain closed/archived flags)
+        select_vars = {"$search": "session"}
+        select_vars.update({k:get_vars[k] for k in get_vars.keys() & {"closed", "archived"}})
+        select_url = r.url(method="select", representation="", vars=select_vars)
+
+        if any(key not in r.post_vars for key in ("selected", "mode")):
+            r.error(400, "Missing selection parameters", next=select_url)
+
+        # Form to choose closure status
+        form_name = "%s-close" % table
+        form = self.form(form_name)
+        form["_action"] = r.url(representation="", vars=select_vars)
+
+        output = None
+        if r.ajax or r.representation == "json":
+            # Dialog request
+            # => generate a JSON object with form and control script
+            script = '''
+(function() {
+    const c = $('input[name="checkout_confirm"]'),
+        f = $('input[name="close_confirm"]'),
+        s = $('select[name="status_id"]'),
+        b = $('.checkout-submit'),
+        toggle = function() {
+            var cc = f.prop('checked');
+                sm = cc && !s.val();
+            b.prop('disabled', !c.prop('checked') || sm);
+            if (sm) { s.addClass('invalidinput'); } else { s.removeClass('invalidinput'); }
+            if (!cc) { s.val(''); }
+        };
+    c.off('.close').on('click.close', toggle);
+    f.off('.close').on('click.close', toggle);
+    s.off('.close').on('change.close', toggle);
+    }
+)();'''
+            dialog = TAG[""](form, SCRIPT(script, _type='text/javascript'))
+
+            current.response.headers["Content-Type"] = "application/json"
+            output = json.dumps({"dialog": dialog.xml().decode("utf-8")})
+
+        elif form.accepts(r.vars, current.session, formname=form_name):
+            # Dialog submission
+            # => process the form, set up, authorize and perform the action
+
+            T = current.T
+            pkey = table._id.name
+            post_vars = r.post_vars
+
+            try:
+                record_ids = self.selected_set(resource, post_vars)
+            except SyntaxError:
+                r.error(400, "Invalid select mode", next=select_url)
+            total_selected = len(record_ids)
+
+            # Verify permission for all selected record
+            query = (table._id.belongs(record_ids)) & \
+                    (table._id.belongs(self.permitted_set(table, record_ids)))
+            permitted = current.db(query).select(table._id)
+            denied = len(record_ids) - len(permitted)
+            if denied > 0:
+                record_ids = {row[pkey] for row in permitted}
+
+            # Check-out the clients
+            checked_out, checkout_failed = self.checkout_residents(record_ids)
+            success = checked_out
+
+            # Build confirmation/error message
+            msg = T("%(number)s residents checked-out") % {"number": checked_out}
+            failures = []
+
+            failed = checkout_failed + denied
+            already_checked_out = total_selected - checked_out - failed
+            if already_checked_out:
+                failures.append(T("%(number)s already done") % {"number": already_checked_out})
+            if failed:
+                failures.append(T("%(number)s failed") % {"number": failed})
+            if failures:
+                failures = "(%s)" % (", ".join(str(f) for f in failures))
+                msg = "%s %s" % (msg, failures)
+
+            form_vars = form.vars
+            if form_vars.get("close_confirm") == "on":
+
+                # Get closure status from form and validate it
+                status_id = form_vars.get("status_id")
+                if not self.valid_status(status_id):
+                    r.error(400, "Invalid closure status", next=select_url)
+
+                # Close the cases
+                closed, closure_failed = self.close_cases(record_ids, status_id)
+                success += closed
+
+                # Append to confirmation/error message
+                msg_ = T("%(number)s cases closed") % {"number": closed}
+                failures = []
+                failed = closure_failed + denied
+                already_closed = total_selected - closed - failed
+                if already_closed:
+                    failures.append(T("%(number)s already done") % {"number": already_closed})
+                if failed:
+                    failures.append(T("%(number)s failed") % {"number": failed})
+                if failures:
+                    failures = "(%s)" % (", ".join(str(f) for f in failures))
+                    msg_ = "%s %s" % (msg_, failures)
+                msg = "%s, %s" % (msg, msg_)
+
+            if success:
+                current.session.confirmation = msg
+            else:
+                current.session.warning = msg
+            redirect(select_url)
+        else:
+            r.error(400, current.ERROR.BAD_REQUEST, next=select_url)
+
+        return output
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def form(cls, form_name):
+        """
+            Produces the form to select closure status and confirm the action
+
+            Args:
+                form_name: the form name (for CSRF protection)
+
+            Returns:
+                the FORM
+        """
+
+        T = current.T
+        db = current.db
+        s3db = current.s3db
+
+        # Dialog and Form
+        INFO = T("The selected residents will be checked-out from their shelter.")
+        CONFIRM = T("Are you sure you want to check-out the selected residents?")
+
+        # Closure statuses
+        stable = s3db.dvr_case_status
+        dbset = db((stable.is_closed == True) & (stable.deleted == False))
+
+        # Selector for closure status
+        ctable = s3db.dvr_case
+        field = ctable.status_id
+        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "dvr_case_status.id",
+                                               field.represent,
+                                               orderby = stable.workflow_position,
+                                               sort = False,
+                                               ))
+        status_selector = OptionsWidget.widget(field, None)
+
+        # Confirmation dialog
+        form = FORM(P(INFO, _class="checkout-info"),
+                    LABEL(INPUT(value = "close_confirm",
+                                _name = "close_confirm",
+                                _type = "checkbox",
+                                ),
+                          T("Close cases"),
+                          _class="label-inline",
+                          ),
+                    LABEL(T("Closure Status"),
+                          status_selector,
+                          _class="label-above",
+                          ),
+                    P(CONFIRM, _class="checkout-question"),
+                    LABEL(INPUT(value = "checkout_confirm",
+                                _name = "checkout_confirm",
+                                _type = "checkbox",
+                                ),
+                          T("Yes, check-out the selected residents"),
+                          _class = "checkout-confirm label-inline",
+                          ),
+                    DIV(BUTTON(T("Submit"),
+                               _class = "small alert button checkout-submit",
+                               _disabled = "disabled",
+                               _type = "submit",
+                               ),
+                        A(T("Cancel"),
+                          _class = "cancel-form-btn action-lnk checkout-cancel",
+                          _href = "javascript:void(0)",
+                          ),
+                        _class = "checkout-buttons",
+                        ),
+                    hidden = {"_formkey": FormKey(form_name).generate(),
+                              "_formname": form_name,
+                              },
+                    _class = "bulk-checkout-form",
+                    )
+
+        return form
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def selected_set(resource, post_vars):
+        """
+            Determine the selected persons from select-parameters
+
+            Args:
+                resource: the pre-filtered CRUDResource (pr_person)
+                post_vars: the POST vars containing the select-parameters
+
+            Returns:
+                set of pr_person.id
+        """
+
+        pkey = resource.table._id.name
+
+        # Selected records
+        selected_ids = post_vars.get("selected", [])
+        if isinstance(selected_ids, str):
+            selected_ids = {item for item in selected_ids.split(",") if item.strip()}
+        query = FS(pkey).belongs(selected_ids)
+
+        # Selection mode
+        mode = post_vars.get("mode")
+        if mode == "Exclusive":
+            query = ~query if selected_ids else None
+        elif mode != "Inclusive":
+            raise SyntaxError
+
+        # Get all matching record IDs
+        if query is not None:
+            resource.add_filter(query)
+        rows = resource.select([pkey], as_rows=True)
+
+        return {row[pkey] for row in rows}
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def permitted_set(table, selected_set):
+        """
+            Produces a sub-select of clients the user is permitted to
+            check-out.
+
+            Args:
+                table: the target table (pr_person)
+                selected_set: set of person IDs of the selected clients
+
+            Returns:
+                SQL
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        rtable = s3db.cr_shelter_registration
+        left = rtable.on((rtable.person_id == table.id) & \
+                         (rtable.deleted == False))
+
+        writable = current.auth.s3_accessible_query("update", rtable)
+        query = table.id.belongs(selected_set) & \
+                ((rtable.id == None) | (rtable.registration_status == 3) | writable)
+
+        return db(query)._select(table.id, left=left)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def valid_status(status_id):
+        """
+            Verify if status_id references a valid closure status
+
+            Args:
+                status_id: the case status record ID
+
+            Returns:
+                boolean
+        """
+
+        table = current.s3db.dvr_case_status
+        query = (table.id == status_id) & \
+                (table.is_closed == True) & \
+                (table.deleted == False)
+        status = current.db(query).select(table.id, limitby=(0, 1)).first()
+
+        return bool(status)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def checkout_residents(person_ids):
+        """
+            Checks out the selected clients from their shelters
+
+            Args:
+                person_ids: person IDs of the selected clients
+
+            Returns:
+                a tuple (number successful, number failed)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Count relevant shelter registrations
+        table = s3db.cr_shelter_registration
+        query = (table.person_id.belongs(person_ids)) & \
+                (table.registration_status != 3) & \
+                (table.deleted == False)
+        cnt = table.id.count()
+        row = db(query).select(cnt).first()
+        total = row[cnt]
+
+        if total > 0:
+            # Get the permitted shelter registrations
+            query = current.auth.s3_accessible_query("update", table) & query
+            rows = db(query).select(table.id,
+                                    table.person_id,
+                                    table.registration_status,
+                                    )
+
+            # Perform the checkout
+            now = current.request.utcnow
+            onaccept = lambda record: s3db.onaccept(table, record, method="update")
+            for registration in rows:
+                registration.update_record(registration_status = 3,
+                                           check_out_date = now,
+                                           )
+                onaccept(registration)
+
+            updated = len(rows)
+        else:
+            updated = 0
+
+        return updated, total - updated
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def close_cases(person_ids, status_id):
+        """
+            Closes the relevant cases with the selected closure status
+
+            Args:
+                person_ids: the person IDs of the cases to close
+                status_id: the ID of the closure status
+
+            Returns:
+                a tuple (number successful, number failed)
+        """
+
+        db = current.db
+        s3db = current.s3db
+
+        # Count relevant cases
+        table = s3db.dvr_case
+        query = (table.person_id.belongs(person_ids)) & \
+                (table.status_id != status_id) & \
+                (table.deleted == False)
+        cnt = table.id.count()
+        row = db(query).select(cnt).first()
+        total = row[cnt]
+
+        if total > 0:
+            # Exclude cases where the client is still checked-in to a shelter
+            rtable = s3db.cr_shelter_registration
+            q = (rtable.person_id.belongs(person_ids)) & \
+                (rtable.registration_status == 2) & \
+                (rtable.deleted == False)
+            checked_in = db(q)._select(rtable.person_id)
+
+            # Get the permitted cases
+            query = current.auth.s3_accessible_query("update", table) & \
+                    (~(table.person_id.belongs(checked_in))) & \
+                    query
+            rows = db(query).select(table.id,
+                                    table.person_id,
+                                    table.status_id,
+                                    )
+
+            # Perform the closure
+            now = current.request.utcnow
+            onaccept = lambda record: s3db.onaccept(table, record, method="update")
+            for case in rows:
+                case.update_record(status_id=status_id, closed_on=now)
+                onaccept(case)
+
+            updated = len(rows)
+        else:
+            updated = 0
+
+        return updated, total - updated
 
 # END =========================================================================

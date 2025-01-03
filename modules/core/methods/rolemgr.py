@@ -43,7 +43,7 @@ from ..tools import JSONERRORS, JSONSEPARATORS, s3_mark_required, s3_str
 from ..ui import s3_comments_widget
 
 from .base import CRUDMethod
-from .crud import S3CRUD
+from .crud import BasicCRUD
 
 # =============================================================================
 class S3RoleManager(CRUDMethod):
@@ -186,7 +186,6 @@ class S3RoleManager(CRUDMethod):
                                 dt_pagination = dt_pagination,
                                 dt_pageLength = display_length,
                                 dt_base_url = r.url(method="", vars={}),
-                                dt_permalink = r.url(),
                                 dt_formkey = formkey,
                                 )
 
@@ -197,7 +196,7 @@ class S3RoleManager(CRUDMethod):
             response.view = "admin/roles.html"
 
             # Page actions
-            crud_button = S3CRUD.crud_button
+            crud_button = BasicCRUD.crud_button
             page_actions = DIV(crud_button(T("Create Role"),
                                            _href = r.url(method="create"),
                                            ),
@@ -220,7 +219,7 @@ class S3RoleManager(CRUDMethod):
         elif representation == "aadata":
 
             # Page limits
-            start, limit = S3CRUD._limits(get_vars)
+            start, limit = BasicCRUD._limits(get_vars)
 
             # Data Table Filter and Sorting
             searchq, orderby, left = resource.datatable_filter(list_fields,
@@ -283,9 +282,9 @@ class S3RoleManager(CRUDMethod):
         # Standard actions
         s3.actions = None
         s3.crud_labels.UPDATE = T("Edit")
-        S3CRUD.action_buttons(r, editable=True, deletable=False)
+        BasicCRUD.action_buttons(r, editable=True, deletable=False)
 
-        action_button = S3CRUD.action_button
+        action_button = BasicCRUD.action_button
 
         # Users
         label = T("Users")
@@ -884,7 +883,7 @@ class S3RoleManager(CRUDMethod):
 
             # Show a back-button since OrgAdmins have no other obvious
             # way to return to the list (no left menu)
-            crud_button = S3CRUD.crud_button
+            crud_button = BasicCRUD.crud_button
             output["list_btn"] = crud_button(T("Back to User List"),
                                              icon = "return",
                                              _href = r.url(id="", method=""),
@@ -1030,10 +1029,10 @@ class S3RoleManager(CRUDMethod):
 
             # Default RHeader and View
             if "rheader" not in attr:
-                return_btn = S3CRUD.crud_button("Back to Roles List",
-                                                icon = "return",
-                                                _href=r.url(id="", method=""),
-                                                )
+                return_btn = BasicCRUD.crud_button("Back to Roles List",
+                                                   icon = "return",
+                                                   _href=r.url(id="", method=""),
+                                                   )
                 output["rheader"] = DIV(return_btn,
                                         _class="rheader",
                                         )

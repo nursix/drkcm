@@ -32,13 +32,13 @@ if auth.permission.format in ("html",):
     controller = request.controller
     if controller not in s3_menu_dict:
         # No custom menu, so use standard menu for this controller
-        menu.options = S3OptionsMenu(controller).menu
+        menu.options = OptionsMenu(controller).menu
     else:
         # Use custom menu
         menu.options = s3_menu_dict[controller]
 
     # Add breadcrumbs
-    menu.breadcrumbs = S3OptionsMenu.breadcrumbs
+    menu.breadcrumbs = OptionsMenu.breadcrumbs
 
 # Re-route controller
 c, f = request.controller, request.function

@@ -1,5 +1,5 @@
 /**
- * jQuery UI Widget for S3Anonymize
+ * jQuery UI Widget for Anonymize
  *
  * @copyright 2018-2021 (c) Sahana Software Foundation
  * @license MIT
@@ -193,11 +193,11 @@
                 return dfd.resolve(false);
             }
 
-            // Request data including action-key
-            var key = container.find('input[name="action-key"]').first().val(),
+            // Request data including formkey
+            var key = container.find('input[name="_formkey"]').first().val(),
                 data = JSON.stringify({
                     'apply': selected,
-                    'key': key,
+                    '_formkey': key,
                 }),
                 url = this.options.ajaxURL;
 

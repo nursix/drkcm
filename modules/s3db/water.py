@@ -30,7 +30,7 @@ __all__ = ("WaterModel",)
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class WaterModel(DataModel):
@@ -103,11 +103,11 @@ class WaterModel(DataModel):
                                        IS_ONE_OF(db, "water_zone_type.id",
                                                  zone_type_represent,
                                                  sort=True)),
-                           comment = S3PopupLink(c = "water",
-                                                 f = "zone_type",
-                                                 label = ADD_ZONE_TYPE,
-                                                 tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
-                                                 ),
+                           comment = PopupLink(c = "water",
+                                               f = "zone_type",
+                                               label = ADD_ZONE_TYPE,
+                                               tooltip = T("Select a Zone Type from the list or click 'Add Zone Type'"),
+                                               ),
                            ),
                      location_id(
                         widget = LocationSelector(catalog_layers = True,
@@ -168,10 +168,10 @@ class WaterModel(DataModel):
         #                         ondelete = "RESTRICT",
         #                         represent = represent,
         #                         requires = IS_EMPTY_OR(IS_ONE_OF(db, "water_river.id", represent)),
-        #                         comment = S3PopupLink(c = "water",
-        #                                               f = "river",
-        #                                               title = ADD_RIVER,
-        #                                               ),
+        #                         comment = PopupLink(c = "water",
+        #                                             f = "river",
+        #                                             title = ADD_RIVER,
+        #                                             ),
         #                         )
 
         # -----------------------------------------------------------------------------

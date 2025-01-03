@@ -88,7 +88,7 @@ from gluon import *
 
 from ..core import *
 from s3dal import Row
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class OrgOrganisationModel(DataModel):
@@ -208,12 +208,12 @@ class OrgOrganisationModel(DataModel):
                                                                       )),
                                               sortby = "name",
                                               widget = organisation_type_widget,
-                                              comment = S3PopupLink(c = "org",
-                                                                    f = "organisation_type",
-                                                                    label = T("Create Organization Type"),
-                                                                    title = T("Organization Type"),
-                                                                    tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
-                                                                    ),
+                                              comment = PopupLink(c = "org",
+                                                                  f = "organisation_type",
+                                                                  label = T("Create Organization Type"),
+                                                                  title = T("Organization Type"),
+                                                                  tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Organization Type'."),
+                                                                  ),
                                               )
 
         configure(tablename,
@@ -308,12 +308,12 @@ class OrgOrganisationModel(DataModel):
                                                               not_filter_opts = opts_filter[1],
                                                               )),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "org",
-                                                            f = "region",
-                                                            label = T("Add Region"),
-                                                            title = T("Region"),
-                                                            tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
-                                                            ),
+                                      comment = PopupLink(c = "org",
+                                                          f = "region",
+                                                          label = T("Add Region"),
+                                                          title = T("Region"),
+                                                          tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Add Region'."),
+                                                          ),
                                       )
 
             configure(tablename,
@@ -429,7 +429,7 @@ class OrgOrganisationModel(DataModel):
                      Field("logo", "upload",
                            label = T("Logo"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("org_organisation", "logo"),
                            requires = IS_EMPTY_OR(IS_IMAGE(
                                             maxsize = (400, 400),
                                             error_message = T("Upload an image file (png or jpeg), max. 400x400 pixels!"),
@@ -542,13 +542,13 @@ class OrgOrganisationModel(DataModel):
         else:
             text_comment = T("You can search by name, acronym or comments")
 
-        # Reusable field
-        organisation_comment = S3PopupLink(c = "org",
-                                           f = "organisation",
-                                           label = ADD_ORGANIZATION,
-                                           title = ADD_ORGANIZATION,
-                                           tooltip = tooltip,
-                                           )
+        # Foreign Key Template
+        organisation_comment = PopupLink(c = "org",
+                                         f = "organisation",
+                                         label = ADD_ORGANIZATION,
+                                         title = ADD_ORGANIZATION,
+                                         tooltip = tooltip,
+                                         )
         auth = current.auth
         organisation_id = FieldTemplate("organisation_id", "reference %s" % tablename,
                                         comment = organisation_comment,
@@ -802,18 +802,10 @@ class OrgOrganisationModel(DataModel):
                        )
 
         # Beneficiary/Case Management
-        if settings.has_module("br"):
-            # Use BR for org-specific categories in case management
-            add_components(tablename,
-                           br_need = "organisation_id",
-                           br_assistance_theme = "organisation_id",
-                           )
-        else:
-            # Use DVR for org-specific categories in case management
-            add_components(tablename,
-                           dvr_need = "organisation_id",
-                           dvr_response_theme = "organisation_id",
-                           )
+        add_components(tablename,
+                       dvr_need = "organisation_id",
+                       dvr_response_theme = "organisation_id",
+                       )
 
         # Projects
         if settings.get_project_multiple_organisations():
@@ -1996,11 +1988,11 @@ class OrgOrganisationResourceModel(DataModel):
                                      readable = True,
                                      writable = True,
                                      empty = False,
-                                     comment = S3PopupLink(c = "org",
-                                                           f = "resource_type",
-                                                           vars = {"child": "parameter_id"},
-                                                           title = ADD_RESOURCE_TYPE,
-                                                           ),
+                                     comment = PopupLink(c = "org",
+                                                         f = "resource_type",
+                                                         vars = {"child": "parameter_id"},
+                                                         title = ADD_RESOURCE_TYPE,
+                                                         ),
                                      ),
                           Field("value", "integer",
                                 label = T("Quantity"),
@@ -2398,7 +2390,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Service deleted"),
             msg_list_empty = T("No Services currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         service_id = FieldTemplate("service_id", "reference %s" % tablename,
                                    label = T("Services"),
                                    ondelete = "CASCADE",
@@ -2638,7 +2630,7 @@ class OrgServiceModel(DataModel):
                                            },
                             )
 
-        # Reusable field
+        # Foreign Key Template
         service_location_id = FieldTemplate("service_location_id",
                                             "reference %s" % tablename,
                                             ondelete = "CASCADE",
@@ -2693,7 +2685,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Booking Mode deleted"),
             msg_list_empty = T("No Booking Modes currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         booking_mode_id = FieldTemplate("booking_mode_id",
                                         "reference %s" % tablename,
@@ -2738,7 +2730,7 @@ class OrgServiceModel(DataModel):
             msg_record_deleted = T("Service Mode deleted"),
             msg_list_empty = T("No Service Modes currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         service_mode_id = FieldTemplate("service_mode_id",
                                         "reference %s" % tablename,
@@ -3776,6 +3768,7 @@ class OrgSitePresenceModel(DataModel):
     def model(self):
 
         T = current.T
+        crud_strings = current.response.s3.crud_strings
 
         define_table = self.define_table
         super_link = self.super_link
@@ -3834,7 +3827,13 @@ class OrgSitePresenceModel(DataModel):
                   insertable = False,
                   editable = False,
                   deletable = False,
+                  immutable = True,
                   )
+
+        # CRUD strings
+        crud_strings[tablename] = Storage(
+            title_list = T("Site Presence Events"),
+            )
 
         # ---------------------------------------------------------------------
         # Current Presence at Sites
@@ -3868,6 +3867,7 @@ class OrgSitePresenceModel(DataModel):
                   insertable = False,
                   editable = False,
                   deletable = False,
+                  immutable = True,
                   )
 
         # ---------------------------------------------------------------------
@@ -4315,12 +4315,12 @@ class OrgFacilityModel(DataModel):
                                                               sort = True,
                                                               ),
                                          sortby = "name",
-                                         comment = S3PopupLink(c = "org",
-                                                               f = "facility_type",
-                                                               label = ADD_FAC,
-                                                               title = T("Facility Type"),
-                                                               tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
-                                                               ),
+                                         comment = PopupLink(c = "org",
+                                                             f = "facility_type",
+                                                             label = ADD_FAC,
+                                                             title = T("Facility Type"),
+                                                             tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Facility Type'."),
+                                                             ),
                                          )
 
         configure(tablename,
@@ -4912,11 +4912,11 @@ class OrgRoomModel(DataModel):
             msg_list_empty = T("No Rooms currently registered"))
 
         room_comment = DIV(
-                           S3PopupLink(c = "org",
-                                       f = "room",
-                                       label = ADD_ROOM,
-                                       tooltip = T("Select a Room from the list or click 'Create Room'"),
-                                       ),
+                           PopupLink(c = "org",
+                                     f = "room",
+                                     label = ADD_ROOM,
+                                     tooltip = T("Select a Room from the list or click 'Create Room'"),
+                                     ),
                            # Filters Room based on site
                            SCRIPT(
 '''$.filterOptionsS3({
@@ -4927,7 +4927,7 @@ class OrgRoomModel(DataModel):
 })''')
                            )
 
-        # Reusable field for other tables to reference
+        # Foreign Key Template for other tables to reference
         represent = S3Represent(lookup=tablename)
         room_id = FieldTemplate("room_id", "reference %s" % tablename,
                                 label = T("Room"),
@@ -5033,12 +5033,12 @@ class OrgOfficeModel(DataModel):
                                                               filter_opts=filter_opts,
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = "org",
-                                                             f = "office_type",
-                                                             label = ADD_OFFICE_TYPE,
-                                                             title = T("Office Type"),
-                                                             tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
-                                                             ),
+                                       comment = PopupLink(c = "org",
+                                                           f = "office_type",
+                                                           label = ADD_OFFICE_TYPE,
+                                                           title = T("Office Type"),
+                                                           tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Office Type'."),
+                                                           ),
                                        )
 
         configure(tablename,
@@ -6847,15 +6847,6 @@ def org_rheader(r, tabs=None):
                 if settings.get_org_pdf_card_configs():
                     append_tab((T("Cards"), "card_config"))
 
-                # Org-specific categories for beneficiary/case management
-                if settings.has_module("br"):
-                    labels = s3db.br_terminology()
-                    if settings.get_br_needs_org_specific():
-                        append_tab((T("Need Types"), "need"))
-                    if settings.get_br_assistance_themes() and \
-                       settings.get_br_assistance_themes_org_specific():
-                        append_tab((labels.THEMES, "assistance_theme"))
-
             if settings.get_L10n_translate_org_organisation():
                 tabs.insert(1, (T("Local Names"), "name"))
 
@@ -7093,7 +7084,7 @@ def org_organisation_controller():
                 # Non-default function name (e.g. project/partners)
                 # => use same function for options lookup after popup-create
                 popup_link = otable.region_id.comment
-                if popup_link and isinstance(popup_link, S3PopupLink):
+                if popup_link and isinstance(popup_link, PopupLink):
                     popup_link.vars["parent"] = f
 
             method = r.method
@@ -7283,33 +7274,6 @@ def org_organisation_controller():
                                    create_next = None,
                                    )
 
-                elif cname == "assistance_theme":
-                    # Filter sector_id to the sectors of the current org
-                    ttable = component.table
-                    stable = s3db.org_sector
-                    ltable = s3db.org_sector_organisation
-
-                    left = ltable.on(ltable.sector_id == stable.id)
-                    dbset = db((ltable.organisation_id == r.id) & \
-                               (ltable.deleted == False))
-
-                    field = ttable.sector_id
-                    field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "org_sector.id",
-                                                           field.represent,
-                                                           left = left,
-                                                           ))
-
-                    # If need types are org-specific, filter need_id to org's needs
-                    if settings.get_br_needs_org_specific():
-                        ntable = s3db.br_need
-
-                        dbset = db(ntable.organisation_id == r.id)
-
-                        field = ttable.need_id
-                        field.requires = IS_EMPTY_OR(IS_ONE_OF(dbset, "br_need.id",
-                                                               field.represent,
-                                                               ))
-
                 elif cname == "card_config":
                     s3db.doc_update_card_type_requires(r.component_id, r.id)
 
@@ -7333,7 +7297,7 @@ def org_organisation_controller():
                 args = ["[id]", "read"] if settings.get_ui_open_read_first() else ["[id]"]
                 read_url = URL(c=controller, f=function, args=args)
                 update_url = URL(c=controller, f=function, args=["[id]", "update"])
-                S3CRUD.action_buttons(r, read_url=read_url, update_url=update_url)
+                BasicCRUD.action_buttons(r, read_url=read_url, update_url=update_url)
 
             elif r.component_name == "branch" and r.record and \
                  isinstance(output, dict) and \
@@ -7640,8 +7604,7 @@ def org_office_controller():
             # (Delete not overridden to keep errors within Tab)
             read_url = URL(c="hrm", f="staff", args=["[id]"])
             update_url = URL(c="hrm", f="staff", args=["[id]", "update"])
-            S3CRUD.action_buttons(r, read_url=read_url,
-                                     update_url=update_url)
+            BasicCRUD.action_buttons(r, read_url=read_url, update_url=update_url)
         return output
     s3.postp = postp
 
@@ -7784,7 +7747,7 @@ def org_facility_controller():
     def postp(r, output):
         if r.interactive and r.component_name == "shift":
             # Normal Action Buttons
-            S3CRUD.action_buttons(r)
+            BasicCRUD.action_buttons(r)
             # Custom Action Buttons
             s3.actions += [{"label": s3_str(current.T("Assign")),
                             "url": URL(c = "hrm",
@@ -8578,7 +8541,7 @@ class org_AssignMethod(CRUDMethod):
         if r.http == "POST":
             added = 0
             post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
                 fkey = component.fkey
                 record = r.record
                 if fkey in record:
@@ -8684,10 +8647,10 @@ class org_AssignMethod(CRUDMethod):
                 profile_url = URL(c = "org",
                                   f = "organisation",
                                   args = ["[id]", "profile"])
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url)
                 response.s3.no_formats = True
 
                 # Data table (items)

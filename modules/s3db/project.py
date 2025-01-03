@@ -66,7 +66,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class ProjectModel(DataModel):
@@ -384,7 +384,7 @@ class ProjectModel(DataModel):
                   update_realm = True,
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         if use_codes:
             project_represent = S3Represent(lookup=tablename,
                                             field_sep = ": ",
@@ -402,10 +402,10 @@ class ProjectModel(DataModel):
                                                           updateable = True,
                                                           )),
                                   sortby = "name",
-                                  comment = S3PopupLink(c = "project",
-                                                        f = "project",
-                                                        tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
-                                                        ),
+                                  comment = PopupLink(c = "project",
+                                                      f = "project",
+                                                      tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
+                                                      ),
                                   )
 
         # Custom Methods
@@ -949,12 +949,12 @@ class ProjectBeneficiaryModel(DataModel):
                                 represent = parameter_represent,
                                 readable = True,
                                 writable = True,
-                                comment = S3PopupLink(c = "project",
-                                                      f = "beneficiary_type",
-                                                      vars = {"child": "parameter_id"},
-                                                      title = ADD_BNF_TYPE,
-                                                      tooltip = T("Please record Beneficiary according to the reporting needs of your project"),
-                                                      ),
+                                comment = PopupLink(c = "project",
+                                                    f = "beneficiary_type",
+                                                    vars = {"child": "parameter_id"},
+                                                    title = ADD_BNF_TYPE,
+                                                    tooltip = T("Please record Beneficiary according to the reporting needs of your project"),
+                                                    ),
                                 ),
                      # Populated automatically from project_location
                      self.gis_location_id(readable = False,
@@ -1110,7 +1110,7 @@ class ProjectBeneficiaryModel(DataModel):
                   super_entity = "stats_data",
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         beneficiary_id = FieldTemplate("beneficiary_id", "reference %s" % tablename,
                                        label = T("Beneficiaries"),
                                        ondelete = "SET NULL",
@@ -1121,11 +1121,11 @@ class ProjectBeneficiaryModel(DataModel):
                                                               sort = True,
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = "project",
-                                                             f = "beneficiary",
-                                                             title = ADD_BNF,
-                                                             tooltip = T("If you don't see the beneficiary in the list, you can add a new one by clicking link 'Add Beneficiaries'."),
-                                                             ),
+                                       comment = PopupLink(c = "project",
+                                                           f = "beneficiary",
+                                                           title = ADD_BNF,
+                                                           tooltip = T("If you don't see the beneficiary in the list, you can add a new one by clicking link 'Add Beneficiaries'."),
+                                                           ),
                                        )
 
         # Components
@@ -1288,7 +1288,7 @@ class ProjectHazardModel(DataModel):
             msg_list_empty = T("No Hazards currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         hazard_id = FieldTemplate("hazard_id", "reference %s" % tablename,
                                   sortby = "name",
@@ -1482,12 +1482,12 @@ class ProjectLocationModel(DataModel):
                         # LocationSelector doesn't support adding new locations dynamically
                         # - if this isn't required, can set to use this widget in the template
                         widget = S3LocationAutocompleteWidget(),
-                        comment = S3PopupLink(c = "gis",
-                                              f = "location",
-                                              label = T("Create Location"),
-                                              title = T("Location"),
-                                              tooltip = messages.AUTOCOMPLETE_HELP,
-                                              ),
+                        comment = PopupLink(c = "gis",
+                                            f = "location",
+                                            label = T("Create Location"),
+                                            title = T("Location"),
+                                            tooltip = messages.AUTOCOMPLETE_HELP,
+                                            ),
                      ),
                      # % breakdown by location
                      Field("percentage", "decimal(3,2)",
@@ -1677,7 +1677,7 @@ class ProjectLocationModel(DataModel):
                                         },
                       )
 
-        # Reusable Field
+        # Foreign Key Template
         project_location_represent = project_LocationRepresent()
         project_location_id = FieldTemplate("project_location_id", "reference %s" % tablename,
                                             label = LOCATION,
@@ -1689,11 +1689,11 @@ class ProjectLocationModel(DataModel):
                                                                       updateable = True,
                                                                       sort = True,
                                                                       )),
-                                            comment = S3PopupLink(ADD_LOCATION,
-                                                                  c = "project",
-                                                                  f = "location",
-                                                                  tooltip = LOCATION_TOOLTIP,
-                                                                  ),
+                                            comment = PopupLink(ADD_LOCATION,
+                                                                c = "project",
+                                                                f = "location",
+                                                                tooltip = LOCATION_TOOLTIP,
+                                                                ),
                                             )
 
         # ---------------------------------------------------------------------
@@ -1896,23 +1896,23 @@ class ProjectOrganisationModel(DataModel):
         tablename = "project_organisation"
         self.define_table(tablename,
                           self.project_project_id(
-                            comment = S3PopupLink(c = "project",
-                                                  f = "project",
-                                                  vars = {"prefix": "project"},
-                                                  tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
-                                                  ),
+                            comment = PopupLink(c = "project",
+                                                f = "project",
+                                                vars = {"prefix": "project"},
+                                                tooltip = T("If you don't see the project in the list, you can add a new one by clicking link 'Create Project'."),
+                                                ),
                           ),
                           self.org_organisation_id(
                                 requires = self.org_organisation_requires(
                                                 required=True,
                                                 ),
                                 widget = None,
-                                comment = S3PopupLink(c = "org",
-                                                      f = "organisation",
-                                                      label = T("Create Organization"),
-                                                      title = messages.ORGANISATION,
-                                                      tooltip = organisation_help,
-                                                      ),
+                                comment = PopupLink(c = "org",
+                                                    f = "organisation",
+                                                    label = T("Create Organization"),
+                                                    title = messages.ORGANISATION,
+                                                    tooltip = organisation_help,
+                                                    ),
                           ),
                           Field("role", "integer",
                                 label = T("Role"),
@@ -2178,13 +2178,13 @@ class ProjectStatusModel(DataModel):
             msg_list_empty = T("No Statuses currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
-                                  comment = S3PopupLink(title = ADD_STATUS,
-                                                        c = "project",
-                                                        f = "status",
-                                                        ),
+                                  comment = PopupLink(title = ADD_STATUS,
+                                                      c = "project",
+                                                      f = "status",
+                                                      ),
                                   label = T("Status"),
                                   ondelete = "SET NULL",
                                   represent = represent,
@@ -2305,7 +2305,7 @@ class ProjectThemeModel(DataModel):
             msg_list_empty = T("No Themes currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         theme_id = FieldTemplate("theme_id", "reference %s" % tablename,
                                  label = T("Theme"),
@@ -2786,13 +2786,13 @@ class ProjectActivityModel(DataModel):
                   update_realm = True,
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         activity_id = FieldTemplate("activity_id", "reference %s" % tablename,
-                                    comment = S3PopupLink(ADD_ACTIVITY,
-                                                          c = "project",
-                                                          f = "activity",
-                                                          tooltip = ACTIVITY_TOOLTIP,
-                                                          ),
+                                    comment = PopupLink(ADD_ACTIVITY,
+                                                        c = "project",
+                                                        f = "activity",
+                                                        tooltip = ACTIVITY_TOOLTIP,
+                                                        ),
                                     label = T("Activity"),
                                     ondelete = "CASCADE",
                                     represent = represent,
@@ -2828,8 +2828,6 @@ class ProjectActivityModel(DataModel):
                        project_activity_data = "activity_id",
                        # Demographic
                        project_activity_demographic = "activity_id",
-                       # Distributions
-                       supply_distribution = "activity_id",
                        # Events
                        event_event = {"link": "event_activity",
                                       "joinby": "activity_id",
@@ -3102,7 +3100,7 @@ class ProjectActivityTypeModel(DataModel):
             msg_list_empty = T("No Activity Types Found"),
             )
 
-        # Reusable Fields
+        # Foreign Key Templates
         represent = S3Represent(lookup=tablename, translate=True)
         activity_type_id = FieldTemplate("activity_type_id", "reference %s" % tablename,
                                          label = T("Activity Type"),
@@ -3114,11 +3112,11 @@ class ProjectActivityTypeModel(DataModel):
                                                                   sort = True,
                                                                   )),
                                          sortby = "name",
-                                         comment = S3PopupLink(title = ADD_ACTIVITY_TYPE,
-                                                               c = "project",
-                                                               f = "activity_type",
-                                                               tooltip = T("If you don't see the type in the list, you can add a new one by clicking link 'Create Activity Type'."),
-                                                               ),
+                                         comment = PopupLink(title = ADD_ACTIVITY_TYPE,
+                                                             c = "project",
+                                                             f = "activity_type",
+                                                             tooltip = T("If you don't see the type in the list, you can add a new one by clicking link 'Create Activity Type'."),
+                                                             ),
                                          )
 
         if current.deployment_settings.get_project_sectors():
@@ -3287,11 +3285,11 @@ class ProjectActivityDemographicsModel(DataModel):
         #
         if current.s3db.table("stats_demographic"):
             title = current.response.s3.crud_strings["stats_demographic"].label_create
-            parameter_id_comment = S3PopupLink(c = "stats",
-                                               f = "demographic",
-                                               vars = {"child": "parameter_id"},
-                                               title = title,
-                                               )
+            parameter_id_comment = PopupLink(c = "stats",
+                                             f = "demographic",
+                                             vars = {"child": "parameter_id"},
+                                             title = title,
+                                             )
         else:
             parameter_id_comment = None
 
@@ -3472,7 +3470,7 @@ class ProjectTaskModel(DataModel):
             msg_list_empty = T("No Milestones Found"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename,
                                 fields=["name", "date"],
                                 labels="%(name)s: %(date)s",
@@ -3486,11 +3484,11 @@ class ProjectTaskModel(DataModel):
                                                               represent,
                                                               )),
                                      sortby = "name",
-                                     comment = S3PopupLink(c = "project",
-                                                           f = "milestone",
-                                                           title = ADD_MILESTONE,
-                                                           tooltip = T("A project milestone marks a significant date in the calendar which shows that progress towards the overall objective is being made."),
-                                                           ),
+                                     comment = PopupLink(c = "project",
+                                                         f = "milestone",
+                                                         title = ADD_MILESTONE,
+                                                         tooltip = T("A project milestone marks a significant date in the calendar which shows that progress towards the overall objective is being made."),
+                                                         ),
                                      )
 
         configure(tablename,
@@ -3830,7 +3828,7 @@ class ProjectTaskModel(DataModel):
                   update_onaccept = self.project_task_update_onaccept,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = project_TaskRepresent(show_link=True)
         task_id = FieldTemplate("task_id", "reference %s" % tablename,
                                 label = T("Task"),
@@ -3841,11 +3839,11 @@ class ProjectTaskModel(DataModel):
                                                           represent,
                                                           )),
                                 sortby = "name",
-                                comment = S3PopupLink(c = "project",
-                                                      f = "task",
-                                                      title = ADD_TASK,
-                                                      tooltip = T("A task is a piece of work that an individual or team can do in 1-2 days."),
-                                                      ),
+                                comment = PopupLink(c = "project",
+                                                    f = "task",
+                                                    title = ADD_TASK,
+                                                    tooltip = T("A task is a piece of work that an individual or team can do in 1-2 days."),
+                                                    ),
                                 )
 
         # Representation with project name, for time log form
@@ -5179,7 +5177,7 @@ def project_task_controller():
             if not r.component and r.method != "import":
                 # Maintain vars: why?
                 update_url = URL(args=["[id]"], vars=get_vars)
-                S3CRUD.action_buttons(r, update_url=update_url)
+                BasicCRUD.action_buttons(r, update_url=update_url)
         return output
     s3.postp = postp
 

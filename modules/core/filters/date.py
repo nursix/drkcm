@@ -36,7 +36,7 @@ from gluon.storage import Storage
 
 from s3dal import Field
 
-from ..tools import IS_UTC_DATE, S3DateTime, s3_decode_iso_datetime
+from ..tools import IS_UTC_DATE, S3DateTime, s3_decode_iso_datetime, s3_relative_datetime
 from ..ui import S3CalendarWidget
 from ..resource import S3ResourceField
 
@@ -481,10 +481,34 @@ class AgeFilter(RangeFilter):
 
     css_base = "age-filter"
 
-    operator = ["le", "gt"]
+    operator = ["le", "ge"]
 
     # Untranslated labels for individual input boxes.
-    input_labels = {"le": "", "gt": "To"}
+    input_labels = {"le": "", "lt": "", "gt": "up to", "ge": "up to"}
+
+    # -------------------------------------------------------------------------
+    def __init__(self, field=None, **attr):
+        """
+            Keyword Args:
+                exact       - in which set to include exact age matches
+                              * "from age to >age" (="from")
+                              * "from <age to age" (="to")
+                              * both (the default)
+
+            Note:
+                - with exact="from" or "to", filtering for "from age to age"
+                  would result in an empty set
+                - with exact="both", filtering for "from age to age" will
+                  return those records with exactly that age (to the day)
+        """
+
+        super().__init__(field=field, **attr)
+
+        mode = self.opts.get("exact")
+        if mode == "from":
+            self.operator = ["le", "gt"]
+        elif mode == "to":
+            self.operator = ["lt", "ge"]
 
     # -------------------------------------------------------------------------
     def widget(self, resource, values):
@@ -506,43 +530,42 @@ class AgeFilter(RangeFilter):
 
         input_class = "%s-%s" % (css_base, "input")
         input_labels = self.input_labels
-        input_elements = DIV()
-        ie_append = input_elements.append
 
         _id = attr["_id"]
         _variable = self._variable
         selector = self.selector
 
-        opts = self.opts
-        minimum = opts.get("minimum", 0)
-        maximum = opts.get("maximum", 120)
-
+        # Generate the input elements
+        input_elements = DIV()
+        ie_append = input_elements.append
         for operator in self.operator:
 
             input_id = "%s-%s" % (_id, operator)
+            variable = _variable(selector, operator)
+
+            # The currently selected value
+            value = values.get(variable, None)
+            if value not in [None, []]:
+                if type(value) is list:
+                    value = value[0]
 
             # Selectable options
-            input_opts = [OPTION("%s" % i, value=i)
-                          for i in range(minimum, maximum + 1)
-                          ]
-            input_opts.insert(0, OPTION("", value=""))
+            options = self.options(value)
+            zero = self.opts.get("zero", "") if operator in ("le", "lt") else ""
+            input_opts = [OPTION(zero, _value="")]
+            selected_value = None
+            for l, v, _, selected in options:
+                if selected:
+                    selected_value = v
+                option = OPTION(l, _value=v, _selected="selected" if selected else None)
+                input_opts.append(option)
 
             # Input Element
             input_box = SELECT(input_opts,
                                _id = input_id,
                                _class = input_class,
+                               _value = selected_value,
                                )
-
-            variable = _variable(selector, operator)
-
-            # Populate with the value, if given
-            # if user has not set any of the limits, we get [] in values.
-            value = values.get(variable, None)
-            if value not in [None, []]:
-                if type(value) is list:
-                    value = value[0]
-                input_box["_value"] = value
-                input_box["value"] = value
 
             label = input_labels[operator]
             if label:
@@ -559,10 +582,62 @@ class AgeFilter(RangeFilter):
                           _class = "range-filter-field",
                           ))
 
-        ie_append(DIV(LABEL(T("Years")),
-                      _class = "age-filter-unit",
-                      ))
-
         return input_elements
+
+    # -------------------------------------------------------------------------
+    def options(self, selected):
+        """
+            Returns the options for an age selector
+
+            Args:
+                operator: the operator for the selector
+                selected: the currently selected cutoff-date (datetime.date)
+
+            Returns:
+                A sorted list of options [(label, value, cutoff-date, is-selected)]
+        """
+
+        opts = self.opts
+        minimum = max(1, opts.get("minimum", 0))
+        maximum = opts.get("maximum", 120)
+
+        T = current.T
+
+        cutoff = self.cutoff_date
+
+        options = []
+        append = options.append
+        for i in range(minimum, maximum + 1):
+
+            label = "1 %s" % T("year") if i == 1 else "%s %s" % (i, T("years"))
+            value = "-%sY" % i
+            append((label, value, cutoff(value), value == selected))
+
+        # Add other options
+        # - options format: (label, relative-date-expression)
+        extra = self.opts.get("extra_options")
+        if extra:
+            for label, value in extra:
+                append((label, value, cutoff(value), value == selected))
+
+        options = sorted(options, key=lambda i: i[2], reverse=True)
+
+        return options
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def cutoff_date(value):
+        """
+            Calculates the cutoff-date for a relative-date string
+
+            Args:
+                value: a relative-date string
+
+            Returns:
+                the cutoff-date (datetime.date), or None for invalid values
+        """
+
+        dt = s3_relative_datetime(value)
+        return S3DateTime.to_local(dt).date() if dt else None
 
 # END =========================================================================

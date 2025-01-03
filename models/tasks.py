@@ -467,7 +467,7 @@ s3task = s3base.S3Task()
 current.s3task = s3task
 
 # -----------------------------------------------------------------------------
-# Reusable field for scheduler task links
+# Field template for scheduler task links
 scheduler_task_id = FieldTemplate("scheduler_task_id",
                                   "reference %s" % s3base.S3Task.TASK_TABLENAME,
                                   ondelete = "CASCADE",

@@ -31,7 +31,6 @@ __all__ = ("DVIModel",
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class DVIModel(DataModel):
@@ -148,7 +147,7 @@ class DVIModel(DataModel):
                                  "status"
                                  ])
 
-        # Reusable fields
+        # Foreign Key Template
         represent = S3Represent(lookup="dvi_recreq",
                                 fields = ["marker", "date", "bodies_found"],
                                 labels = T("[%(marker)s] %(date)s: %(bodies_found)s bodies"),
@@ -193,7 +192,7 @@ class DVIModel(DataModel):
                            ),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         morgue_id = FieldTemplate("morgue_id", "reference %s" % tablename,
                                   requires = IS_EMPTY_OR(
                                                 IS_ONE_OF(db, "dvi_morgue.id",
@@ -481,12 +480,12 @@ class DVIModel(DataModel):
         c_comment = T("Type the first few characters of one of the Person's names.")
 
         ADD_PERSON = T("Add Person")
-        return S3PopupLink(c = "pr",
-                           f = "person",
-                           vars = {"child": fieldname},
-                           label = ADD_PERSON,
-                           title = c_title,
-                           tooltip = c_comment,
-                           )
+        return PopupLink(c = "pr",
+                         f = "person",
+                         vars = {"child": fieldname},
+                         label = ADD_PERSON,
+                         title = c_title,
+                         tooltip = c_comment,
+                         )
 
 # END =========================================================================

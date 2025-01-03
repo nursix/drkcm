@@ -35,7 +35,7 @@ from gluon import current, URL, DIV
 from gluon.storage import Storage
 
 from ..resource import S3URLQuery, SyncPolicy
-from ..methods import CRUDMethod, S3CRUD
+from ..methods import CRUDMethod, BasicCRUD
 from ..tools import s3_parse_datetime, s3_utc, s3_str
 
 # =============================================================================
@@ -851,7 +851,7 @@ class S3SyncLog(CRUDMethod):
 
         resource = r.resource
         if resource.tablename == self.TABLENAME:
-            return S3CRUD().select(r, **attr)
+            return BasicCRUD().select(r, **attr)
 
         elif resource.tablename == "sync_repository":
             # READ for sync log for this repository (currently not needed)

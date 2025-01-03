@@ -159,7 +159,6 @@ class S3Config(Storage):
         # Allow templates to append rather than replace
         self.base.prepopulate = ["default/base"]
         self.base.prepopulate_demo = ["default/users"]
-        self.br = Storage()
         self.cap = Storage()
         self.cms = Storage()
         self.cr = Storage()
@@ -327,8 +326,7 @@ class S3Config(Storage):
                 template = getattr(__import__(package, fromlist=[config]), config)
             except ImportError as e:
                 raise RuntimeError("Template not found: %s" % name) from e
-            else:
-                template.config(self)
+            template.config(self)
 
         return self
 
@@ -2018,6 +2016,21 @@ class S3Config(Storage):
         """
         return self.L10n.get("translate_supply_item", False)
 
+    def get_L10n_units_of_measure(self):
+
+        #default_units = {"pc": T("piece"),
+                         #"pair": T("pair"),
+                         #"set": T("set"),
+                         #"mg": T("milligram"),
+                         #"g": T("gram"),
+                         #"kg": T("kilogram"),
+                         #"ml": T("milliliter"),
+                         #"L": T("liter"),
+                         #"m": T("meter"),
+                         #}
+
+        return self.L10n.get("units_of_measure", None)
+
     def get_L10n_pootle_url(self):
         """ URL for Pootle server """
         return self.L10n.get("pootle_url", "http://pootle.sahanafoundation.org/")
@@ -2283,7 +2296,7 @@ class S3Config(Storage):
               * a tuple (extension, css-class[, onhover-title])
         """
         return self.ui.get("export_formats",
-                           ("cap", "have", "kml", "map", "pdf", "rss", "xls", "xlsx", "xml"))
+                           ("xls", "xlsx", "pdf", "map", "rss", "cap", "have", "kml", "xml"))
 
     def get_ui_hide_report_filter_options(self):
         """
@@ -2349,13 +2362,6 @@ class S3Config(Storage):
             e.g. 'Cell Phone'
         """
         return current.T(self.ui.get("label_mobile_phone", "Mobile Phone"))
-
-    def get_ui_label_permalink(self):
-        """
-            Label for the Permalink on dataTables
-            - set to None to disable
-        """
-        return self.ui.get("label_permalink", "Link to this result")
 
     def get_ui_label_postcode(self):
         """
@@ -2524,10 +2530,10 @@ class S3Config(Storage):
             'css' is a folder relative to static/styles
             - /jstree.css or /jstree.min.css is added as-required
         """
-        return self.ui.get("hierarchy_theme", dict(css = "plugins",
-                                                   icons = False,
-                                                   stripes = True,
-                                                   ))
+        return self.ui.get("hierarchy_theme", {"css": "plugins",
+                                               "icons": False,
+                                               "stripes": True,
+                                               })
 
     def get_ui_hierarchy_cascade_option_in_tree(self):
         """
@@ -2656,6 +2662,31 @@ class S3Config(Storage):
             Enable year view in organizer
         """
         return self.ui.get("organizer_year_view", False)
+
+    def get_ui_checkpoint_show_picture(self):
+        """
+            Checkpoint-type UI to show client profile picture
+            by default (True), or only on demand (False):
+            - can be set to False (selectively) in order to improve
+              responsiveness of the UI and reduce network traffic
+        """
+        return self.ui.get("checkpoint_show_picture", True)
+
+    def get_ui_checkpoint_multi_preselect_all(self):
+        """
+            Checkpoint-type UI to pre-select all eligible case group members
+            for multiple-registration (otherwise, only the present client
+            would be pre-selected)
+        """
+        return self.ui.get("checkpoint_multi_preselect_all", True)
+
+    def get_ui_image_upload_use_camera(self):
+        """
+            Enable ImageUploadWidgets to capture images from a built-in
+            or connected web camera
+            - this can still be disabled per individual widget instance
+        """
+        return self.ui.get("image_upload_use_camera", True)
 
     # =========================================================================
     # Messaging
@@ -2832,316 +2863,6 @@ class S3Config(Storage):
             Whether Assets should include a specific type for Telephones
         """
         return self.asset.get("telephones", False)
-
-    # -------------------------------------------------------------------------
-    # BR: Beneficiary Registry
-    #
-    def get_br_case_terminology(self):
-        """
-            Terminology to use when referring to cases: Beneficiary|Client|Case
-        """
-        return self.br.get("case_terminology", "Case")
-
-    def get_br_assistance_terminology(self):
-        """
-            Terminology to use when referring to measures of assistance: Counseling|Assistance
-        """
-        return self.br.get("assistance_terminology", "Assistance")
-
-    def get_br_needs_hierarchical(self):
-        """
-            Need categories are hierarchical
-        """
-        return self.br.get("needs_hierarchical", False)
-
-    def get_br_needs_org_specific(self):
-        """
-            Need categories are specific per root organisation
-        """
-        return self.br.get("needs_org_specific", True)
-
-    def get_br_id_card_layout(self):
-        """
-            Layout class for beneficiary ID cards
-        """
-        return self.br.get("id_card_layout")
-
-    def get_br_id_card_export_roles(self):
-        """
-            User roles permitted to export beneficiary ID cards
-        """
-        return self.br.get("id_card_export_roles")
-
-    def get_br_case_global_default_org(self):
-        """
-            All cases belong to the global default organisation,
-            even if the user could create cases for other orgs
-        """
-        return self.br.get("case_global_default_org", False)
-
-    def get_br_case_hide_default_org(self):
-        """
-            Hide the organisation field in cases if only one allowed
-        """
-        return self.br.get("case_hide_default_org", True)
-
-    def get_br_case_manager(self):
-        """
-            Assign cases to individual case managers (staff members)
-        """
-        return self.br.get("case_manager", True)
-
-    def get_br_case_address(self):
-        """
-            Document the current address of beneficiaries
-        """
-        return self.br.get("case_address", False)
-
-    def get_br_case_language_details(self):
-        """
-            Document languages that can be used when communicating with
-            a beneficiary
-        """
-        return self.br.get("case_language_details", True)
-
-    def get_br_household_size(self):
-        """
-            Track the number of persons per household (family)
-
-            - False = off
-            - True = manual
-            - "auto" = count family members automatically
-        """
-        return self.br.get("household_size", "auto")
-
-    def get_br_case_contacts_tab(self):
-        """
-            Case file use tab to track beneficiary contact information
-        """
-        return self.br.get("case_contacts_tab", True)
-
-    def get_br_case_id_tab(self):
-        """
-            Case file use tab to track identity documents
-        """
-        return self.br.get("case_id_tab", False)
-
-    def get_br_case_family_tab(self):
-        """
-            Case file use tab to track family members
-        """
-        return self.br.get("case_family_tab", True)
-
-    def get_br_service_contacts(self):
-        """
-            Enable case file tab to track service contacts
-        """
-        return self.br.get("service_contacts", False)
-
-    def get_br_case_notes_tab(self):
-        """
-            Use a simple notes journal in case files
-        """
-        return self.br.get("case_notes_tab", False)
-
-    def get_br_case_photos_tab(self):
-        """
-            Case file use tab to upload photos
-
-            NB image-component can also be reached by clicking on the
-               profile photo (or the placeholder, respectively)
-        """
-        return self.br.get("case_photos_tab", False)
-
-    def get_br_case_documents_tab(self):
-        """
-            Case file use tab to upload documents
-        """
-        return self.br.get("case_documents_tab", True)
-
-    def get_br_case_include_activity_docs(self):
-        """
-            Documents-tab of case files includes activity attachments
-        """
-        return self.get_br_case_activity_documents() and \
-               self.br.get("case_include_activity_docs", True)
-
-    def get_br_case_include_group_docs(self):
-        """
-            Documents-tab of case files includes case group attachments
-        """
-        return self.br.get("case_include_group_docs", True)
-
-    def get_br_case_activities(self):
-        """
-            Track case activities
-        """
-        return self.br.get("case_activities", True)
-
-    def get_br_case_activity_manager(self):
-        """
-            Assign case activities to individual staff members
-        """
-        return self.br.get("case_activity_manager", True)
-
-    def get_br_case_activity_urgent_option(self):
-        """
-            Expose features for urgent case activities ("emergencies")
-        """
-        return self.br.get("case_activity_urgent_option", False)
-
-    def get_br_case_activity_need(self):
-        """
-            Use need categories for case activities
-        """
-        return self.br.get("case_activity_need", True)
-
-    def get_br_case_activity_subject(self):
-        """
-            Have a subject line (title) for case activities
-        """
-        return self.br.get("case_activity_subject", False)
-
-    def get_br_case_activity_need_details(self):
-        """
-            Have a text field to document need details in case activities
-        """
-        return self.br.get("case_activity_need_details", False)
-
-    def get_br_case_activity_status(self):
-        """
-            Case activities have a status (and possibly an end date)
-        """
-        return self.br.get("case_activity_status", True)
-
-    def get_br_case_activity_end_date(self):
-        """
-            Show case activity end date in form
-            - True to show, "writable" to allow manual edit
-        """
-        return self.br.get("case_activity_end_date", False)
-
-    def get_br_case_activity_updates(self):
-        """
-            Use case activity update journal (inline-component)
-        """
-        return self.br.get("case_activity_updates", False)
-
-    def get_br_case_activity_outcome(self):
-        """
-            Show field to track outcomes of case activities (free-text)
-        """
-        return self.br.get("case_activity_outcome", True)
-
-    def get_br_case_activity_documents(self):
-        """
-            Case activities have attachments
-        """
-        return self.br.get("case_activity_documents", False)
-
-    def get_br_manage_assistance(self):
-        """
-            Track individual measures of assistance
-        """
-        return self.br.get("manage_assistance", True)
-
-    def get_br_assistance_inline(self):
-        """
-            Document assistance measures inline in activities
-        """
-        return self.br.get("assistance_inline", True)
-
-    def get_br_assistance_tab(self):
-        """
-            Document assistance measures on separate case file tab
-        """
-        setting = self.br.get("assistance_tab")
-        if setting is None:
-            # Show the tab if managing assistance without activities
-            setting = self.get_br_manage_assistance() and \
-                      not self.get_br_case_activities()
-        return setting
-
-    def get_br_assistance_manager(self):
-        """
-            Assign assistance measures to individual staff members
-        """
-        return self.br.get("assistance_manager", True)
-
-    def get_br_assistance_types(self):
-        """
-            Use assistance type categories
-        """
-        return self.br.get("assistance_types", True)
-
-    def get_br_assistance_themes(self):
-        """
-            Use assistance theme categories
-        """
-        return self.br.get("assistance_themes", False)
-
-    def get_br_assistance_themes_org_specific(self):
-        """
-            Assistance themes are specific per root organisation
-        """
-        return self.br.get("assistance_themes_org_specific", True)
-
-    def get_br_assistance_themes_sectors(self):
-        """
-            Assistance themes are organized by org sector
-        """
-        return self.br.get("assistance_themes_sectors", False)
-
-    def get_br_assistance_themes_needs(self):
-        """
-            Assistance themes are linked to needs
-        """
-        return self.br.get("assistance_themes_needs", False)
-
-    def get_br_assistance_measures_use_time(self):
-        """
-            Assistance measures use date+time (instead of just date)
-        """
-        return self.br.get("assistance_measures_use_time", False)
-
-    def get_br_assistance_measure_default_closed(self):
-        """
-            Set default status of assistance measures to closed
-            (useful if the primary use-case is post-action documentation)
-        """
-        return self.br.get("assistance_measure_default_closed", False)
-
-    def get_br_assistance_details_per_theme(self):
-        """
-            Document assistance measure details per theme
-            - requires assistance tab
-        """
-        return self.get_br_assistance_tab() and \
-               self.br.get("assistance_details_per_theme", False)
-
-    def get_br_assistance_activity_autolink(self):
-        """
-            Auto-link assistance details to case activities
-            - requires case_activity_need
-            - requires assistance_themes and assistance_themes_needs
-            - requires assistance_tab and assistance_details_per_theme
-        """
-        return self.br.get("assistance_activity_autolink", False)
-
-    def get_br_assistance_track_effort(self):
-        """
-            Track effort (=hours spent) for assistance measures
-        """
-        return self.br.get("assistance_track_effort", True)
-
-    def get_br_assistance_offer_refno(self):
-        """
-            Use reference numbers in offers of assistance
-            False - do not use reference numbers
-            True - use reference numbers, manual input
-            "auto" - auto-generate reference numbers
-        """
-        return self.br.get("assistance_offer_refno", "auto")
 
     # -------------------------------------------------------------------------
     # CAP: Common Alerting Protocol
@@ -3635,6 +3356,18 @@ class S3Config(Storage):
         """
         return self.dvr.get("household_size", False)
 
+    def get_dvr_case_languages(self):
+        """
+            The most commonly documented case languages as a list|tuple
+            of ISO 639/2 language codes; this will vary greatly between
+            deployments, so the default is to use all languages available
+            from the IS_ISO639_2_LANGUAGE_CODE validator, which may be
+            difficult to use (selector with over 360 languages!)
+
+            - e.g. settings.dvr.case_languages = ("ar", "en", "zh")
+        """
+        return self.dvr.get("case_languages")
+
     def get_dvr_track_transfer_sites(self):
         """
             Enable features to track transfer origin/destination sites
@@ -3686,6 +3419,7 @@ class S3Config(Storage):
         return self.dvr.get("case_flags_org_specific", False)
 
     # Needs -----------------------------------------------
+
     def get_dvr_need_types_org_specific(self):
         """
             Use org-specific need types
@@ -3754,15 +3488,6 @@ class S3Config(Storage):
             not checked-in
         """
         return self.dvr.get("event_registration_checkin_warning", False)
-
-    def get_dvr_event_registration_show_picture(self):
-        """
-            Event registration UI to show profile picture
-            by default (True), or only on demand (False):
-            - can be set to False (selectively) in order to improve
-              responsiveness of the UI and reduce network traffic
-        """
-        return self.dvr.get("event_registration_show_picture", True)
 
     def get_dvr_event_registration_exclude_codes(self):
         """
@@ -4700,12 +4425,6 @@ class S3Config(Storage):
             Call Stock Adjustments 'Stock Counts'
         """
         return self.inv.get("stock_count", True)
-
-    def get_inv_track_pack_values(self):
-        """
-            Whether or not Pack values are tracked
-        """
-        return self.inv.get("track_pack_values", True)
 
     def get_inv_item_status(self):
         """
@@ -5700,7 +5419,8 @@ class S3Config(Storage):
         """
             Do we show pack values in Requests?
         """
-        return self.req.get("pack_values", True)
+        return self.get_supply_track_pack_values() and \
+               self.req.get("pack_values", True)
 
     def get_req_multiple_req_items(self):
         """
@@ -5825,11 +5545,42 @@ class S3Config(Storage):
         """
         return self.supply.get("catalog_multi", True)
 
+    def get_supply_item_category_hierarchy(self):
+        """
+            Whether supply item categories are hierarchical
+        """
+        return self.supply.get("item_category_hierarchy", False)
+
+    def get_supply_track_pack_values(self):
+        """
+            Whether to track pack values
+        """
+        return self.supply.get("track_pack_values", False)
+
+    def get_supply_track_pack_dimensions(self):
+        """
+            Whether to track pack dimensions
+        """
+        return self.supply.get("track_pack_dimensions", False)
+
+    def get_supply_generic_items(self):
+        """
+            Track only generic items, i.e. without manufacturing
+            details such as brand, or model/year
+        """
+        return self.supply.get("generic_items", False)
+
+    def get_supply_kits(self):
+        """
+            Supply items can be kits
+        """
+        return self.supply.get("kits", False)
+
     def get_supply_use_alt_name(self):
         """
             Whether to allow Alternative Items to be defined
         """
-        return self.supply.get("use_alt_name", True)
+        return self.supply.get("use_alt_name", False)
 
     def get_supply_shipping_code(self):
         """
@@ -5837,6 +5588,22 @@ class S3Config(Storage):
             - function(prefix, site_id, field)
         """
         return self.supply.get("shipping_code")
+
+    def get_supply_distribution_check_case_flags(self):
+        """
+            Distribution UI to check for required/debarring case flags
+            - requires DVR module
+        """
+        return self.has_module("dvr") and \
+               self.supply.get("distribution_check_case_flags", True)
+
+    def get_supply_distribution_check_resident(self):
+        """
+            Distribution UI to check that client is shelter resident (if required)
+            - requires CR module
+        """
+        return self.has_module("cr") and \
+               self.supply.get("distribution_check_resident", True)
 
     # -------------------------------------------------------------------------
     # Transport

@@ -381,10 +381,10 @@ def assignment():
                               vars=get_vars,
                               )
             if url:
-                button = s3base.S3CRUD.crud_button(T("Upload Appraisal"),
-                                                   _href=url,
-                                                   _class="action-btn",
-                                                   )
+                button = s3base.BasicCRUD.crud_button(T("Upload Appraisal"),
+                                                      _href=url,
+                                                      _class="action-btn",
+                                                      )
                 if popup:
                     output["items"] = button
                 else:
@@ -771,7 +771,7 @@ def email_inbox():
             # Custom CRUD button for linking the message to mission
             authorised = auth.s3_has_permission("create", "deploy_response")
             if authorised:
-                s3.rfooter = s3base.S3CRUD.crud_button(
+                s3.rfooter = s3base.BasicCRUD.crud_button(
                                         T("Link to Mission"),
                                         _href = URL(f="email_inbox",
                                                     args = [r.id, "select"],

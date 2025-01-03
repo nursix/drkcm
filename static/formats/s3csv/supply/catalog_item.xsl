@@ -29,7 +29,6 @@
          Height..........................supply_item.height
          Volume..........................supply_item.volume
          Kit.............................supply_item.kit
-         Distributed.....................supply_distribution_item (boolean to create)
          Comments........................supply_item.comments
 
          supply_catalog_item uses references to supply_catalog,
@@ -39,7 +38,7 @@
     *********************************************************************** -->
     <xsl:output method="xml"/>
     <xsl:include href="../../xml/commons.xsl"/>
-    
+
     <xsl:key name="catalog" match="row" use="col[@field='Catalog']"/>
     <xsl:key name="item_category" match="row" use="col[@field='Category']"/>
     <xsl:key name="supply_item" match="row" use="concat(col[@field='Item Name'],col[@field='Item Code'])"/>
@@ -81,7 +80,7 @@
         <xsl:variable name="catalog" select="col[@field='Catalog']/text()"/>
         <xsl:variable name="category" select="col[@field='Category']/text()"/>
         <xsl:variable name="item" select="concat(col[@field='Item Name'],col[@field='Item Code'])"/>
-        
+
         <!-- Supply Catalog Item -->
         <resource name="supply_catalog_item">
             <reference field="catalog_id" resource="supply_catalog">
@@ -115,7 +114,7 @@
         </resource>
 
     </xsl:template>
-    
+
     <!-- ****************************************************************** -->
     <xsl:template name="Brand">
         <resource name="supply_brand">
@@ -232,12 +231,6 @@
 	            <resource name="supply_item_pack">
 	                <data field="name"><xsl:value-of select="col[@field='Pack3']"/></data>
 	                <data field="quantity"><xsl:value-of select="col[@field='Pack3 Quantity']"/></data>
-	            </resource>
-	        </xsl:if>
-            <!-- Supply Distribution Items -->
-	        <xsl:if test="$distributed='Y' or $distributed='YES' or $distributed='T' or $distributed='TRUE'">
-	            <resource name="supply_distribution_item">
-	                <data field="name"><xsl:value-of select="$item_name"/></data>
 	            </resource>
 	        </xsl:if>
         </resource>

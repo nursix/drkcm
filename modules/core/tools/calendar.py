@@ -60,8 +60,8 @@ from gluon import current
 #
 ISOFORMAT = "%Y-%m-%dT%H:%M:%S" #: ISO 8601 Combined Date+Time format
 OFFSET = re.compile(r"([+|-]{0,1})(\d{1,2}):(\d\d)")
-RELATIVE = re.compile(r"([+-]{0,1})([0-9]*)([YMDhms])")
-SECONDS = {"D": 86400, "h": 3600, "m": 60, "s": 1}
+RELATIVE = re.compile(r"([+-]{0,1})([0-9]*)([YMWDhms])")
+SECONDS = {"W": 604800, "D": 86400, "h": 3600, "m": 60, "s": 1}
 
 # =============================================================================
 class S3DateTime:
@@ -262,7 +262,7 @@ class S3DateTime:
         offset = request.post_vars.get("_utc_offset", None)
         if offset:
             offset = int(offset)
-            utcstr = offset < 0 and "+" or "-"
+            utcstr = "+" if offset < 0 else "-"
             hours = abs(int(offset/60))
             minutes = abs(int(offset % 60))
             offset = "%s%02d%02d" % (utcstr, hours, minutes)

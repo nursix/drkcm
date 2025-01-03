@@ -823,17 +823,17 @@ class CRUDResource:
                     self.error = INTEGRITY_ERROR
                     db.rollback()
                     raise
-                else:
-                    # Clear session
-                    if get_last_record_id(tablename) == row[pkey]:
-                        remove_last_record_id(tablename)
 
-                    # Delete super-entity
-                    delete_super(table, row)
+                # Clear session
+                if get_last_record_id(tablename) == row[pkey]:
+                    remove_last_record_id(tablename)
 
-                    # On-delete
-                    if ondelete:
-                        callback(ondelete, row, tablename=tablename)
+                # Delete super-entity
+                delete_super(table, row)
+
+                # On-delete
+                if ondelete:
+                    callback(ondelete, row, tablename=tablename)
 
         return True
 
@@ -845,15 +845,18 @@ class CRUDResource:
               update = None,
               main = True,
               ):
-        """ Merge two records, see also S3RecordMerger.merge """
+        """
+            Merge two records; see MergeProcess.merge
+        """
 
-        from ..methods import S3RecordMerger
-        return S3RecordMerger(self).merge(original_id,
-                                          duplicate_id,
-                                          replace = replace,
-                                          update = update,
-                                          main = main,
-                                          )
+        from .merge import MergeProcess
+        return MergeProcess.merge(self,
+                                  original_id,
+                                  duplicate_id,
+                                  replace = replace,
+                                  update = update,
+                                  main = main,
+                                  )
 
     # -------------------------------------------------------------------------
     # Exports
@@ -1091,17 +1094,16 @@ class CRUDResource:
                     if f == "the_geom":
                         # Filter out bulky Polygons
                         continue
+                    fmt = current.auth.permission.format
+                    if fmt == "cap":
+                        # Include WKT
+                        pass
+                    elif fmt == "xml" and current.deployment_settings.get_gis_xml_wkt():
+                        # Include WKT
+                        pass
                     else:
-                        fmt = current.auth.permission.format
-                        if fmt == "cap":
-                            # Include WKT
-                            pass
-                        elif fmt == "xml" and current.deployment_settings.get_gis_xml_wkt():
-                            # Include WKT
-                            pass
-                        else:
-                            # Filter out bulky Polygons
-                            continue
+                        # Filter out bulky Polygons
+                        continue
                 elif tablename.startswith("gis_layer_shapefile_"):
                     # Filter out bulky Polygons
                     continue
@@ -1279,8 +1281,8 @@ class CRUDResource:
             self.load()
         try:
             master = self[key]
-        except IndexError:
-            raise KeyError("Record not found")
+        except IndexError as e:
+            raise KeyError("Record not found") from e
 
         if not component and not link:
             return master
@@ -1296,8 +1298,8 @@ class CRUDResource:
         else:
             try:
                 c = self.components[component]
-            except KeyError:
-                raise AttributeError("Undefined component %s" % component)
+            except KeyError as e:
+                raise AttributeError("Undefined component %s" % component) from e
 
         rows = c._rows
         if rows is None:
@@ -1314,9 +1316,9 @@ class CRUDResource:
             else:
                 try:
                     rows = [record for record in rows if master_id == record[fkey]]
-                except AttributeError:
+                except AttributeError as e:
                     # Most likely need to tweak static/formats/geoson/export.xsl
-                    raise AttributeError("Component %s records are missing fkey %s" % (component, fkey))
+                    raise AttributeError("Component %s records are missing fkey %s" % (component, fkey)) from e
         else:
             rows = []
         return rows
@@ -2020,7 +2022,7 @@ class CRUDResource:
         for item in selectors:
             if not item:
                 continue
-            elif type(item) is tuple:
+            if type(item) is tuple:
                 item = item[-1]
             if isinstance(item, str):
                 selector = item
@@ -2088,8 +2090,7 @@ class CRUDResource:
             colname = rfield.colname
             if colname in columns:
                 continue
-            else:
-                add_column(colname)
+            add_column(colname)
 
             # Replace default label
             if label is not None:
@@ -2329,16 +2330,16 @@ class CRUDResource:
             return join
 
     # -------------------------------------------------------------------------
-    def get_join(self):
+    def get_join(self, reverse=False):
         """ Get join for this component """
 
-        return self._join(implicit=True)
+        return self._join(implicit=True, reverse=reverse)
 
     # -------------------------------------------------------------------------
-    def get_left_join(self):
+    def get_left_join(self, reverse=False):
         """ Get a left join for this component """
 
-        return self._join()
+        return self._join(reverse=reverse)
 
     # -------------------------------------------------------------------------
     def link_id(self, master_id, component_id):
@@ -2493,7 +2494,7 @@ class CRUDResource:
 
             # Build filter
             text = get_vars[sSearch]
-            words = [w for w in text.lower().split()]
+            words = text.lower().split()
 
             if words:
                 try:
@@ -2742,7 +2743,7 @@ class CRUDResource:
             return "~.%s" % selector
 
     # -------------------------------------------------------------------------
-    def list_fields(self, key="list_fields", id_column=0):
+    def list_fields(self, key="list_fields", id_column=0, request=None):
         """
             Get the list_fields for this resource
 
@@ -2754,10 +2755,12 @@ class CRUDResource:
                              whether it is configured or not
         """
 
-        list_fields = self.get_config(key, None)
-
-        if not list_fields and key != "list_fields":
-            list_fields = self.get_config("list_fields", None)
+        if key == "list_fields":
+            list_fields = self.active_list_fields(request) if request else None
+        else:
+            list_fields = self.get_config(key)
+        if not list_fields:
+            list_fields = self.get_config("list_fields")
         if not list_fields:
             list_fields = [f.name for f in self.readable_fields()]
 
@@ -2784,10 +2787,42 @@ class CRUDResource:
                 seen(selector)
                 append(f)
 
-        if id_column == 0:
+        if id_column is not False and id_column == 0:
             fields.insert(0, id_field)
 
         return fields
+
+    # -------------------------------------------------------------------------
+    def active_list_fields(self, request):
+        """
+            Uses the aCols URL parameter to determine the active list_fields
+            and their order in variable-columns data tables and exports
+
+            Args:
+                request: the (CRUD)Request to read the aCols parameter from
+
+            Returns:
+                list_fields configuration (a list) or None if aCols is not applicable
+        """
+
+        available = self.get_config("available_list_fields")
+        if available:
+            available = [f for f in available if f]
+
+        active = None
+        if available and "aCols" in request.get_vars:
+            try:
+                selected = request.get_vars.aCols.split(",")
+                selected = [int(index) for index in selected]
+            except (TypeError, ValueError):
+                pass
+            else:
+                try:
+                    active = [available[i] for i in selected]
+                except IndexError:
+                    pass
+
+        return active
 
     # -------------------------------------------------------------------------
     def get_defaults(self, master, defaults=None, data=None):

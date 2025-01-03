@@ -114,7 +114,7 @@ class XMLImporter:
                 if xml.error:
                     raise SyntaxError(xml.error)
                 else:
-                    raise SyntaxError("Invalid source")
+                    raise SyntaxError(current.ERROR.BAD_SOURCE)
 
             if stylesheet is not None:
                 prefix, name = tablename.split("_", 1)

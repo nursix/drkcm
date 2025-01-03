@@ -39,6 +39,7 @@ __all__ = ("JSONSEPARATORS",
            "set_last_record_id",
            "get_last_record_id",
            "remove_last_record_id",
+           "deduplicate_links",
            "s3_addrow",
            "s3_dev_toolbar",
            "s3_flatlist",
@@ -61,7 +62,6 @@ __all__ = ("JSONSEPARATORS",
            "version_info",
            )
 
-import collections
 import copy
 import os
 import platform
@@ -274,6 +274,49 @@ def remove_last_record_id(tablename=None):
             last_id.pop(tablename, None)
         else:
             del session_s3[LAST_ID]
+
+# =============================================================================
+def deduplicate_links(table, *fieldnames):
+    """
+        Removes any duplicates (by combination of specified fields) in a
+        link table; useful to clean up after imports or merge
+
+        Args:
+            table: the target Table
+            fieldnames: names of fields to de-duplicate by
+
+        Returns:
+            total number of deleted duplicates
+    """
+
+    db = current.db
+
+    base_query = (table.deleted == False) if "deleted" in table else (table.id>0)
+
+    total = table._id.count()
+    original = table._id.min()
+
+    fields = []
+    query = base_query
+    for fn in fieldnames:
+        field = table[fn]
+        fields.append(field)
+        query = (field != None) & query
+    rows = db(query).select(total,
+                            original,
+                            *fields,
+                            groupby = fields,
+                            having = total > 1,
+                            )
+    result = 0
+    for row in rows:
+        link = row[table]
+        query = base_query & (table._id > row[original])
+        for field in fields:
+            query = (field == link[field]) & query
+        result += db(query).delete()
+
+    return result
 
 # =============================================================================
 def s3_validate(table, field, value, record=None):
@@ -763,8 +806,10 @@ def s3_get_foreign_key(field, m2m=True):
 def s3_flatlist(nested):
     """ Iterator to flatten mixed iterables of arbitrary depth """
 
+    import collections.abc
+
     for item in nested:
-        if isinstance(item, collections.Iterable) and \
+        if isinstance(item, collections.abc.Iterable) and \
            not isinstance(item, str):
             for sub in s3_flatlist(item):
                 yield sub
@@ -1173,7 +1218,7 @@ class MarkupStripper(HTMLParser):
     """ Simple markup stripper """
 
     def __init__(self):
-        super(MarkupStripper, self).__init__()
+        super().__init__()
         #self.reset() # Included in super-init
         self.result = []
 
@@ -1275,7 +1320,7 @@ class FormKey:
         keys = current.session.get(keyname, [])
         if not formkey or formkey not in keys:
             return False
-        elif invalidate:
+        if invalidate:
             keys.remove(formkey)
 
         return True

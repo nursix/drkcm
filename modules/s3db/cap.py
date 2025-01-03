@@ -50,7 +50,7 @@ import datetime
 import os
 
 from collections import OrderedDict
-from io import StringIO
+from io import BytesIO
 from urllib import request as urllib2
 from urllib.error import HTTPError, URLError
 from uuid import uuid4
@@ -59,7 +59,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 OIDPATTERN = r"^[^,<&\s]+$"
 
@@ -718,7 +717,7 @@ $.filterOptionsS3({
                                       field_sep = " - ",
                                       )
 
-        # Reusable Field
+        # Foreign Key Template
         alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
                                  comment = T("The alert message containing this information"),
                                  label = T("Alert"),
@@ -779,8 +778,7 @@ $.filterOptionsS3({
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -1368,7 +1366,7 @@ $.filterOptionsS3({
                                      fields = ["language", "headline"],
                                      field_sep = " - ")
 
-        # Reusable Field
+        # Foreign Key Template
         info_id = FieldTemplate("info_id", "reference %s" % tablename,
                                 label = T("Information Segment"),
                                 ondelete = "CASCADE",
@@ -1413,8 +1411,7 @@ $.filterOptionsS3({
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -1940,7 +1937,7 @@ class CAPAreaModel(DataModel):
         # Reference Representation
         area_represent = cap_AreaRepresent(show_link=True)
 
-        # Reusable Field
+        # Foreign Key Template
         area_id = FieldTemplate("area_id", "reference %s" % tablename,
                                 label = T("Area"),
                                 ondelete = "CASCADE",
@@ -2073,8 +2070,7 @@ class CAPAreaModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -2369,7 +2365,7 @@ class CAPResourceModel(DataModel):
                      Field("image", "upload",
                            label = T("Image"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("cap_resource", "image"),
                            requires = IS_EMPTY_OR(IS_IMAGE(maxsize=(800, 800),
                                                            error_message=\
 T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
@@ -2499,8 +2495,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -2535,7 +2530,7 @@ T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"))),
                 import base64
 
                 image = Storage(filename = uuid4().hex + filename)
-                image.file = stream = StringIO(base64.decodestring(encoded_file))
+                image.file = stream = BytesIO(base64.b64decode(encoded_file))
 
                 form_vars.image = image
 
@@ -2719,7 +2714,7 @@ class CAPWarningPriorityModel(DataModel):
             msg_list_empty = T("No Warning Classifications currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         priority_id = FieldTemplate("priority", "reference %s" % tablename,
                                     label = T("Priority"),
@@ -2736,8 +2731,7 @@ class CAPWarningPriorityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3115,7 +3109,7 @@ class CAPHistoryModel(DataModel):
                                               field_sep = " - ",
                                               )
 
-        # Reusable Field
+        # Foreign Key Template
         alert_history_id = FieldTemplate("alert_history_id", "reference %s" % tablename,
                                          label = T("Alert History"),
                                          ondelete = "CASCADE",
@@ -3388,7 +3382,7 @@ class CAPHistoryModel(DataModel):
                                              field_sep = " - ",
                                              )
 
-        # Reusable Field
+        # Foreign Key Template
         info_history_id = FieldTemplate("info_history_id", "reference %s" % tablename,
                                         label = T("Information History Segment"),
                                         ondelete = "CASCADE",
@@ -3543,7 +3537,7 @@ class CAPHistoryModel(DataModel):
             msg_list_empty = T("No areas currently defined for this alert"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = cap_AreaRepresent(show_link=True)
         area_history_id = FieldTemplate("area_history_id", "reference %s" % tablename,
                                         label = T("Area"),
@@ -3626,7 +3620,7 @@ class CAPHistoryModel(DataModel):
                      Field("image", "upload",
                            label = T("Image"),
                            length = current.MAX_FILENAME_LENGTH,
-                           represent = self.doc_image_represent,
+                           represent = represent_image("cap_resource_history", "image"),
                            requires = IS_EMPTY_OR(
                                         IS_IMAGE(maxsize = (800, 800),
                                                  error_message = T("Upload an image file(bmp, gif, jpeg or png), max. 800x800 pixels!"),
@@ -3729,8 +3723,7 @@ class CAPHistoryModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3776,11 +3769,11 @@ class CAPAlertingAuthorityModel(DataModel):
                      self.org_organisation_id(
                         empty = False,
                         widget = None, # Use simple drop-down
-                        comment = S3PopupLink(c = "org",
-                                              f = "organisation",
-                                              label = T("Create Organization"),
-                                              title = messages.ORGANISATION,
-                                              ),
+                        comment = PopupLink(c = "org",
+                                            f = "organisation",
+                                            label = T("Create Organization"),
+                                            title = messages.ORGANISATION,
+                                            ),
                         ),
                      Field("country", length=2,
                            label = T("Country"),
@@ -3854,7 +3847,7 @@ class CAPAlertingAuthorityModel(DataModel):
             msg_list_empty = T("No Alerting Authority available"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 fields = ["organisation_id", "oid"],
                                 field_sep = " - ",
@@ -3900,8 +3893,7 @@ class CAPAlertingAuthorityModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3936,8 +3928,7 @@ class CAPMessageModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -4561,11 +4552,11 @@ class cap_AreaRepresent(S3Represent):
             if language == settings.get_L10n_default_language():
                 translate = False
 
-        super(cap_AreaRepresent, self).__init__(lookup = "cap_area",
-                                                show_link = show_link,
-                                                translate = translate,
-                                                multiple = multiple,
-                                                )
+        super().__init__(lookup = "cap_area",
+                         show_link = show_link,
+                         translate = translate,
+                         multiple = multiple,
+                         )
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -5019,7 +5010,7 @@ class cap_AssignArea(CRUDMethod):
             added = 0
             post_vars = r.post_vars
 
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
 
                 selected = post_vars.selected
                 if selected:
@@ -5121,11 +5112,11 @@ class cap_AssignArea(CRUDMethod):
                                   f = "area",
                                   args = ["[id]", "read"],
                                   )
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url,
-                                      )
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url,
+                                         )
                 # Hide export icons
                 response.s3.no_formats = True
 

@@ -299,7 +299,7 @@ class S3DynamicTablesModel(DataModel):
             msg_list_empty = T("No Tables currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, show_link=True)
         table_id = FieldTemplate("table_id", "reference %s" % tablename,
                                  label = T("Table"),
@@ -427,7 +427,7 @@ class S3DynamicTablesModel(DataModel):
             msg_list_empty = T("No Fields currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, show_link=True)
         field_id = FieldTemplate("field_id", "reference %s" % tablename,
                                  label = T("Field"),

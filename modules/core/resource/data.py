@@ -270,7 +270,7 @@ class ResourceData:
                     master_query = table._id.belongs(set(master_ids))
 
                 orderby = None
-                if not ljoins or ijoins:
+                if not ljoins and not ijoins:
                     # Without joins, there can only be one row per id,
                     # so we can limit the master query (faster)
                     limitby = (0, len(master_ids))

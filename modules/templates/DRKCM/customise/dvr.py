@@ -11,7 +11,7 @@ from collections import OrderedDict
 from gluon import current, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_IN_SET, IS_LENGTH
 from gluon.storage import Storage
 
-from core import FS, IS_ONE_OF, get_form_record_data, get_form_record_id
+from core import FS, IS_ONE_OF, PopupLink, get_form_record_data, get_form_record_id
 
 from ..uioptions import get_ui_options
 
@@ -1922,8 +1922,7 @@ def configure_response_action_tab(person_id,
                                        )
 
             # Allow in-popup creation of new activities for the case
-            from s3layouts import S3PopupLink
-            field.comment = S3PopupLink(label = T("Create Counseling Reason"),
+            field.comment = PopupLink(label = T("Create Counseling Reason"),
                                         c = "dvr",
                                         f = "case_activity",
                                         vars = {"~.person_id": person_id,

@@ -16,7 +16,7 @@ from gluon.storage import Storage
 
 from core import ConsentTracking, IS_PHONE_NUMBER_MULTI, \
                  ICON, S3GroupedOptionsWidget, LocationSelector, \
-                 CRUDRequest, S3CRUD, CustomController, FS, JSONERRORS, \
+                 CRUDRequest, BasicCRUD, CustomController, FS, JSONERRORS, \
                  S3Represent, WithAdvice, s3_comments_widget, \
                  s3_get_extension, s3_mark_required, s3_str, \
                  s3_text_represent, s3_truncate
@@ -783,7 +783,7 @@ class approve(CustomController):
             # Pagination
             get_vars = request.get_vars
             if representation == "aadata":
-                start, limit = S3CRUD._limits(get_vars)
+                start, limit = BasicCRUD._limits(get_vars)
             else:
                 # Initial page request always uses defaults (otherwise
                 # filtering and pagination would have to be relative to
@@ -847,7 +847,6 @@ class approve(CustomController):
                 dtargs["dt_pagination"] = dt_pagination
                 dtargs["dt_pageLength"] = display_length
                 dtargs["dt_base_url"] = URL(c="default", f="index", args="approve")
-                dtargs["dt_permalink"] = URL(c="default", f="index", args="approve")
                 datatable = dt.html(totalrows, displayrows, **dtargs)
 
                 # Action Buttons

@@ -1329,16 +1329,8 @@ class S3Permission:
     def fail(self):
         """ Action upon insufficient permissions """
 
-        if self.format == "html":
-            # HTML interactive request => flash message + redirect
-            if self.auth.s3_logged_in():
-                current.session.error = self.INSUFFICIENT_PRIVILEGES
-                redirect(self.homepage)
-            else:
-                current.session.error = self.AUTHENTICATION_REQUIRED
-                redirect(self.loginpage)
-        else:
-            # Non-HTML request => raise HTTP status
+        if current.request.ajax or self.format != "html":
+            # Non-interactive request => raise HTTP status
             if self.auth.s3_logged_in():
                 raise HTTP(403, body=self.INSUFFICIENT_PRIVILEGES)
 
@@ -1354,6 +1346,15 @@ class S3Permission:
                 S3MasterKey.challenge(headers)
 
             raise HTTP(401, body=self.AUTHENTICATION_REQUIRED, **headers)
+
+        else:
+            # Interactive request => flash message + redirect
+            if self.auth.s3_logged_in():
+                current.session.error = self.INSUFFICIENT_PRIVILEGES
+                redirect(self.homepage)
+            else:
+                current.session.error = self.AUTHENTICATION_REQUIRED
+                redirect(self.loginpage)
 
     # -------------------------------------------------------------------------
     # ACL Lookup

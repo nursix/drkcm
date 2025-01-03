@@ -55,7 +55,6 @@
     <s3:fields tables="project_sector_activity" select="activity_id"/>
     <s3:fields tables="stats_people_group" select="people_id"/>
     <s3:fields tables="stats_trained_group" select="trained_id"/>
-    <s3:fields tables="supply_distribution" select="activity_id"/>
     <s3:fields tables="vehicle_vehicle" select="asset_id,vehicle_type_id"/>
     <s3:fields tables="ANY" select="location_id,site_id"/>
 

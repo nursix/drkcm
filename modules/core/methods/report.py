@@ -207,18 +207,19 @@ class S3Report(CRUDMethod):
                 # Render as empty string to avoid the exception in the view
                 filter_widgets = None
 
-            # Generate the report form
+            # Ajax URL to retrieve updated pivot data
             ajax_vars = Storage(r.get_vars)
             ajax_vars.update(get_vars)
-            filter_url = r.url(method = "",
-                               representation = "",
-                               vars = ajax_vars.fromkeys((k for k in ajax_vars
-                                                          if k not in report_vars)))
             ajaxurl = attr.get("ajaxurl", r.url(method = "report",
                                                 representation = "json",
                                                 vars = ajax_vars,
                                                 ))
+            # Filter URL for chart-click
+            filter_vars = ajax_vars.fromkeys(k for k in ajax_vars if k not in report_vars)
+            filter_vars["$search"] = "query" # suppress default filters
+            filter_url = r.url(method="", representation="", vars=filter_vars)
 
+            # Generate the report form
             output = S3ReportForm(resource).html(pivotdata,
                                                  get_vars = get_vars,
                                                  filter_widgets = filter_widgets,

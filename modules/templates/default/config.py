@@ -466,8 +466,6 @@ def config(settings):
     #settings.ui.datatables_responsive = False
     # Uncomment to enable double scroll bars on non-responsive datatables
     #settings.ui.datatables_double_scroll = True
-    # Uncomment to modify the label of the Permalink
-    #settings.ui.label_permalink = "Permalink"
     # Uncomment to modify the main menu logo
     #settings.ui.menu_logo = URL(c="static", f="img", args=["S3menulogo.png"])
     # Configure business hours to indicate in organizer (can be a list)
@@ -476,6 +474,8 @@ def config(settings):
     #settings.ui.organizer_time_format = "H:mm"
     # Configure the snap raster width in organizer (hh:mm:ss)
     #settings.ui.organizer_snap_duration = "00:15:00"
+    # Uncomment this to show profile pictures in checkpoint UI only on demand
+    #settings.ui.checkpoint_show_picture = False
 
     # -------------------------------------------------------------------------
     # Sync
@@ -752,8 +752,6 @@ def config(settings):
     #settings.dvr.id_code_pattern = "(?P<label>[^,]*),(?P<first_name>[^,]*),(?P<last_name>[^,]*),(?P<date_of_birth>[^,]*)"
     # Uncomment this to show a warning during event registration if the person is not currently checked-in
     #settings.dvr.event_registration_checkin_warning = True
-    # Uncomment this to show profile pictures in event registration UI only on demand
-    #settings.dvr.event_registration_show_picture = False
 
     # -------------------------------------------------------------------------
     # Events
@@ -997,8 +995,6 @@ def config(settings):
     #settings.inv.shipment_name = "order"
     # Uncomment to validate for Unique Warehouse Codes
     #settings.inv.warehouse_code_unique = True
-    # Uncomment to not track pack values
-    #settings.inv.track_pack_values = False
     #settings.inv.show_mode_of_transport = True
     #settings.inv.send_show_org = False
     #settings.inv.send_show_time_in = True
@@ -1125,6 +1121,8 @@ def config(settings):
     #settings.supply.catalog_multi = False
     # Disable the use of Alternative Items
     #settings.supply.use_alt_name = False
+    # Uncomment to not track pack values
+    #settings.supply.track_pack_values = False
 
     # -------------------------------------------------------------------------
     # Projects
@@ -1266,11 +1264,6 @@ def config(settings):
             access = "|1|",     # Only Administrators can see this module in the default menu & access the controller
             module_type = None  # This item is handled separately for the menu
         )),
-        ("translate", Storage(
-            name_nice = T("Translation"),
-            #description = "Selective translation of strings based on module.",
-            module_type = None,
-        )),
         ("gis", Storage(
             name_nice = T("Map"),
             #description = "Situation Awareness & Geospatial Analysis",
@@ -1358,11 +1351,6 @@ def config(settings):
         #("event", Storage(
         #    name_nice = T("Events"),
         #    #description = "Activate Events (e.g. from Scenario templates) for allocation of appropriate Resources (Human, Assets & Facilities).",
-        #    module_type = 10,
-        #)),
-        #("br", Storage(
-        #    name_nice = T("Beneficiary Registry"),
-        #    #description = "Allow affected individuals & households to register to receive compensation and distributions",
         #    module_type = 10,
         #)),
         #("cr", Storage(

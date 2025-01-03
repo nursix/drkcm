@@ -147,44 +147,98 @@ def event_overdue(code, interval):
 # -------------------------------------------------------------------------
 def pr_person_resource(r, tablename):
 
+    T = current.T
     s3db = current.s3db
     auth = current.auth
 
     has_permission = auth.s3_has_permission
 
-    # Users who can not register new residents also have
-    # only limited write-access to basic details of residents
-    if r.controller == "dvr" and not has_permission("create", "pr_person"):
+    controller = r.controller
+    if controller in ("dvr", "counsel", "supply"):
 
-        # Cannot modify any fields in main person record
-        ptable = s3db.pr_person
-        for field in ptable:
-            field.writable = False
+        case_administration = has_permission("create", "pr_person")
 
-        # Cannot modify certain details
-        dtable = s3db.pr_person_details
-        for fn in ("nationality", "marital_status"):
-            dtable[fn].writable = False
+        # Users who can not register new residents also have only
+        # limited write-access to basic details of residents
+        if not case_administration:
 
-        # Can not add or modify contact or identity information,
-        # images, tags or residence status
-        for tn in ("pr_contact",
-                   "pr_identity",
-                   "pr_image",
-                   "pr_person_tag",
-                   "dvr_residence_status",
-                   ):
-            s3db.configure(tn,
-                           insertable = False,
-                           editable = False,
-                           deletable = False,
-                           )
-
-        # Can not update shelter registration (except housing unit)
-        rtable = s3db.cr_shelter_registration
-        for field in rtable:
-            if field.name != "shelter_unit_id":
+            # Cannot modify any fields in main person record
+            ptable = s3db.pr_person
+            for field in ptable:
                 field.writable = False
+
+            # Cannot modify certain details
+            dtable = s3db.pr_person_details
+            for fn in ("nationality", "marital_status"):
+                dtable[fn].writable = False
+
+            # Can not add or modify contact or identity information,
+            # images, tags or residence status
+            for tn in ("pr_contact",
+                       "pr_identity",
+                       "pr_image",
+                       "pr_person_tag",
+                       "dvr_residence_status",
+                       ):
+                s3db.configure(tn,
+                               insertable = False,
+                               editable = False,
+                               deletable = False,
+                               )
+
+            # Can not update shelter registration (except housing unit)
+            rtable = s3db.cr_shelter_registration
+            for field in rtable:
+                if field.name != "shelter_unit_id":
+                    field.writable = False
+
+        resource = r.resource
+        if not r.component and resource.tablename == "pr_person":
+
+            if controller == "dvr":
+
+                from ..reports import PresenceReport, ArrivalsDeparturesReport
+                s3db.set_method("pr_person", method="presence_report", action=PresenceReport)
+                s3db.set_method("pr_person", method = "aandd", action=ArrivalsDeparturesReport)
+
+                bulk_actions = []
+
+                get_vars = r.get_vars
+                select_vars = {k:get_vars[k] for k in get_vars.keys() & {"closed", "archived"}}
+
+                if case_administration and \
+                   has_permission("update", "cr_shelter_registration"):
+
+                    from ..shelter import BulkRegistration
+                    s3db.set_method("pr_person", method="checkout", action=BulkRegistration)
+
+                    bulk_actions.append({"label": T("Check-out"),
+                                         "mode": "ajax",
+                                         "url": r.url(method="checkout", representation="json", vars=select_vars),
+                                         })
+
+                if auth.s3_has_role("ADMIN"):
+                    # Configure anonymize-method
+                    from core import Anonymize
+                    s3db.set_method("pr_person", method="anonymize", action=Anonymize)
+
+                    # Configure anonymize-rules
+                    from ..anonymize import anonymize_rules
+                    resource.configure(anonymize=anonymize_rules())
+
+                    # Configure anonymize bulk-action
+                    bulk_actions.append({"label": T("Anonymize"),
+                                         "mode": "ajax",
+                                         "url": r.url(method="anonymize", representation="json", vars={}),
+                                         })
+
+                if bulk_actions:
+                    resource.configure(bulk_actions = bulk_actions)
+
+                ## Disabled due to requirement for skills to create templates:
+                ## Configure case document template methods
+                #from .doc import GenerateCaseDocument
+                #GenerateCaseDocument.configure("pr_person")
 
     # Do not include acronym in Case-Org Representation
     table = s3db.dvr_case
@@ -194,6 +248,7 @@ def pr_person_resource(r, tablename):
     # Configure components to inherit realm_entity from the person
     # record upon forced realm update
     s3db.configure("pr_person",
+                   deletable = False,
                    realm_components = ("address",
                                        "case_activity",
                                        "case_details",
@@ -231,7 +286,14 @@ def configure_person_tags():
                                                     },
                                                   "multiple": False,
                                                   },
-                                                 )
+                                                 ),
+                                dvr_case_language = ({"name": "mother_tongue",
+                                                      "joinby": "person_id",
+                                                      "filterby": {
+                                                          "quality": "N",
+                                                          },
+                                                      },
+                                                     ),
                                 )
 
 # -------------------------------------------------------------------------
@@ -592,6 +654,9 @@ def configure_case_filters(resource, organisation_id=None, privileged=False):
                           ),
             AgeFilter("date_of_birth",
                       label = T("Age"),
+                      extra_options = [("6 %s" % T("months"), "-6M")],
+                      #exact = "from",
+                      zero = "0",
                       hidden = True,
                       ),
             OptionsFilter("person_details.nationality",
@@ -716,36 +781,54 @@ def configure_case_list_fields(resource,
         orderby = "pr_person.last_name, pr_person.first_name"
 
     # Custom list fields
+    available_list_fields = [(T("ID"), "pe_label"),
+                             "dvr_case.organisation_id",
+                             (T("Principal Ref.No."), "dvr_case.reference"),
+                             (T("BAMF Ref.No."), "bamf.value"),
+                             "last_name",
+                             "first_name",
+                             "date_of_birth",
+                             # TODO age, # not default
+                             "gender",
+                             "person_details.marital_status",
+                             "person_details.nationality",
+                             "mother_tongue.language",
+                             # TODO residence status / permit, # not default
+                             (T("Size of Family"), "dvr_case.household_size"),
+                             case_status,
+                             case_date,
+                             shelter,
+                             unit,
+                             # TODO presence (at assigned shelter), # not default
+                             "dvr_case.last_seen_on",
+                             ]
+
+    list_fields = [(T("ID"), "pe_label"),
+                   "last_name",
+                   "first_name",
+                   "date_of_birth",
+                   "gender",
+                   "person_details.nationality",
+                   case_status,
+                   case_date,
+                   shelter,
+                   unit,
+                   ]
+
     if fmt in ("xlsx", "xls"):
-        list_fields = [(T("ID"), "pe_label"),
-                       (T("Principal Ref.No."), "dvr_case.reference"),
-                       (T("BAMF Ref.No."), "bamf.value"),
-                       "last_name",
-                       "first_name",
-                       "date_of_birth",
-                       "gender",
-                       "person_details.nationality",
-                       (T("Size of Family"), "dvr_case.household_size"),
-                       case_status,
-                       case_date,
-                       shelter,
-                       unit,
-                       "dvr_case.last_seen_on",
-                       ]
-    else:
-        list_fields = [(T("ID"), "pe_label"),
-                       "last_name",
-                       "first_name",
-                       "date_of_birth",
-                       "gender",
-                       "person_details.nationality",
-                       case_status,
-                       case_date,
-                       shelter,
-                       unit,
-                       ]
+        # Include external references
+        list_fields[1:1] = [(T("Principal Ref.No."), "dvr_case.reference"),
+                            (T("BAMF Ref.No."), "bamf.value"),
+                            ]
+
+        # Include household size
+        list_fields.insert(-4, (T("Size of Family"), "dvr_case.household_size"))
+
+        # Include last-seen-on date
+        list_fields.append("dvr_case.last_seen_on")
 
     resource.configure(list_fields = list_fields,
+                       available_list_fields = available_list_fields,
                        orderby = orderby,
                        )
 
@@ -837,8 +920,6 @@ def configure_dvr_person_controller(r, privileged=False, administration=False):
         case_organisation = default_case_organisation
 
     if not r.component:
-
-        configure_person_tags()
 
         # Attach registration history method
         from ..presence import RegistrationHistory
@@ -1132,16 +1213,16 @@ def configure_security_person_controller(r):
                                 _class="profile-header",
                                 )
 
-        notes_widget = dict(label = "Security Notes",
-                            label_create = "Add Note",
-                            type = "datatable",
-                            tablename = "dvr_note",
-                            filter = ((FS("note_type_id$name") == "Security") & \
-                                        (FS("person_id") == person_id)),
-                            #icon = "report",
-                            create_controller = "dvr",
-                            create_function = "note",
-                            )
+        notes_widget = {"label": "Security Notes",
+                        "label_create": "Add Note",
+                        "type": "datatable",
+                        "tablename": "dvr_note",
+                        "filter": (FS("note_type_id$name") == "Security") & \
+                                  (FS("person_id") == person_id),
+                        #"icon": "report",
+                        "create_controller": "dvr",
+                        "create_function": "note",
+                        }
         profile_widgets = [notes_widget]
     else:
         profile_header = None
@@ -1269,6 +1350,115 @@ def configure_hrm_person_controller(r):
                                   )
 
 # -------------------------------------------------------------------------
+def configure_custom_actions(r, output, is_case_admin=False, is_org_admin=False):
+    """
+        Configure additional action buttons for the case/staff file
+
+        Args:
+            r: the context CRUDRequest
+            output: the output of the request
+            is_case_admin: whether the user has the CASE_ADMIN role
+            is_org_admin: whether the user has the ORG_ADMIN role
+    """
+
+    T = current.T
+    s3 = current.response.s3
+
+    from ..helpers import inject_button
+
+    component_name = r.component_name
+
+    controller = r.controller
+    if controller in ("dvr", "counsel", "supply"):
+
+        if not r.component:
+
+            if controller == "dvr" and current.auth.s3_has_role("ADMIN"):
+                # Anonymize-button
+                from core import AnonymizeWidget
+                anonymize = AnonymizeWidget.widget(r, _class="button action-btn anonymize-btn")
+                inject_button(output, anonymize, before="delete_btn", alt=None)
+
+            ## Disabled due to requirement for skills to create templates
+            #if is_case_admin:
+            #    # Doc-From-Template-button (requires appropriate role)
+            #    doc_from_template = A(T("Document from Template"),
+            #                          _class = "action-btn activity button s3_modal",
+            #                          _title = T("Generate Document from Template"),
+            #                          _href = URL(args=[r.id, "templates"]),
+            #                          )
+            #    inject_button(output, doc_from_template, before="delete_btn", alt=None)
+
+        elif component_name == "case_appointment":
+            # Organizer-button on appointments tab
+            btn = A(T("Calendar"),
+                    _href = r.url(component = "case_appointment",
+                                    method = "organize",
+                                    ),
+                    _class = "action-btn activity button",
+                    )
+            inject_button(output, btn)
+
+        elif component_name == "site_presence_event":
+
+            # Registration History button on presence tab
+            widget_id = "rhist-btn"
+            label = T("Registration History")
+
+            btn = A(label,
+                    _id = widget_id,
+                    _class = "action-btn activity button",
+                    )
+            inject_button(output, btn)
+
+            # Inject JS
+            appname = current.request.application
+            script = "/%s/static/scripts/templates/MRCMS/rhist.js" % appname
+            if script not in s3.scripts:
+                s3.scripts.append(script)
+
+            # Instantiate widget
+            opts = {"ajaxURL": r.url(component = "",
+                                     method = "registration_history",
+                                     representation = "json",
+                                     ),
+                    "xlsxURL": r.url(component = "shelter_registration_history",
+                                     method = "",
+                                     representation = "xlsx",
+                                     ),
+                    "container": "map",
+                    "labelTitle": s3_str(label),
+                    "labelShelter": s3_str(T("Shelter")),
+                    "labelPlanned": s3_str(T("Planned since")),
+                    "labelArrival": s3_str(T("Arrival")),
+                    "labelDeparture": s3_str(T("Departure")),
+                    "labelEmpty": s3_str(T("No data available")),
+                    "labelMissing": s3_str(T("Date not registered")),
+                    "labelClose": s3_str(T("Close")),
+                    "labelExport": s3_str(T("Export Data")),
+                    }
+            from core import JSONSEPARATORS
+            script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
+                        {"selector": widget_id,
+                         "options": json.dumps(opts, separators=JSONSEPARATORS),
+                         }
+            s3.jquery_ready.append(script)
+
+    # Generate-ID button
+    if controller == "dvr" and is_case_admin or \
+       controller == "hrm" and is_org_admin:
+        btn = A(T("Generate ID"),
+                _href = r.url(component = "identity",
+                              method = "generate",
+                              ),
+                _class = "action-btn activity button",
+                )
+        if not r.component:
+            inject_button(output, btn, before="delete_btn", alt=None)
+        elif r.component_name == "identity":
+            inject_button(output, btn)
+
+# -------------------------------------------------------------------------
 def pr_person_controller(**attr):
 
     T = current.T
@@ -1287,6 +1477,19 @@ def pr_person_controller(**attr):
 
     QUARTERMASTER = auth.s3_has_role("QUARTERMASTER") and not privileged
 
+    # Add custom components
+    # - must happen before prep, so selectors from filters do not
+    #   get resolved as virtual fields prematurely
+    if current.request.controller in ("dvr", "counsel", "supply"):
+        configure_person_tags()
+
+    # Only one staff record per person
+    current.s3db.add_components("pr_person",
+                                hrm_human_resource = {"joinby": "person_id",
+                                                      "multiple": False,
+                                                      },
+                                )
+
     # Custom prep
     standard_prep = s3.prep
     def prep(r):
@@ -1296,7 +1499,7 @@ def pr_person_controller(**attr):
             r.vars["closed"] = r.get_vars["closed"] = "0"
 
         # Call standard prep
-        if r.controller in ("dvr", "counsel"):
+        if r.controller in ("dvr", "counsel", "supply"):
             from .dvr import dvr_person_prep
             result = dvr_person_prep(r)
         else:
@@ -1311,7 +1514,7 @@ def pr_person_controller(**attr):
             crud_strings["title_list"] = T("Invalid Cases")
 
         controller = r.controller
-        if controller in ("dvr", "counsel"):
+        if controller in ("dvr", "counsel", "supply"):
             configure_dvr_person_controller(r,
                                             privileged = privileged,
                                             administration = administration,
@@ -1356,99 +1559,49 @@ def pr_person_controller(**attr):
 
         if QUARTERMASTER:
             # Add Action Button to assign Housing Unit to the Resident
-            s3.actions = [dict(label=s3_str(T("Assign Shelter")),
-                               _class="action-btn",
-                               url=URL(c="cr",
-                                       f="shelter_registration",
-                                       args=["assign"],
-                                       vars={"person_id": "[id]"},
-                                       )),
+            s3.actions = [{"label": s3_str(T("Assign Shelter")),
+                           "url": URL(c = "cr",
+                                      f = "shelter_registration",
+                                      args = ["assign"],
+                                      vars = {"person_id": "[id]"},
+                                      ),
+                           "_class": "action-btn",
+                           },
                           ]
 
         if r.record and isinstance(output, dict):
-
-            from ..helpers import inject_button
-
-            component_name = r.component_name
-
-            # Generate-ID button (requires appropriate role)
-            if r.controller == "dvr" and is_case_admin or \
-               r.controller == "hrm" and is_org_admin:
-                btn = A(T("Generate ID"),
-                        _href = r.url(component = "identity",
-                                      method = "generate",
-                                      ),
-                        _class = "action-btn activity button",
-                        )
-                if not r.component:
-                    inject_button(output, btn, before="delete_btn", alt=None)
-                elif r.component_name == "identity":
-                    inject_button(output, btn)
-
-            # Organizer-button on appointments tab
-            if component_name == "case_appointment":
-                btn = A(T("Calendar"),
-                        _href = r.url(component = "case_appointment",
-                                      method = "organize",
-                                      ),
-                        _class = "action-btn activity button",
-                        )
-                inject_button(output, btn)
-
-            # Registration History button on presence tab
-            elif component_name == "site_presence_event":
-
-                widget_id = "rhist-btn"
-                label = T("Registration History")
-
-                btn = A(label,
-                        _id = widget_id,
-                        _class = "action-btn activity button",
-                        )
-                inject_button(output, btn)
-
-                # TODO move into function
-
-                # Inject JS
-                appname = current.request.application
-                script = "/%s/static/themes/JUH/js/rhist.js" % appname
-                if script not in s3.scripts:
-                    s3.scripts.append(script)
-
-                # Instantiate widget
-                opts = {"ajaxURL": r.url(component="",
-                                         method="registration_history",
-                                         representation="json",
-                                         ),
-                        "container": "map",
-                        "labelTitle": s3_str(label),
-                        "labelShelter": s3_str(T("Shelter")),
-                        "labelPlanned": s3_str(T("Planned since")),
-                        "labelArrival": s3_str(T("Arrival")),
-                        "labelDeparture": s3_str(T("Departure")),
-                        "labelEmpty": s3_str(T("No data available")),
-                        "labelMissing": s3_str(T("Date not registered")),
-                        "labelClose": s3_str(T("Close")),
-                        }
-                from core import JSONSEPARATORS
-                script = '''$('#%(selector)s').registrationHistory(%(options)s);''' % \
-                         {"selector": widget_id,
-                          "options": json.dumps(opts, separators=JSONSEPARATORS),
-                          }
-                s3.jquery_ready.append(script)
-
-
+            # Add custom actions
+            configure_custom_actions(r,
+                                     output,
+                                     is_case_admin = is_case_admin,
+                                     is_org_admin = is_org_admin,
+                                     )
         return output
     s3.postp = postp
 
     # Custom rheader tabs
     from ..rheaders import dvr_rheader, hrm_rheader, default_rheader
-    if current.request.controller in ("dvr", "counsel"):
+    if current.request.controller in ("dvr", "counsel", "supply"):
+
         attr["rheader"] = dvr_rheader
+        attr["variable_columns"] = True
+        #attr["dtargs"] = {"dt_double_scroll": True}
+
+        # Allow selection of Organisation with case imports
+        from ..helpers import managed_orgs_field
+        attr["csv_extra_fields"] = [{"label": "Organisation",
+                                     "field": managed_orgs_field,
+                                     }]
+
     elif current.request.controller == "hrm":
         attr["rheader"] = hrm_rheader
     elif current.request.controller == "default":
         attr["rheader"] = default_rheader
+
+    # Activate filters on component tabs
+    attr["hide_filter"] = {"response_action": False,
+                           "distribution_item": False,
+                           }
 
     return attr
 
@@ -1502,7 +1655,7 @@ def pr_group_membership_controller(**attr):
             rtable.shelter_id.default = shelter_id
             rtable.shelter_unit_id.default = unit_id
 
-            ROLE = T("Role")
+            ROLE = T("Dependency")
 
             if r.interactive:
                 table = resource.table
@@ -1528,7 +1681,7 @@ def pr_group_membership_controller(**attr):
                 field = table.role_id
                 field.readable = field.writable = True
                 field.label = ROLE
-                field.comment = None
+                field.comment = T("The type of dependency from the rest of the family/household (leave empty for independent adults). Use the comments field to elaborate if required.")
                 field.requires = IS_EMPTY_OR(
                                     IS_ONE_OF(current.db, "pr_group_member_role.id",
                                               field.represent,
@@ -1538,6 +1691,9 @@ def pr_group_membership_controller(**attr):
 
                 field = table.group_head
                 field.label = T("Head of Family")
+
+                field = table.comments
+                field.comment = T("Use this field for details about position or relationships of the family member")
 
                 # Custom CRUD strings for this perspective
                 s3.crud_strings["pr_group_membership"] = Storage(
@@ -1559,6 +1715,7 @@ def pr_group_membership_controller(**attr):
                            "person_id$gender",
                            "group_head",
                            (ROLE, "role_id"),
+                           "comments",
                            (T("Case Status"), "person_id$dvr_case.status_id"),
                            ]
             # Retain group_id in list_fields if added in standard prep

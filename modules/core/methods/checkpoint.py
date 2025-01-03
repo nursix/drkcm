@@ -231,7 +231,7 @@ class Checkpoint(CRUDMethod):
                                buttons = buttons,
                                hidden = hidden,
                                _id = widget_id,
-                               _class = "case-event-registration",
+                               _class = "event-registration-form",
                                *formfields)
         output["form"] = form
         output["picture"] = DIV(_class = "panel profile-picture",
@@ -242,11 +242,13 @@ class Checkpoint(CRUDMethod):
         response.view = self._view(r, "dvr/register_case_event.html")
 
         # Show profile picture by default or only on demand?
-        show_picture = settings.get_dvr_event_registration_show_picture()
+        show_picture = settings.get_ui_checkpoint_show_picture()
+        multi_preselect_all = settings.get_ui_checkpoint_multi_preselect_all()
 
         # Inject JS
         options = {"tablename": resourcename,
                    "ajaxURL": self.ajax_url(r),
+                   "multiPreselectAll": multi_preselect_all,
                    "showPicture": show_picture,
                    "showPictureText": s3_str(T("Show Picture")),
                    "hidePictureText": s3_str(T("Hide Picture")),
@@ -312,30 +314,35 @@ class Checkpoint(CRUDMethod):
 
             Returns:
                 a JSON object like:
-                    {"l": the actual PE label (to update the input field),
+                    {// Person details
+                     "l": the actual PE label (to update the input field),
                      "p": the person details (HTML),
                      "f": flags instructions
                           [{"n": the flag name, "i": flag instructions},...],
-                     "x": the family details,
-                     "d": action details,       # TODO proper explanation
                      "b": profile picture URL,  # TODO Change into i(mage)
+                     "x": the family details,
+
+                     // Transaction details
+                     "d": action details,       # TODO proper explanation
                      "i": blocked events        # TODO Change into "r" (=rules)
                           {<event_code>: [<msg>, <blocked_until_datetime>]},
                      "u": actionable info (e.g. which payment to pay out)
                      "s": whether the action is permitted or not
-                     "e": form error (for label field)  # TODO use "a" instead
-                     "a": error message                 # TODO use "e" instead
+
+                     // Messages
+                     "a": form error (for label field)
+                     "e": error message
                      "w": warning message
-                     "m": success message               # TODO use "c" instead
+                     "c": success message
                      }
 
             Note:
                 Request body is expected to contain a JSON-object like:
                     {"a": the action ("check"|"register")
+                     "k": XSRF token
                      "l": the PE label(s)
                      "o": the organisation ID
-                     "e": the event type code
-                     "k": XSRF token
+                     "t": the event type code
                      }
         """
 
@@ -480,7 +487,7 @@ class Checkpoint(CRUDMethod):
         error = None
 
         # Identify the event type
-        code = json_data.get("e")
+        code = json_data.get("t")
         event_type = self.get_event_type(code, organisation_id)
         if event_type:
             # Identify the person(s)
@@ -517,7 +524,7 @@ class Checkpoint(CRUDMethod):
             for person in persons:
                 # TODO Check event type not blocked for that person
                 #      - GUI should prevent this, but need to catch forged requests
-                success = self.register_bare(person, event_type.id)
+                success = self.register_case_event(person, event_type.id)
                 if not success:
                     error = T("Event registration failed")
                     break
@@ -528,15 +535,15 @@ class Checkpoint(CRUDMethod):
             error = T("Person not found")
 
         if error:
-            output = {"a": s3_str(error)}
+            output = {"e": s3_str(error)}
         else:
-            output = {"m": s3_str(T("Event registered"))}
+            output = {"c": s3_str(T("Event registered"))}
 
         return output
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def register_bare(person, event_type_id):
+    def register_case_event(person, event_type_id):
         """
             Registers an event for a person (low-level method)
 
@@ -1040,6 +1047,8 @@ class Checkpoint(CRUDMethod):
                     "n": s3_fullname(member),
                     "d": S3DateTime.date_represent(member.date_of_birth),
                     }
+            if str(member.id) == str(person_id):
+                data["s"] = True
 
             # Profile picture URL
             picture = row.pr_image
@@ -1150,7 +1159,7 @@ class Checkpoint(CRUDMethod):
     # Helper functions
     # -------------------------------------------------------------------------
     @classmethod
-    def get_organisations(cls):
+    def get_organisations(cls, tablename="dvr_case_event"):
         """
             Looks up all organisations the user is permitted to register
             case events for
@@ -1165,7 +1174,7 @@ class Checkpoint(CRUDMethod):
         otable = s3db.org_organisation
 
         permissions = current.auth.permission
-        permitted_realms = permissions.permitted_realms("dvr_case_event", "create")
+        permitted_realms = permissions.permitted_realms(tablename, "create")
         if permitted_realms is not None:
             query = (otable.pe_id.belongs(permitted_realms)) & \
                     (otable.deleted == False)
@@ -1526,7 +1535,7 @@ class Checkpoint(CRUDMethod):
 
         # Last registration of types with a minimum interval
         join = ttable.on((ttable.id == etable.type_id) & \
-                         (ttable.max_per_day != None))
+                         (ttable.min_interval != None))
         query = (etable.person_id == person_id) & \
                 (etable.type_id.belongs(check)) & \
                 (etable.deleted == False)

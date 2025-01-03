@@ -13,7 +13,7 @@ def index():
     auth.settings.register_onvalidation = _register_validation
     auth.configure_user_fields()
 
-    current.menu.oauth = S3MainMenu.menu_oauth()
+    current.menu.oauth = MainMenu.menu_oauth()
 
     page = None
     if len(request.args):
@@ -338,13 +338,49 @@ def download():
         #session.error = T("Need to specify the file to download!")
         #redirect(URL(f="index"))
 
+    import re
+    from pydal.helpers.regex import REGEX_UPLOAD_PATTERN
+    items = re.match(REGEX_UPLOAD_PATTERN, filename)
+    if not items:
+        raise HTTP(404)
+    tablename = items.group("table")
+    fieldname = items.group("field")
+
     # Check Permissions
-    tablename = filename.split(".", 1)[0]
     if "_" in tablename:
-        # Load the Model
-        table = s3db.table(tablename)
-        if table and not auth.s3_has_permission("read", tablename):
-            auth.permission.fail()
+        # Load the Model, deal with aliased tables
+        otn = request.vars.get("otn")
+        if otn and tablename != otn:
+            alias, tablename = tablename, otn
+            table = s3db.table(tablename)
+            if table:
+                table = table.with_alias(alias)
+        else:
+            alias = tablename
+            table = s3db.table(tablename)
+
+        if table:
+            # Identify the record
+            try:
+                query = (table[fieldname] == filename)
+                row = current.db(query).select(table._id, limitby=(0, 1)).first()
+            except (AttributeError, KeyError) as e:
+                # Field does not exist in table
+                raise HTTP(404)
+            else:
+                record_id = row[table._id] if row else None
+
+            # Check permission
+            # NOTE
+            # If no record ID can be found, then the file does not belong
+            # to this table, and hence cannot be accessed by this link,
+            # which is therefore indicated as failed authorization
+            if not record_id or \
+               not auth.s3_has_permission("read", tablename, record_id=record_id):
+                auth.permission.fail()
+        else:
+            # Table does not exist
+            raise HTTP(404)
 
     return response.download(request, db)
 
@@ -1002,7 +1038,7 @@ def user():
     self_registration = settings.get_security_self_registration()
     login_form = register_form = None
 
-    current.menu.oauth = S3MainMenu.menu_oauth()
+    current.menu.oauth = MainMenu.menu_oauth()
 
     if not settings.get_auth_password_changes():
         # Block Password changes as these are managed externally (OpenID / SMTP / LDAP)

@@ -78,7 +78,6 @@ from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -193,10 +192,10 @@ class HRModel(DataModel):
                                                               filter_opts = filter_opts,
                                                               )),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-                                                            f = "department",
-                                                            label = label_create,
-                                                            ),
+                                      comment = PopupLink(c = "vol" if group == "volunteer" else "hrm",
+                                                          f = "department",
+                                                          label = label_create,
+                                                          ),
                                       )
 
         configure("hrm_department",
@@ -335,16 +334,16 @@ class HRModel(DataModel):
                                      represent = represent,
                                      requires = requires,
                                      sortby = "name",
-                                     comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-                                                           f = "job_title",
-                                                           # Add this for usecases where this is no special controller for an options lookup
-                                                           #vars = {"prefix": "hrm",
-                                                           #        "parent": "human_resource",
-                                                           #        },
-                                                           label = label_create,
-                                                           title = label,
-                                                           tooltip = tooltip,
-                                                           ),
+                                     comment = PopupLink(c = "vol" if group == "volunteer" else "hrm",
+                                                         f = "job_title",
+                                                         # Add this for usecases where this is no special controller for an options lookup
+                                                         #vars = {"prefix": "hrm",
+                                                         #        "parent": "human_resource",
+                                                         #        },
+                                                         label = label_create,
+                                                         title = label,
+                                                         tooltip = tooltip,
+                                                         ),
                                      )
 
         configure("hrm_job_title",
@@ -596,14 +595,14 @@ class HRModel(DataModel):
                     msg_record_deleted = T("Record deleted"),
                     msg_list_empty = T("No staff or volunteers currently registered"))
 
-        #comment = S3PopupLink(c = "vol" if group == "volunteer" else "hrm",
-        #                      f = group or "staff",
-        #                      vars = {"child": "human_resource_id"},
-        #                      label = crud_strings["hrm_%s" % group].label_create if group else \
-        #                              crud_strings[tablename].label_create,
-        #                      title = label,
-        #                      tooltip = AUTOCOMPLETE_HELP,
-        #                      )
+        #comment = PopupLink(c = "vol" if group == "volunteer" else "hrm",
+        #                    f = group or "staff",
+        #                    vars = {"child": "human_resource_id"},
+        #                    label = crud_strings["hrm_%s" % group].label_create if group else \
+        #                            crud_strings[tablename].label_create,
+        #                    title = label,
+        #                    tooltip = AUTOCOMPLETE_HELP,
+        #                    )
 
         human_resource_id = FieldTemplate("human_resource_id", "reference %s" % tablename,
                                           label = label,
@@ -1030,8 +1029,7 @@ class HRModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Safe defaults for model-global names in case module is disabled
         """
@@ -1586,9 +1584,9 @@ class HRSalaryModel(DataModel):
                                                   "hrm_staff_level.id",
                                                   staff_level_represent,
                                                   )),
-                           comment = S3PopupLink(f = "staff_level",
-                                                 label = T("Create Staff Level"),
-                                                 ),
+                           comment = PopupLink(f = "staff_level",
+                                               label = T("Create Staff Level"),
+                                               ),
                            ),
                      Field("salary_grade_id", "reference hrm_salary_grade",
                            label = T("Salary Grade"),
@@ -1598,9 +1596,9 @@ class HRSalaryModel(DataModel):
                                                   "hrm_salary_grade.id",
                                                   salary_grade_represent,
                                                   )),
-                           comment = S3PopupLink(f = "salary_grade",
-                                                 label = T("Create Salary Grade"),
-                                                 ),
+                           comment = PopupLink(f = "salary_grade",
+                                               label = T("Create Salary Grade"),
+                                               ),
                            ),
                      DateField("start_date",
                                default = "now",
@@ -2157,12 +2155,12 @@ class HRSkillModel(DataModel):
                                                               represent,
                                                               )),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = c,
-                                                            f = "skill_type",
-                                                            label = label_create,
-                                                            title = label_create,
-                                                            tooltip = T("Add a new skill type to the catalog."),
-                                                            ),
+                                      comment = PopupLink(c = c,
+                                                          f = "skill_type",
+                                                          label = label_create,
+                                                          title = label_create,
+                                                          tooltip = T("Add a new skill type to the catalog."),
+                                                          ),
                                       )
 
         configure(tablename,
@@ -2214,11 +2212,11 @@ class HRSkillModel(DataModel):
             widget = None
             tooltip = None
 
-        skill_help = S3PopupLink(c = c,
-                                 f = "skill",
-                                 label = label_create,
-                                 tooltip = tooltip,
-                                 )
+        skill_help = PopupLink(c = c,
+                               f = "skill",
+                               label = label_create,
+                               tooltip = tooltip,
+                               )
 
         represent = S3Represent(lookup=tablename, translate=True)
         skill_id = FieldTemplate("skill_id", "reference %s" % tablename,
@@ -2549,10 +2547,10 @@ class HRSkillModel(DataModel):
 
         if is_admin:
             label_create = crud_strings[tablename].label_create
-            course_help = S3PopupLink(c = c,
-                                      f = "course",
-                                      label = label_create,
-                                      )
+            course_help = PopupLink(c = c,
+                                    f = "course",
+                                    label = label_create,
+                                    )
         else:
             course_help = None
             #course_help = DIV(_class="tooltip",
@@ -2647,12 +2645,12 @@ class HRSkillModel(DataModel):
                                                               represent
                                                               )),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "hrm",
-                                                            f = "event_type",
-                                                            label = label_create,
-                                                            title = label_create,
-                                                            tooltip = T("Add a new event type to the catalog."),
-                                                            ),
+                                      comment = PopupLink(c = "hrm",
+                                                          f = "event_type",
+                                                          label = label_create,
+                                                          title = label_create,
+                                                          tooltip = T("Add a new event type to the catalog."),
+                                                          ),
                                       )
 
         configure(tablename,
@@ -2784,10 +2782,10 @@ class HRSkillModel(DataModel):
                                                                   #filter_opts=filter_opts,
                                                                   )),
                                           sortby = "course_id",
-                                          comment = S3PopupLink(c = c,
-                                                                f = "training_event",
-                                                                label = ADD_TRAINING_EVENT,
-                                                                ),
+                                          comment = PopupLink(c = c,
+                                                              f = "training_event",
+                                                              label = ADD_TRAINING_EVENT,
+                                                              ),
                                           # Comment this to use a Dropdown & not an Autocomplete
                                           #widget = S3AutocompleteWidget("hrm", "training_event")
                                           )
@@ -3350,12 +3348,12 @@ class HRSkillModel(DataModel):
                                                               filter_opts=filter_opts
                                                               )),
                                        sortby = "name",
-                                       comment = S3PopupLink(c = c,
-                                                             f = "certificate",
-                                                             label = label_create,
-                                                             title = label_create,
-                                                             tooltip = T("Add a new certificate to the catalog."),
-                                                             ),
+                                       comment = PopupLink(c = c,
+                                                           f = "certificate",
+                                                           label = label_create,
+                                                           title = label_create,
+                                                           tooltip = T("Add a new certificate to the catalog."),
+                                                           ),
                                        )
 
         if settings.get_hrm_use_skills():
@@ -3644,8 +3642,7 @@ class HRSkillModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -3695,12 +3692,12 @@ class HRSkillModel(DataModel):
             controller = "hrm"
         if current.auth.s3_has_role(current.session.s3.system_roles.ADMIN):
             label_create = s3.crud_strings["hrm_competency_rating"].label_create
-            comment = S3PopupLink(c = controller,
-                                  f = "competency_rating",
-                                  vars = {"child":"competency_id"},
-                                  label = label_create,
-                                  tooltip = T("Add a new competency rating to the catalog."),
-                                  )
+            comment = PopupLink(c = controller,
+                                f = "competency_rating",
+                                vars = {"child":"competency_id"},
+                                label = label_create,
+                                tooltip = T("Add a new competency rating to the catalog."),
+                                )
         else:
             comment = DIV(_class="tooltip",
                           _title="%s|%s" % (T("Competency Rating"),
@@ -4654,9 +4651,9 @@ class HRAwardModel(DataModel):
                                                 "hrm_award_type.id",
                                                 award_type_represent,
                                                 ),
-                           comment = S3PopupLink(f = "award_type",
-                                                 label = ADD_AWARD_TYPE,
-                                                 ),
+                           comment = PopupLink(f = "award_type",
+                                               label = ADD_AWARD_TYPE,
+                                               ),
                            ),
                      )
 
@@ -4727,9 +4724,9 @@ class HRDisciplinaryActionModel(DataModel):
                                                 "hrm_disciplinary_type.id",
                                                 disciplinary_type_represent,
                                                 ),
-                           comment = S3PopupLink(f = "disciplinary_type",
-                                                 label = T("Add Disciplinary Action Type"),
-                                                 ),
+                           comment = PopupLink(f = "disciplinary_type",
+                                               label = T("Add Disciplinary Action Type"),
+                                               ),
                            ),
                      CommentsField(),
                      )
@@ -4869,11 +4866,11 @@ class HRProgrammeModel(DataModel):
                                                               filter_opts = filter_opts,
                                                               )),
                                      sortby = "name",
-                                     comment = S3PopupLink(f = "programme",
-                                                           label = label_create,
-                                                           title = label_create,
-                                                           tooltip = T("Add a new program to the catalog."),
-                                                           ),
+                                     comment = PopupLink(f = "programme",
+                                                         label = label_create,
+                                                         title = label_create,
+                                                         tooltip = T("Add a new program to the catalog."),
+                                                         ),
                                      )
 
         configure(tablename,
@@ -5128,10 +5125,10 @@ class HRShiftModel(DataModel):
                                                 IS_ONE_OF(db, "hrm_shift.id",
                                                           represent,
                                                           )),
-                                 comment = S3PopupLink(c = "hrm",
-                                                       f = "shift",
-                                                       label = T("Create Shift"),
-                                                       ),
+                                 comment = PopupLink(c = "hrm",
+                                                     f = "shift",
+                                                     label = T("Create Shift"),
+                                                     ),
                                  )
 
         self.add_components(tablename,
@@ -5272,8 +5269,7 @@ class HRShiftModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """
             Return safe defaults in case the model has been deactivated.
         """
@@ -5529,8 +5525,7 @@ class HRDelegationModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         #dummy = FieldTemplate.dummy
@@ -5718,7 +5713,7 @@ class hrm_AssignMethod(CRUDMethod):
         if r.http == "POST":
             added = 0
             post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
 
                 selected = post_vars.selected
                 if selected:
@@ -5911,10 +5906,10 @@ class hrm_AssignMethod(CRUDMethod):
                 profile_url = URL(c = controller,
                                   f = "human_resource",
                                   args = ["[id]", "profile"])
-                S3CRUD.action_buttons(r,
-                                      deletable = False,
-                                      read_url = profile_url,
-                                      update_url = profile_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = False,
+                                         read_url = profile_url,
+                                         update_url = profile_url)
 
                 response.s3.no_formats = True
 
@@ -7748,7 +7743,7 @@ def hrm_competency_controller():
     def postp(r, output):
         if r.interactive:
             # Custom action button to add the member to a team
-            S3CRUD.action_buttons(r)
+            BasicCRUD.action_buttons(r)
 
             args = ["[id]", "group_membership"]
             s3.actions.append({"label": str(T("Add to a Team")),
@@ -7986,7 +7981,7 @@ def hrm_group_controller():
         if r.interactive:
             if not r.component:
                 update_url = URL(args=["[id]", "group_membership"])
-                S3CRUD.action_buttons(r, update_url=update_url)
+                BasicCRUD.action_buttons(r, update_url=update_url)
                 if current.deployment_settings.has_module("msg") and \
                    current.auth.permission.has_permission("update", c="hrm",
                                                           f="compose"):
@@ -8480,10 +8475,10 @@ def hrm_human_resource_controller(extra_filter = None):
                     # Standard CRUD buttons
                     read_url = None
                     update_url = None
-                S3CRUD.action_buttons(r,
-                                      deletable = deletable,
-                                      read_url = read_url,
-                                      update_url = update_url)
+                BasicCRUD.action_buttons(r,
+                                         deletable = deletable,
+                                         read_url = read_url,
+                                         update_url = update_url)
                 if "msg" in settings.modules and \
                    settings.get_hrm_compose_button() and \
                    current.auth.permission.has_permission("update",
@@ -9067,11 +9062,11 @@ def hrm_training_event_controller():
     #           showadd_btn = output.get("showadd_btn", None)
     #           if showadd_btn:
     #               # Add an Import button
-    #               import_btn = S3CRUD.crud_button(label=current.T("Import Participants"),
-    #                                               _class="action-btn s3_modal",
-    #                                               _href=URL(f="training", args="import.popup",
-    #                                                         vars={"~.training_event_id":r.id}),
-    #                                               )
+    #               import_btn = BasicCRUD.crud_button(label=current.T("Import Participants"),
+    #                                                  _class="action-btn s3_modal",
+    #                                                  _href=URL(f="training", args="import.popup",
+    #                                                            vars={"~.training_event_id":r.id}),
+    #                                                  )
     #               output["showadd_btn"] = TAG[""](showadd_btn, import_btn)
     #    return output
     #s3.postp = postp

@@ -229,7 +229,7 @@ class S3SQLForm:
                     else:
                         # Default script: hide form, show add-button
                         script = \
-'''$('.cancel-form-btn').click(function(){$('#%(hide)s').slideUp('medium',function(){$('#%(show)s').show()})})'''
+'''$('.cancel-form-btn').on('click',function(){$('#%(hide)s').slideUp('medium',function(){$('#%(show)s').show()})})'''
                     s3.jquery_ready.append(script % cancel)
                 elif s3.cancel is True:
                     cancel_button.add_class("s3-cancel")
@@ -762,6 +762,9 @@ class S3SQLDefaultForm(S3SQLForm):
             success = False
 
             if form.errors:
+                # Indicate form error in response
+                # - so an otherwise hidden form can be made visible
+                current.response.s3.form_error = True
 
                 # Revert any records created within widgets/validators
                 current.db.rollback()
@@ -1179,6 +1182,10 @@ class S3SQLCustomForm(S3SQLForm):
             response.confirmation = message
 
         if form.errors:
+            # Indicate form error in response
+            # - so an otherwise hidden form can be made visible
+            current.response.s3.form_error = True
+
             # Revert any records created within widgets/validators
             db.rollback()
 
@@ -1260,8 +1267,6 @@ class S3SQLCustomForm(S3SQLForm):
         for component in self.components:
             if hasattr(component, "validate"):
                 component.validate(form)
-
-        return
 
     # -------------------------------------------------------------------------
     def accept(self,
@@ -1348,9 +1353,8 @@ class S3SQLCustomForm(S3SQLForm):
             else:
                 # No => apply component defaults
                 subid = None
-                subdata = component.get_defaults(main_data,
-                                                 data = subdata,
-                                                 )
+                subdata = component.get_defaults(main_data, data=subdata)
+
             # Accept the subrecord
             accept_row(subid,
                        subdata,
@@ -1362,20 +1366,16 @@ class S3SQLCustomForm(S3SQLForm):
         # Accept components (e.g. Inline-Forms)
         for item in self.components:
             if hasattr(item, "accept"):
-                item.accept(form,
-                            master_id = master_id,
-                            format = format,
-                            )
+                item.accept(form, master_id=master_id, format=format)
 
         # Update form with master form_vars
         form_vars = form.vars
-        # ID
         form_vars[table._id.name] = master_id
+
         # Super entities (& anything added manually in table's onaccept)
         for var in master_form_vars:
             if var not in form_vars:
                 form_vars[var] = master_form_vars[var]
-        return
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -1447,7 +1447,7 @@ class S3SQLCustomForm(S3SQLForm):
                 undelete = False
                 ):
         """
-            Create or update a record
+            Creates or updates a record
 
             Args:
                 record_id: the record ID
@@ -1457,18 +1457,28 @@ class S3SQLCustomForm(S3SQLForm):
                 hierarchy: the data for the hierarchy link to create
                 link: resource.link for linktable components
                 undelete: reinstate a previously deleted record
+
+            Returns:
+                tuple (accept_id, master_form_vars)
+                - accept_id: the ID of the new/updated record
+                - master_form_vars: the updated form vars (master record only)
+
+            Raises:
+                - RuntimeError if the record could not be created
         """
+
+        empty = Storage()
 
         if alias is not None:
             # Subtable
             if not data or \
                not record_id and all(value is None for value in data.values()):
                 # No data => skip
-                return None, Storage()
+                return None, empty
         elif record_id and not data:
             # Existing master record, no data => skip, but return
             # record_id to allow update of inline-components:
-            return record_id, Storage()
+            return record_id, empty
 
         s3db = current.s3db
 
@@ -1522,7 +1532,7 @@ class S3SQLCustomForm(S3SQLForm):
                 # Do not (ever) update a deleted record that we don't
                 # want to restore, otherwise this may set foreign keys
                 # in a deleted record!
-                return accept_id
+                return accept_id, empty
             db(table._id == record_id).update(**data)
         else:
             # Insert new record
@@ -1534,6 +1544,8 @@ class S3SQLCustomForm(S3SQLForm):
 
         data[table._id.name] = accept_id
         prefix, name = tablename.split("_", 1)
+
+        # Pseudo-form for post-processing
         form_vars = Storage(data)
         form = Storage(vars=form_vars, record=oldrecord)
 
@@ -1584,14 +1596,14 @@ class S3SQLCustomForm(S3SQLForm):
             except:
                 error = "onaccept failed: %s" % str(onaccept)
                 current.log.error(error)
-                # This is getting swallowed
                 raise
 
-        if alias is None:
-            # Return master_form_vars
-            return accept_id, form.vars
-        else:
-            return accept_id
+        # Master form vars
+        # - to update the original form with any values added during
+        #   post-process, e.g. super-IDs
+        master_form_vars = empty if alias else form.vars
+
+        return accept_id, master_form_vars
 
 # =============================================================================
 class S3SQLFormElement:
@@ -1659,7 +1671,7 @@ class S3SQLFormElement:
                           method will be rendered (unless popup is None)
                 label: override option for the original field label
                 popup: only if comments=False, additional vars for comment
-                       navigation items (e.g. AddResourceLink), None prevents
+                       navigation items (e.g. PopupLink), None prevents
                        rendering of navigation items
                 skip_validation: skip field validation during POST, useful
                                  for client-side processed dummy fields.

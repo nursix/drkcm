@@ -4,28 +4,7 @@
     License: MIT
 """
 
-from gluon import current
-
-# =============================================================================
-def drk_obscure_dob(record_id, field, value):
-    """
-        Helper to obscure a date of birth; maps to the first day of
-        the quarter, thus retaining the approximate age for statistics
-
-        Args:
-            record_id: the pr_address record ID
-            field: the location_id Field
-            value: the location_id
-
-        Returns:
-            the new date
-    """
-
-    if value:
-        month = int((value.month - 1) / 3) * 3 + 1
-        value = value.replace(month=month, day=1)
-
-    return value
+from core import anonymous_address, obscure_dob
 
 # =============================================================================
 def drk_person_anonymize():
@@ -68,7 +47,7 @@ def drk_person_anonymize():
               "fields": {"first_name": ("set", ANONYMOUS),
                          "last_name": ("set", ANONYMOUS),
                          "pe_label": anonymous_id,
-                         "date_of_birth": drk_obscure_dob,
+                         "date_of_birth": obscure_dob,
                          "comments": "remove",
                          },
               "cascade": [("dvr_case", {"key": "person_id",
@@ -100,7 +79,7 @@ def drk_person_anonymize():
                                                     }),
                           ("pr_address", {"key": "pe_id",
                                           "match": "pe_id",
-                                          "fields": {"location_id": current.s3db.pr_address_anonymise,
+                                          "fields": {"location_id": anonymous_address,
                                                      "comments": "remove",
                                                      },
                                           }),

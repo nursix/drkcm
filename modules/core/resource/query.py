@@ -133,16 +133,19 @@ class S3FieldSelector:
     # -------------------------------------------------------------------------
     def expr(self, val):
 
+        ret = val
+
         if self.op and val is not None:
             if self.op == self.LOWER and \
                hasattr(val, "lower") and callable(val.lower) and \
                (not isinstance(val, Field) or val.type in TEXTTYPES):
-                return val.lower()
+                ret = val.lower()
             elif self.op == self.UPPER and \
                  hasattr(val, "upper") and callable(val.upper) and \
                  (not isinstance(val, Field) or val.type in TEXTTYPES):
-                return val.upper()
-        return val
+                ret = val.upper()
+
+        return ret
 
     # -------------------------------------------------------------------------
     def represent(self, resource):
@@ -592,12 +595,10 @@ class S3FieldPath:
                             continue
                         if tn == tablename:
                             if fkey is not None:
-                                raise SyntaxError("ambiguous foreign key in %s" %
-                                                  alias)
-                            else:
-                                fkey = fname
-                                if key:
-                                    pkey = key
+                                raise SyntaxError("ambiguous foreign key in %s" % alias)
+                            fkey = fname
+                            if key:
+                                pkey = key
                     if fkey is None:
                         raise SyntaxError("no foreign key for %s in %s" %
                                           (tablename, kname))
@@ -2261,7 +2262,7 @@ class S3URLQuery:
             if not key:
                 continue
 
-            elif key == "$filter":
+            if key == "$filter":
                 # Instantiate the advanced filter parser
                 parser = S3URLQueryParser()
                 if parser.parser is None:
@@ -2288,8 +2289,7 @@ class S3URLQuery:
                 # Stop here
                 continue
 
-            elif key[0] == "_" or \
-                 not("." in key or key[0] == "(" and ")" in key):
+            if key[0] == "_" or not("." in key or key[0] == "(" and ")" in key):
                 # Not a filter expression
                 continue
 
@@ -2542,29 +2542,29 @@ class S3AIRegex:
 
     # Groups with diacritic variants of the same character
     GROUPS = (
-        u"aăâåãáàẩắằầảẳẵẫấạặậǻ",
-        u"äæ",
-        u"cçćĉ",
-        u"dđð",
-        u"eêèềẻểẽễéếẹệë",
-        u"gǵĝ",
-        u"hĥ",
-        u"iìỉĩíịîï\u0131\u0130",
-        u"jĵ",
-        u"kḱ",
-        u"lĺ",
-        u"mḿ",
-        u"nñńǹ",
-        u"oôơòồờỏổởõỗỡóốớọộợ",
-        u"öøǿ",
-        u"pṕ",
-        u"rŕ",
-        u"sśŝ",
-        u"tẗ",
-        u"uưùừủửũữúứụựứüǘûǜ",
-        u"wẃŵẁ",
-        u"yỳỷỹýỵÿŷ",
-        u"zźẑ",
+        "aăâåãáàẩắằầảẳẵẫấạặậǻ",
+        "äæ",
+        "cçćĉ",
+        "dđð",
+        "eêèềẻểẽễéếẹệë",
+        "gǵĝ",
+        "hĥ",
+        "iìỉĩíịîï\u0131\u0130",
+        "jĵ",
+        "kḱ",
+        "lĺ",
+        "mḿ",
+        "nñńǹ",
+        "oôơòồờỏổởõỗỡóốớọộợ",
+        "öøǿ",
+        "pṕ",
+        "rŕ",
+        "sśŝ",
+        "tẗ",
+        "uưùừủửũữúứụựứüǘûǜ",
+        "wẃŵẁ",
+        "yỳỷỹýỵÿŷ",
+        "zźẑ",
     )
 
     ESCAPE = ".*$^[](){}\\+?"
@@ -2610,7 +2610,7 @@ class S3AIRegex:
         escaped = False
         for character in s3_str(string):
 
-            if character != u"\u0130": # "İ".lower() gives two characters!!
+            if character != "\u0130": # "İ".lower() gives two characters!!
                 character = character.lower()
 
             result = None
@@ -2701,10 +2701,10 @@ class S3URLQueryParser:
                       comparison +
                       pp.originalTextFor(pp.delimitedList(value, combine=True)))
 
-        parser = pp.operatorPrecedence(qe, [("not", 1, pp.opAssoc.RIGHT, ),
-                                            ("and", 2, pp.opAssoc.LEFT, ),
-                                            ("or", 2, pp.opAssoc.LEFT, ),
-                                            ])
+        parser = pp.infixNotation(qe, [("not", 1, pp.opAssoc.RIGHT, ),
+                                       ("and", 2, pp.opAssoc.LEFT, ),
+                                       ("or", 2, pp.opAssoc.LEFT, ),
+                                       ])
 
         self.parser = parser
         self.ParseResults = pp.ParseResults

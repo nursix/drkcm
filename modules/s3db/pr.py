@@ -72,8 +72,6 @@ __all__ = (# PR Base Entities
            "pr_AssignMethod",
            "pr_compose",
            "pr_Contacts",
-           "pr_Template",
-           "pr_Templates",
 
            # PE Hierarchy and Realms
            "pr_update_affiliations",
@@ -101,10 +99,9 @@ __all__ = (# PR Base Entities
            "pr_image_modify",
 
            # Other functions
-           "pr_address_anonymise",
            "pr_availability_filter",
            "pr_import_prep",
-           "pr_person_obscure_dob",
+           "pr_PersonMergeProcess",
 
            # Data List Default Layouts
            #"pr_address_list_layout",
@@ -126,7 +123,7 @@ from gluon.sqlhtml import RadioWidget
 
 from ..core import *
 from s3dal import Field, Row
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 OU = 1 # role type which indicates hierarchy, see role_types
 OTHER_ROLE = 9
@@ -298,7 +295,7 @@ class PRPersonEntityModel(DataModel):
                        gis_config = pe_id,
                        )
 
-        # Reusable fields
+        # Foreign Key Template
         pr_pe_label = FieldTemplate("pe_label", length=128,
                                     label = T("ID Tag Number"),
                                     requires = IS_EMPTY_OR(
@@ -394,7 +391,7 @@ class PRPersonEntityModel(DataModel):
                        pr_affiliation = "role_id",
                        )
 
-        # Reusable fields
+        # Foreign Key Template
         pr_role_represent = pr_RoleRepresent()
         role_id = FieldTemplate("role_id", "reference %s" % tablename,
                                 label = T("Role"),
@@ -952,6 +949,7 @@ class PRPersonModel(DataModel):
                                            "presence",
                                            ),
                        super_entity = ("pr_pentity", "sit_trackable"),
+                       merge_process = pr_PersonMergeProcess,
                        )
 
         person_id_comment = pr_person_comment(
@@ -1000,15 +998,6 @@ class PRPersonModel(DataModel):
                    action = self.pr_person_check_duplicates,
                    )
 
-        # Enable in templates as-required
-        #set_method("pr_person",
-        #           method = "templates",
-        #           action = pr_Templates())
-
-        #set_method("pr_person",
-        #           method = "template",
-        #           action = pr_Template())
-
         # Components
         add_components(tablename,
                        # Assets
@@ -1031,7 +1020,6 @@ class PRPersonModel(DataModel):
                                                   },
                        cr_shelter_registration_history = "person_id",
                        org_site_event = "person_id",
-                       supply_distribution_person = "person_id",
                        event_incident = {"link": "event_human_resource",
                                          "joinby": "person_id",
                                          "key": "incident_id",
@@ -1171,57 +1159,43 @@ class PRPersonModel(DataModel):
                                       "actuate": "hide",
                                       },
                        supply_person_item = "person_id",
+
+                       # Supply item distributions
+                       supply_distribution = "person_id",
+                       supply_distribution_item = "person_id",
                        )
 
         # Beneficiary/Case Management
-        if settings.has_module("br"):
-            # Use BR for case management
-            add_components(tablename,
-                           # Beneficiary Registry
-                           br_case = {"joinby": "person_id",
-                                      "multiple": False,
-                                      },
-                           br_case_language = "person_id",
-                           br_case_activity = "person_id",
-                           br_assistance_measure = "person_id",
-                           br_note = {"name": "br_note",
-                                      "joinby": "person_id",
-                                      },
-                           br_service_contact = "person_id",
-                           )
-        else:
-            # Use DVR for case management
-            add_components(tablename,
-                           dvr_case = {"name": "dvr_case",
-                                       "joinby": "person_id",
-                                       "multiple": False,
-                                       },
-                           dvr_case_details = {"joinby": "person_id",
-                                               "multiple": False,
-                                               },
-                           dvr_case_flag = {"link": "dvr_case_flag_case",
-                                            "joinby": "person_id",
-                                            "key": "flag_id",
-                                            "actuate": "link",
-                                            "autodelete": False,
-                                            },
-                           dvr_case_flag_case = {"name": "dvr_flag",
-                                                 "joinby": "person_id",
-                                                 },
-                           dvr_case_activity = "person_id",
-                           dvr_case_appointment = "person_id",
-                           dvr_case_effort = "person_id",
-                           dvr_case_event = "person_id",
-                           dvr_case_language = "person_id",
-                           dvr_response_action = "person_id",
-                           dvr_allowance = "person_id",
-                           dvr_note = {"name": "case_note",
-                                       "joinby": "person_id",
-                                       },
-                           dvr_residence_status = "person_id",
-                           dvr_service_contact = "person_id",
-                           dvr_vulnerability = "person_id",
-                           )
+        add_components(tablename,
+                       dvr_case = {"name": "dvr_case",
+                                   "joinby": "person_id",
+                                   "multiple": False,
+                                   },
+                       dvr_case_details = {"joinby": "person_id",
+                                           "multiple": False,
+                                           },
+                       dvr_case_flag = {"link": "dvr_case_flag_case",
+                                        "joinby": "person_id",
+                                        "key": "flag_id",
+                                        "actuate": "link",
+                                        "autodelete": False,
+                                        },
+                       dvr_case_flag_case = {"name": "dvr_flag",
+                                             "joinby": "person_id",
+                                             },
+                       dvr_case_activity = "person_id",
+                       dvr_case_appointment = "person_id",
+                       dvr_case_event = "person_id",
+                       dvr_case_language = "person_id",
+                       dvr_response_action = "person_id",
+                       dvr_allowance = "person_id",
+                       dvr_note = {"name": "case_note",
+                                   "joinby": "person_id",
+                                   },
+                       dvr_residence_status = "person_id",
+                       dvr_service_contact = "person_id",
+                       dvr_vulnerability = "person_id",
+                       )
 
         # ---------------------------------------------------------------------
         # Pass names back to global scope (s3.*)
@@ -1631,8 +1605,7 @@ class PRPersonModel(DataModel):
 
             if check in duplicates:
                 continue
-            else:
-                duplicates[check] = row
+            duplicates[check] = row
 
         if len(duplicates):
             best_match = max(duplicates.keys())
@@ -2263,15 +2236,15 @@ class PRGroupModel(DataModel):
                                             ),
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
-                                  comment = S3PopupLink(c = "pr",
-                                                        f = "group_status",
-                                                        label = CREATE_STATUS,
-                                                        title = CREATE_STATUS,
-                                                        vars = {"child": "status_id"},
-                                                        ),
+                                  comment = PopupLink(c = "pr",
+                                                      f = "group_status",
+                                                      label = CREATE_STATUS,
+                                                      title = CREATE_STATUS,
+                                                      vars = {"child": "status_id"},
+                                                      ),
                                   label = T("Status"),
                                   ondelete = "SET NULL",
                                   represent = represent,
@@ -2376,7 +2349,7 @@ class PRGroupModel(DataModel):
                                   ),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         if current.request.controller in ("hrm", "vol") and \
            current.deployment_settings.get_hrm_teams() == "Teams":
             label = T("Team")
@@ -2392,12 +2365,12 @@ class PRGroupModel(DataModel):
         represent = pr_GroupRepresent()
         group_id = FieldTemplate("group_id", "reference %s" % tablename,
                                  sortby = "name",
-                                 comment = S3PopupLink(#c = "pr",
-                                                       f = "group",
-                                                       label = add_label,
-                                                       title = title,
-                                                       tooltip = tooltip,
-                                                       ),
+                                 comment = PopupLink(#c = "pr",
+                                                     f = "group",
+                                                     label = add_label,
+                                                     title = title,
+                                                     tooltip = tooltip,
+                                                     ),
                                  label = label,
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -2526,16 +2499,16 @@ class PRGroupModel(DataModel):
                                             ),
                   )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         role_id = FieldTemplate("role_id", "reference %s" % tablename,
-                                comment = S3PopupLink(c = "pr",
-                                                      f = "group_member_role",
-                                                      label = CREATE_ROLE,
-                                                      title = CREATE_ROLE,
-                                                      tooltip = T("The role of the member in the group"),
-                                                      vars = {"child": "role_id"},
-                                                      ),
+                                comment = PopupLink(c = "pr",
+                                                    f = "group_member_role",
+                                                    label = CREATE_ROLE,
+                                                    title = CREATE_ROLE,
+                                                    tooltip = T("The role of the member in the group"),
+                                                    vars = {"child": "role_id"},
+                                                    ),
                                 label = T("Group Member Role"),
                                 ondelete = "RESTRICT",
                                 represent = represent,
@@ -2823,10 +2796,6 @@ class PRGroupModel(DataModel):
 
         s3db = current.s3db
 
-        # BR extensions
-        if settings.has_module("br"):
-            s3db.br_group_membership_onaccept(record, row.pr_group, group_id, person_id)
-
         # DVR extensions
         if settings.has_module("dvr"):
             s3db.dvr_group_membership_onaccept(record, row.pr_group, group_id, person_id)
@@ -2959,16 +2928,16 @@ class PRForumModel(DataModel):
                   super_entity = ("pr_pentity"),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         forum_id = FieldTemplate("forum_id", "reference %s" % tablename,
                                  sortby = "name",
-                                 comment = S3PopupLink(c = "pr",
-                                                       f = "forum",
-                                                       label = T("Create Forum"),
-                                                       title = T("Create Forum"),
-                                                       tooltip = T("Create a new Forum"),
-                                                       ),
+                                 comment = PopupLink(c = "pr",
+                                                     f = "forum",
+                                                     label = T("Create Forum"),
+                                                     title = T("Create Forum"),
+                                                     tooltip = T("Create a new Forum"),
+                                                     ),
                                  label = T("Forum"),
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -3115,7 +3084,7 @@ class PRForumModel(DataModel):
                     data = json.loads(exists.deleted_fk)
                     data["deleted"] = False
                 else:
-                    data = dict(deleted=False)
+                    data = {"deleted": False}
                 db(ltable.id == link_id).update(**data)
         else:
             link_id = ltable.insert(forum_id = forum_id,
@@ -3232,8 +3201,8 @@ class PRForumModel(DataModel):
             translations = {}
             languages = list({a["auth_user.language"] for a in admins})
             for l in languages:
-                translations[l] = {"s": s3_str(T(subject, language = l)) % dict(forum_name = forum_name),
-                                   "b": s3_str(T(body, language = l)) % dict(url = url),
+                translations[l] = {"s": s3_str(T(subject, language = l)) % {"forum_name": forum_name},
+                                   "b": s3_str(T(body, language = l)) % {"url": url},
                                    }
             send_email = current.msg.send_by_pe_id
             for a in admins:
@@ -3805,27 +3774,6 @@ class PRImageModel(DataModel):
             9:T("other")
         }
 
-        def get_file(table):
-            """ Decorator to return a table-specific file-callback """
-
-            def cb():
-                """ Callback to return the file field for our record """
-
-                if len(request.args) < 3:
-                    return None
-                try:
-                    record_id = int(request.args[2])
-                except ValueError:
-                    # Probably a 'create' method
-                    return None
-                query = (table.id == record_id)
-                record = db(query).select(table.image,
-                                          limitby = (0, 1)
-                                          ).first()
-                return record.image if record else None
-
-            return cb
-
         tablename = "pr_image"
         self.define_table(tablename,
                           # Component not Instance
@@ -3840,7 +3788,7 @@ class PRImageModel(DataModel):
                                 label = T("Image"),
                                 length = current.MAX_FILENAME_LENGTH,
                                 represent = self.pr_image_represent,
-                                widget = S3ImageCropWidget((600, 600)),
+                                widget = ImageUploadWidget((600,600)), #S3ImageCropWidget((600, 600)),
                                 comment =  DIV(_class = "tooltip",
                                                _title = "%s|%s" % (T("Image"),
                                                                    T("Upload an image file here. If you don't upload an image file, then you must specify its location in the URL field."),
@@ -3872,19 +3820,6 @@ class PRImageModel(DataModel):
                                                                           ),
                                                       ),
                                         ),
-                          # Image-validator needs the Table instance
-                          # => set it on-define to allow the table to be lazy
-                          on_define = lambda table: [
-                                        table.image.set_attributes(
-                                            requires = IS_PROCESSED_IMAGE(
-                                                        "image",
-                                                        get_file(table),
-                                                        upload_path = os.path.join(request.folder,
-                                                                                   "uploads",
-                                                                                   ),
-                                                        ),
-                                        ),
-                                       ]
                           )
 
         # CRUD Strings
@@ -4163,10 +4098,10 @@ class PRAvailabilityModel(DataModel):
                                                 IS_ONE_OF(db, "pr_slot.id",
                                                           represent,
                                                           )),
-                                #comment=S3PopupLink(c = "pr",
-                                #                    f = "slot",
-                                #                    label = ADD_SLOT,
-                                #                    ),
+                                #comment=PopupLink(c = "pr",
+                                #                  f = "slot",
+                                #                  label = ADD_SLOT,
+                                #                  ),
                                 )
 
         # ---------------------------------------------------------------------
@@ -4426,8 +4361,7 @@ class PRAvailabilityModel(DataModel):
 
                     # Interval
                     interv = rule.get("i", 1)
-                    if interv < 0:
-                        interv = 0 # = do not repeat
+                    interv = max(interv, 0) # = do not repeat
 
                     if freq == "DAILY":
                         dow = all_week
@@ -5022,10 +4956,10 @@ class PREducationModel(DataModel):
 
         represent = S3Represent(lookup=tablename, translate=True)
         level_id = FieldTemplate("level_id", "reference %s" % tablename,
-                                 comment = S3PopupLink(c = "pr",
-                                                       f = "education_level",
-                                                       label = ADD_EDUCATION_LEVEL,
-                                                       ),
+                                 comment = PopupLink(c = "pr",
+                                                     f = "education_level",
+                                                     label = ADD_EDUCATION_LEVEL,
+                                                     ),
                                  label = T("Level of Award"),
                                  ondelete = "RESTRICT",
                                  represent = represent,
@@ -5425,7 +5359,7 @@ class PROccupationModel(DataModel):
             msg_list_empty = T("No Occupation Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 translate = True,
                                 )
@@ -5437,10 +5371,10 @@ class PROccupationModel(DataModel):
                                                                 represent,
                                                                 ),
                                            sortby = "name",
-                                           comment = S3PopupLink(c = "pr",
-                                                                 f = "occupation_type",
-                                                                 tooltip = T("Create a new occupation type"),
-                                                                 ),
+                                           comment = PopupLink(c = "pr",
+                                                               f = "occupation_type",
+                                                               tooltip = T("Create a new occupation type"),
+                                                               ),
                                            )
 
         # ---------------------------------------------------------------------
@@ -5994,6 +5928,70 @@ def pr_get_entities(pe_ids=None,
             return repr_all
 
 # =============================================================================
+class pr_PersonMergeProcess(MergeProcess):
+    """
+        Low-level merge process for person records
+
+        - extends the default process to handle user accounts linked
+          to the person records
+    """
+
+    # -------------------------------------------------------------------------
+    def prepare(self, original, duplicate):
+        """
+            Prepares the merge process
+            - removes all account links for the duplicate record
+            - deactivates and removes all corresponding user accounts
+
+            Args:
+                original: the original record
+                duplicate: the duplicate record
+        """
+
+        super().prepare(original, duplicate)
+
+        db = current.db
+        s3db = current.s3db
+        auth = current.auth
+
+        # Remove all account links of the duplicate
+        ltable = s3db.pr_person_user
+        query = (ltable.pe_id == duplicate.pe_id) & \
+                (ltable.deleted == False)
+        links = db(query).select(ltable.id, ltable.user_id)
+        user_ids = {l.user_id for l in links}
+        for link in links:
+            self.delete_record(ltable, link)
+
+        # Remove any orphaned accounts
+        utable = auth.settings.table_user
+        left = ltable.on((ltable.user_id == utable.id) & (ltable.deleted == False))
+        query = (utable.id.belongs(user_ids)) & \
+                (ltable.id == None) & \
+                (utable.deleted == False)
+        accounts = db(query).select(utable.id, left=left)
+        auth = current.auth
+        for account in accounts:
+            user_id = account.id
+            auth.s3_anonymise_password(user_id, utable.id, user_id)
+            auth.s3_anonymise_roles(user_id, utable.id, user_id)
+            account.update_record(registration_key="disabled", deleted=True)
+
+    # -------------------------------------------------------------------------
+    def cleanup(self):
+        """
+            Performs cleanup actions at the end of the merge process
+            - Cleans up any duplicate account links (pr_person_user)
+              that may be left behind by the default merge process
+        """
+
+        super().cleanup()
+
+        # Remove any duplicate links from pr_person_user
+        ltable = current.s3db.pr_person_user
+        deduplicate_links(ltable, "pe_id", "user_id")
+
+# =============================================================================
 class pr_RoleRepresent(S3Represent):
     """ Representations of pr_role IDs """
 
@@ -6281,8 +6279,6 @@ class pr_PersonRepresent(S3Represent):
                     controller = "hrm"
                 elif c == "vol":
                     controller = "vol"
-                elif c == "br":
-                    controller = "br"
                 elif c == "dvr":
                     controller = "dvr"
                 else:
@@ -6761,12 +6757,12 @@ def pr_person_comment(title=None, comment=None, caller=None, child=None):
     get_vars = {"child": child}
     if caller:
         get_vars["caller"] = caller
-    return S3PopupLink(c = "pr",
-                       f = "person",
-                       vars = get_vars,
-                       title = current.messages.ADD_PERSON,
-                       tooltip = "%s|%s" % (title, comment),
-                       )
+    return PopupLink(c = "pr",
+                     f = "person",
+                     vars = get_vars,
+                     title = current.messages.ADD_PERSON,
+                     tooltip = "%s|%s" % (title, comment),
+                     )
 
 # =============================================================================
 def pr_rheader(r, tabs=None):
@@ -7050,7 +7046,7 @@ class pr_AssignMethod(CRUDMethod):
         if r.http == "POST":
             added = 0
             post_vars = r.post_vars
-            if all([n in post_vars for n in ("assign", "selected", "mode")]):
+            if all(n in post_vars for n in ("assign", "selected", "mode")):
 
                 selected = post_vars.selected
                 if selected:
@@ -7202,10 +7198,10 @@ class pr_AssignMethod(CRUDMethod):
                     profile_url = URL(c = controller,
                                       f = "person",
                                       args = ["[id]", "profile"])
-                    S3CRUD.action_buttons(r,
-                                          deletable = False,
-                                          read_url = profile_url,
-                                          update_url = profile_url)
+                    BasicCRUD.action_buttons(r,
+                                             deletable = False,
+                                             read_url = profile_url,
+                                             update_url = profile_url)
                     actions = s3.actions
 
                 s3.no_formats = True
@@ -7752,185 +7748,7 @@ class pr_Contacts(CRUDMethod):
                             data = data,
                             _class="pr-emergency-contact row",
                             ))
-
         return form
-
-# =============================================================================
-class pr_Templates(CRUDMethod):
-    """
-        Custom Method to select a Word Template to merge Person data into
-
-        - used by DRKCM
-    """
-
-    # -------------------------------------------------------------------------
-    def apply_method(self, r, **attr):
-        """
-            Applies the method (controller entry point).
-
-            Args:
-                r: the CRUDRequest
-                attr: controller options for this request
-        """
-
-        output = {}
-
-        if r.http == "GET":
-            if r.representation == "html":
-
-                T = current.T
-                output["title"] = "" #"%s:" % T("Select Template")
-
-                s3db = current.s3db
-
-                root_org = s3db.org_root_organisation(current.auth.user.organisation_id)
-                table = s3db.doc_document
-                query = (table.organisation_id == root_org) & \
-                        (table.is_template == True) & \
-                        (table.deleted == False)
-                templates = current.db(query).select(table.id,
-                                                     table.name,
-                                                     orderby = table.name,
-                                                     )
-                if not templates:
-                    buttons = P(T("No document templates found"))
-                else:
-                    person_id = r.id
-                    buttons = UL()
-                    bappend = buttons.append
-                    for t in templates:
-                        bappend(LI(A(t.name,
-                                     #_class = "action-btn",
-                                     _href = URL(args = [person_id, "template.docx"],
-                                                 vars = {"template": t.id},
-                                                 ),
-                                     _target = "_top",
-                                     )))
-
-                output["item"] = DIV(buttons, _style="padding:1rem;")
-                current.response.view = "plain.html"
-
-            else:
-                r.error(415, current.ERROR.BAD_FORMAT)
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-
-        return output
-
-# =============================================================================
-class pr_Template(CRUDMethod):
-    """
-        Custom Method to merge Person data into a Word Template
-
-        - used by DRKCM
-    """
-
-    # -------------------------------------------------------------------------
-    def apply_method(self, r, **attr):
-        """
-            Applies the method (controller entry point).
-
-            Args:
-                r: the CRUDRequest
-                attr: controller options for this request
-        """
-
-        output = None
-
-        if r.http == "GET":
-            if r.representation == "docx":
-
-                T = current.T
-
-                person_id = r.id
-                if not person_id:
-                    current.session.error = T("No Person selected")
-                    redirect(URL(args = None))
-
-                try:
-                    from mailmerge import MailMerge
-                except ImportError:
-                    current.session.error = T("Need to install docx-mailmerge")
-                    redirect(URL(args = person_id))
-
-                # Find Template
-                document_id = r.get_vars.get("template")
-                if not document_id:
-                    r.error(400, current.ERROR.BAD_REQUEST)
-
-                table = current.s3db.doc_document
-                template = current.db(table.id == document_id).select(table.file,
-                                                                      table.name,
-                                                                      limitby = (0, 1)
-                                                                      ).first()
-
-                template_path = os.path.join(r.folder, "uploads", template.file)
-
-                # Extract Data
-                resource = r.resource
-                mailmerge_fields = current.deployment_settings.get_doc_mailmerge_fields()
-                data = resource.select(list(mailmerge_fields.values()),
-                                       represent = True,
-                                       show_links = False,
-                                       )
-                record = data.rows[0]
-                rfields = {rfield.selector: rfield for rfield in data.rfields}
-
-                # Format Data
-                NONE = current.messages["NONE"]
-                prefix = resource.prefix_selector
-
-                doc_data = {}
-                for key, selector in mailmerge_fields.items():
-                    if callable(selector):
-                        for k, v in selector(resource, record).items():
-                            doc_data["%s_%s" % (key, k)] = s3_str(v)
-                    elif selector == "current_user.name":
-                        user = current.auth.user
-                        if user:
-                            username = s3_format_fullname(fname = user.first_name,
-                                                          lname = user.last_name,
-                                                          )
-                        else:
-                            username = current.T("Unknown User")
-                        doc_data[key] = s3_str(username)
-                    else:
-                        rfield = rfields.get(prefix(selector))
-                        if rfield:
-                            value = record[rfield.colname]
-                            doc_data[key] = s3_str(value)
-                        else:
-                            doc_data[key] = NONE
-
-                # Merge
-                filename = "%s_%s.docx" % (template.name, person_id)
-                from io import BytesIO
-                stream = BytesIO()
-                with MailMerge(template_path) as document:
-                    document.merge(**doc_data)
-                    document.write(stream)
-                stream.seek(0)
-
-                # Output
-                from gluon.contenttype import contenttype
-                from gluon.streamer import DEFAULT_CHUNK_SIZE
-
-                # Response headers
-                disposition = "attachment; filename=\"%s\"" % filename
-                response = current.response
-                response.headers["Content-Type"] = contenttype(".docx")
-                response.headers["Content-disposition"] = disposition
-
-                output = response.stream(stream,
-                                         chunk_size = DEFAULT_CHUNK_SIZE,
-                                         request = r,
-                                         )
-            else:
-                r.error(415, current.ERROR.BAD_FORMAT)
-        else:
-            r.error(405, current.ERROR.BAD_METHOD)
-
-        return output
 
 # =============================================================================
 # Hierarchy Manipulation
@@ -9151,81 +8969,6 @@ def pr_image_modify(image_file,
         return True
     else:
         return False
-
-# =============================================================================
-def pr_address_anonymise(record_id, field, value):
-    """
-        Helper to anonymize a pr_address location; removes street and
-        postcode details, but retains Lx ancestry for statistics
-
-        Args:
-            record_id: the pr_address record ID
-            field: the location_id Field
-            value: the location_id
-
-        Returns:
-            the location_id
-
-        Example:
-            Use like this in anonymise rules:
-            ("pr_address", {"key": "pe_id",
-                            "match": "pe_id",
-                            "fields": {"location_id": s3db.pr_address_anonymise,
-                                       "comments": "remove",
-                                       },
-                            }),
-    """
-    # TODO move into Anonymize and deprecate here?
-
-    db = current.db
-    s3db = current.s3db
-
-    # Get the location
-    if value:
-        ltable = s3db.gis_location
-        row = db(ltable.id == value).select(ltable.id,
-                                            ltable.level,
-                                            limitby = (0, 1),
-                                            ).first()
-        if not row.level:
-            # Specific location => remove address details
-            data = {"addr_street": None,
-                    "addr_postcode": None,
-                    "gis_feature_type": 0,
-                    "lat": None,
-                    "lon": None,
-                    "wkt": None,
-                    }
-            # Doesn't work - PyDAL doesn't detect the None value:
-            #if "the_geom" in ltable.fields:
-            #    data["the_geom"] = None
-            row.update_record(**data)
-            if "the_geom" in ltable.fields:
-                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
-
-    return value
-
-# =============================================================================
-def pr_person_obscure_dob(record_id, field, value):
-    """
-        Helper to obscure a date of birth; maps to the first day of
-        the quarter, thus retaining the approximate age for statistics
-
-        Args:
-            record_id: the record ID
-            field: the Field
-            value: the field value
-
-        Returns:
-            the new field value
-    """
-    # TODO move into Anonymize and deprecate here?
-
-    if value:
-        month = int((value.month - 1) / 3) * 3 + 1
-        value = value.replace(month=month, day=1)
-
-    return value
 
 # =============================================================================
 def pr_availability_filter(r):

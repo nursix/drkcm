@@ -174,7 +174,7 @@ function s3_popup_refresh_caller(popupData) {
         return;
     }
 
-    // Modal opened from a form (e.g. S3PopupLink, PersonSelector)?
+    // Modal opened from a form (e.g. PopupLink, PersonSelector)?
     // => update the respective form field (=the caller)
 
     var caller = $_GET.caller;

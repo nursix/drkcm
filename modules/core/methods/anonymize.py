@@ -26,24 +26,26 @@
 """
 
 import json
-from uuid import uuid4
 
-from gluon import current, redirect, A, BUTTON, DIV, FORM, INPUT, LABEL, P
+from collections import OrderedDict
+
+from gluon import current, redirect, A, BUTTON, DIV, FORM, INPUT, LABEL, P, SCRIPT, TAG
 
 from s3dal import original_tablename
 
-from ..tools import JSONERRORS, s3_str
+from ..resource import FS
+from ..tools import JSONERRORS, FormKey, s3_str
 
 from .base import CRUDMethod
 
-__all__ = ("S3Anonymize",
-           "S3AnonymizeWidget",
-           "S3AnonymizeBulk",
-           "S3AnonymizeBulkWidget",
+__all__ = ("Anonymize",
+           "AnonymizeWidget",
+           "anonymous_address",
+           "obscure_dob",
            )
 
 # =============================================================================
-class S3Anonymize(CRUDMethod):
+class Anonymize(CRUDMethod):
     """
         REST Method to Anonymize a Record
         - usually pr_person
@@ -64,30 +66,27 @@ class S3Anonymize(CRUDMethod):
 
         output = {}
 
-        table, record_id = self.get_target_id()
-        if not table:
+        rules = self.resource.get_config("anonymize")
+        if not rules:
             r.error(405, "Anonymizing not configured for resource")
-        if not record_id:
-            r.error(400, "No target record specified")
-        if not self.permitted(table, record_id):
-            r.unauthorised()
 
-        if r.representation == "json":
-            if r.http == "POST":
-                output = self.anonymize(r, table, record_id)
+        if r.http == "POST":
+            if r.ajax or r.representation == "json":
+                if self.record_id:
+                    output = self.anonymize(r, **attr)
+                else:
+                    output = self.anonymize_bulk(r, **attr)
+            elif r.representation == "html":
+                output = self.anonymize_bulk(r, **attr)
             else:
-                r.error(405, current.ERROR.BAD_METHOD)
+                r.error(415, current.ERROR.BAD_FORMAT)
         else:
-            r.error(415, current.ERROR.BAD_FORMAT)
-
-        # Set Content Type
-        current.response.headers["Content-Type"] = "application/json"
+            r.error(405, current.ERROR.BAD_METHOD)
 
         return output
 
     # -------------------------------------------------------------------------
-    @classmethod
-    def anonymize(cls, r, table, record_id):
+    def anonymize(self, r, **attr):
         """
             Handle POST (anonymize-request), i.e. anonymize the target record
 
@@ -100,6 +99,11 @@ class S3Anonymize(CRUDMethod):
                 JSON message
         """
 
+        resource = self.resource
+        record_id = self.record_id
+
+        table = resource.table
+
         # Read+parse body JSON
         s = r.body
         s.seek(0)
@@ -110,25 +114,18 @@ class S3Anonymize(CRUDMethod):
         if not isinstance(options, dict):
             r.error(400, "Invalid request options")
 
-        # Verify submitted action key against session (CSRF protection)
-        widget_id = "%s-%s-anonymize" % (table, record_id)
-        session_s3 = current.session.s3
-        keys = session_s3.anonymize
-        if keys is None or \
-           widget_id not in keys or \
-           options.get("key") != keys[widget_id]:
+        # Verify submitted form key against session (CSRF protection)
+        form_name = "%s-%s-anonymize" % (table, record_id)
+        form_key = FormKey(form_name)
+        if not form_key.verify(options):
             r.error(400, "Invalid action key (form reopened in another tab?)")
 
+        # Authorize the action
+        if not self.permitted(table, record_id):
+            r.unauthorised()
+
         # Get the available rules from settings
-        rules = current.s3db.get_config(table, "anonymize")
-        if isinstance(rules, (tuple, list)):
-            names = set(rule.get("name") for rule in rules)
-            names.discard(None)
-        else:
-            # Single rule
-            rules["name"] = "default"
-            names = (rules["name"],)
-            rules = [rules]
+        rules, names = self.get_rules(table)
 
         # Get selected rules from options
         selected = options.get("apply")
@@ -140,28 +137,15 @@ class S3Anonymize(CRUDMethod):
             if name not in names:
                 r.error(400, "Invalid rule: %s" % name)
 
-        # Merge selected rules
-        cleanup = {}
-        cascade = []
-        for rule in rules:
-            name = rule.get("name")
-            if not name or name not in selected:
-                continue
-            field_rules = rule.get("fields")
-            if field_rules:
-                cleanup.update(field_rules)
-            cascade_rules = rule.get("cascade")
-            if cascade_rules:
-                cascade.extend(cascade_rules)
-
         # Apply selected rules
+        cleanup, cascade = self.merge(rules, selected)
         if cleanup or cascade:
             rules = {"fields": cleanup,
                      "cascade": cascade,
                      }
 
             # NB will raise (+roll back) if configuration is invalid
-            cls.cascade(table, (record_id,), rules)
+            self.cascade(table, (record_id,), rules)
 
             # Audit anonymize
             prefix, name = original_tablename(table).split("_", 1)
@@ -173,6 +157,124 @@ class S3Anonymize(CRUDMethod):
             output = current.xml.json_message(updated=record_id)
         else:
             output = current.xml.json_message(msg="No applicable rules found")
+
+        # Set Content Type
+        current.response.headers["Content-Type"] = "application/json"
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def anonymize_bulk(self, r, **attr):
+        """
+            Generates a rule selection and confirmation dialog for bulk-action
+
+            Args:
+                r: the CRUDRequest
+                table: the target table
+
+            Returns:
+                a JSON object with the dialog HTML as string
+        """
+
+        resource = self.resource
+        table = resource.table
+
+        if any(key not in r.post_vars for key in ("selected", "mode")):
+            r.error(400, "Missing selection parameters")
+
+        # Get the rules
+        rules, names = self.get_rules(table)
+        if not rules:
+            r.error(501, current.ERROR.NOT_IMPLEMENTED)
+
+        # Form to choose rules for anonymization
+        form_name = "%s-anonymize" % table
+        form = AnonymizeWidget.form(form_name, rules, ajax=False, plural=True)
+        form["_action"] = r.url(representation="")
+
+        output = None
+        if r.ajax or r.representation == "json":
+            # Dialog request
+            # => generate a JSON object with form and control script
+            script = '''var submitButton=$('.anonymize-submit');$('input[name="anonymize_confirm"]').off('.anonymize').on('click.anonymize',function(){if ($(this).prop('checked')){submitButton.prop('disabled',false);}else{submitButton.prop('disabled',true);}});'''
+            dialog = TAG[""](form, SCRIPT(script, _type='text/javascript'))
+            current.response.headers["Content-Type"] = "application/json"
+            output = json.dumps({"dialog": dialog.xml().decode("utf-8")})
+
+        elif form.accepts(r.vars, current.session, formname=form_name):
+            # Dialog submission
+            # => process the form, set up, authorize and perform the action
+
+            T = current.T
+            pkey = table._id.name
+            post_vars = r.post_vars
+
+            # Selected records
+            selected_ids = post_vars.get("selected", [])
+            if isinstance(selected_ids, str):
+                selected_ids = {item for item in selected_ids.split(",") if item.strip()}
+            query = FS(pkey).belongs(selected_ids)
+
+            # Selection mode
+            mode = post_vars.get("mode")
+            if mode == "Exclusive":
+                if selected_ids:
+                    query = ~query
+                else:
+                    query = None
+            elif mode != "Inclusive":
+                r.error(400, T("Invalid select mode"))
+
+            # Add selection filter to resource
+            if query is not None:
+                resource.add_filter(query)
+
+            # Get all selected IDs from resource
+            rows = resource.select([pkey], as_rows=True)
+            record_ids = {row[pkey] for row in rows}
+
+            # Verify permission for all selected record
+            query = (table._id.belongs(record_ids)) & \
+                    (table._id.belongs(self.permitted_set(table)))
+            permitted = current.db(query).select(table._id)
+            failed = len(record_ids) - len(permitted)
+            if failed > 0:
+                record_ids = {row[pkey] for row in permitted}
+
+            # Selected rules from form.vars
+            form_vars = form.vars
+            selected_rules = [n for n in names if form_vars.get(n) == "on"]
+
+            # Apply selected rules
+            cleanup, cascade = self.merge(rules, selected_rules)
+            if cleanup or cascade:
+                rules = {"fields": cleanup,
+                        "cascade": cascade,
+                        }
+
+                # NB will raise (+roll back) if configuration is invalid
+                self.cascade(table, record_ids, rules)
+                updated = len(record_ids)
+
+                # Audit anonymize
+                audit = current.audit
+                prefix, name = original_tablename(table).split("_", 1)
+                for record_id in record_ids:
+                    audit("anonymize", prefix, name,
+                        record = record_id,
+                        representation = "html",
+                        )
+                msg = T("%(number)s records updated") % {"number": updated}
+                if failed:
+                    msg = "%s - %s" % (msg, T("%(number)s failed") % {"number": failed})
+                current.session.confirmation = msg
+            else:
+                current.session.error = T("No applicable rules found")
+
+            redirect(r.url(method="select", representation="", vars={}))
+
+        else:
+            r.error(400, current.ERROR.BAD_REQUEST)
 
         return output
 
@@ -195,13 +297,72 @@ class S3Anonymize(CRUDMethod):
 
     # -------------------------------------------------------------------------
     @staticmethod
+    def get_rules(table):
+        """
+            Returns all anonymizer rules for a table, and their names
+
+            Args:
+                table: the Table
+
+            Returns:
+                tuple of two lists (rules, names)
+        """
+
+        rules = current.s3db.get_config(table, "anonymize")
+
+        if isinstance(rules, (tuple, list)):
+            # List of rules
+            keys = OrderedDict.fromkeys(rule.get("name") for rule in rules)
+            keys.pop(None, None)
+            names = list(keys)
+
+        elif isinstance(rules, dict):
+            # Single rule
+            rules["name"] = "default"
+            rules, names = [rules], ["default"]
+
+        else:
+            rules, names = [], []
+
+        return rules, names
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def merge(rules, selected_rules):
+        """
+            Merges the selected rules
+
+            Args:
+                rules: the configured rules
+                selected_rules: list of names of selected rules
+
+            Returns:
+                tuple ({cleanup}, [cascade])
+        """
+
+        cleanup, cascade = {}, []
+        for rule in rules:
+            name = rule.get("name")
+            if not name or name not in selected_rules:
+                continue
+            field_rules = rule.get("fields")
+            if field_rules:
+                cleanup.update(field_rules)
+            cascade_rules = rule.get("cascade")
+            if cascade_rules:
+                cascade.extend(cascade_rules)
+
+        return cleanup, cascade
+
+    # -------------------------------------------------------------------------
+    @staticmethod
     def permitted(table, record_id):
         """
-            Check permissions to anonymize the target record
+            Check permissions to anonymize
 
             Args:
                 table: the target Table
-                record_id: the target record ID
+                record_id: the target record ID (or None for any record in the table)
 
             Returns:
                 True|False
@@ -211,6 +372,25 @@ class S3Anonymize(CRUDMethod):
 
         return has_permission("update", table, record_id=record_id) and \
                has_permission("delete", table, record_id=record_id)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def permitted_set(table):
+        """
+            Returns a sub-query for the records the user is permitted
+            to anonymize
+
+            Args:
+                table: the Table
+
+            Returns:
+                subquery (a SQL string)
+        """
+
+        accessible = current.auth.s3_accessible_query
+
+        return current.db(accessible("update", table) & \
+                          accessible("delete", table))._select(table._id)
 
     # -------------------------------------------------------------------------
     @classmethod
@@ -370,19 +550,15 @@ class S3Anonymize(CRUDMethod):
                 onaccept(table, data, method="update")
 
 # =============================================================================
-class S3AnonymizeWidget:
-    """
-        GUI widget for S3Anonymize
-        - popup
-        - acts via AJAX
-    """
+class AnonymizeWidget:
+    """ UI Elements for Anonymize """
 
     # -------------------------------------------------------------------------
     @classmethod
     def widget(cls,
                r,
                label = "Anonymize",
-               ajaxURL = None,
+               ajax_url = None,
                _class = "action-lnk",
                ):
         """
@@ -393,7 +569,7 @@ class S3AnonymizeWidget:
             Args:
                 r: the CRUDRequest
                 label: The label for the action item
-                ajaxURL: The URL for the AJAX request
+                ajax_url: The URL for the AJAX request
                 _class: HTML class for the action item
 
             Returns:
@@ -417,7 +593,7 @@ class S3AnonymizeWidget:
         table = resource.table
 
         # Determine target record
-        record_id = S3Anonymize._record_id(r)
+        record_id = Anonymize._record_id(r)
         if not record_id:
             return default
 
@@ -431,18 +607,18 @@ class S3AnonymizeWidget:
             rules = [rules]
 
         # Check permissions to anonymize
-        if not S3Anonymize.permitted(table, record_id):
+        if not Anonymize.permitted(table, record_id):
             return default
 
-        # Determine widget ID
-        widget_id = "%s-%s-anonymize" % (table, record_id)
+        # Determine widget ID (to attach script)
+        widget_id = "%s-anonymize" % table
 
         # Inject script
-        if ajaxURL is None:
-            ajaxURL = r.url(method = "anonymize",
-                            representation = "json",
-                            )
-        script_options = {"ajaxURL": ajaxURL,
+        if ajax_url is None:
+            ajax_url = r.url(method = "anonymize",
+                             representation = "json",
+                             )
+        script_options = {"ajaxURL": ajax_url,
                           }
         next_url = resource.get_config("anonymize_next")
         if next_url:
@@ -455,10 +631,44 @@ class S3AnonymizeWidget:
         if _class:
             action_button.add_class(_class)
 
+        # Form to select rules and confirm the action
+        form_name = "%s-%s-anonymize" % (table, record_id)
+        form = cls.form(form_name, rules)
+
+        # Dialog to show the form
+        dialog = DIV(form,
+                     DIV(P(T("Action successful - please wait...")),
+                         _class = "hide anonymize-success",
+                         ),
+                     _class = "anonymize-dialog hide",
+                     _title = translated_label,
+                     )
+
+        # Return the widget
+        return DIV(action_button, dialog, _class="s3-anonymize", _id=widget_id)
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def form(cls, form_name, rules, ajax=True, plural=False):
+        """
+            Produces the form to select rules and confirm the action
+
+            Args:
+                form_name: the form name (for CSRF protection)
+                rules: the rules the user can choose
+                ajax: whether the form is processed client-side (True)
+                      or server-side (False)
+                plural: use plural for info text and confirmation challenge
+        """
+
+        T = current.T
+
         # Dialog and Form
-        INFO = T("The following information will be deleted from the record")
+        if plural:
+            INFO = T("The following information will be deleted from the selected records")
+        else:
+            INFO = T("The following information will be deleted from the record")
         CONFIRM = T("Are you sure you want to delete the selected details?")
-        SUCCESS = T("Action successful - please wait...")
 
         form = FORM(P("%s:" % INFO),
                     cls.selector(rules),
@@ -470,52 +680,14 @@ class S3AnonymizeWidget:
                     LABEL(T("Yes, delete the selected details")),
                           _class = "anonymize-confirm",
                           ),
-                    cls.buttons(),
+                    cls.buttons(ajax=ajax),
                     _class = "anonymize-form",
-                    # Store action key in form
-                    hidden = {"action-key": cls.action_key(widget_id)},
+                    hidden = {"_formkey": FormKey(form_name).generate(),
+                              "_formname": form_name,
+                              },
                     )
 
-        dialog = DIV(form,
-                     DIV(P(SUCCESS),
-                         _class = "hide anonymize-success",
-                         ),
-                     _class = "anonymize-dialog hide",
-                     _title = translated_label,
-                     )
-
-        # Assemble widget
-        widget = DIV(action_button,
-                     dialog,
-                     _class = "s3-anonymize",
-                     _id = widget_id,
-                     )
-
-        return widget
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def action_key(widget_id):
-        """
-            Generate a unique STP token for the widget (CSRF protection) and
-            store it in session
-
-            Args:
-                widget_id: the widget ID (which includes the target
-                           table name and record ID)
-
-            Returns:
-                a unique identifier (as string)
-        """
-
-        session_s3 = current.session.s3
-
-        keys = session_s3.anonymize
-        if keys is None:
-            session_s3.anonymize = keys = {}
-        key = keys[widget_id] = str(uuid4())
-
-        return key
+        return form
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -556,10 +728,13 @@ class S3AnonymizeWidget:
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def buttons():
+    def buttons(ajax=True):
         """
             Generate the submit/cancel buttons for the anonymize-form
 
+            Args:
+                ajax: whether the form is processed client-side (True)
+                      or server-side (False)
             Returns:
                 the buttons row (DIV)
         """
@@ -569,7 +744,7 @@ class S3AnonymizeWidget:
         return DIV(BUTTON(T("Submit"),
                           _class = "small alert button anonymize-submit",
                           _disabled = "disabled",
-                          _type = "button",
+                          _type = "button" if ajax else "submit",
                           ),
                    A(T("Cancel"),
                      _class = "cancel-form-btn action-lnk anonymize-cancel",
@@ -618,240 +793,76 @@ class S3AnonymizeWidget:
             jquery_ready.append(script)
 
 # =============================================================================
-class S3AnonymizeBulk(S3Anonymize):
+def anonymous_address(record_id, field, value):
     """
-        REST Method to Anonymize Records
-        - usually auth_user
+        Helper to anonymize a pr_address location; removes street and
+        postcode details, but retains Lx ancestry for statistics
+
+        Args:
+            record_id: the pr_address record ID
+            field: the location_id Field
+            value: the location_id
+
+        Returns:
+            the location_id
+
+        Example:
+            Use like this in anonymise rules:
+            ("pr_address", {"key": "pe_id",
+                            "match": "pe_id",
+                            "fields": {"location_id": anonymize_address,
+                                       "comments": "remove",
+                                       },
+                            }),
     """
 
-    def apply_method(self, r, **attr):
-        """
-            Entry point for REST API
+    db = current.db
+    s3db = current.s3db
 
-            Args:
-                r: the CRUDRequest instance
-                attr: controller parameters
+    # Get the location
+    if value:
+        ltable = s3db.gis_location
+        row = db(ltable.id == value).select(ltable.id,
+                                            ltable.level,
+                                            limitby = (0, 1),
+                                            ).first()
+        if not row.level:
+            # Specific location => remove address details
+            data = {"addr_street": None,
+                    "addr_postcode": None,
+                    "gis_feature_type": 0,
+                    "lat": None,
+                    "lon": None,
+                    "wkt": None,
+                    }
+            # Doesn't work - PyDAL doesn't detect the None value:
+            #if "the_geom" in ltable.fields:
+            #    data["the_geom"] = None
+            row.update_record(**data)
+            if "the_geom" in ltable.fields:
+                db.executesql("UPDATE gis_location SET the_geom=NULL WHERE id=%s" % row.id)
 
-            Returns:
-                output data (JSON)
-        """
-
-        resource = self.resource
-        rules = resource.get_config("anonymize")
-        if not rules:
-            r.error(405, "Anonymizing not configured for resource")
-
-        record_ids = current.session.s3.get("anonymize_record_ids")
-        if not record_ids:
-            r.error(400, "No target record(s) specified")
-
-        table = resource.table
-
-        # Check permission for each record
-        has_permission = current.auth.s3_has_permission
-        for record_id in record_ids:
-            if not has_permission("update", table, record_id=record_id) or \
-               not has_permission("delete", table, record_id=record_id):
-                r.unauthorised()
-
-        output = {}
-
-        if r.representation == "html":
-            if r.http == "GET":
-                # Show form
-                anonymise_btn = S3AnonymizeBulkWidget.widget(r,
-                                                             record_ids = record_ids,
-                                                             _class = "action-btn anonymize-btn",
-                                                             )
-                current.response.view = "simple.html"
-                output = {"item": anonymise_btn,
-                          "title": current.T("Anonymize Records"),
-                          }
-            elif r.http == "POST":
-                # Process form
-                output = self.anonymize(r, table, record_ids)
-                del current.session.s3["anonymize_record_ids"]
-                next_url = resource.get_config("anonymize_next")
-                if next_url:
-                    redirect(next_url)
-            else:
-                r.error(405, current.ERROR.BAD_METHOD)
-        else:
-            r.error(415, current.ERROR.BAD_FORMAT)
-
-        return output
-
-    # -------------------------------------------------------------------------
-    @classmethod
-    def anonymize(cls, r, table, record_ids):
-        """
-            Handle POST (anonymize-request), i.e. anonymize the target record
-
-            Args:
-                r: the CRUDRequest
-                table: the target Table
-                record_ids: the target record IDs
-
-            Returns:
-                JSON message
-        """
-
-        post_vars_get = r.post_vars.get
-
-        # Verify submitted action key against session (CSRF protection)
-        widget_id = "%s-anonymize" % table
-        session_s3 = current.session.s3
-        keys = session_s3.anonymize
-        if keys is None or \
-           widget_id not in keys or \
-           post_vars_get("action-key") != keys[widget_id]:
-            r.error(400, "Invalid action key (form reopened in another tab?)")
-
-        # Get the available rules from settings
-        rules = current.s3db.get_config(table, "anonymize")
-        if isinstance(rules, (tuple, list)):
-            names = set(rule.get("name") for rule in rules)
-            names.discard(None)
-        else:
-            # Single rule
-            rules["name"] = "default"
-            names = (rules["name"],)
-            rules = [rules]
-
-        # Get selected rules from form
-        selected = []
-        for rule in rules:
-            rule_name = rule.get("name")
-            if not rule_name:
-                continue
-            if post_vars_get(rule_name) == "on":
-                selected.append(rule)
-
-        # Merge selected rules
-        cleanup = {}
-        cascade = []
-        for rule in selected:
-            field_rules = rule.get("fields")
-            if field_rules:
-                cleanup.update(field_rules)
-            cascade_rules = rule.get("cascade")
-            if cascade_rules:
-                cascade.extend(cascade_rules)
-
-        # Apply selected rules
-        if cleanup or cascade:
-            rules = {"fields": cleanup,
-                     "cascade": cascade,
-                     }
-
-            for record_id in record_ids:
-                # NB will raise (+roll back) if configuration is invalid
-                cls.cascade(table, (record_id,), rules)
-
-                # Audit anonymize
-                prefix, name = original_tablename(table).split("_", 1)
-                current.audit("anonymize", prefix, name,
-                              record = record_id,
-                              representation = "html",
-                              )
-
-            output = current.xml.json_message(updated=record_ids)
-        else:
-            output = current.xml.json_message(msg="No applicable rules found")
-
-        return output
+    return value
 
 # =============================================================================
-class S3AnonymizeBulkWidget(S3AnonymizeWidget):
+def obscure_dob(record_id, field, value):
     """
-        GUI widget for S3AnonymizeBulk
-        - normal page (not popup)
-        - acts via POST (not AJAX)
+        Helper to obscure a date of birth; maps to the first day of
+        the quarter, thus retaining the approximate age for statistics
+
+        Args:
+            record_id: the record ID
+            field: the Field
+            value: the field value
+
+        Returns:
+            the new field value
     """
 
-    # -------------------------------------------------------------------------
-    @classmethod
-    def widget(cls,
-               r,
-               record_ids = None,
-               _class = "action-lnk",
-               ):
-        """
-            Render an action item (link or button) to anonymize the
-            provided records
+    if value:
+        month = int((value.month - 1) / 3) * 3 + 1
+        value = value.replace(month=month, day=1)
 
-            Args:
-                r: the CRUDRequest
-                record_ids: The list of record_ids to act on
-                _class: HTML class for the action item
-
-            Returns:
-                the action item (a HTML helper instance), or an empty
-                string if no anonymize-rules are configured for the
-                target table, no target record was specified or the
-                user is not permitted to anonymize it
-        """
-
-        T = current.T
-
-        default = ""
-
-        # Determine target table
-        if r.component:
-            resource = r.component
-            if resource.link and not r.actuate_link():
-                resource = resource.link
-        else:
-            resource = r.resource
-        table = resource.table
-
-        # Determine target record
-        if not record_ids:
-            return default
-
-        # Check if target is configured for anonymize
-        rules = resource.get_config("anonymize")
-        if not rules:
-            return default
-        if not isinstance(rules, (tuple, list)):
-            # Single rule
-            rules["name"] = "default"
-            rules = [rules]
-
-        # Determine widget ID
-        widget_id = "%s-anonymize" % table
-
-        # Dialog and Form
-        INFO = T("The following information will be deleted from all the selected records")
-        CONFIRM = T("Are you sure you want to delete the selected details?")
-        #SUCCESS = T("Action successful - please wait...")
-
-        form = FORM(P("%s:" % INFO),
-                    cls.selector(rules),
-                    P(CONFIRM),
-                    DIV(INPUT(value = "anonymize_confirm",
-                              _name = "anonymize_confirm",
-                              _type = "checkbox",
-                              ),
-                    LABEL(T("Yes, delete the selected details")),
-                          _class = "anonymize-confirm",
-                          ),
-                    DIV(INPUT(_class = "small alert button anonymize-submit",
-                              _disabled = "disabled",
-                              _type = "submit",
-                              _value = T("Anonymize"),
-                              ),
-                        _class = "anonymize-buttons",
-                        ),
-                    _class = "anonymize-form",
-                    # Store action key in form
-                    hidden = {"action-key": cls.action_key(widget_id)},
-                    )
-
-        script = '''var submitButton=$('.anonymize-submit');
-$('input[name="anonymize_confirm"]').off('.anonymize').on('click.anonymize',function(){if ($(this).prop('checked')){submitButton.prop('disabled',false);}else{submitButton.prop('disabled',true);}});'''
-        current.response.s3.jquery_ready.append(script)
-
-        return form
+    return value
 
 # END =========================================================================

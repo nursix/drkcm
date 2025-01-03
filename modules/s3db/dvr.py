@@ -27,11 +27,11 @@
 
 __all__ = ("DVRCaseModel",
            "DVRCaseFlagModel",
+           "DVRCaseFlagDistributionModel",
            "DVRCaseActivityModel",
            "DVRCaseAllowanceModel",
            "DVRCaseAppointmentModel",
            "DVRResidenceStatusModel",
-           "DVRCaseEffortModel",
            "DVRCaseEventModel",
            "DVRNeedsModel",
            "DVRNotesModel",
@@ -40,7 +40,6 @@ __all__ = ("DVRCaseModel",
            "DVRVulnerabilityModel",
            "DVRDiagnosisModel",
            "DVRServiceContactModel",
-           "DVRSiteActivityModel",
            "dvr_CaseActivityRepresent",
            "dvr_DocEntityRepresent",
            "dvr_ResponseActionThemeRepresent",
@@ -81,7 +80,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 DEFAULT = lambda: None
 
@@ -216,7 +214,7 @@ class DVRCaseModel(DataModel):
                   onaccept = self.case_status_onaccept,
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
                                   label = T("Status"),
@@ -478,28 +476,6 @@ class DVRCaseModel(DataModel):
                                          },
                             )
 
-        # Report options FIXME
-        #axes = ["organisation_id",
-        #        "case_need.need_id",
-        #        ]
-        #levels = current.gis.get_relevant_hierarchy_levels()
-        #for level in levels:
-        #    axes.append("current_address.location_id$%s" % level)
-        #highest_lx = "current_address.location_id$%s" % levels[0]
-        #
-        #facts = [(T("Number of Cases"), "count(id)"),
-        #         ]
-        #
-        #report_options = {"rows": axes,
-        #                  "cols": axes,
-        #                  "fact": facts,
-        #                  "defaults": {"rows": "case_need.need_id",
-        #                               "cols": highest_lx,
-        #                               "fact": facts[0],
-        #                               "totals": True,
-        #                               },
-        #                  }
-
         # Table configuration
         configure(tablename,
                   deduplicate = S3Duplicate(primary=("person_id",),
@@ -512,7 +488,7 @@ class DVRCaseModel(DataModel):
                   super_entity = ("doc_entity",),
                   )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, fields=("reference",))
         case_id = FieldTemplate("case_id", "reference %s" % tablename,
                                 label = label,
@@ -528,6 +504,7 @@ class DVRCaseModel(DataModel):
         # Case Language: languages that can be used to communicate with
         #                a case beneficiary
         #
+        languages = settings.get_dvr_case_languages()
 
         # Quality/Mode of communication:
         lang_quality_opts = (("N", T("native")),
@@ -542,7 +519,7 @@ class DVRCaseModel(DataModel):
                      person_id(empty = False,
                                ondelete = "CASCADE",
                                ),
-                     LanguageField(select=None),
+                     LanguageField(select=languages),
                      Field("quality",
                            default = "N",
                            label = T("Quality/Mode"),
@@ -781,7 +758,7 @@ class DVRCaseModel(DataModel):
         person_id = case.person_id
         organisation_id = case.organisation_id
 
-        # Auto-create active appointments
+        # Auto-create appointments
         org_specific = settings.get_dvr_appointment_types_org_specific()
         if not org_specific or org_specific and organisation_id:
 
@@ -791,7 +768,7 @@ class DVRCaseModel(DataModel):
             left = atable.on((atable.type_id == ttable.id) &
                              (atable.person_id == person_id) &
                              (atable.deleted == False))
-            query = (atable.id == None) & (ttable.active == True)
+            query = (atable.id == None) & (ttable.autocreate == True)
             if org_specific:
                 query &= (ttable.organisation_id == organisation_id)
             query &= (ttable.deleted == False)
@@ -829,6 +806,7 @@ class DVRCaseFlagModel(DataModel):
 
     names = ("dvr_case_flag",
              "dvr_case_flag_case",
+             "dvr_case_flag_id",
              )
 
     def model(self):
@@ -1036,7 +1014,7 @@ class DVRCaseFlagModel(DataModel):
             msg_list_empty = T("No Case Flags found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         flag_id = FieldTemplate("flag_id", "reference %s" % tablename,
                                 label = T("Case Flag"),
@@ -1046,11 +1024,11 @@ class DVRCaseFlagModel(DataModel):
                                                 IS_ONE_OF(db, "dvr_case_flag.id",
                                                           represent,
                                                           )),
-                                comment=S3PopupLink(c = "dvr",
-                                                    f = "case_flag",
-                                                    title = ADD_FLAG,
-                                                    tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
-                                                    ),
+                                comment=PopupLink(c = "dvr",
+                                                  f = "case_flag",
+                                                  title = ADD_FLAG,
+                                                  tooltip = T("Choose the flag from the drop-down, or click the link to create a new flag"),
+                                                  ),
                                 )
 
         # ---------------------------------------------------------------------
@@ -1081,12 +1059,60 @@ class DVRCaseFlagModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_case_flag_id": FieldTemplate.dummy("flag_id"),
                 }
+
+# =============================================================================
+class DVRCaseFlagDistributionModel(DataModel):
+    """
+        Model to control applicability of supply item distribution sets
+        by case flags
+    """
+
+    names = ("dvr_distribution_flag_debarring",
+             "dvr_distribution_flag_required",
+             )
+
+    def model(self):
+
+        define_table = self.define_table
+
+        case_flag_id = self.dvr_case_flag_id
+        distribution_set_id = self.supply_distribution_set_id
+
+        # ---------------------------------------------------------------------
+        # Flags required for a distribution set
+        #
+        tablename = "dvr_distribution_flag_required"
+        define_table(tablename,
+                     distribution_set_id(),
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Flags debarring from a distribution set
+        #
+        tablename = "dvr_distribution_flag_debarring"
+        define_table(tablename,
+                     distribution_set_id(),
+                     case_flag_id(
+                         empty = False,
+                         ondelete = "CASCADE",
+                         comment = None,
+                         ),
+                     )
+
+        # ---------------------------------------------------------------------
+        # Pass names back to global scope (s3.*)
+        #
+        return None
 
 # =============================================================================
 class DVRNeedsModel(DataModel):
@@ -1159,7 +1185,7 @@ class DVRNeedsModel(DataModel):
             msg_list_empty = T("No Need Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         need_id = FieldTemplate("need_id", "reference %s" % tablename,
                                 label = T("Need Type"),
@@ -1191,8 +1217,7 @@ class DVRNeedsModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_need_id": FieldTemplate.dummy("need_id"),
@@ -1258,7 +1283,7 @@ class DVRNotesModel(DataModel):
         #               deduplicate = S3Duplicate(),
         #               )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         note_type_id = FieldTemplate("note_type_id", "reference %s" % tablename,
                                      label = T("Note Type"),
@@ -1373,7 +1398,7 @@ class DVRReferralModel(DataModel):
             msg_list_empty = T("No Referral Types found"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         referral_type_id = FieldTemplate("referral_type_id",
                                          "reference %s" % tablename,
@@ -1394,8 +1419,7 @@ class DVRReferralModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_referral_type_id": FieldTemplate.dummy("referral_type_id"),
@@ -1488,7 +1512,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Themes currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         themes_represent = dvr_ResponseThemeRepresent(multiple = True,
                                                       translate = True,
                                                       )
@@ -1589,7 +1613,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         response_type_id = FieldTemplate(
                                 "response_type_id",
@@ -1669,7 +1693,7 @@ class DVRResponseModel(DataModel):
             msg_list_empty = T("No Response Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         response_status_id = FieldTemplate(
                                 "status_id",
@@ -1818,28 +1842,6 @@ class DVRResponseModel(DataModel):
             list_fields.insert(-3, "date_due")
 
         # Filter widgets
-        if use_response_types:
-            if hierarchical_response_types:
-                response_type_filter = HierarchyFilter(
-                                            "response_type_id",
-                                            lookup = "dvr_response_type",
-                                            hidden = True,
-                                            )
-            else:
-                response_type_filter = OptionsFilter(
-                                            "response_type_id",
-                                            options = lambda: \
-                                                      get_filter_options("dvr_response_type"),
-                                            hidden = True,
-                                            )
-        else:
-            response_type_filter = None
-
-        if use_due_date:
-            due_filter = DateFilter("date_due")
-        else:
-            due_filter = None
-
         filter_widgets = [TextFilter(["case_activity_id$person_id$pe_label",
                                       "case_activity_id$person_id$first_name",
                                       "case_activity_id$person_id$middle_name",
@@ -1854,9 +1856,27 @@ class DVRResponseModel(DataModel):
                                         cols = 3,
                                         translate = True,
                                         ),
-                          due_filter,
-                          response_type_filter,
+                          #due_filter,
+                          #response_type_filter,
                           ]
+        if use_due_date:
+            filter_widgets.append(DateFilter("date_due"))
+
+        if use_response_types:
+            if hierarchical_response_types:
+                response_type_filter = HierarchyFilter(
+                                            "response_type_id",
+                                            lookup = "dvr_response_type",
+                                            hidden = True,
+                                            )
+            else:
+                response_type_filter = OptionsFilter(
+                                            "response_type_id",
+                                            options = lambda: \
+                                                      get_filter_options("dvr_response_type"),
+                                            hidden = True,
+                                            )
+            filter_widgets.append(response_type_filter)
 
         # CRUD Form
         type_field = "response_type_id" if use_response_types else None
@@ -1997,8 +2017,7 @@ class DVRResponseModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -2605,7 +2624,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Provider Types currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         provider_type_id = FieldTemplate("provider_type_id", "reference %s" % tablename,
                                          label = T("Provider Type"),
@@ -2657,7 +2676,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Termination Types currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         termination_type_id = FieldTemplate("termination_type_id", "reference %s" % tablename,
                                             label = T("Termination Type"),
@@ -2714,7 +2733,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Activity Statuses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         activity_status_id = FieldTemplate("status_id",
                                            "reference %s" % tablename,
@@ -2938,7 +2957,6 @@ class DVRCaseActivityModel(DataModel):
 
         # Components
         self.add_components(tablename,
-                            dvr_case_effort = "case_activity_id",
                             dvr_response_action = "case_activity_id",
                             dvr_response_action_theme = "case_activity_id",
                             dvr_case_activity_update = "case_activity_id",
@@ -2958,11 +2976,6 @@ class DVRCaseActivityModel(DataModel):
                                                  "joinby": "case_activity_id",
                                                  "key": "vulnerability_id",
                                                  },
-                            supply_distribution = {
-                                "link": "supply_distribution_case_activity",
-                                "joinby": "case_activity_id",
-                                "key": "distribution_id",
-                                },
                             )
 
         # List fields
@@ -3099,7 +3112,7 @@ class DVRCaseActivityModel(DataModel):
                 msg_list_empty = T("No Activities currently registered"),
                 )
 
-        # Reusable field
+        # Foreign Key Template
         represent = dvr_CaseActivityRepresent(show_link=True)
         case_activity_id = FieldTemplate("case_activity_id",
                                          "reference %s" % tablename,
@@ -3142,7 +3155,7 @@ class DVRCaseActivityModel(DataModel):
             msg_list_empty = T("No Update Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         update_type_id = FieldTemplate("update_type_id",
                                        "reference %s" % tablename,
@@ -3183,8 +3196,7 @@ class DVRCaseActivityModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         dummy = FieldTemplate.dummy
@@ -3342,136 +3354,6 @@ class DVRCaseActivityModel(DataModel):
             activity.update_record(end_date = None)
 
 # =============================================================================
-class DVRCaseEffortModel(DataModel):
-    """ Effort Log for Case / Case Activities """
-
-    names = ("dvr_case_effort",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        s3 = current.response.s3
-
-        define_table = self.define_table
-        crud_strings = s3.crud_strings
-
-        # ---------------------------------------------------------------------
-        # Effort log
-        #
-        tablename = "dvr_case_effort"
-        define_table(tablename,
-                     self.pr_person_id(
-                         ondelete = "CASCADE",
-                         ),
-                     self.dvr_case_activity_id(
-                         ondelete = "SET NULL",
-                         readable = False,
-                         writable = False,
-                         ),
-                     DateTimeField(
-                         default = "now"
-                         ),
-                     Field("name",
-                           label = T("Short Description"),
-                           ),
-                     self.hrm_human_resource_id(
-                         comment = None,
-                         widget = None,
-                         ),
-                     Field("hours", "double",
-                           represent = lambda v: \
-                                       IS_FLOAT_AMOUNT.represent(v,
-                                                                 precision = 2,
-                                                                 ),
-                           requires = IS_FLOAT_AMOUNT(minimum=0.0),
-                           widget = S3HoursWidget(precision = 2,
-                                                  ),
-                           ),
-                     CommentsField(),
-                     )
-
-        # Table Configuration
-        self.configure(tablename,
-                       onaccept = self.case_effort_onaccept,
-                       )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Add Effort"),
-            title_display = T("Effort Details Details"),
-            title_list = T("Efforts"),
-            title_update = T("Edit Effort"),
-            label_list_button = T("List Efforts"),
-            label_delete_button = T("Delete Effort"),
-            msg_record_created = T("Effort added"),
-            msg_record_modified = T("Effort updated"),
-            msg_record_deleted = T("Effort deleted"),
-            msg_list_empty = T("No Efforts currently registered"),
-        )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
-
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def case_effort_onaccept(form):
-        """
-            Onaccept-callback for dvr_case_effort:
-                - inherit person_id from case_activity, unless specified
-                  in form or default
-
-            Args:
-                form: the FORM
-        """
-
-        # Read form data
-        formvars = form.vars
-
-        # Get the record ID
-        if "id" in formvars:
-            record_id = formvars.id
-        elif hasattr(form, "record_id"):
-            record_id = form.record_id
-        else:
-            record_id = None
-        if not record_id:
-            return
-
-        s3db = current.s3db
-
-        etable = s3db.dvr_case_effort
-        field = etable.person_id
-
-        if "person_id" not in formvars and not field.default:
-
-            # Inherit person_id from the case activity
-            atable = s3db.dvr_case_activity
-            query = (etable.id == record_id) & \
-                    (atable.id == etable.case_activity_id)
-            row = current.db(query).select(etable.id,
-                                           etable.person_id,
-                                           atable.person_id,
-                                           limitby = (0, 1),
-                                           ).first()
-            if row:
-                effort = row.dvr_case_effort
-                activity = row.dvr_case_activity
-
-                if not effort.person_id:
-                    effort.update_record(person_id = activity.person_id)
-
-# =============================================================================
 class DVRCaseAppointmentModel(DataModel):
     """ Model for Case Appointments """
 
@@ -3516,12 +3398,12 @@ class DVRCaseAppointmentModel(DataModel):
                      Field("name", length=64,
                            requires = [IS_NOT_EMPTY(), IS_LENGTH(64, minsize=1)],
                            ),
-                     Field("active", "boolean",
-                           default = True,
-                           label = T("Active"),
+                     Field("autocreate", "boolean",
+                           default = False,
+                           label = T("Create automatically"),
                            represent = s3_yes_no_represent,
                            comment = DIV(_class = "tooltip",
-                                         _title = "%s|%s" % (T("Active Appointment"),
+                                         _title = "%s|%s" % (T("Create automatically"),
                                                              T("Automatically create this appointment for new cases"),
                                                              ),
                                          ),
@@ -3605,7 +3487,7 @@ class DVRCaseAppointmentModel(DataModel):
             msg_list_empty = T("No Appointment Types currently registered"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         appointment_type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                             label = T("Appointment Type"),
@@ -3721,8 +3603,7 @@ class DVRCaseAppointmentModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_appointment_status_opts": {},
@@ -3987,7 +3868,7 @@ class DVRResidenceStatusModel(DataModel):
             msg_list_empty = T("No Residence Status Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         status_type_id = FieldTemplate("status_type_id",
                                        "reference %s" % tablename,
@@ -4030,7 +3911,7 @@ class DVRResidenceStatusModel(DataModel):
             msg_list_empty = T("No Residence Permit Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         permit_type_id = FieldTemplate("permit_type_id",
                                        "reference %s" % tablename,
@@ -4086,8 +3967,7 @@ class DVRResidenceStatusModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -4217,8 +4097,7 @@ class DVRCaseAllowanceModel(DataModel):
                 }
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return {"dvr_allowance_status_opts": {},
@@ -4500,7 +4379,7 @@ class DVRCaseEventModel(DataModel):
             msg_list_empty = T("No Event Types currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         event_type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                       label = T("Event Type"),
@@ -4510,10 +4389,10 @@ class DVRCaseEventModel(DataModel):
                                                            represent,
                                                            ),
                                       sortby = "name",
-                                      comment = S3PopupLink(c = "dvr",
-                                                            f = "case_event_type",
-                                                            tooltip = T("Create a new event type"),
-                                                            ),
+                                      comment = PopupLink(c = "dvr",
+                                                          f = "case_event_type",
+                                                          tooltip = T("Create a new event type"),
+                                                          ),
                                       )
 
         # ---------------------------------------------------------------------
@@ -4571,6 +4450,11 @@ class DVRCaseEventModel(DataModel):
                                    future = 0,
                                    writable = False,
                                    ),
+                     Field("present", "boolean",
+                           default = False,
+                           readable = False,
+                           writable = False,
+                           ),
                      # Field for quantitative recording of case events
                      # for statistical purposes (without linking them to
                      # individual cases)
@@ -4651,8 +4535,7 @@ class DVRCaseEventModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -4770,6 +4653,7 @@ class DVRCaseEventModel(DataModel):
 
         # Update last_seen (if event type requires personal presence)
         if event_type.presence_required:
+            db(table.id == record_id).update(present=True)
             dvr_update_last_seen(person_id)
 
         # Close appointment
@@ -5054,8 +4938,7 @@ class DVRVulnerabilityModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
@@ -5158,7 +5041,7 @@ class DVRDiagnosisModel(DataModel):
             msg_list_empty = T("No Diagnoses currently defined"),
         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         diagnosis_id = FieldTemplate("diagnosis_id",
                                      "reference %s" % tablename,
@@ -5254,7 +5137,7 @@ class DVRServiceContactModel(DataModel):
             msg_list_empty = T("No Service Contact Types currently defined"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         type_id = FieldTemplate("type_id", "reference %s" % tablename,
                                 label = T("Service Contact Type"),
@@ -5330,143 +5213,10 @@ class DVRServiceContactModel(DataModel):
         return None
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
+    def defaults(self):
         """ Safe defaults for names in case the module is disabled """
 
         return None
-
-# =============================================================================
-class DVRSiteActivityModel(DataModel):
-    """ Model to record the activity of a site over time """
-
-    names = ("dvr_site_activity",
-             )
-
-    def model(self):
-
-        T = current.T
-
-        s3 = current.response.s3
-        settings = current.deployment_settings
-
-        crud_strings = s3.crud_strings
-
-        configure = self.configure
-        define_table = self.define_table
-
-        SITE = settings.get_org_site_label()
-        site_represent = self.org_SiteRepresent(show_link=False)
-
-        default_site = settings.get_org_default_site()
-        permitted_facilities = current.auth.permitted_facilities(redirect_on_error=False)
-
-        # ---------------------------------------------------------------------
-        # Site Activity
-        #
-        tablename = "dvr_site_activity"
-        define_table(tablename,
-                     self.super_link("site_id", "org_site",
-                                     default = default_site,
-                                     filterby = "site_id",
-                                     filter_opts = permitted_facilities,
-                                     label = SITE,
-                                     readable = not default_site,
-                                     writable = not default_site,
-                                     represent = site_represent,
-                                     updateable = True,
-                                     ),
-                     DateField(future=0),
-                     Field("old_total", "integer",
-                           default = 0,
-                           label = T("Previous Total"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("cases_new", "integer",
-                           default = 0,
-                           label = T("Admissions"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("cases_closed", "integer",
-                           default = 0,
-                           label = T("Departures"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("new_total", "integer",
-                           default = 0,
-                           label = T("Current Total"),
-                           requires = IS_INT_IN_RANGE(0, None),
-                           ),
-                     Field("report", "upload",
-                           autodelete = True,
-                           label = T("Report"),
-                           length = current.MAX_FILENAME_LENGTH,
-                           represent = self.report_represent,
-                           uploadfolder = os.path.join(current.request.folder,
-                                                       "uploads",
-                                                       "dvr",
-                                                       ),
-                           ),
-                     CommentsField(),
-                     )
-
-        # CRUD Strings
-        crud_strings[tablename] = Storage(
-            label_create = T("Create Activity Report"),
-            title_display = T("Activity Report"),
-            title_list = T("Activity Reports"),
-            title_update = T("Edit Activity Report"),
-            label_list_button = T("List Activity Reports"),
-            label_delete_button = T("Delete Activity Report"),
-            msg_record_created = T("Activity Report created"),
-            msg_record_modified = T("Activity Report updated"),
-            msg_record_deleted = T("Activity Report deleted"),
-            msg_list_empty = T("No Activity Reports found"),
-        )
-
-        # Filter widgets
-        date_filter = DateFilter("date")
-        date_filter.operator = ["eq"]
-        filter_widgets = [date_filter]
-        if not default_site:
-            site_filter = OptionsFilter("site_id",
-                                        label = SITE,
-                                        )
-            filter_widgets.insert(0, site_filter)
-
-        # Table configuration
-        configure(tablename,
-                  filter_widgets = filter_widgets,
-                  )
-
-        # ---------------------------------------------------------------------
-        # Pass names back to global scope (s3.*)
-        #
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def defaults():
-        """ Safe defaults for names in case the module is disabled """
-
-        return None
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def report_represent(value):
-        """ File representation """
-
-        if value:
-            try:
-                # Read the filename from the file
-                filename = current.db.dvr_site_activity.report.retrieve(value)[0]
-            except IOError:
-                return current.T("File not found")
-            else:
-                return A(filename,
-                         _href=URL(c="default", f="download", args=[value]))
-        else:
-            return current.messages["NONE"]
 
 # =============================================================================
 def dvr_case_organisation(person_id):
@@ -6780,13 +6530,14 @@ class dvr_DocEntityRepresent(S3Represent):
     """ Module context-specific representation of doc-entities """
 
     def __init__(self,
-                 case_label=None,
-                 case_group_label=None,
-                 activity_label=None,
-                 use_sector=True,
-                 use_need=False,
-                 use_subject=True,
-                 show_link=False,
+                 case_label = None,
+                 case_group_label = None,
+                 activity_label = None,
+                 use_sector = True,
+                 use_need = False,
+                 use_subject = True,
+                 show_link = False,
+                 linkto_controller = "dvr",
                  ):
         """
             Args:
@@ -6799,6 +6550,7 @@ class dvr_DocEntityRepresent(S3Represent):
                 use_subject: include subject when representing activities
                              as need type
                 show_link: show representation as clickable link
+                linkto_controller: controller to link to
         """
 
         super().__init__(lookup = "doc_entity",
@@ -6825,6 +6577,7 @@ class dvr_DocEntityRepresent(S3Represent):
         self.use_sector = use_sector
         self.use_need = use_need
         self.use_subject = use_subject or not use_need
+        self.linkto_controller = linkto_controller
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):
@@ -6958,15 +6711,15 @@ class dvr_DocEntityRepresent(S3Represent):
                 table = current.s3db.dvr_case_activity
                 activity = row.dvr_case_activity
 
-                title = activity.subject
+                title = activity.subject if activity.subject else "-"
                 if self.use_need:
                     need_id = activity.need_id
                     if need_id:
                         represent = table.need_id.represent
-                    if self.use_subject and title:
-                        title = "%s: %s" % (represent(need_id), title)
-                    else:
-                        title = represent(need_id)
+                        if self.use_subject and title:
+                            title = "%s: %s" % (represent(need_id), title)
+                        else:
+                            title = represent(need_id)
 
                 label = self.activity_label
                 if self.use_sector:
@@ -7019,7 +6772,7 @@ class dvr_DocEntityRepresent(S3Represent):
                 except AttributeError:
                     pass
                 else:
-                    url = URL(c = "dvr",
+                    url = URL(c = self.linkto_controller,
                               f = "person",
                               args = [person_id,
                                       "case_activity",
@@ -7702,7 +7455,7 @@ class DVRManageAppointments(CRUDMethod):
                 # Page load
                 resource.configure(deletable = False)
 
-                S3CRUD.action_buttons(r)
+                BasicCRUD.action_buttons(r)
                 response.s3.no_formats = True
 
                 # Data table (items)
@@ -7757,10 +7510,10 @@ class DVRManageAppointments(CRUDMethod):
                 else:
                     ff = ""
 
-                output = dict(items = items,
-                              title = T("Manage Appointments"),
-                              list_filter_form = ff,
-                              )
+                output = {"items": items,
+                          "title": T("Manage Appointments"),
+                          "list_filter_form": ff,
+                          }
 
                 response.view = "list_filter.html"
                 return output
@@ -8206,7 +7959,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
         response.view = self._view(r, "dvr/register_case_event.html")
 
         # Show profile picture by default or only on demand?
-        show_picture = settings.get_dvr_event_registration_show_picture()
+        show_picture = settings.get_ui_checkpoint_show_picture()
 
         # Inject JS
         options = {"tablename": resourcename,
@@ -8816,8 +8569,7 @@ class DVRRegisterCaseEvent(CRUDMethod):
             for excluded_by_id in excluded_by_ids:
                 if excluded_by_id in seen:
                     continue
-                else:
-                    seen.add(excluded_by_id)
+                seen.add(excluded_by_id)
                 excluded_by_type = event_types.get(excluded_by_id)
                 if not excluded_by_type:
                     continue
@@ -9490,7 +9242,7 @@ class DVRRegisterPayment(DVRRegisterCaseEvent):
                                "t": s3_str(date),
                                "h": payments,
                                }
-                output["u"] = True if payments else False
+                output["u"] = bool(payments)
             else:
                 if not permitted:
                     alert = T("Payment registration not permitted")

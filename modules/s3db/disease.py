@@ -45,7 +45,6 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Monitoring upgrades {new_level:previous_levels}
 MONITORING_UPGRADE = {"OBSERVATION": ("NONE",
@@ -114,9 +113,9 @@ class DiseaseDataModel(DataModel):
                                                         represent,
                                                         ),
                                    sortby = "name",
-                                   comment = S3PopupLink(f = "disease",
-                                                         tooltip = T("Add a new disease to the catalog"),
-                                                         ),
+                                   comment = PopupLink(f = "disease",
+                                                       tooltip = T("Add a new disease to the catalog"),
+                                                       ),
                                    )
 
         self.add_components(tablename,
@@ -252,7 +251,7 @@ class DiseaseDataModel(DataModel):
             msg_list_empty = T("No Testing Devices currently registered"),
             )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         device_id = FieldTemplate("device_id", "reference %s" % tablename,
                                   label = T("Testing Device"),
@@ -423,7 +422,7 @@ class DiseaseMonitoringModel(DataModel):
             msg_list_empty = T("No Demographics currently defined"),
             )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         demographic_id = FieldTemplate("demographic_id", "reference %s" % tablename,
                                        label = T("Demographic"),
@@ -1064,7 +1063,7 @@ class DiseaseCaseTrackingModel(DataModel):
                      CommentsField(),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         represent = disease_CaseRepresent()
         case_id = FieldTemplate("case_id", "reference %s" % tablename,
                                 label = T("Case"),
@@ -1073,9 +1072,9 @@ class DiseaseCaseTrackingModel(DataModel):
                                                 IS_ONE_OF(db, "disease_case.id",
                                                           represent,
                                                           )),
-                                comment = S3PopupLink(f = "case",
-                                                      tooltip = T("Add a new case"),
-                                                      ),
+                                comment = PopupLink(f = "case",
+                                                    tooltip = T("Add a new case"),
+                                                    ),
                                 )
 
         # Components
@@ -1777,9 +1776,9 @@ class DiseaseContactTracingModel(DataModel):
                                                               represent,
                                                               )),
                                    sortby = "date",
-                                   comment = S3PopupLink(f = "tracing",
-                                                         tooltip = T("Add a new contact tracing information"),
-                                                         ),
+                                   comment = PopupLink(f = "tracing",
+                                                       tooltip = T("Add a new contact tracing information"),
+                                                       ),
                                    )
 
         self.add_components(tablename,
@@ -2158,11 +2157,11 @@ class DiseaseStatsModel(DataModel):
                                 readable = True,
                                 writable = True,
                                 empty = False,
-                                comment = S3PopupLink(c = "disease",
-                                                      f = "statistic",
-                                                      vars = {"child": "parameter_id"},
-                                                      title = ADD_STATISTIC,
-                                                      ),
+                                comment = PopupLink(c = "disease",
+                                                    f = "statistic",
+                                                    vars = {"child": "parameter_id"},
+                                                    title = ADD_STATISTIC,
+                                                    ),
                                 ),
                      location_id(
                          requires = IS_LOCATION(),

@@ -59,19 +59,19 @@
     <xsl:variable name="ActivityPrefix">
         <xsl:text>http://hxl.humanitarianresponse.info/data/emergencies/</xsl:text>
     </xsl:variable>
-        
+
     <xsl:variable name="EventPrefix">
         <xsl:text>http://hxl.humanitarianresponse.info/data/emergencies/</xsl:text>
     </xsl:variable>
-        
+
     <xsl:variable name="LocationPrefix">
         <xsl:text>http://hxl.humanitarianresponse.info/data/locations/admin/</xsl:text>
     </xsl:variable>
-        
+
     <xsl:variable name="OrgPrefix">
         <xsl:text>http://hxl.humanitarianresponse.info/data/organisations/</xsl:text>
     </xsl:variable>
-        
+
     <!-- ****************************************************************** -->
     <xsl:template match="resource[@name='event_event']">
         <!-- Sahana resource -->
@@ -360,57 +360,6 @@
                     </xsl:attribute>
                 </hxl:Organisation>
             </rdf:Description>
-        </xsl:for-each>
-        <!-- Distributions -->
-        <xsl:for-each select="./resource[@name='supply_distribution']">
-            <rdf:Description>
-                <xsl:attribute name="rdf:about">
-                    <xsl:value-of select="$sahana_url"/>
-                </xsl:attribute>
-                <hxl:Distribution>
-                    <xsl:value-of select="./reference[@field='parameter_id']/text()" />
-                </hxl:Distribution>
-            </rdf:Description>
-            <rdf:Description>
-                <xsl:attribute name="rdf:about">
-                    <xsl:value-of select="$sahana_url"/>
-                </xsl:attribute>
-                <hxl:count>
-                    <xsl:value-of select="./data[@field='value']/@value" />
-                </hxl:count>
-            </rdf:Description>
-            <!-- Date -->
-            <xsl:variable name="date">
-                <xsl:value-of select="./data[@field='date']" />
-            </xsl:variable>
-            <xsl:if test="$date!=''">
-                <rdf:Description>
-                    <xsl:attribute name="rdf:about">
-                        <xsl:value-of select="$sahana_url"/>
-                    </xsl:attribute>
-                    <hxl:date>
-                        <xsl:value-of select="$date" />
-                    </hxl:date>
-                </rdf:Description>
-            </xsl:if>
-            <!-- Location -->
-            <xsl:variable name="location_id">
-                <xsl:value-of select="./reference[@field='location_id']/@uuid" />
-            </xsl:variable>
-            <xsl:if test="$location_id!=''">
-                <rdf:Description>
-                    <xsl:attribute name="rdf:about">
-                        <xsl:value-of select="$sahana_url"/>
-                    </xsl:attribute>
-                    <hxl:atLocation>
-                        <xsl:attribute name="rdf:resource">
-                            <xsl:call-template name="location_url">
-                                <xsl:with-param name="uuid" select="$location_id" />
-                            </xsl:call-template>
-                        </xsl:attribute>
-                    </hxl:atLocation>
-                </rdf:Description>
-            </xsl:if>
         </xsl:for-each>
         <!-- Events -->
         <xsl:for-each select="./resource[@name='event_activity']">

@@ -6,17 +6,17 @@
 
 from gluon import current, URL, TAG, SPAN
 from core import IS_ISO639_2_LANGUAGE_CODE
-from s3layouts import MM, M, ML, MP, MA
+from core.ui.layouts import MM, M, ML, MP, MA
 try:
     from .layouts import OM
 except ImportError:
     pass
-import s3menus as default
+import core.ui.menus as default
 
 from .helpers import get_default_organisation, get_default_shelter
 
 # =============================================================================
-class S3MainMenu(default.S3MainMenu):
+class MainMenu(default.MainMenu):
     """ Custom Application Main Menu """
 
     # -------------------------------------------------------------------------
@@ -47,6 +47,8 @@ class S3MainMenu(default.S3MainMenu):
         has_role = auth.s3_has_role
         has_permission = auth.s3_has_permission
 
+        is_admin = has_role("ADMIN")
+
         # Single or multiple organisations?
         if has_permission("create", "org_organisation", c="org", f="organisation"):
             organisation_id = None
@@ -54,7 +56,7 @@ class S3MainMenu(default.S3MainMenu):
             organisation_id = get_default_organisation()
 
         # Organisation menu
-        c = ("org", "hrm") if has_role("ADMIN") else ("org", "hrm", "cms")
+        c = ("org", "hrm") if is_admin else ("org", "hrm", "cms")
         f = ("organisation", "*")
         if organisation_id:
             org_menu = MM("Organization", c=c, f=f, args=[organisation_id], ignore_args=True)
@@ -75,8 +77,13 @@ class S3MainMenu(default.S3MainMenu):
 
         return [
             MM("Clients", c=("dvr", "pr"), f=("person", "*")),
-            shelter_menu,
+            MM("Food Distribution", c="dvr", f="case_event", m="register_food", p="create",
+               restrict = "CATERING",
+               check = not is_admin,
+               ),
             MM("Counseling", c=("counsel", "pr"), f=("person", "*")),
+            MM("Supply", c=("supply", "pr"), f=("person", "*")),
+            shelter_menu,
             org_menu,
             MM("Security", c="security", f="seized_item"),
             ]
@@ -172,14 +179,16 @@ class S3MainMenu(default.S3MainMenu):
 
         menu_about = MA(c="default")(
                 MA("Help", f="help"),
-                #MA("Contact", f="contact"),
+                MA("Contact", f="index", args=["contact"]),
+                MA("Privacy", f="index", args=["privacy"]),
+                MA("Legal Notice", f="index", args=["legal"]),
                 MA("Version", f="about", restrict = ADMIN),
                 )
 
         return menu_about
 
 # =============================================================================
-class S3OptionsMenu(default.S3OptionsMenu):
+class OptionsMenu(default.OptionsMenu):
     """ Custom Controller Menus """
 
     # -------------------------------------------------------------------------
@@ -198,6 +207,12 @@ class S3OptionsMenu(default.S3OptionsMenu):
 
         return M(c="counsel")(
                     M("Current Cases", c=("counsel", "pr"), f="person"),
+                    M("Actions", c="counsel", f="response_action")(
+                        M("Overview"),
+                        ),
+                    M("Statistics", link=False)(
+                        M("Actions", f="response_action", m="report"),
+                        ),
                     M("Administration", link=False, restrict=(ADMIN, ORG_GROUP_ADMIN))(
                         # Global types
                         M("Need Types", f="need"),
@@ -294,12 +309,6 @@ class S3OptionsMenu(default.S3OptionsMenu):
                 #    ),
                 M("Appointments", f="case_appointment")(
                     M("Overview"),
-                    #M("Import Updates", m="import", p="create",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  ),
-                    #M("Bulk Status Update", m="manage", p="update",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  ),
                     ),
                 M("Registration", c="dvr", f="case_event", link=None)(
                     M("Checkpoint", c="dvr", f="case_event", m="register", p="create"),
@@ -310,21 +319,19 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Cases", c="dvr", f="person", m="report",
                       restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
                       ),
-                    #M("Check-in overdue", c=("dvr", "pr"), f="person",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  vars = {"overdue": "check-in"},
-                    #  ),
-                    #M("Food Distribution overdue", c=("dvr", "pr"), f="person",
-                    #  restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
-                    #  vars = {"overdue": "FOOD*"},
-                    #  ),
-                    #M("Clients Reports", c="dvr", f="site_activity",
-                    #  ),
-                    #M("Food Distribution Statistics", c="dvr", f="case_event",
-                    #  m = "report",
-                    #  restrict = (ADMIN, ORG_ADMIN),
-                    #  vars = {"code": "FOOD*"},
-                    #  ),
+                    ),
+                M("Reports", link=False)(
+                    M("Arrivals and Departures##shelter", c="dvr", f="person", m="aandd",
+                      t = "cr_shelter_registration_history", p="read",
+                      restrict = ("ADMIN", "ORG_ADMIN", "CASE_ADMIN"),
+                      ),
+                    M("Presence", c="dvr", f="person", m="presence_report",
+                      t = "org_site_presence_event", p="read",
+                      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                      ),
+                    M("Food Distribution", c="dvr", f="case_event", m="meals_report",
+                      restrict = (ADMIN, ORG_ADMIN, "CASE_ADMIN"),
+                      ),
                     ),
                 M("Archive", link=False)(
                     M("Closed Cases", f="person",
@@ -423,6 +430,29 @@ class S3OptionsMenu(default.S3OptionsMenu):
                     M("Create", m="create"),
                     M("Item Types", f="seized_item_type"),
                     M("Depositories", f="seized_item_depository"),
+                    ),
+                )
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def supply(cls):
+
+        return M(c="supply")(
+                M("Current Cases", c=("supply", "pr"), f="person"),
+                M("Distributed Items", f="distribution_item")(
+                    M("Overview"),
+                    ),
+                M("Registration", link=False)(
+                    M("Distribution", f="distribution", m="register", p="create"),
+                    ),
+                #M("Statistics", link=False),
+                M("Reports", link=False)(
+                    M("Grants Total##supplies", f="distribution_item", m="grants_total"),
+                    ),
+                M("Administration", link=False, restrict=["ADMIN", "ORG_ADMIN"])(
+                    M("Distribution Item Sets", f="distribution_set"),
+                    M("Catalogs", f="catalog"),
+                    M("Items", f="item"),
                     ),
                 )
 

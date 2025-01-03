@@ -271,7 +271,7 @@ class AssetModel(DataModel):
 
         asset_represent = asset_AssetRepresent(show_link=True)
 
-        # Reusable Field
+        # Foreign Key Template
         asset_id = FieldTemplate("asset_id", "reference %s" % tablename,
                                  label = T("Asset"),
                                  ondelete = "CASCADE",
@@ -1291,7 +1291,7 @@ def asset_controller():
         if r.interactive and r.method != "import":
             script = "/%s/static/scripts/S3/s3.asset.js" % r.application
             s3.scripts.append(script)
-            S3CRUD.action_buttons(r, deletable=False)
+            BasicCRUD.action_buttons(r, deletable=False)
             #if not r.component:
                 #s3.actions.append({"url" : URL(c="asset", f="asset",
                 #                               args = ["[id]", "log", "create"],

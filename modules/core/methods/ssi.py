@@ -87,6 +87,8 @@ class SpreadsheetImporter(CRUDMethod):
                                 - a tuple ("format", "prefix", "name.ext")
         """
 
+        output = None
+
         # Target table for the data import
         tablename = self.tablename
 
@@ -108,7 +110,8 @@ class SpreadsheetImporter(CRUDMethod):
         elif r.http == "POST":
             if r.post_vars.get("job_id"):
                 # Commit selected items
-                output = self.commit(r, **attr)
+                # output = self.commit(r, **attr) # doesn't return anything
+                self.commit(r, **attr)
             else:
                 # Process upload form (trial import) and show items list
                 output = self.upload(r, **attr)
@@ -315,7 +318,6 @@ class SpreadsheetImporter(CRUDMethod):
                              dt_pagination = True,
                              dt_pageLength = display_length,
                              dt_base_url = r.url(method="import", vars={"job_id": job_id}),
-                             dt_permalink = None,
                              dt_ajax_url = ajax_url,
                              dt_bulk_actions = dt_bulk_actions,
                              dt_bulk_selected = select_list,
@@ -464,6 +466,8 @@ class SpreadsheetImporter(CRUDMethod):
         if extra_fields:
             for item in extra_fields:
                 field = item.get("field")
+                if callable(field):
+                    field = field()
                 if not field:
                     continue
                 label = item.get("label")
@@ -548,11 +552,10 @@ class SpreadsheetImporter(CRUDMethod):
 
         fpath = os.path.join(r.folder, "static", "formats", *args)
         try:
-            open(fpath, "r")
+            with open(fpath, "r", encoding="utf-8"):
+                url = URL(c="static", f="formats", args=args)
         except IOError:
             url = None
-        else:
-            url = URL(c="static", f="formats", args=args)
 
         return url
 
@@ -581,6 +584,8 @@ class SpreadsheetImporter(CRUDMethod):
                 continue
 
             field = f.get("field")
+            if callable(field):
+                field = field()
             if field:
                 # Read value from upload form
                 if field.name in form_vars:

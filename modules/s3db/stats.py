@@ -45,7 +45,7 @@ from gluon import *
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
+from core.ui.layouts import PopupLink
 
 # =============================================================================
 class StatsParameterModel(DataModel):
@@ -76,7 +76,6 @@ class StatsParameterModel(DataModel):
                     "stats_impact_type": T("Impact Type"),
                     # @ToDo; Deprecate
                     "stats_people_type": T("Types of People"),
-                    "supply_distribution_item": T("Distribution Item"),
                     }
 
         tablename = "stats_parameter"
@@ -136,7 +135,6 @@ class StatsDataModel(DataModel):
                     "stats_impact": T("Impact"),
                     # @ToDo: Deprecate
                     "stats_people": T("People"),
-                    "supply_distribution": T("Distribution"),
                     }
 
         accuracy_opts = {1 : T("Official Measurement"),
@@ -353,11 +351,11 @@ class StatsDemographicModel(DataModel):
                                             readable = True,
                                             writable = True,
                                             empty = False,
-                                            comment = S3PopupLink(c = "stats",
-                                                                  f = "demographic",
-                                                                  vars = {"child": "parameter_id"},
-                                                                  title = ADD_DEMOGRAPHIC,
-                                                                  ),
+                                            comment = PopupLink(c = "stats",
+                                                                f = "demographic",
+                                                                vars = {"child": "parameter_id"},
+                                                                title = ADD_DEMOGRAPHIC,
+                                                                ),
                                             )
 
         # ---------------------------------------------------------------------
@@ -1201,12 +1199,12 @@ def stats_demographic_data_controller():
     """
         Function to be called from controller functions
         - display all demographic data for a location as a tab.
-        - options.s3json lookups for AddResourceLink
+        - options.s3json lookups for PopupLink
     """
 
     request = current.request
     if "options.s3json" in request.args:
-        # options.s3json lookups for AddResourceLink
+        # options.s3json lookups for PopupLink
         return current.crud_controller("stats", "demographic_data")
 
     # Only viewing is valid
@@ -1329,11 +1327,11 @@ class StatsImpactModel(DataModel):
                                 readable = True,
                                 writable = True,
                                 empty = False,
-                                comment = S3PopupLink(c = "stats",
-                                                      f = "impact_type",
-                                                      vars = {"child": "parameter_id"},
-                                                      title = ADD_IMPACT_TYPE,
-                                                      ),
+                                comment = PopupLink(c = "stats",
+                                                    f = "impact_type",
+                                                    vars = {"child": "parameter_id"},
+                                                    title = ADD_IMPACT_TYPE,
+                                                    ),
                                 ),
                      Field("value", "double",
                            label = T("Value"),
@@ -1365,7 +1363,7 @@ class StatsImpactModel(DataModel):
                                         ),
                           ]
 
-        # Reusable Field
+        # Foreign Key Template
         impact_id = FieldTemplate("impact_id", "reference %s" % tablename,
                                   label = T("Impact"),
                                   ondelete = "CASCADE",
@@ -1462,11 +1460,11 @@ class StatsPeopleModel(DataModel):
                                 readable = True,
                                 writable = True,
                                 empty = False,
-                                comment = S3PopupLink(c = "stats",
-                                                      f = "people_type",
-                                                      vars = {"child": "parameter_id"},
-                                                      title = ADD_PEOPLE_TYPE,
-                                                      ),
+                                comment = PopupLink(c = "stats",
+                                                    f = "people_type",
+                                                    vars = {"child": "parameter_id"},
+                                                    title = ADD_PEOPLE_TYPE,
+                                                    ),
                                 ),
                      Field("value", "integer",
                            label = T("Number of People"),

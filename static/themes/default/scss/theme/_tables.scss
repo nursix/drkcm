@@ -35,32 +35,31 @@ table {
     }
 }
 
-// DataTable
+// ----------------------------------------------------------------------------
+// The table itself
+// - child of form.dt-wrapper > div.dataTables_wrapper > div.dataTable_table
 //
-#table-container {
-    display: block;
-    margin-bottom: 1.5rem;
-    width: 100%;
-    .empty {
-        margin-top: 30px;
-        margin-left: 10px;
-    }
-}
-.dataTable_table {
-    // Scroll the table not the wrapper
-    overflow: auto;
-    clear: both;
-}
-table.dataTable {
+.dataTable {
+
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+
     thead, tbody, tfoot {
         th, td {
             border: 1px solid $datatables_border_color;
             padding: 0.2rem 1.5rem 0.2rem 0.5rem;
             [dir=rtl] & {
                 padding: 0.2rem 0.5rem 0.2rem 1.5rem;
+            }
+            &.dt-bulk {
+                padding: 0.2rem;
+                text-align: center;
+                vertical-align: middle;
+                min-width: 3rem;
+            }
+            &.dt-actions {
+                white-space: nowrap;
             }
         }
         th {
@@ -182,22 +181,10 @@ table.dataTable {
 
     }
     // Bulk-select
-    .selected-action {
-        margin: 0.35rem 0.2rem;
-    }
     .bulk-select-options {
-        font-size: 0.7rem;
-        font-weight: normal;
         input[type=checkbox] {
-            margin-bottom: 0.2rem;
-            margin-right: 0.5rem;
-            vertical-align: middle;
+            margin-bottom: 0;
         }
-    }
-    input.bulkcheckbox[type=checkbox] {
-        position: relative;
-        left: 50%;
-        margin-top: 0.5rem;
     }
 
     // DataTable Responsive
@@ -205,7 +192,6 @@ table.dataTable {
         td:first-child::before,
         th:first-child::before {
             top: 0.4rem;
-            //line-height: 0.9rem;
             background-color: $primary-color;
         }
         tr.parent td:first-child::before,
@@ -220,69 +206,77 @@ table.dataTable {
     }
 }
 
+// ----------------------------------------------------------------------------
+// Wrapper and controls
+//
 .dataTables_wrapper {
-    .dataTables_filter {
-        float: left;
-        text-align: left;
-        margin-right: 3rem;
-        label {
-            margin-left: 0.3rem;
-            font-size: 0.75rem;
-            font-weight: normal;
-        }
-        input[type="search"] {
-            margin-left: 0.3rem;
-        }
-        [dir=rtl] & {
-            float: right;
-            text-align: right;
-            margin-right: 0;
-            margin-left: 3rem;
-            label,
-            input[type="search"] {
-                margin-left: 0rem;
-                margin-right: 0.3rem;
-            }
-        }
+
+    // Scroll the table not the wrapper
+    .dataTable_table {
+        overflow: auto;
+        clear: both;
     }
+
+    // Variable columns selection button
+    .dt-variable-columns {
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        padding: 0.2rem;
+        color: #666;
+        min-width: 2.5rem;
+        &:hover {
+            border-color: #aaa;
+            background-color: #eee;
+        }
+        cursor: pointer;
+    }
+
+    // Table controls
+    .dataTables_bulk,
+    .dataTables_filter,
     .dataTables_length {
         float: left;
-        margin-bottom:4px;
-        label {
-            font-size: 0.75rem;
-            font-weight: normal;
-            white-space: nowrap;
-            margin: 0 10rem 0.3rem 0.3rem;
-        }
+        text-align: left!important;
+        margin: 0 3rem 4px 0;
+        font-size: 0.75rem;
+        font-weight: normal;
+        white-space: nowrap;
         select {
             font-size: 0.75rem;
             text-align: center;
             height: auto;
-            padding: 0.2rem 1.2rem 0.2rem 0;
+            padding: 0.2rem 1.2rem 0.2rem 0.2rem;
             border-radius: 0;
             margin: 0 0.2rem;
             min-width: 3rem;
         }
+        label {
+            font-size: 0.75rem;
+            font-weight: normal;
+            white-space: nowrap;
+            margin: 0 10rem 0.3rem 0;
+            display: inline-block;
+        }
+        input[type="search"] {
+            margin-left: 0.3rem;
+            margin-right: 0rem;
+        }
         [dir=rtl] & {
             float: right;
-            label {
-                margin: 0 0.3rem 0.3rem 10rem;
-            }
+            text-align: right!important;
+            margin-left: 3rem;
+            margin-right: 0;
             select {
-                padding: 0.2rem 0 0.2rem 1.1rem!important;
+                padding: 0.2rem 0.2rem 0.2rem 1.2rem;
             }
-        }
-    }
-    .dataTables_processing {
-        padding: 1rem 0 2rem;
-        top: 2.5rem;
-        left: 30%;
-        background-color: #fffbe0;
-        color: #737373;
-        border-color: #737373;
-        [dir=rtl] & {
-            left: unset;
-            right: 30%;
+            label {
+                margin-left: 10rem;
+                margin-right: 0rem;
+            }
+            input[type="search"] {
+                margin-left: 0rem;
+                margin-right: 0.3rem;
+            }
         }
     }
     .dataTables_info {
@@ -334,64 +328,155 @@ table.dataTable {
             }
         }
     }
+    .dataTables_processing {
+        z-index: 99;
+        padding: 1rem 0 2rem;
+        top: 2.5rem;
+        left: 30%;
+        background-color: #fffbe0;
+        color: #737373;
+        border-color: #737373;
+        [dir=rtl] & {
+            left: unset;
+            right: 30%;
+        }
+    }
+}
+
+// Overrides for scrollable (non-responsive) data tables
+.dt-wrapper.scrollable {
+    .dataTable_table {
+        max-height: 80vh;
+        overflow: scroll;
+        scroll-snap-type: y proximity;
+        th, td {
+            scroll-snap-align: end;
+        }
+    }
+    .dataTable {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-bottom: 0;
+        th, td {
+            border-top-width: 0;
+            border-right-width: 0;
+        }
+        tr th:last-child,
+        tr td:last-child {
+            border-right-width: 1px;
+        }
+        thead {
+            tr:first-child th {
+                border-top-width: 1px
+            }
+            position: sticky;
+            top: 0;
+            background-color: $datatables_bgcolor_head;
+        }
+    }
 }
 
 // ----------------------------------------------------------------------------
-// Export Options
+// Variable columns selection dialog
+//
+.column-selector {
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0.1rem;
+        td {
+            padding: 0.15rem;
+            margin: 0;
+            label {
+                margin: 0;
+                input {
+                    margin: 0.2rem;
+                }
+            }
+            width: 100%;
+            &.column-left, &.column-right {
+                cursor: pointer;
+                width: 1.5rem;
+                min-width: 1.5rem;
+                font-size: 1rem;
+                text-align: center;
+                &:hover {
+                    background-color: #eee;
+                }
+            }
+        }
+        thead {
+            background: transparent;
+            th, td {
+                border: 0;
+            }
+        }
+        tbody {
+            td {
+                border: 1px solid #ccc;
+            }
+            &.ui-sortable .sortable-placeholder {
+                background-color: #fff7d8;
+            }
+        }
+    }
+    .submit-form-btn {
+        margin-bottom: 0.3rem;
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Export options
 //
 .dt-export-options {
     float: right;
+    [dir=rtl] & {
+        float: left;
+    }
     padding-top: 5px;
     .list_formats {
         padding-top: 0;
         margin: 0 0.2rem;
-        .dt-export {
-            float: right;
-            margin: 0 0.1rem;
-            padding: 1px;
-            cursor: pointer;
-            height: 16px;
-            width: 16px;
-            background-repeat: no-repeat;
-            &.fa {
-                font-size: 14px;
-                padding: 0;
-                padding-top: 2px;
-            }
-            &.export_cap {
-                background-image: url(../../img/cap_16.png);
-            }
-            &.export_have {
-                background-image: url(../../img/have_16.png);
-            }
-            &.export_kml {
-                background-image: url(../../img/kml_icon.png);
-            }
-            &.export_map {
-                background-image: url(../../img/map_icon.png);
-            }
-            &.export_pdf {
-                background-image: url(../../img/pdficon_small.gif);
-            }
-            &.export_rss {
-                background-image: url(../../img/RSS_16.png);
-            }
-            &.export_xls {
-                background-image: url(../../img/icon-xls.png);
-            }
-            &.export_xlsx {
-                background-image: url(../../img/icon-xls.png);
-            }
-            &.export_xml {
-                background-image: url(../../img/icon-xml.png);
-            }
-        }
     }
-    [dir=rtl] & {
-        float: left;
-        .dt-export {
-            float: left;
-        }
+}
+.dt-export {
+    display: inline-block;
+    margin: 0 0.15rem;
+    cursor: pointer;
+    height: 16px;
+    width: 16px;
+    background-repeat: no-repeat;
+    &.fa {
+        font-size: 14px;
+        padding: 0;
+        padding-top: 2px;
+    }
+    &.export_cap {
+        background-image: url(../../img/cap_16.png);
+    }
+    &.export_have {
+        background-image: url(../../img/have_16.png);
+    }
+    &.export_kml {
+        background-image: url(../../img/kml_icon.png);
+    }
+    &.export_map {
+        background-image: url(../../img/map_icon.png);
+    }
+    &.export_pdf {
+        background-image: url(../../img/pdficon_small.gif);
+    }
+    &.export_rss {
+        background-image: url(../../img/RSS_16.png);
+    }
+    &.export_xls {
+        background-image: url(../../img/icon-xls.png);
+    }
+    &.export_xlsx {
+        background-image: url(../../img/icon-xls.png);
+    }
+    &.export_xml {
+        background-image: url(../../img/icon-xml.png);
     }
 }
 

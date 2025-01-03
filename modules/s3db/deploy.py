@@ -41,7 +41,6 @@ from gluon.html import *
 from gluon.tools import callback
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # =============================================================================
 class DeployOrganisationModel(DataModel):
@@ -326,7 +325,7 @@ class DeployModel(DataModel):
             msg_record_deleted = T("Mission deleted"),
             msg_list_empty = T("No Missions currently registered"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup = tablename,
                                 linkto = URL(f="mission",
                                              args=["[id]", "profile"]),
@@ -341,10 +340,10 @@ class DeployModel(DataModel):
                                                         "deploy_mission.id",
                                                         represent,
                                                         ),
-                                   comment = S3PopupLink(c = "deploy",
-                                                         f = "mission",
-                                                         label = label_create,
-                                                         ),
+                                   comment = PopupLink(c = "deploy",
+                                                       f = "mission",
+                                                       label = label_create,
+                                                       ),
                                    )
 
         # ---------------------------------------------------------------------
@@ -1000,7 +999,7 @@ class DeployAlertModel(DataModel):
                         action = self.deploy_alert_send,
                         )
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         alert_id = FieldTemplate("alert_id", "reference %s" % tablename,
                                  label = T("Alert"),
@@ -1502,7 +1501,7 @@ def deploy_rheader(r, tabs=None, profile=False):
                                               "deploy_mission",
                                               record_id = r.id,
                                               ):
-                    crud_button = S3CRUD.crud_button
+                    crud_button = BasicCRUD.crud_button
                     edit_btn = crud_button(T("Edit"),
                                            _href = r.url(method="update"),
                                            )
@@ -1804,15 +1803,15 @@ class deploy_Inbox(CRUDMethod):
                            "url": URL(f="email_inbox", args=["[id]", "select"]),
                            },
                           ]
-            S3CRUD.action_buttons(r,
-                                  editable = False,
-                                  read_url = r.url(method = "read",
-                                                   id = "[id]",
-                                                   ),
-                                  delete_url = r.url(method = "delete",
-                                                     id = "[id]",
-                                                     ),
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     editable = False,
+                                     read_url = r.url(method = "read",
+                                                      id = "[id]",
+                                                      ),
+                                     delete_url = r.url(method = "delete",
+                                                        id = "[id]",
+                                                        ),
+                                     )
 
             # Export not needed
             s3.no_formats = True
@@ -2031,11 +2030,11 @@ def deploy_apply(r, **attr):
             profile_url = URL(f = "human_resource",
                               args = ["[id]", "profile"],
                               )
-            S3CRUD.action_buttons(r,
-                                  deletable = False,
-                                  read_url = profile_url,
-                                  update_url = profile_url,
-                                  )
+            BasicCRUD.action_buttons(r,
+                                     deletable = False,
+                                     read_url = profile_url,
+                                     update_url = profile_url,
+                                     )
             s3.no_formats = True
 
             # Selection of Deploying Organisation

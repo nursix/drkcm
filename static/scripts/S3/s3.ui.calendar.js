@@ -260,7 +260,15 @@
          */
         _init: function() {
 
-            // var el = $(this.element);
+            var el = $(this.element);
+
+            // Mark the filter form if we have a value
+            // - filter form initialization may already have happened and
+            //   skipped this widget for the lack of an instance, so update it
+            let filterForm = el.closest('.filter-form');
+            if (filterForm.length && el.val()) {
+                filterForm.addClass('has-active-filters');
+            }
 
             this.refresh();
         },
@@ -277,9 +285,6 @@
             if (this.clearButton) {
                 this.clearButton.remove();
             }
-
-            // Call prototype method
-            $.Widget.prototype.destroy.call(this);
         },
 
         /**
@@ -1194,7 +1199,9 @@
 
             // Clear-button
             if (this.clearButton) {
-                this.clearButton.on('click' + ns, function() {
+                this.clearButton.on('click' + ns, function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
                     self.clear();
                 });
             }

@@ -41,6 +41,7 @@ def doc_document_resource(r, tablename):
 
         T = current.T
         s3db = current.s3db
+
         table = s3db.doc_document
 
         # Hide URL field

@@ -9,7 +9,7 @@ from collections import OrderedDict
 from gluon import current, URL, \
                   DIV, IS_EMPTY_OR, IS_IN_SET, IS_NOT_EMPTY, TAG
 
-from core import FS, ICON, IS_ONE_OF, S3CRUD, S3Represent, \
+from core import FS, ICON, IS_ONE_OF, BasicCRUD, S3Represent, \
                  get_filter_options, get_form_record_id
 
 from ..models.org import TestProvider, TestStation, \
@@ -659,7 +659,7 @@ def org_organisation_controller(**attr):
 
             # Add a "Manage"-button to switch to facility perspective
             manage_url = URL(c="org", f="facility", args=[component_id, "update"])
-            manage_btn = S3CRUD.crud_button(T("Manage"), _href=manage_url)
+            manage_btn = BasicCRUD.crud_button(T("Manage"), _href=manage_url)
 
             delete_btn = buttons.get("delete_btn")
             buttons["delete_btn"] = TAG[""](manage_btn, delete_btn) \
@@ -1460,9 +1460,9 @@ def org_facility_controller(**attr):
             buttons = output.get("buttons")
             if isinstance(buttons, dict) and "list_btn" in buttons:
                 summary = r.url(method="summary", id="", component="")
-                buttons["list_btn"] = S3CRUD.crud_button(label = T("List Facilities"),
-                                                         _href = summary,
-                                                         )
+                buttons["list_btn"] = BasicCRUD.crud_button(label = T("List Facilities"),
+                                                            _href = summary,
+                                                            )
         return output
     s3.postp = postp
 

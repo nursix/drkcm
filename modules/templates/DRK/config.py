@@ -25,6 +25,11 @@ def config(settings):
     # Theme (folder to use for views/layout.html)
     settings.base.theme = "DRK"
 
+    # Custom models/controllers
+    settings.base.models = "templates.DRK.models"
+    settings.base.rest_controllers = {("dvr", "site_activity"): ("dvr", "site_activity"),
+                                      }
+
     # Authentication settings
     # Should users be allowed to register themselves?
     settings.security.self_registration = False

@@ -10,7 +10,7 @@ from io import StringIO
 
 from gluon import current
 
-from core import S3Anonymize
+from core import Anonymize
 
 from unit_tests import run_suite
 
@@ -133,7 +133,7 @@ class AnonymizeTests(unittest.TestCase):
                     ],
                  }
 
-        S3Anonymize.cascade(ptable, (self.person_id,), rules)
+        Anonymize.cascade(ptable, (self.person_id,), rules)
 
         # Verify the person record
         query = (ptable.id == self.person_id)
@@ -186,7 +186,7 @@ class AnonymizeTests(unittest.TestCase):
                  "comments": "remove",
                  }
 
-        S3Anonymize.apply_field_rules(table, (self.person_id,), rules)
+        Anonymize.apply_field_rules(table, (self.person_id,), rules)
 
         query = (table.id == self.person_id)
         row = current.db(query).select(table.first_name,
@@ -204,6 +204,6 @@ if __name__ == "__main__":
 
     run_suite(
         AnonymizeTests,
-    )
+        )
 
 # END ========================================================================

@@ -13,11 +13,11 @@ from gluon.storage import Storage
 
 from unit_tests import run_suite
 
-from core import S3CRUD
+from core import BasicCRUD
 
 # =============================================================================
 class ValidateTests(unittest.TestCase):
-    """ Test S3CRUD/validate """
+    """ Test BasicCRUD/validate """
 
     def setUp(self):
 
@@ -40,7 +40,7 @@ class ValidateTests(unittest.TestCase):
         """ Test successful main table validation """
 
         request = self.request
-        crud = S3CRUD()
+        crud = BasicCRUD()
 
         jsonstr = """{"name":"TestOrganisation", "acronym":"TO"}"""
         request.body = StringIO(jsonstr)
@@ -71,7 +71,7 @@ class ValidateTests(unittest.TestCase):
         """ Test error in main table validation """
 
         request = self.request
-        crud = S3CRUD()
+        crud = BasicCRUD()
 
         jsonstr = """{"name":"", "acronym":"TO"}"""
         request.body = StringIO(jsonstr)
@@ -101,7 +101,7 @@ class ValidateTests(unittest.TestCase):
         """ Test successful component validation """
 
         request = self.request
-        crud = S3CRUD()
+        crud = BasicCRUD()
 
         jsonstr = """{"name":"TestOffice"}"""
         request.body = StringIO(jsonstr)
@@ -126,7 +126,7 @@ class ValidateTests(unittest.TestCase):
         """ Test error in component validation """
 
         request = self.request
-        crud = S3CRUD()
+        crud = BasicCRUD()
 
         jsonstr = """{"name":"", "acronym":"test"}"""
         request.body = StringIO(jsonstr)
@@ -171,7 +171,7 @@ class ValidateTests(unittest.TestCase):
                           representation="json",
                           http="GET")
 
-        crud = S3CRUD()
+        crud = BasicCRUD()
 
         jsonstr = """{"organisation_id":"1", "role":"1"}"""
         request.body = StringIO(jsonstr)

@@ -1,5 +1,5 @@
 """
-    Maintenance Tasks for BRCMS/RLP
+    Maintenance Tasks for GIMS
 
     License: MIT
 """

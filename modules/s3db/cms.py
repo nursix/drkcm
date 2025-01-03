@@ -34,6 +34,7 @@ __all__ = ("CMSContentModel",
            "CMSContentUserModel",
            "CMSContentRoleModel",
            "CMSNewsletterModel",
+           "CustomPage",
            "cms_NewsletterDetails",
            "cms_UpdateNewsletter",
            "cms_newsletter_notify",
@@ -62,7 +63,6 @@ from collections import OrderedDict
 from gluon import *
 from gluon.storage import Storage
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -151,7 +151,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Series deleted"),
             msg_list_empty = T("No series currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         translate = settings.get_L10n_translate_cms_series()
         represent = S3Represent(lookup=tablename, translate=translate)
         series_id = FieldTemplate("series_id", "reference %s" % tablename,
@@ -207,7 +207,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Status deleted"),
             msg_list_empty = T("No Statuses currently registered"))
 
-        # Reusable Field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
                                 #none = T("Unknown"))
         status_id = FieldTemplate("status_id", "reference %s" % tablename,
@@ -220,10 +220,10 @@ class CMSContentModel(DataModel):
                                                           sort = True,
                                                           )),
                                   sortby = "name",
-                                  comment = S3PopupLink(title = ADD_STATUS,
-                                                        c = "cms",
-                                                        f = "status",
-                                                        ),
+                                  comment = PopupLink(title = ADD_STATUS,
+                                                      c = "cms",
+                                                      f = "status",
+                                                      ),
                                   )
 
         # ---------------------------------------------------------------------
@@ -333,7 +333,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Post deleted"),
             msg_list_empty = T("No posts currently available"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename)
         post_id = FieldTemplate("post_id", "reference %s" % tablename,
                                 label = T("Post"),
@@ -344,11 +344,11 @@ class CMSContentModel(DataModel):
                                                           represent,
                                                           )),
                                 sortby = "name",
-                                comment = S3PopupLink(c = "cms",
-                                                      f = "post",
-                                                      title = ADD_POST,
-                                                      tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
-                                                      ),
+                                comment = PopupLink(c = "cms",
+                                                    f = "post",
+                                                    title = ADD_POST,
+                                                    tooltip = T("A block of rich text which could be embedded into a page, viewed as a complete page or viewed as a list of news items."),
+                                                    ),
                                 )
 
         list_fields = ["post_module.module",
@@ -601,7 +601,7 @@ class CMSContentModel(DataModel):
             msg_record_deleted = T("Tag deleted"),
             msg_list_empty = T("No tags currently defined"))
 
-        # Reusable field
+        # Foreign Key Template
         represent = S3Represent(lookup=tablename, translate=True)
         tag_id = FieldTemplate("tag_id", "reference %s" % tablename,
                                label = T("Tag"),
@@ -776,6 +776,7 @@ class CMSContentModel(DataModel):
                 record = None
                 query &= ((table.resource == None) | \
                           (table.resource == "index"))
+            query &= (table.deleted == False)
             result = db(query).update(post_id=post_id)
             if not result:
                 table.insert(post_id=post_id,
@@ -1660,6 +1661,73 @@ class CMSNewsletterModel(DataModel):
         return status
 
 # =============================================================================
+class CustomPage(CustomController):
+    """
+        A custom controller to render a page with user-editable
+        contents from CMS
+    """
+
+    context = ("default", "custom")
+    template = "cmspage.html"
+
+    def __call__(self):
+
+        T = current.T
+        s3db = current.s3db
+
+        output = {}
+
+        # Allow editing of page content from browser using CMS module
+        ADMIN = current.auth.s3_has_role("ADMIN")
+
+        table = s3db.cms_post
+        ltable = s3db.cms_post_module
+
+        module, resource = self.context
+
+        query = (ltable.module == module) & \
+                (ltable.resource == resource) & \
+                (ltable.post_id == table.id) & \
+                (table.deleted != True)
+        item = current.db(query).select(table.body,
+                                        table.id,
+                                        limitby = (0, 1)
+                                        ).first()
+        if item:
+            if ADMIN:
+                content = DIV(XML(item.body),
+                              BR(),
+                              A(T("Edit"),
+                                _href = URL(c="cms", f="post",
+                                            args = [item.id, "update"],
+                                            vars = {"module": module,
+                                                    "resource": resource,
+                                                    },
+                                            ),
+                                _class="action-btn",
+                                ),
+                              )
+            else:
+                content = DIV(XML(item.body))
+        elif ADMIN:
+            content = A(T("Edit"),
+                        _href = URL(c="cms", f="post", args="create",
+                                    vars = {"module": module,
+                                            "resource": resource,
+                                            },
+                                    ),
+                        _class="action-btn cms-edit",
+                        )
+        else:
+            content = ""
+
+        output["item"] = content
+
+        self._view(current.deployment_settings.get_theme_layouts(), self.template)
+
+        return output
+
+# =============================================================================
 class cms_NewsletterDetails:
     """
         Field methods for compact representation contact information
@@ -2297,7 +2365,7 @@ def cms_unread_newsletters(count=True, cached=True):
             pass
 
     now = datetime.datetime.utcnow()
-    if expire and expire > now and False:
+    if expire and expire > now:
         return number if count else record_ids
 
     if auth.user:
@@ -2576,8 +2644,8 @@ def cms_index(module,
         try:
             # Pass view as file not str to work in compiled mode
             response.view = open(view, "rb")
-        except IOError:
-            raise HTTP(404, "Unable to open Custom View: %s" % view)
+        except IOError as e:
+            raise HTTP(404, "Unable to open Custom View: %s" % view) from e
     else:
         response.view = "index.html"
 
@@ -2588,7 +2656,8 @@ def cms_index(module,
 # =============================================================================
 def cms_documentation(r, default_page, default_url):
     """
-        Render an online documentation page, to be called from prep
+        Render an online documentation page;
+        to be called from prep of a cms_post CRUD controller
 
         Args:
             r: the CRUDRequest
@@ -2619,10 +2688,10 @@ def cms_documentation(r, default_page, default_url):
             s3_redirect_default(default_url)
 
     # Render the page
-    from core import S3XMLContents
+    from core import XMLContentsRepresent
     return {"bypass": True,
             "output": {"title": row.title,
-                       "contents": S3XMLContents(row.body),
+                       "contents": XMLContentsRepresent(row.body),
                        },
             }
 
@@ -2740,15 +2809,17 @@ class S3CMS(CRUDMethod):
         r.error(405, current.ERROR.BAD_METHOD)
 
     # -------------------------------------------------------------------------
-    def widget(self, r, method="cms", widget_id=None, **attr):
+    def widget(self, r, method="cms", widget_id=None, visible=True, **attr):
         """
             Render a Rich Text widget suitable for use in a page such as
             S3Summary
 
             Args:
-                method: the widget method
                 r: the CRUDRequest
-                attr: controller attributes
+                method: the widget method
+                widget_id: the widget ID
+                visible: whether the widget is initially visible
+                attr: dictionary of parameters for the method handler
 
             TODO Support comments
         """

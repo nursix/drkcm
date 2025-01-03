@@ -204,6 +204,28 @@ def realm_entity(table, row):
     #    # Owned by the managing organisation (default ok)
     #    pass
 
+    #elif tablename in ("supply_catalog",
+    #                   "supply_distribution_set",
+    #                   "supply_distribution",
+    #                   ):
+    #    # Owned by the managing organisation (default ok)
+    #    pass
+
+    elif tablename in ("supply_item_category",
+                       "supply_catalog_item",
+                       ):
+        # Inherit from catalog via catalog_id
+        realm_entity = inherit_realm(tablename, row, "supply_catalog", "catalog_id")
+
+    elif tablename == "supply_distribution_set_item":
+        # Inherit from distribution set via distribution_set_id
+        realm_entity = inherit_realm(tablename, row, "supply_distribution_set", "distribution_set_id")
+
+
+    elif tablename == "supply_distribution_item":
+        # Inherit from distribution via distribution_id
+        realm_entity = inherit_realm(tablename, row, "supply_distribution", "distribution_id")
+
     return realm_entity
 
 # -------------------------------------------------------------------------
@@ -234,6 +256,10 @@ def doc_realm_entity(table, row):
 
     document = row[table]
     instance_type = row.doc_entity.instance_type
+
+    # Newsletter attachments do not belong to any realm
+    if instance_type == "cms_newsletter":
+        return None
 
     # Inherit the realm entity from instance, if available
     if document.doc_id and instance_type and instance_type != "pr_group":

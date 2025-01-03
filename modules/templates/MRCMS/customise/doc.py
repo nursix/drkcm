@@ -6,7 +6,7 @@
 
 from gluon import current, IS_NOT_EMPTY
 
-from core import represent_file, IS_ONE_OF, FS
+from core import represent_file, GenerateDocument, IS_ONE_OF, FS
 
 # -------------------------------------------------------------------------
 def doc_image_resource(r, tablename):
@@ -57,12 +57,18 @@ def document_onaccept(form):
             row.update_record(name=name)
 
 # -------------------------------------------------------------------------
-def doc_document_resource(r, tablename):
+def doc_customise_documents(r, table):
 
     T = current.T
 
-    s3db = current.s3db
-    table = s3db.doc_document
+    s3 = current.response.s3
+
+    if r.component_name == "template":
+        #table.is_template.default = True
+        s3.crud_strings["doc_document"].label_create = T("Add Document Template")
+    else:
+        #table.is_template.default = False
+        s3.crud_strings["doc_document"].label_create = T("Add Document")
 
     # Custom label for date-field, default not writable
     field = table.date
@@ -84,6 +90,14 @@ def doc_document_resource(r, tablename):
 
     # Set default organisation_id
     doc_set_default_organisation(r, table=table)
+
+# -------------------------------------------------------------------------
+def doc_document_resource(r, tablename):
+
+    s3db = current.s3db
+    table = s3db.doc_document
+
+    doc_customise_documents(r, table)
 
     # List fields
     list_fields = ["name",
@@ -180,7 +194,9 @@ def dvr_document_prep(r):
                 doc_ids.append(row.doc_id)
 
     # Include case activities
-    if include_activity_docs:
+    # - to be able to limit access to activity attachments, they must be accessed
+    #   through counsel-controller (and thus, user must have counsel controller permission)
+    if include_activity_docs and r.controller == "counsel":
 
         # Look up relevant case activities
         atable = s3db.dvr_case_activity
@@ -208,6 +224,7 @@ def dvr_document_prep(r):
                                 use_subject = subject_type in ("subject", "both"),
                                 case_group_label = T("Family"),
                                 activity_label = T("Need"),
+                                linkto_controller = r.controller,
                                 )
 
         # Make doc_id readable and visible in table
@@ -312,5 +329,32 @@ def doc_set_default_organisation(r, table=None):
 
     if organisation_id:
         table.organisation_id.default = organisation_id
+
+# -------------------------------------------------------------------------
+class GenerateCaseDocument(GenerateDocument):
+    """
+        Custom version of GenerateDocument that uses the case organisation
+        rather than the user organisation for template lookup
+    """
+
+    @staticmethod
+    def template_query(r):
+
+        person = r.record
+
+        if r.tablename != "pr_person" or not person:
+            return super().template_query(r)
+
+        s3db = current.s3db
+
+        # Look up the case organisation
+        organisation_id = s3db.dvr_case_organisation(person.id)
+
+        table = s3db.doc_document
+        query = (table.organisation_id == organisation_id) & \
+                (table.is_template == True) & \
+                (table.deleted == False)
+
+        return query
 
 # END =========================================================================

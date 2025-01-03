@@ -29,6 +29,7 @@ __all__ = ("BooleanRepresent",
            "S3Represent",
            "S3RepresentLazy",
            "S3PriorityRepresent",
+           "XMLContentsRepresent",
            "s3_URLise",
            "s3_avatar_represent",
            "s3_comments_represent",
@@ -44,7 +45,9 @@ __all__ = ("BooleanRepresent",
            "s3_url_represent",
            "s3_yes_no_represent",
            "represent_file",
+           "represent_image",
            "represent_option",
+           "represent_hours",
            )
 
 import os
@@ -968,6 +971,89 @@ class BooleanRepresent:
             return "-"
 
 # =============================================================================
+class XMLContentsRepresent:
+    """
+        Renderer for db-stored XML contents (e.g. CMS)
+
+        Replaces {{page}} expressions inside the contents with local URLs.
+
+        {{page}}                 - gives the URL of the current page
+        {{name:example}}         - gives the URL of the current page with
+                                   a query ?name=example (can add any number
+                                   of query variables)
+        {{c:org,f:organisation}} - c and f tokens override controller and
+                                   function of the current page, in this
+                                   example like /org/organisation
+        {{args:arg,arg}}         - override the current request's URL args
+                                   (this should come last in the expression)
+        {{noargs}}               - strip all URL args
+
+        NB does not check permissions for the result URLs
+    """
+
+    def __init__(self, contents):
+        """
+            Args:
+                contents: the contents (string)
+        """
+
+        self.contents = contents
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def link(match):
+        """
+            Replace {{}} expressions with local URLs, with the ability to
+            override controller, function and URL query variables.Called
+            from re.sub.
+
+            Args:
+                match: the re match object
+        """
+
+        # Parse the expression
+        tokens = match.group(1).split(",")
+
+        args = True
+        parameters = {}
+        arguments = []
+        collect_args = False
+        for token in tokens:
+            if not token:
+                continue
+            elif ":" in token:
+                collect_args = False
+                key, value = token.split(":")
+            else:
+                key, value = token, None
+            key = key.strip()
+            if not value:
+                if key == "noargs":
+                    args = False
+                elif collect_args:
+                    arguments.append(key)
+            elif key == "args":
+                arguments.append(value.strip())
+                collect_args = True
+            else:
+                parameters[key] = value.strip()
+
+        # Construct the URL
+        request = current.request
+        c = parameters.pop("c", request.controller)
+        f = parameters.pop("f", request.function)
+        if not arguments:
+            arguments = request.args
+        args = arguments if args else []
+        return URL(c=c, f=f, args=args, vars=parameters, host=True)
+
+    # -------------------------------------------------------------------------
+    def xml(self):
+        """ Render the output """
+
+        return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
+
+# =============================================================================
 # Uploaded file representation
 #
 FILE_ICONS = {".pdf": "file-pdf",
@@ -1017,7 +1103,11 @@ def represent_file(tablename="doc_document", fieldname="file"):
         icon = ICON(icon_type)
 
         output = A(icon,
-                   _href = URL(c="default", f="download", args=[value]),
+                   _href = URL(c = "default",
+                               f = "download",
+                               args = [value],
+                               vars = {"otn": tablename},
+                               ),
                    _title = name,
                    _class = "file-repr",
                    )
@@ -1037,6 +1127,40 @@ def represent_file(tablename="doc_document", fieldname="file"):
 
     return represent
 
+# -----------------------------------------------------------------------------
+def represent_image(tablename="doc_image", fieldname="file"):
+
+    def represent(value, row=None):
+        """
+            Represent an image as a clickable thumbnail
+
+            Args:
+                value: name of the image file
+                row: unused, for API compatibility
+
+            Returns:
+                representation (DIV-type)
+        """
+
+        if not value:
+            return current.messages["NONE"]
+
+        link = URL(c = "default",
+                   f = "download",
+                   args = value,
+                   vars = {"otn": tablename},
+                   )
+
+        return DIV(A(IMG(_src = link,
+                         _class = "img-preview",
+                         ),
+                     _class = "zoom",
+                     _href = link,
+                     ),
+                   )
+
+    return represent
+
 # =============================================================================
 def represent_option(options, default="-"):
     """
@@ -1052,6 +1176,45 @@ def represent_option(options, default="-"):
 
     def represent(value, row=None):
         return options.get(value, default)
+    return represent
+
+# =============================================================================
+def represent_hours(colon=False):
+    """
+        Representation function for hours (duration), adding an
+        onhover-hint with alternative formatting (0h 0min, or 0:00)
+
+        Args:
+            colon: use colon-notation 0:00 for hint
+
+        Returns:
+            function: the representation function
+    """
+
+    def represent(value, row=None):
+
+        if value is None:
+            return ""
+        try:
+            value = float(value)
+        except (ValueError, TypeError):
+            value = 0
+
+        hours = int(value)
+        minutes = round((value - hours) * 60)
+
+        if colon:
+            title = "%d:%02d" % (hours, minutes)
+        else:
+            formatted = []
+            if hours:
+                formatted.append("%dh" % hours)
+            if minutes:
+                formatted.append("%dmin" % minutes)
+            title = " ".join(formatted) if formatted else None
+
+        return SPAN("%s" % round(value, 2), _title=title, _class="hours-formatted")
+
     return represent
 
 # =============================================================================

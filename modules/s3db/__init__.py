@@ -3,7 +3,6 @@ DEFAULT = lambda: None
 from . import act
 from . import asset
 from . import auth
-from . import br
 from . import budget
 from . import cap
 from . import cms
@@ -35,7 +34,6 @@ from . import sit
 from . import stats
 from . import supply
 from . import sync
-from . import translate
 from . import transport
 from . import vehicle
 from . import vol

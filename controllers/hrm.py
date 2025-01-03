@@ -139,11 +139,11 @@ def staff():
                                                      T("The facility where this position is based."),
                                                      #messages.AUTOCOMPLETE_HELP,
                                             )))
-                    #field.comment = S3PopupLink(c="org", f="facility",
-                    #                            vars = dict(child="site_id",
-                    #                                        parent="req"),
-                    #                            title=T("Add New Site"),
-                    #                            )
+                    #field.comment = PopupLink(c="org", f="facility",
+                    #                          vars = dict(child="site_id",
+                    #                                      parent="req"),
+                    #                          title=T("Add New Site"),
+                    #                          )
 
                     # Hide status field
                     table.status.writable = table.status.readable = False

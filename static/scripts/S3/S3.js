@@ -946,7 +946,7 @@ S3.openPopup = function(url, center) {
  * in another field (=trigger), e.g.:
  *   - Task Form: Activity options filtered by Project selection
  *
- * @todo: fix updateAddResourceLink
+ * @todo: fix updatePopupLink
  * @todo: move into separate file and load only when needed?
  */
 
@@ -1026,15 +1026,15 @@ S3.openPopup = function(url, center) {
     };
 
     /**
-     * Update the AddResourceLink for the target with lookup key and
+     * Update the PopupLink for the target with lookup key and
      * value, so that the popup can pre-populate them; or hide the
-     * AddResourceLink if no trigger value has been selected
+     * PopupLink if no trigger value has been selected
      *
      * @param {string} resourceName - the target resource name
      * @param {string} key - the lookup key
      * @param {string} value - the selected trigger value
      */
-    var updateAddResourceLink = function(resourceName, key, value) {
+    var updatePopupLink = function(resourceName, key, value) {
 
         $('a#' + resourceName + '_add').each(function() {
             var search = this.search,
@@ -1077,7 +1077,7 @@ S3.openPopup = function(url, center) {
     var renderOptions = function(data, settings) {
 
         var options = [],
-            defaultValue = 0;
+            defaultValue = '';
 
         if (data.length === 0) {
             // No options available
@@ -1108,7 +1108,7 @@ S3.openPopup = function(url, center) {
             for (var i = 0; i < data.length; i++) {
                 record = data[i];
                 value = record[lookupField];
-                if (i === 0) {
+                if (i === 0 && !settings.multiple) {
                     defaultValue = value;
                 }
                 name = fncRepresent ? fncRepresent(record, prepResult) : record.name;
@@ -1167,7 +1167,7 @@ S3.openPopup = function(url, center) {
                     currentValue = widget.prop('value');
                 }
                 if (!currentValue) {
-                    currentValue = widget.data('initialValue');
+                    currentValue = widget.data('selected');
                 }
                 if (!Array.isArray(currentValue)) {
                     currentValue = currentValue ? [currentValue] : [];
@@ -1307,10 +1307,10 @@ S3.openPopup = function(url, center) {
 
         if (!multiple && !userChange) {
             // Store initial value
-            var initialValue = target.val(),
-                storedInitialValue = target.data('initialValue');
-            if (storedInitialValue == undefined) {
-                target.data('initialValue', initialValue);
+            var selected = target.val(),
+                storedInitialValue = target.data('selected');
+            if (storedInitialValue === undefined) {
+                target.data('selected', selected);
             }
         }
 
@@ -1339,7 +1339,7 @@ S3.openPopup = function(url, center) {
             }
             // Trigger change-event on target for filter cascades
             target.trigger('change');
-            updateAddResourceLink(lookupResource, lookupKey);
+            updatePopupLink(lookupResource, lookupKey);
             return;
         }
 
@@ -1392,7 +1392,9 @@ S3.openPopup = function(url, center) {
                 var widget = $(this),
                     visible = true;
                 if (widget.hasClass('groupedopts-widget')) {
-                    visible = widget.groupedopts('visible');
+                    visible = widget.groupedopts('instance') ? widget.groupedopts('visible') : false;
+                } else if (widget.hasClass('multiselect-widget')) {
+                    visible = widget.multiselect('instance') ? widget.multiselect('visible') : false;
                 } else {
                     visible = widget.data('visible') || widget.is(':visible');
                 }
@@ -1400,6 +1402,8 @@ S3.openPopup = function(url, center) {
                     widget.data('visible', true);
                     if (widget.hasClass('groupedopts-widget')) {
                         widget.groupedopts('hide');
+                    } else if (widget.hasClass('groupedopts-widget')) {
+                        widget.multiselect('hide');
                     } else {
                         widget.hide();
                     }
@@ -1443,7 +1447,7 @@ S3.openPopup = function(url, center) {
                     });
 
                     // Modify URL for Add-link and show the Add-link
-                    updateAddResourceLink(lookupResource, lookupKey, value);
+                    updatePopupLink(lookupResource, lookupKey, value);
 
                     // Clear navigate-away-confirm if not a user change
                     if (!userChange) {
@@ -1499,7 +1503,7 @@ S3.openPopup = function(url, center) {
                     removeThrobber(widget, lookupResource);
 
                     // Modify URL for Add-link and show the Add-link
-                    updateAddResourceLink(lookupResource, lookupKey, value);
+                    updatePopupLink(lookupResource, lookupKey, value);
 
                     // Clear navigate-away-confirm if not a user change
                     if (!userChange) {
@@ -1617,6 +1621,9 @@ S3.openPopup = function(url, center) {
             targetField = $(targetSelector);
             if (!targetField.length) {
                 return;
+            }
+            if (targetField.attr('multiple') !== undefined) {
+                settings.multiple = true;
             }
             targetForm = targetField.closest('form');
         }

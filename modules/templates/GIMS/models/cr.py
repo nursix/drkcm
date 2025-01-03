@@ -70,7 +70,7 @@ class CRReceptionCenterModel(DataModel):
         define_table = self.define_table
         configure = self.configure
 
-        # Reusable field for population-type fields
+        # Field template for population-type fields
         population = FieldTemplate("population", "integer",
                                    default = 0,
                                    requires = IS_INT_IN_RANGE(0),

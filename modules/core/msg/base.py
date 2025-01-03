@@ -53,7 +53,7 @@ from urllib.parse import urlencode
 from gluon import current, redirect, IS_IN_SET
 from gluon.html import *
 
-from ..methods import S3CRUD
+from ..methods import BasicCRUD
 from ..tools import IS_ONE_OF, get_crud_string, s3_decode_iso_datetime, \
                     s3_str
 from ..ui import S3SQLDefaultForm, S3PentityAutocompleteWidget
@@ -2660,7 +2660,7 @@ class S3Msg:
             return hashdef["defs"]["def"]["text"]
 
 # =============================================================================
-class S3Compose(S3CRUD):
+class S3Compose(BasicCRUD):
     """ RESTful method for messaging """
 
     # -------------------------------------------------------------------------

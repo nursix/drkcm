@@ -9,7 +9,7 @@ import os
 import secrets
 import uuid
 
-from dateutil.relativedelta import relativedelta
+#from dateutil.relativedelta import relativedelta
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import Color, HexColor
@@ -99,17 +99,17 @@ class GenerateIDCard(CRUDMethod):
         response = current.response
         s3 = response.s3
 
-        # TODO translations
+        # Available Formats
         card_formats = (("A4", T("A4")),
                         ("CCL", "%s (%s)" % (T("Credit Card"), T("Landscape##format"))),
                         ("CCP", "%s (%s)" % (T("Credit Card"), T("Portrait##format"))),
                         )
 
         # Form fields
-        now = request.utcnow.date()
+        #now = request.utcnow.date()
         formfields = [DateField("valid_until",
                                 label = T("Valid Until"),
-                                default = now + relativedelta(months=1, day=31),
+                                #default = now + relativedelta(months=1, day=31),
                                 month_selector = True,
                                 past = 0,
                                 #empty = False,
@@ -284,7 +284,7 @@ class GenerateIDCard(CRUDMethod):
     @staticmethod
     def download(r, **attr):
         """
-            Download the PDF for an ID card
+            Downloads the PDF for an ID card
 
             Args:
                 r: the CRUDRequest
@@ -453,7 +453,7 @@ class IDCard:
     @staticmethod
     def invalidate_ids(person_id, keep=None, expire_only=False):
         """
-            Invalidate all system-generated IDs for a person
+            Invalidates all system-generated IDs for a person
 
             Args:
                 person_id: the person record ID
@@ -490,7 +490,7 @@ class IDCard:
     @staticmethod
     def generate_vhash(label, uid, token):
         """
-            Generate the server-side verification hash for the ID Card; to
+            Generates the server-side verification hash for the ID Card; to
             be stored in the identity record
 
             Args:
@@ -509,7 +509,7 @@ class IDCard:
     @staticmethod
     def generate_chash(label, uid, vhash):
         """
-            Generate the document-side verification hash for the ID Card; to
+            Generates the document-side verification hash for the ID Card; to
             be embedded in the PDF
 
             Args:
@@ -630,7 +630,7 @@ class IDCard:
         data = label.strip().split("##") if label else None
         if not data:
             raise SyntaxError("No data for identification")
-        elif len(data) == 3:
+        if len(data) == 3:
             label, token, chash = data
         else:
             label, token, chash = data[0], None, None
@@ -703,9 +703,9 @@ class IDCard:
         # Compute the ID card verification hash
         try:
             uid = uuid.UUID(record.uuid).hex.upper()
-        except ValueError:
+        except ValueError as e:
             # Malformed ID record UID (invalid ID record)
-            raise ValueError("Invalid ID record")
+            raise ValueError("Invalid ID record") from e
         chash_v = cls.generate_chash(person.pe_label, uid, vhash)
 
         if chash_v != chash:
@@ -717,7 +717,7 @@ class IDCard:
     # -------------------------------------------------------------------------
     def auto_expire(self):
         """
-            Auto-expire all ID cards unless holder is still registered
+            Auto-expires all ID cards unless holder is still registered
             at a shelter, or an active staff member
         """
 
@@ -791,7 +791,7 @@ class IDCardLayoutL(PDFCardLayout):
     @classmethod
     def lookup(cls, resource, items):
         """
-            Look up layout-specific common data for all cards
+            Looks up layout-specific common data for all cards
 
             Args:
                 resource: the resource
@@ -848,7 +848,7 @@ class IDCardLayoutL(PDFCardLayout):
     # -------------------------------------------------------------------------
     def draw(self):
         """
-            Draw the card (one side), to be implemented by subclass
+            Draws the card (one side), to be implemented by subclass
 
             Instance attributes (NB draw-function should not modify them):
             - self.canv...............the canvas (provides the drawing methods)
@@ -1285,10 +1285,11 @@ class IDCardLayoutL(PDFCardLayout):
         """
             Returns the default organisation logo for ID cards
         """
-        # TODO move into config.py, allow override
 
-        path = os.path.join("static", "themes", "JUH", "img", "logo_small.png")
-        return os.path.join(current.request.folder, path)
+        path = current.deployment_settings.get_custom("idcard_default_logo")
+
+        return os.path.join(current.request.folder, "static", "themes", *path) \
+               if path else None
 
 # =============================================================================
 class IDCardLayoutP(IDCardLayoutL):
@@ -1537,7 +1538,7 @@ class IDCardLayoutA4(IDCardLayoutP):
     # -------------------------------------------------------------------------
     def draw(self):
         """
-            Draw the card (one side)
+            Draws the card (one side)
 
             Instance attributes (NB draw-function should not modify them):
             - self.canv...............the canvas (provides the drawing methods)
@@ -1866,7 +1867,7 @@ class IDCardLayoutA4(IDCardLayoutP):
         c.restoreState()
 
 # =============================================================================
-class StaffIDCardLayoutL(IDCardLayoutL):
+class StaffIDCardLayout(PDFCardLayout):
     """
         Variant of IDCardLayout for staff members
     """
@@ -1894,8 +1895,101 @@ class StaffIDCardLayoutL(IDCardLayoutL):
                 "last_name",
                 "date_of_birth",
                 "human_resource.organisation_id$root_organisation",
+                "human_resource.site_id",
                 "human_resource.job_title_id",
                 ]
+
+    # -------------------------------------------------------------------------
+    @classmethod
+    def lookup(cls, resource, items):
+        """
+            Looks up layout-specific common data for all cards
+            (extending super-method)
+
+            Args:
+                resource: the resource
+                items: the items
+
+            Returns:
+                a dict with common data
+        """
+
+        output = super().lookup(resource, items)
+
+        # Get the human_resource.site_ids
+        site_ids = {item["_row"]["hrm_human_resource.site_id"] for item in items}
+        site_ids.discard(None)
+
+        # Look up shelter names and addresses for site_ids
+        db = current.db
+        s3db = current.s3db
+
+        stable = s3db.cr_shelter
+        ltable = s3db.gis_location
+
+        left = ltable.on(ltable.id == stable.location_id)
+        query = (stable.site_id.belongs(site_ids)) & \
+                (stable.deleted == False)
+        rows = db(query).select(stable.id,
+                                stable.site_id,
+                                stable.name,
+                                ltable.id,
+                                ltable.addr_postcode,
+                                ltable.addr_street,
+                                ltable.L3,
+                                ltable.L4,
+                                left = left,
+                                )
+        shelters = {}
+        for row in rows:
+            shelter = row.cr_shelter
+            address = row.gis_location
+            if address.id:
+                d = [shelter.name,
+                     address.addr_street,
+                     address.L3 or address.L4,
+                     address.addr_postcode,
+                     ]
+            else:
+                d = [shelter.name, None, None, None]
+            shelters[shelter.site_id] = d
+
+        output["shelters"] = shelters
+
+        return output
+
+    # -------------------------------------------------------------------------
+    def get_site_details(self, item):
+        """
+            Looks up the site details for the staff member from commons
+
+            Args:
+                item: the staff member data
+
+            Returns:
+                tuple with site details (name, place, address)
+        """
+
+        raw = item["_row"]
+
+        # Shelter
+        site_id = raw["hrm_human_resource.site_id"]
+
+        shelter = self.common["shelters"].get(site_id) if site_id else None
+        if shelter:
+            name, address, place, postcode = shelter
+            if place:
+                place = "%s %s" % (postcode, place) if postcode else place
+        else:
+            name = place = address = None
+
+        return name, place, address
+
+# =============================================================================
+class StaffIDCardLayoutL(StaffIDCardLayout, IDCardLayoutL):
+    """
+        Variant of IDCardLayoutL for staff members
+    """
 
     # -------------------------------------------------------------------------
     def draw_person_details(self, item, t_):
@@ -1953,39 +2047,43 @@ class StaffIDCardLayoutL(IDCardLayoutL):
                             valign = "middle",
                             )
 
-# =============================================================================
-class StaffIDCardLayoutP(IDCardLayoutP):
-    """
-        Variant of IDCardLayout for staff members
-    """
-
-    border_color = HexColor(0xeb003c)
-
     # -------------------------------------------------------------------------
-    @classmethod
-    def fields(cls, resource):
+    def draw_shelter_details(self, item, t_):
         """
-            The layout-specific list of fields to look up from the resource
+            Draws the shelter details:
+                - shelter name
+                - shelter address
 
             Args:
-                resource: the resource
-
-            Returns:
-                list of field selectors
+                item: the data item
+                t_: the translator
         """
 
-        return ["id",
-                "pe_id",
-                "pe_label",
-                "first_name",
-                #"middle_name",
-                "last_name",
-                "date_of_birth",
-                "human_resource.organisation_id$root_organisation",
-                "human_resource.job_title_id",
-                ]
+        draw_string = self.draw_string
 
-    # -------------------------------------------------------------------------
+        # Start position
+        w = self.width
+        h = self.height
+        x, y = 10, h-16
+        wt = w - x*2 # text width
+
+        # Shelter
+        name, place, address = self.get_site_details(item)
+        if name:
+            draw_string(x, y, name, width=wt, height=12, size=9, halign="center")
+            if address and place:
+                address = ", ".join((address, place))
+            elif place:
+                address = place
+            if address:
+                draw_string(x, y-9, address, width=wt, height=8, size=7, halign="center")
+
+# =============================================================================
+class StaffIDCardLayoutP(StaffIDCardLayout, IDCardLayoutP):
+    """
+        Variant of IDCardLayoutP for staff members
+    """
+
     def draw_person_details(self, item, t_):
         """
             Draws the person details:
@@ -2034,39 +2132,41 @@ class StaffIDCardLayoutP(IDCardLayoutP):
                             valign = "middle",
                             )
 
-# =============================================================================
-class StaffIDCardLayoutA4(IDCardLayoutA4):
-    """
-        Variant of IDCardLayout for staff members
-    """
-
-    border_color = HexColor(0xeb003c)
-
     # -------------------------------------------------------------------------
-    @classmethod
-    def fields(cls, resource):
+    def draw_shelter_details(self, item, t_):
         """
-            The layout-specific list of fields to look up from the resource
+            Draws the shelter details:
+                - shelter name
+                - shelter address
 
             Args:
-                resource: the resource
-
-            Returns:
-                list of field selectors
+                item: the data item
+                t_: the translator
         """
 
-        return ["id",
-                "pe_id",
-                "pe_label",
-                "first_name",
-                #"middle_name",
-                "last_name",
-                "date_of_birth",
-                "human_resource.organisation_id$root_organisation",
-                "human_resource.job_title_id",
-                ]
+        draw_string = self.draw_string
 
-    # -------------------------------------------------------------------------
+        # Start position
+        w = self.width
+        h = self.height
+        x, y = 8, h-20
+        wt = w - x*2 # text width
+
+        # Shelter
+        name, place, address = self.get_site_details(item)
+        if name:
+            draw_string(x, y, name, width=wt, height=16, size=9, halign="center")
+            if address:
+                draw_string(x, y-9, address, width=wt, height=8, size=7, halign="center")
+            if place:
+                draw_string(x, y-18, place, width=wt, height=8, size=7, halign="center")
+
+# =============================================================================
+class StaffIDCardLayoutA4(StaffIDCardLayout, IDCardLayoutA4):
+    """
+        Variant of IDCardLayoutA4 for staff members
+    """
+
     def draw_person_details(self, item, t_):
         """
             Draws the person details:
@@ -2107,7 +2207,8 @@ class StaffIDCardLayoutA4(IDCardLayoutA4):
         draw_string(x, y + 13, t_("Name"))
         draw_string(x, y, name, width=wt, height=20, size=12)
 
-        y = bottom + 50
+        site_id = raw["hrm_human_resource.site_id"]
+        y = bottom + (27 if site_id else 50)
 
         # Staff Role
         draw_string(x, y, t_("Staff"), width=wt, height=20, size=18, bold=True)
@@ -2127,5 +2228,39 @@ class StaffIDCardLayoutA4(IDCardLayoutA4):
                             halign = "center",
                             valign = "middle",
                             )
+
+    # -------------------------------------------------------------------------
+    def draw_shelter_details(self, item, t_):
+        """
+            Draws the shelter details:
+                - shelter name
+                - shelter address
+
+            Args:
+                item: the data item
+                t_: the translator
+        """
+
+        w = self.width
+        h = self.height
+
+        draw_string = self.draw_string
+
+        x = 40
+        y = h/2 + 165
+        wt = w/2 - 2*x # text width
+
+        # Shelter
+        name, place, address = self.get_site_details(item)
+        if name:
+            # Shelter Name
+            draw_string(x, y + 14, t_("Shelter"))
+            draw_string(x, y, name, width=wt, height=20, size=10)
+
+            # Shelter address
+            if address:
+                draw_string(x, y-10, address, width=wt, height=12, size=9)
+            if place:
+                draw_string(x, y-20, place, width=wt, height=12, size=9)
 
 # END =========================================================================

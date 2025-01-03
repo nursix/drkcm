@@ -1253,7 +1253,13 @@ class IS_ONE_OF_EMPTY(Validator):
 # =============================================================================
 class IS_ONE_OF_EMPTY_SELECT(IS_ONE_OF_EMPTY):
     """
-        Extends IS_ONE_OF_EMPTY by displaying an empty SELECT (instead of INPUT)
+        Extends IS_ONE_OF_EMPTY by displaying an empty SELECT
+        (instead of INPUT).
+
+        Note:
+            Fields with this validator should also use the EmptyOptionsWidget
+            to ensure the previously selected option is passed to filterOptionsS3
+            in order to be re-selected after the initial options lookup
     """
 
     @staticmethod
@@ -1321,6 +1327,7 @@ class IS_NOT_ONE_OF(IS_NOT_IN_DB):
                          allowed_override = allowed_override,
                          ignore_common_filters = ignore_common_filters,
                          )
+
         self.skip_imports = skip_imports
 
     # -------------------------------------------------------------------------
@@ -1435,7 +1442,7 @@ class IS_LOCATION(Validator):
         else:
             self.error_message = current.T("Invalid Location!")
 
-        # Make it like IS_ONE_OF to support AddResourceLink
+        # Make it like IS_ONE_OF to support PopupLink
         self.ktable = "gis_location"
         self.kfield = "id"
 
@@ -2432,8 +2439,8 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             Args:
                 error_message: alternative error message
                 multiple: allow selection of multiple options
-                select: dict of options for the selector,
-                        defaults to settings.L10n.languages,
+                select: dict or code/tuple-list of options for the
+                        selector, defaults to settings.L10n.languages,
                         set explicitly to None to allow all languages
                 sort: sort options in selector
                 translate: translate the language options into
@@ -2452,6 +2459,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             self._select = current.deployment_settings.get_L10n_languages()
         else:
             self._select = select
+
         self.translate = translate
 
     # -------------------------------------------------------------------------
@@ -2462,26 +2470,28 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
             superclass function here.
 
             Args:
-                zero: include an empty-option (overrides self.zero)
+                zero: include an empty-option (with self.zero as label)
 
             Returns:
                 list of tuples (code, representation)
         """
 
-        language_codes = self.language_codes()
+        language_codes = self.language_codes(mis=False)
 
-        if self._select:
+        translate = self.translate
+        T = current.T
+
+        selection = self._select
+        if selection:
             language_codes_dict = dict(language_codes)
-            if self.translate:
-                T = current.T
-                items = ((k, T(v)) for k, v in self._select.items()
-                                   if k in language_codes_dict)
-            else:
-                items = ((k, v) for k, v in self._select.items()
-                                if k in language_codes_dict)
+            if isinstance(selection, (list, tuple)):
+                selection = self.subset(language_codes_dict, selection)
+            items = ((k, (T(v) if translate else v))
+                     for k, v in selection.items()
+                     if k != "mis" and k in language_codes_dict
+                     )
         else:
-            if self.translate:
-                T = current.T
+            if translate:
                 items = ((k, T(v)) for k, v in language_codes)
             else:
                 items = language_codes
@@ -2491,10 +2501,42 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
         else:
             items = list(items)
 
-        if zero and not self.zero is None and not self.multiple:
+        if zero and self.zero is not None and not self.multiple:
             items.insert(0, ("", self.zero))
 
+        # Miscellaneous always as last option
+        items.append(("mis", (T("Miscellaneous") if translate else "Miscellaneous")))
+
         return items
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def subset(languages, selection):
+        """
+            Converts a list|tuple of languages into a dict {code: name},
+            permitting both languages codes or tuples (code, name) as
+            list elements
+
+            Args:
+                languages: the complete language dict (from .language_codes)
+                selection: the selection to determine the subset
+
+            Returns:
+                a dict {code: language}
+        """
+
+        subset = []
+        append = subset.append
+
+        for l in selection:
+            if isinstance(l, str):
+                name = languages.get(l)
+                if name:
+                    append((l, name))
+            else:
+                append(l)
+
+        return dict(subset)
 
     # -------------------------------------------------------------------------
     def represent(self, code):
@@ -2556,10 +2598,13 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
 
     # -------------------------------------------------------------------------
     @staticmethod
-    def language_codes():
+    def language_codes(mis=True):
         """
             Returns a list of tuples of ISO639-1 alpha-2 language
             codes, can also be used to look up the language name
+
+            Args:
+                mis: include the "Miscellaneous" option
 
             Just the subset which are useful for Translations
             - 2 letter code preferred, 3-letter code where none exists,
@@ -2575,13 +2620,13 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("ada", "Adangme"),
                 ("ady", "Adyghe; Adygei"),
                 #("afa", "Afro-Asiatic languages"),
-                ("afh", "Afrihili"),
+                #("afh", "Afrihili"),
                 #("afr", "Afrikaans"),
                 ("af", "Afrikaans"),
                 ("ain", "Ainu"),
                 #("aka", "Akan"),
                 ("ak", "Akan"),
-                ("akk", "Akkadian"),
+                #("akk", "Akkadian"),
                 #("alb", "Albanian"),
                 ("sq", "Albanian"),
                 ("ale", "Aleut"),
@@ -2611,7 +2656,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("ava", "Avaric"),
                 ("av", "Avaric"),
                 #("ave", "Avestan"),
-                ("ae", "Avestan"),
+                #("ae", "Avestan"),
                 ("awa", "Awadhi"),
                 #("aym", "Aymara"),
                 ("ay", "Aymara"),
@@ -2668,10 +2713,10 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("cel", "Celtic languages"),
                 #("cha", "Chamorro"),
                 ("ch", "Chamorro"),
-                ("chb", "Chibcha"),
+                #("chb", "Chibcha"),
                 #("che", "Chechen"),
                 ("ce", "Chechen"),
-                ("chg", "Chagatai"),
+                #("chg", "Chagatai"),
                 #("chi", "Chinese"),
                 ("zh", "Chinese"),
                 ("chk", "Chuukese"),
@@ -2681,12 +2726,12 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("chp", "Chipewyan; Dene Suline"),
                 ("chr", "Cherokee"),
                 #("chu", "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic"),
-                ("cu", "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic"),
+                #("cu", "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic"),
                 #("chv", "Chuvash"),
                 ("cv", "Chuvash"),
                 ("chy", "Cheyenne"),
                 #("cmc", "Chamic languages"),
-                ("cop", "Coptic"),
+                #("cop", "Coptic"),
                 #("cor", "Cornish"),
                 ("kw", "Cornish"),
                 #("cos", "Corsican"),
@@ -2726,12 +2771,12 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("efi", "Efik"),
                 #("egy", "Egyptian (Ancient)"),
                 ("eka", "Ekajuk"),
-                ("elx", "Elamite"),
+                #("elx", "Elamite"),
                 #("eng", "English"),
                 ("en", "English"),
                 #("enm", "English, Middle (1100-1500)"),
                 #("epo", "Esperanto"),
-                ("eo", "Esperanto"),
+                #("eo", "Esperanto"),
                 #("est", "Estonian"),
                 ("et", "Estonian"),
                 #("ewe", "Ewe"),
@@ -2767,7 +2812,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("ka", "Georgian"),
                 #("ger", "German"),
                 ("de", "German"),
-                ("gez", "Geez"),
+                #("gez", "Geez"),
                 ("gil", "Gilbertese"),
                 #("gla", "Gaelic; Scottish Gaelic"),
                 ("gd", "Gaelic; Scottish Gaelic"),
@@ -2781,7 +2826,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("goh", "German, Old High (ca.750-1050)"),
                 ("gon", "Gondi"),
                 ("gor", "Gorontalo"),
-                ("got", "Gothic"),
+                #("got", "Gothic"),
                 ("grb", "Grebo"),
                 #("grc", "Greek, Ancient (to 1453)"),
                 #("gre", "Greek, Modern (1453-)"),
@@ -2806,7 +2851,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("him", "Himachali languages; Western Pahari languages"),
                 #("hin", "Hindi"),
                 ("hi", "Hindi"),
-                ("hit", "Hittite"),
+                #("hit", "Hittite"),
                 ("hmn", "Hmong; Mong"),
                 #("hmo", "Hiri Motu"),
                 ("ho", "Hiri Motu"),
@@ -2822,17 +2867,17 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("ice", "Icelandic"),
                 ("is", "Icelandic"),
                 #("ido", "Ido"),
-                ("io", "Ido"),
+                #("io", "Ido"),
                 #("iii", "Sichuan Yi; Nuosu"),
                 ("ii", "Sichuan Yi; Nuosu"),
                 #("ijo", "Ijo languages"),
                 #("iku", "Inuktitut"),
                 ("iu", "Inuktitut"),
                 #("ile", "Interlingue; Occidental"),
-                ("ie", "Interlingue; Occidental"),
+                #("ie", "Interlingue; Occidental"),
                 ("ilo", "Iloko"),
                 #("ina", "Interlingua (International Auxiliary Language Association)"),
-                ("ia", "Interlingua (International Auxiliary Language Association)"),
+                #("ia", "Interlingua (International Auxiliary Language Association)"),
                 #("inc", "Indic languages"),
                 #("ind", "Indonesian"),
                 ("id", "Indonesian"),
@@ -2846,7 +2891,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("it", "Italian"),
                 #("jav", "Javanese"),
                 ("jv", "Javanese"),
-                ("jbo", "Lojban"),
+                #("jbo", "Lojban"),
                 #("jpn", "Japanese"),
                 ("ja", "Japanese"),
                 #("jpr", "Judeo-Persian"),
@@ -2864,7 +2909,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("ks", "Kashmiri"),
                 #("kau", "Kanuri"),
                 ("kr", "Kanuri"),
-                ("kaw", "Kawi"),
+                #("kaw", "Kawi"),
                 #("kaz", "Kazakh"),
                 ("kk", "Kazakh"),
                 ("kbd", "Kabardian"),
@@ -2872,7 +2917,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("khi", "Khoisan languages"),
                 #("khm", "Central Khmer"),
                 ("km", "Central Khmer"),
-                ("kho", "Khotanese; Sakan"),
+                #("kho", "Khotanese; Sakan"),
                 #("kik", "Kikuyu; Gikuyu"),
                 ("ki", "Kikuyu; Gikuyu"),
                 #("kin", "Kinyarwanda"),
@@ -2905,7 +2950,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("lao", "Lao"),
                 ("lo", "Lao"),
                 #("lat", "Latin"),
-                ("la", "Latin"),
+                #("la", "Latin"),
                 #("lav", "Latvian"),
                 ("lv", "Latvian"),
                 ("lez", "Lezghian"),
@@ -2924,7 +2969,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("lu", "Luba-Katanga"),
                 #("lug", "Ganda"),
                 ("lg", "Ganda"),
-                ("lui", "Luiseno"),
+                #("lui", "Luiseno"),
                 ("lun", "Lunda"),
                 ("luo", "Luo (Kenya and Tanzania)"),
                 ("lus", "Lushai"),
@@ -3026,7 +3071,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("oto", "Otomian languages"),
                 #("paa", "Papuan languages"),
                 ("pag", "Pangasinan"),
-                ("pal", "Pahlavi"),
+                #("pal", "Pahlavi"),
                 ("pam", "Pampanga; Kapampangan"),
                 #("pan", "Panjabi; Punjabi"),
                 ("pa", "Panjabi; Punjabi"),
@@ -3036,9 +3081,9 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("per", "Persian"),
                 ("fa", "Persian"),
                 #("phi", "Philippine languages"),
-                ("phn", "Phoenician"),
+                #("phn", "Phoenician"),
                 #("pli", "Pali"),
-                ("pi", "Pali"),
+                #("pi", "Pali"),
                 #("pol", "Polish"),
                 ("pl", "Polish"),
                 ("pon", "Pohnpeian"),
@@ -3072,9 +3117,9 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("sah", "Yakut"),
                 #("sai", "South American Indian (Other)"),
                 #("sal", "Salishan languages"),
-                ("sam", "Samaritan Aramaic"),
+                #("sam", "Samaritan Aramaic"),
                 #("san", "Sanskrit"),
-                ("sa", "Sanskrit"),
+                #("sa", "Sanskrit"),
                 ("sas", "Sasak"),
                 ("sat", "Santali"),
                 ("scn", "Sicilian"),
@@ -3108,7 +3153,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("snd", "Sindhi"),
                 ("sd", "Sindhi"),
                 ("snk", "Soninke"),
-                ("sog", "Sogdian"),
+                #("sog", "Sogdian"),
                 #("som", "Somali"),
                 ("so", "Somali"),
                 #("son", "Songhai languages"),
@@ -3129,7 +3174,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("sun", "Sundanese"),
                 ("su", "Sundanese"),
                 ("sus", "Susu"),
-                ("sux", "Sumerian"),
+                #("sux", "Sumerian"),
                 #("swa", "Swahili"),
                 ("sw", "Swahili"),
                 #("swe", "Swedish"),
@@ -3185,7 +3230,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 ("tw", "Twi"),
                 ("tyv", "Tuvinian"),
                 ("udm", "Udmurt"),
-                ("uga", "Ugaritic"),
+                #("uga", "Ugaritic"),
                 #("uig", "Uighur; Uyghur"),
                 ("ug", "Uighur; Uyghur"),
                 #("ukr", "Ukrainian"),
@@ -3202,7 +3247,7 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
                 #("vie", "Vietnamese"),
                 ("vi", "Vietnamese"),
                 #("vol", "Volapük"),
-                ("vo", "Volapük"),
+                #("vo", "Volapük"),
                 ("vot", "Votic"),
                 #("wak", "Wakashan languages"),
                 ("wal", "Walamo"),
@@ -3247,6 +3292,8 @@ class IS_ISO639_2_LANGUAGE_CODE(IS_IN_SET):
         extra_codes = settings.get_L10n_extra_codes()
         if extra_codes:
             lang += extra_codes
+        if mis:
+            lang.append(("mis", "Miscellaneous"))
 
         return list(set(lang)) # Remove duplicates
 

@@ -4,21 +4,24 @@
     License: MIT
 """
 
-__all__ = ("S3OrgMenuLayout",
+__all__ = ("OrgMenuLayout",
            "OM",
            )
 
-from gluon import current, IMG
+from gluon import current, URL, IMG
 from core import S3NavigationItem
 
 # =============================================================================
-class S3OrgMenuLayout(S3NavigationItem):
+class OrgMenuLayout(S3NavigationItem):
     """ Layout for the organisation-specific menu """
 
     @staticmethod
     def layout(item):
 
-        name = "Johanniter-Unfall-Hilfe"
+        settings = current.deployment_settings
+
+        name = settings.get_custom("context_org_name")
+        logo = settings.get_custom("org_menu_logo")
 
         current_user = current.auth.user
         if current_user:
@@ -33,16 +36,17 @@ class S3OrgMenuLayout(S3NavigationItem):
                 if row:
                     name = row.name
 
-        logo = IMG(_src = "/%s/static/themes/JUH/img/logo_smaller.png" % current.request.application,
-                   _alt = name,
-                   _width = 49,
-                   )
+        if logo:
+            path = URL(c="static", f="themes", args=list(logo))
+            logo = IMG(_src=path, _alt=name, _height=49, _class="org-menu-logo")
+        else:
+            logo = ""
 
         # Note: render using current.menu.org.render()[0] + current.menu.org.render()[1]
         return (name, logo)
 
 # -----------------------------------------------------------------------------
 # Shortcut
-OM = S3OrgMenuLayout
+OM = OrgMenuLayout
 
 # END =========================================================================

@@ -857,7 +857,7 @@ class FilterForm:
             Add default filters to resource, to be called on a multi-record
             view when a filter form is rendered the first time and before
             the view elements get processed; can be overridden in request
-            URL with ?default_filters=0
+            URL with ?search=xxx (e.g. $search=query)
 
             Args:
                 request: the request
@@ -869,10 +869,11 @@ class FilterForm:
 
         default_filters = {}
 
-        get_vars = request.get_vars
-        if get_vars.get("default_filters") == "0":
-            # Skip default filters (e.g. link in report)
+        if request.suppress_default_filters:
+            # Skip default filters (e.g. session filter, or links in reports)
             return default_filters
+
+        get_vars = request.get_vars
 
         # Do we have filter defaults for this table?
         tablename = resource.tablename
@@ -885,12 +886,14 @@ class FilterForm:
         filter_widgets = resource.get_config("filter_widgets")
         for filter_widget in filter_widgets:
 
-            widget_opts = filter_widget.opts
+            if not filter_widget:
+                continue
 
             # Do not apply defaults of hidden widgets because they are
             # not visible to the user
-            if not filter_widget or widget_opts.get("hidden"):
-                continue
+            widget_opts = filter_widget.opts
+            #if widget_opts.get("hidden"):
+                #continue
 
             # Skip widget if there are no defaults
             if table_defaults is None and "default" not in widget_opts:

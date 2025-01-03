@@ -1,7 +1,7 @@
 """
     Interactive Record Merger
 
-    Copyright: 2012-2022 (c) Sahana Software Foundation
+    Copyright: 2012-2024 (c) Sahana Software Foundation
 
     Permission is hereby granted, free of charge, to any person
     obtaining a copy of this software and associated documentation
@@ -30,11 +30,8 @@ from gluon import current, IS_NOT_IN_DB, \
                   TABLE, TBODY, TD, TFOOT, TH, THEAD, TR
 from gluon.storage import Storage
 
-from s3dal import Field
-
 from ..resource import FS
-from ..tools import IS_ONE_OF, s3_get_foreign_key, s3_represent_value, \
-                    s3_str
+from ..tools import IS_ONE_OF, s3_represent_value, s3_str
 from ..ui import PersonSelector, DataTable, S3LocationAutocompleteWidget, \
                  LocationSelector
 
@@ -617,9 +614,9 @@ class S3Merge(CRUDMethod):
             except Exception:
                 import sys
                 r.error(424,
-                        T("Could not merge records. (Internal Error: %s)") %
-                            sys.exc_info()[1],
-                        next=r.url())
+                        T("Could not merge records. (Internal Error: %s)") % sys.exc_info()[1],
+                        next=r.url(),
+                        )
             else:
                 # Cleanup bookmark list
                 if mode == "Inclusive":
@@ -695,22 +692,26 @@ class S3Merge(CRUDMethod):
                 d: the duplicate value
         """
 
+        requires = field.requires
+
         allowed_override = [str(o), str(d)]
 
-        requires = field.requires
         if field.unique and not requires:
-            field.requires = IS_NOT_IN_DB(current.db, str(field),
-                                          allowed_override=allowed_override)
+            field.requires = IS_NOT_IN_DB(current.db,
+                                          str(field),
+                                          allowed_override = allowed_override,
+                                          )
         else:
-            if not isinstance(requires, (list, tuple)):
-                requires = [requires]
-            for r in requires:
-                if hasattr(r, "allowed_override"):
+            def set_allowed_override(r):
+                if isinstance(r, (list, tuple)):
+                    for validator in r:
+                        set_allowed_override(validator)
+                elif hasattr(r, "other"):
+                    set_allowed_override(r.other)
+                elif hasattr(r, "allowed_override"):
                     r.allowed_override = allowed_override
-                if hasattr(r, "other") and \
-                   hasattr(r.other, "allowed_override"):
-                    r.other.allowed_override = allowed_override
-        return
+
+            set_allowed_override(requires)
 
     # -------------------------------------------------------------------------
     @staticmethod
@@ -779,417 +780,5 @@ class S3Merge(CRUDMethod):
             inp = widgets[ftype].widget(field, value, **attr)
 
         return inp
-
-# =============================================================================
-class S3RecordMerger:
-    """ Record Merger """
-
-    def __init__(self, resource):
-        """
-            Args:
-                resource: the resource
-        """
-
-        self.resource = resource
-        self.main = True
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def raise_error(msg, error=RuntimeError):
-        """
-            Rolls back the current transaction and raise an error
-
-            Args:
-                message: error message
-                error: exception class to raise
-        """
-
-        current.db.rollback()
-        raise error(msg)
-
-    # -------------------------------------------------------------------------
-    def update_record(self, table, record_id, row, data):
-
-        form = Storage(vars = Storage([(f, row[f])
-                              for f in table.fields if f in row]))
-        form.vars.update(data)
-        try:
-            current.db(table._id==row[table._id]).update(**data)
-        except Exception:
-            self.raise_error("Could not update %s.%s" %
-                            (table._tablename, record_id))
-        else:
-            s3db = current.s3db
-            s3db.update_super(table, form.vars)
-            current.auth.s3_set_record_owner(table, row[table._id], force_update=True)
-            s3db.onaccept(table, form, method="update")
-        return form.vars
-
-    # -------------------------------------------------------------------------
-    def delete_record(self, table, record_id, replaced_by=None):
-
-        s3db = current.s3db
-
-        if replaced_by is not None:
-            replaced_by = {str(record_id): replaced_by}
-        resource = s3db.resource(table, id=record_id)
-        success = resource.delete(replaced_by=replaced_by,
-                                  cascade=True)
-        if not success:
-            self.raise_error("Could not delete %s.%s (%s)" %
-                            (resource.tablename, record_id, resource.error))
-        return success
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def merge_realms(table, original, duplicate):
-        """
-            Merge the realms of two person entities (update all
-            realm_entities in all records from duplicate to original)
-
-            Args:
-                table: the table original and duplicate belong to
-                original: the original record
-                duplicate: the duplicate record
-        """
-
-        if "pe_id" not in table.fields:
-            return
-
-        original_pe_id = original["pe_id"]
-        duplicate_pe_id = duplicate["pe_id"]
-
-        db = current.db
-
-        for t in db:
-            if "realm_entity" in t.fields:
-
-                query = (t.realm_entity == duplicate_pe_id)
-                if "deleted" in t.fields:
-                    query &= (t.deleted == False)
-                try:
-                    db(query).update(realm_entity = original_pe_id)
-                except:
-                    db.rollback()
-                    raise
-        return
-
-
-    # -------------------------------------------------------------------------
-    def fieldname(self, key):
-
-        fn = None
-        if "." in key:
-            alias, fn = key.split(".", 1)
-            if alias not in ("~", self.resource.alias):
-                fn = None
-        elif self.main:
-            fn = key
-        return fn
-
-    # -------------------------------------------------------------------------
-    def merge(self,
-              original_id,
-              duplicate_id,
-              replace = None,
-              update = None,
-              main = True):
-        """
-            Merge a duplicate record into its original and remove the
-            duplicate, updating all references in the database.
-
-            Args:
-                original_id: the ID of the original record
-                duplicate_id: the ID of the duplicate record
-                replace: list fields names for which to replace the
-                         values in the original record with the values
-                         of the duplicate
-                update: dict of {field:value} to update the final record
-                main: internal indicator for recursive calls
-
-            Notes:
-                - virtual references (i.e. non-SQL, without foreign key
-                  constraints) must be declared in the table configuration
-                  of the referenced table like:
-
-                    s3db.configure(tablename, referenced_by=[(tablename, fieldname)])
-
-                  This does not apply for list:references which will be found
-                  automatically.
-                - this method can only be run from master resources (in order
-                  to find all components). To merge component records, you have
-                  to re-define the component as a master resource.
-                - NB CLI calls must db.commit()
-
-            TODO de-duplicate components and link table entries
-        """
-
-        self.main = main
-
-        db = current.db
-        resource = self.resource
-        table = resource.table
-        tablename = resource.tablename
-
-        # Check for master resource
-        if resource.parent:
-            self.raise_error("Must not merge from component", SyntaxError)
-
-        # Check permissions
-        auth = current.auth
-        has_permission = auth.s3_has_permission
-        permitted = has_permission("update", table,
-                                   record_id = original_id) and \
-                    has_permission("delete", table,
-                                   record_id = duplicate_id)
-        if not permitted:
-            self.raise_error("Operation not permitted", auth.permission.error)
-
-        # Load all models
-        s3db = current.s3db
-        if main:
-            s3db.load_all_models()
-        if db._lazy_tables:
-            # Must roll out all lazy tables to detect dependencies
-            for tn in list(db._LAZY_TABLES.keys()):
-                db[tn]
-
-        # Get the records
-        original = None
-        duplicate = None
-        query = table._id.belongs([original_id, duplicate_id])
-        if "deleted" in table.fields:
-            query &= (table.deleted == False)
-        rows = db(query).select(table.ALL, limitby=(0, 2))
-        for row in rows:
-            record_id = row[table._id]
-            if str(record_id) == str(original_id):
-                original = row
-                original_id = row[table._id]
-            elif str(record_id) == str(duplicate_id):
-                duplicate = row
-                duplicate_id = row[table._id]
-        msg = "Record not found: %s.%s"
-        if original is None:
-            self.raise_error(msg % (tablename, original_id), KeyError)
-        if duplicate is None:
-            self.raise_error(msg % (tablename, duplicate_id), KeyError)
-
-        # Find all single-components of this resource
-        # (so that their records can be merged rather than just re-linked)
-        # NB this is only reliable as far as the relevant component
-        #    declarations have actually happened before calling merge:
-        #    Where that happens in another controller (or customise_*)
-        #    than the one merge is being run from, those components may
-        #    be treated as multiple instead!
-        single = {}
-        hooks = s3db.get_hooks(table)[1]
-        if hooks:
-            for alias, hook in hooks.items():
-                if hook.multiple:
-                    continue
-                component = resource.components.get(alias)
-                if not component:
-                    # E.g. module disabled
-                    continue
-                ctablename = component.tablename
-                if ctablename in single:
-                    single[ctablename].append(component)
-                else:
-                    single[ctablename] = [component]
-
-        # Is this a super-entity?
-        is_super_entity = table._id.name != "id" and \
-                          "instance_type" in table.fields
-
-        # Find all references
-        referenced_by = list(table._referenced_by)
-
-        # Append virtual references
-        virtual_references = s3db.get_config(tablename, "referenced_by")
-        if virtual_references:
-            referenced_by.extend(virtual_references)
-
-        # Find and append list:references
-        for t in db:
-            for f in t:
-                ftype = str(f.type)
-                if ftype[:14] == "list:reference" and \
-                   ftype[15:15+len(tablename)] == tablename:
-                    referenced_by.append((t._tablename, f.name))
-
-        update_record = self.update_record
-        delete_record = self.delete_record
-        fieldname = self.fieldname
-
-        # Update all references
-        define_resource = s3db.resource
-        for referee in referenced_by:
-
-            if isinstance(referee, Field):
-                tn, fn = referee.tablename, referee.name
-            else:
-                tn, fn = referee
-
-            se = s3db.get_config(tn, "super_entity")
-            if is_super_entity and \
-               (isinstance(se, (list, tuple)) and tablename in se or \
-                se == tablename):
-                # Skip instance types of this super-entity
-                continue
-
-            # Reference field must exist
-            if tn not in db or fn not in db[tn].fields:
-                continue
-
-            rtable = db[tn]
-            if tn in single:
-                for component in single[tn]:
-
-                    if component.link is not None:
-                        component = component.link
-
-                    if fn == component.fkey:
-
-                        # Single component => must reduce to one record
-                        join = component.get_join()
-                        pkey = component.pkey
-                        lkey = component.lkey or component.fkey
-
-                        # Get the component records
-                        query = (table[pkey] == original[pkey]) & join
-                        osub = db(query).select(limitby=(0, 1)).first()
-                        query = (table[pkey] == duplicate[pkey]) & join
-                        dsub = db(query).select(limitby=(0, 1)).first()
-
-                        ctable = component.table
-                        ctable_id = ctable._id
-
-                        if dsub is None:
-                            # No duplicate => skip this step
-                            continue
-
-                        elif not osub:
-                            # No original => re-link the duplicate
-                            dsub_id = dsub[ctable_id]
-                            data = {lkey: original[pkey]}
-                            update_record(ctable, dsub_id, dsub, data)
-
-                        elif component.linked is not None:
-
-                            # Duplicate link => remove it
-                            dsub_id = dsub[ctable_id]
-                            delete_record(ctable, dsub_id)
-
-                        else:
-                            # Two records => merge them
-                            osub_id = osub[ctable_id]
-                            dsub_id = dsub[ctable_id]
-                            cresource = define_resource(component.tablename)
-                            cresource.merge(osub_id, dsub_id,
-                                            replace = replace,
-                                            update = update,
-                                            main = False,
-                                            )
-
-            # Find the foreign key
-            rfield = rtable[fn]
-            ktablename, key, multiple = s3_get_foreign_key(rfield)
-            if not ktablename:
-                if str(rfield.type) == "integer":
-                    # Virtual reference
-                    key = table._id.name
-                else:
-                    continue
-
-            # Find the referencing records
-            if multiple:
-                query = rtable[fn].contains(duplicate[key])
-            else:
-                query = rtable[fn] == duplicate[key]
-            rows = db(query).select(rtable._id, rtable[fn])
-
-            # Update the referencing records
-            for row in rows:
-                if not multiple:
-                    data = {fn:original[key]}
-                else:
-                    keys = [k for k in row[fn] if k != duplicate[key]]
-                    if original[key] not in keys:
-                        keys.append(original[key])
-                    data = {fn: keys}
-                update_record(rtable, row[rtable._id], row, data)
-
-        # Merge super-entity records
-        super_entities = resource.get_config("super_entity")
-        if super_entities is not None:
-
-            if not isinstance(super_entities, (list, tuple)):
-                super_entities = [super_entities]
-
-            for super_entity in super_entities:
-
-                super_table = s3db.table(super_entity)
-                if not super_table:
-                    continue
-                superkey = super_table._id.name
-
-                skey_o = original[superkey]
-                if not skey_o:
-                    msg = "No %s found in %s.%s" % (superkey,
-                                                    tablename,
-                                                    original_id)
-                    current.log.warning(msg)
-                    s3db.update_super(table, original)
-                    skey_o = original[superkey]
-                if not skey_o:
-                    continue
-                skey_d = duplicate[superkey]
-                if not skey_d:
-                    msg = "No %s found in %s.%s" % (superkey,
-                                                    tablename,
-                                                    duplicate_id)
-                    current.log.warning(msg)
-                    continue
-
-                sresource = define_resource(super_entity)
-                sresource.merge(skey_o, skey_d,
-                                replace=replace,
-                                update=update,
-                                main=False)
-
-        # Merge and update original data
-        data = Storage()
-        if replace:
-            for k in replace:
-                fn = fieldname(k)
-                if fn and fn in duplicate:
-                    data[fn] = duplicate[fn]
-        if update:
-            for k, v in update.items():
-                fn = fieldname(k)
-                if fn in table.fields:
-                    data[fn] = v
-        if len(data):
-            r = None
-            p = Storage([(fn, "__deduplicate_%s__" % fn)
-                         for fn in data
-                         if table[fn].unique and \
-                            table[fn].type == "string" and \
-                            data[fn] == duplicate[fn]])
-            if p:
-                r = Storage([(fn, original[fn]) for fn in p])
-                update_record(table, duplicate_id, duplicate, p)
-            update_record(table, original_id, original, data)
-            if r:
-                update_record(table, duplicate_id, duplicate, r)
-
-        # Delete the duplicate
-        if not is_super_entity:
-            self.merge_realms(table, original, duplicate)
-            delete_record(table, duplicate_id, replaced_by=original_id)
-
-        # Success
-        return True
 
 # END =========================================================================

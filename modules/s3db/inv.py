@@ -57,7 +57,6 @@ from gluon.sqlhtml import RadioWidget
 from gluon.storage import Storage
 
 from ..core import *
-from s3layouts import S3PopupLink
 
 # Compact JSON encoding
 SEPARATORS = (",", ":")
@@ -199,12 +198,12 @@ class InvWarehouseModel(DataModel):
                                                                   sort=True
                                                                   )),
                                           sortby = "name",
-                                          comment = S3PopupLink(c = "inv",
-                                                                f = "warehouse_type",
-                                                                label = ADD_WAREHOUSE_TYPE,
-                                                                title = T("Warehouse Type"),
-                                                                tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
-                                                                ),
+                                          comment = PopupLink(c = "inv",
+                                                              f = "warehouse_type",
+                                                              label = ADD_WAREHOUSE_TYPE,
+                                                              title = T("Warehouse Type"),
+                                                              tooltip = T("If you don't see the Type in the list, you can add a new one by clicking link 'Create Warehouse Type'."),
+                                                              ),
                                           )
 
         configure(tablename,
@@ -434,7 +433,7 @@ class InventoryModel(DataModel):
 
         settings = current.deployment_settings
         direct_stock_edits = settings.get_inv_direct_stock_edits()
-        track_pack_values = settings.get_inv_track_pack_values()
+        track_pack_values = settings.get_supply_track_pack_values()
         WAREHOUSE = T(settings.get_inv_facility_label())
 
         inv_source_type = {0: None,
@@ -562,7 +561,7 @@ class InventoryModel(DataModel):
             msg_record_deleted = T("Stock removed from Warehouse"),
             msg_list_empty = T("No Stock currently registered in this Warehouse"))
 
-        # Reusable Field
+        # Foreign Key Template
         inv_item_represent = inv_InvItemRepresent()
         inv_item_id = FieldTemplate("inv_item_id", "reference %s" % tablename,
                                     label = INV_ITEM,
@@ -1230,7 +1229,7 @@ class InventoryTrackingModel(DataModel):
             msg_record_deleted = T("Sent Shipment canceled"),
             msg_list_empty = T("No Sent Shipments"))
 
-        # Reusable Field
+        # Foreign Key Template
         send_id = FieldTemplate("send_id", "reference %s" % tablename,
                                 label = T("Send Shipment"),
                                 ondelete = "RESTRICT",
@@ -1450,7 +1449,7 @@ class InventoryTrackingModel(DataModel):
         else:
             recv_id_label = T("Receive Shipment")
 
-        # Reusable Field
+        # Foreign Key Template
         inv_recv_represent = self.inv_recv_represent
         recv_id = FieldTemplate("recv_id", "reference %s" % tablename,
                                 label = recv_id_label,
@@ -1602,12 +1601,12 @@ class InventoryTrackingModel(DataModel):
                              widget = S3AutocompleteWidget("supply", "item",
                                                            filter = "item.kit=1"),
                              # Needs better workflow as no way to add the Kit Items
-                             #comment = S3PopupLink(c = "supply",
-                             #                      f = "item",
-                             #                      label = T("Create Kit"),
-                             #                      title = T("Kit"),
-                             #                      tooltip = T("Type the name of an existing catalog kit OR Click 'Create Kit' to add a kit which is not in the catalog."),
-                             #                      ),
+                             #comment = PopupLink(c = "supply",
+                             #                    f = "item",
+                             #                    label = T("Create Kit"),
+                             #                    title = T("Kit"),
+                             #                    tooltip = T("Type the name of an existing catalog kit OR Click 'Create Kit' to add a kit which is not in the catalog."),
+                             #                    ),
                              comment = DIV(_class="tooltip",
                                            _title="%s|%s" % (T("Kit"),
                                                              T("Type the name of an existing catalog kit"))),
@@ -2260,7 +2259,7 @@ $.filterOptionsS3({
             # This Shipment relates to a request
             # - show the req_item comments
             list_fields.append("req_item_id$comments")
-        if settings.get_inv_track_pack_values():
+        if settings.get_supply_track_pack_values():
             list_fields.extend(("currency",
                                 "pack_value",
                                 ))
@@ -3886,7 +3885,7 @@ class InventoryAdjustModel(DataModel):
         auth = current.auth
 
         settings = current.deployment_settings
-        track_pack_values = settings.get_inv_track_pack_values()
+        track_pack_values = settings.get_supply_track_pack_values()
 
         organisation_id = self.org_organisation_id
         org_site_represent = self.org_site_represent
@@ -3961,7 +3960,7 @@ class InventoryAdjustModel(DataModel):
                             inv_adj_item = "adj_id",
                             )
 
-        # Reusable Field
+        # Foreign Key Template
         adj_id = FieldTemplate("adj_id", "reference %s" % tablename,
                                label = T("Inventory Adjustment"),
                                ondelete = "RESTRICT",
@@ -4099,7 +4098,7 @@ class InventoryAdjustModel(DataModel):
                      CommentsField(),
                      )
 
-        # Reusable Field
+        # Foreign Key Template
         adj_item_id = FieldTemplate("adj_item_id", "reference %s" % tablename,
                                     label = T("Inventory Adjustment Item"),
                                     ondelete = "RESTRICT",
@@ -4481,8 +4480,7 @@ def inv_stock_movements(resource, selectors, orderby):
             if raw["inv_recv.date"] > latest:
                 item_data["quantity_in_after"] += quantity_in
                 continue
-            else:
-                item_data["quantity_in"] += quantity_in
+            item_data["quantity_in"] += quantity_in
         # Origin sites
         sites = item_data["sites"]
         from_site = raw["inv_recv.from_site_id"]
@@ -4524,8 +4522,7 @@ def inv_stock_movements(resource, selectors, orderby):
             if send_date and send_date > latest:
                 item_data["quantity_out_after"] += quantity_in
                 continue
-            else:
-                item_data["quantity_out"] += quantity_in
+            item_data["quantity_out"] += quantity_in
         # Destination sites
         sites = item_data["sites"]
         to_site = raw["inv_send.to_site_id"]
@@ -4745,7 +4742,7 @@ def inv_send_controller():
 
             elif r.component_name == "track_item":
                 record = r.record
-                values = current.deployment_settings.get_inv_track_pack_values()
+                values = current.deployment_settings.get_supply_track_pack_values()
                 if status in (SHIP_STATUS_RECEIVED, SHIP_STATUS_CANCEL):
                     list_fields = ["status",
                                    "item_id",
@@ -5157,7 +5154,7 @@ class inv_InvItemRepresent(S3Represent):
 
     def __init__(self):
 
-        super(inv_InvItemRepresent, self).__init__(lookup = "inv_inv_item")
+        super().__init__(lookup = "inv_inv_item")
 
     # -------------------------------------------------------------------------
     def lookup_rows(self, key, values, fields=None):

@@ -25,7 +25,7 @@
     OTHER DEALINGS IN THE SOFTWARE.
 """
 
-__all__ = ("S3CRUD",)
+__all__ = ("BasicCRUD",)
 
 import json
 
@@ -45,10 +45,8 @@ from ..ui import S3EmbeddedComponentWidget, LocationSelector, ICON, S3SQLDefault
 from .base import CRUDMethod
 
 # =============================================================================
-class S3CRUD(CRUDMethod):
-    """
-        Interactive CRUD Method Handler
-    """
+class BasicCRUD(CRUDMethod):
+    """ Basic CRUD (Create, Read, Update, Delete) Method Handler """
 
     def __init__(self):
 
@@ -65,7 +63,19 @@ class S3CRUD(CRUDMethod):
 
             Args:
                 r: the CRUDRequest
-                attr: dictionary of parameters for the method handler
+
+            Keyword Args:
+                custom_crud_buttons: dict with custom CRUD buttons (see render_buttons)
+                dtargs: additional parameters for datatable
+                hide_filter: dict with settings to hide|show filters on tabs
+                filter_submit_url: URL to retrieve filtered data
+                filter_ajax_url: URL to retrieve updated filter options
+                list_ajaxurl: custom Ajax URL for datalist
+                list_id: the datatable list_id (=DOM node ID)
+                list_type: which type of list to use (datatable|datalist)
+                populate: dict {fieldname:value} with data to pre-populate
+                          create-form, or a function returning such a dict
+                variable_columns: allow user-selected table columns (True|False)
 
             Returns:
                 output object to send to the view
@@ -562,7 +572,7 @@ class S3CRUD(CRUDMethod):
                                                              _id="show-add-btn")
                     addtitle = get_crud_string(tablename, "label_create")
                     output["addtitle"] = addtitle
-                    if r.http == "POST":
+                    if r.has_form_error():
                         # Always show the form if there was a form error
                         script = '''$('#list-add').show();$('#show-add-btn').hide()'''
                         s3.jquery_ready.append(script)
@@ -1172,17 +1182,16 @@ class S3CRUD(CRUDMethod):
         tablename = resource.tablename
         get_config = resource.get_config
 
-        list_fields = get_config("list_fields", None)
-
         representation = r.representation
+
+        # Data table/list
         if representation in ("html", "iframe", "aadata", "dl", "popup"):
 
             hide_filter = self.hide_filter
             filter_widgets = get_config("filter_widgets", None)
 
             show_filter_form = False
-            if filter_widgets and not hide_filter and \
-               representation not in ("aadata", "dl"):
+            if filter_widgets and not hide_filter and representation not in ("aadata", "dl"):
                 show_filter_form = True
                 # Apply filter defaults (before rendering the data!)
                 from ..filters import FilterForm
@@ -1205,14 +1214,11 @@ class S3CRUD(CRUDMethod):
                     # Hide datatable filter box if we have a filter form
                     if "dt_searching" not in dtargs:
                         dtargs["dt_searching"] = False
-                    # Override default ajax URL if we have default filters
+                    # Set Ajax URL (also used to initialize exports)
+                    ajax_vars = dict(get_vars)
                     if default_filters:
-                        ajax_vars = dict(get_vars)
                         ajax_vars.update(default_filters)
-                        ajax_url = r.url(representation = "aadata",
-                                         vars = ajax_vars,
-                                         )
-                        dtargs["dt_ajax_url"] = ajax_url
+                    dtargs["dt_ajax_url"] = r.url(representation="aadata", vars=ajax_vars)
                     attr["dtargs"] = dtargs
                 filter_ajax = True
                 target = "datatable"
@@ -1262,6 +1268,13 @@ class S3CRUD(CRUDMethod):
                                          _id = "%s-filter-form" % target
                                          )
                 fresource = current.s3db.resource(resource.tablename) # Use a clean resource
+                if resource.parent and r.record:
+                    # We're on a component tab: filter by primary record so that
+                    # option lookups are limited to relevant component entries
+                    pkey = resource.parent.table._id
+                    join = (pkey == r.record[pkey]) & resource.get_join(reverse=True)
+                    fresource.add_filter(join)
+
                 alias = resource.alias if r.component else None
                 output["list_filter_form"] = filter_form.html(fresource,
                                                               get_vars,
@@ -1302,6 +1315,10 @@ class S3CRUD(CRUDMethod):
                                                        _id = "show-add-btn",
                                                        )
                         output["showadd_btn"] = showadd_btn
+                        if r.has_form_error():
+                            # Always show the form if there was a form error
+                            script = '''$('#list-add').show();$('#show-add-btn').hide()'''
+                            s3.jquery_ready.append(script)
 
                     # Restore the view
                     response.view = view
@@ -1313,7 +1330,12 @@ class S3CRUD(CRUDMethod):
                     if buttons:
                         output["buttons"] = buttons
 
-        elif representation == "plain":
+            return output
+
+        # Other formats
+        variable_columns = attr.get("variable_columns", False)
+        list_fields = resource.list_fields(request=r if variable_columns else None)
+        if representation == "plain":
 
             if resource.count() == 1:
                 # Provide the record
@@ -1379,7 +1401,10 @@ class S3CRUD(CRUDMethod):
             report_filename = get_config("report_filename", None)
             report_formname = get_config("report_formname", None)
 
+            pdf_fields = get_config("pdf_fields", list_fields)
+
             output = DataExporter.pdf(resource,
+                                      list_fields = pdf_fields,
                                       request = r,
                                       report_hide_comments = report_hide_comments,
                                       report_filename = report_filename,
@@ -1448,7 +1473,8 @@ class S3CRUD(CRUDMethod):
         list_id = attr.get("list_id", "datatable")
 
         # List fields
-        list_fields = resource.list_fields()
+        variable_columns = attr.get("variable_columns", False)
+        list_fields = resource.list_fields(request=r if variable_columns else None)
 
         # Default orderby
         orderby = get_config("orderby", None)
@@ -1546,8 +1572,15 @@ class S3CRUD(CRUDMethod):
             #        of EmptyTable)
             dtargs["dt_pagination"] = dt_pagination
             dtargs["dt_pageLength"] = display_length
+
             dtargs["dt_base_url"] = r.url(method="", vars={})
-            dtargs["dt_permalink"] = r.url()
+            if get_config("bulk_actions"):
+                dtargs["dt_select_url"] = r.url(method = "select",
+                                                vars = self._remove_filters(r.get_vars),
+                                                )
+            if variable_columns:
+                dtargs["dt_available_cols"] = self.available_cols(resource, list_fields)
+
             datatable = dt.html(totalrows, displayrows, **dtargs)
 
             # View + data
@@ -1557,8 +1590,7 @@ class S3CRUD(CRUDMethod):
         elif representation == "aadata":
 
             # Apply datatable filters
-            searchq, orderby, left = resource.datatable_filter(list_fields,
-                                                               get_vars)
+            searchq, orderby, left = resource.datatable_filter(list_fields, get_vars)
             if searchq is not None:
                 totalrows = resource.count()
                 resource.add_filter(searchq)
@@ -1600,6 +1632,65 @@ class S3CRUD(CRUDMethod):
             r.error(415, current.ERROR.BAD_FORMAT)
 
         return output
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def available_cols(resource, list_fields):
+        """
+            Build a JSON-serializable list of available columns, for column
+            selection in variable column data tables
+
+            Args:
+                resource: the CRUDResource
+                list_fields: the currently active list fields
+
+            Returns:
+                an array of [[index, label, selector, active]]
+                - index: the index of the field in the available_list_fields
+                - label: the field label
+                - selector: the field selector
+                - active: True|False whether the field is currently active
+        """
+
+        available_list_fields = resource.get_config("available_list_fields")
+        if available_list_fields:
+
+            available_cols = []
+
+            # Get the selectors of all available list fields
+            available = [f[1] if isinstance(f, (tuple, list)) else f
+                         for f in available_list_fields if f
+                         ]
+
+            # Get the selectors of all active list fields
+            active = [f[1] if isinstance(f, (tuple, list)) else f
+                      for f in list_fields if f
+                      ]
+
+            # Determine the indices of all active list fields
+            active_idx = [available.index(s) for s in active if s in available]
+
+            # Build list of available columns, preserving active order
+            rfields = resource.resolve_selectors(available_list_fields, extra_fields=False)[0]
+            last = len(available) - 1
+            for index, rfield in enumerate(rfields):
+
+                # Skip if active (except last)
+                if index < last and index in active_idx:
+                    continue
+
+                # Append all active list fields up to the current index
+                while active_idx and active_idx[0] < index:
+                    nxt = active_idx.pop(0)
+                    rf, s = rfields[nxt], available[nxt]
+                    available_cols.append([nxt, str(rf.label), s, True])
+
+                # Append this field
+                available_cols.append([index, str(rfield.label), available[index], index in active_idx])
+        else:
+            available_cols = None
+
+        return available_cols
 
     # -------------------------------------------------------------------------
     def _datalist(self, r, **attr):
@@ -2633,7 +2724,6 @@ class S3CRUD(CRUDMethod):
                 they will appear AFTER the standard action buttons
         """
 
-        s3crud = S3CRUD
         s3 = current.response.s3
         labels = s3.crud_labels
 
@@ -2685,13 +2775,13 @@ class S3CRUD(CRUDMethod):
                 update_url = iframe_safe(URL(args = args + ["update"], #.popup to use modals
                                              vars = get_vars,
                                              ))
-            s3crud.action_button(label, update_url,
-                                 # To use modals
-                                 #_class="action-btn s3_modal"
-                                 _class="action-btn edit",
-                                 icon = "edit",
-                                 **target
-                                 )
+            cls.action_button(label, update_url,
+                              # To use modals
+                              #_class="action-btn s3_modal"
+                              _class="action-btn edit",
+                              icon = "edit",
+                              **target
+                              )
         else:
             # User has permission to edit only some - or none - of the records
             if not read_url:
@@ -2699,13 +2789,13 @@ class S3CRUD(CRUDMethod):
                 read_url = iframe_safe(URL(args = args + method, #.popup to use modals
                                            vars = get_vars,
                                            ))
-            s3crud.action_button(label, read_url,
-                                 # To use modals
-                                 #_class="action-btn s3_modal"
-                                 _class="action-btn read",
-                                 icon = "file",
-                                 **target
-                                 )
+            cls.action_button(label, read_url,
+                              # To use modals
+                              #_class="action-btn s3_modal"
+                              _class="action-btn read",
+                              icon = "file",
+                              **target
+                              )
 
         # Delete-action
         if deletable and has_permission("delete", table):
@@ -2728,28 +2818,28 @@ class S3CRUD(CRUDMethod):
                     row_id = row.get("id", None)
                     if row_id:
                         rappend(str(row_id))
-                s3crud.action_button(labels.DELETE, delete_url,
-                                     _class="delete-btn",
-                                     icon=icon,
-                                     restrict=restrict,
-                                     **target
-                                     )
+                cls.action_button(labels.DELETE, delete_url,
+                                  _class="delete-btn",
+                                  icon=icon,
+                                  restrict=restrict,
+                                  **target
+                                  )
             else:
-                s3crud.action_button(labels.DELETE, delete_url,
-                                     _class="delete-btn",
-                                     icon=icon,
-                                     **target
-                                     )
+                cls.action_button(labels.DELETE, delete_url,
+                                  _class="delete-btn",
+                                  icon=icon,
+                                  **target
+                                  )
 
         # Copy-action
         if copyable and has_permission("create", table):
             if not copy_url:
                 copy_url = iframe_safe(URL(args = args + ["copy"]))
-            s3crud.action_button(labels.COPY,
-                                 copy_url,
-                                 icon="icon-copy",
-                                 **target
-                                 )
+            cls.action_button(labels.COPY,
+                              copy_url,
+                              icon="icon-copy",
+                              **target
+                              )
 
         # Append custom actions
         if custom_actions:

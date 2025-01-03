@@ -235,6 +235,8 @@ class S3NavigationItem:
         self.ltr = ltr                  # Item is always rendered LTR
         self.authorized = None          # True|False after authorization
 
+        self._applicable = None         # Outcome of the check-hook
+
         # Role restriction
         self.restrict = restrict
         if restrict is not None:
@@ -423,14 +425,14 @@ class S3NavigationItem:
 
         authorized = False
 
+        # Check required roles
         restrict = self.restrict
-        if restrict:
-            authorized = current.auth.s3_has_roles(restrict)
-        else:
-            authorized = True
+        authorized = current.auth.s3_has_roles(restrict) if restrict else True
 
-        if self.accessible_url() == False:
-            authorized = False
+        # Check URL accessible
+        if authorized:
+            authorized = self.accessible_url() is not False
+
         return authorized
 
     # -------------------------------------------------------------------------
@@ -477,22 +479,31 @@ class S3NavigationItem:
         return True if self.selected else False
 
     # -------------------------------------------------------------------------
-    def check_hook(self):
+    @property
+    def applicable(self):
         """
-            Run hooked-in checks
+            The result of the check-hook (lazy property)
+
+            Returns:
+                boolean
         """
 
-        cond = True
-        check = self.check
-        if check is not None:
-            if not isinstance(check, (list, tuple)):
-                check = [check]
-            for condition in check:
-                if callable(condition) and not condition(self):
-                    cond = False
-                elif not condition:
-                    cond = False
-        return cond
+        applicable = self._applicable
+        if applicable is None:
+
+            applicable = True
+
+            check = self.check
+            if check is not None:
+                if not isinstance(check, (list, tuple)):
+                    check = [check]
+                for condition in check:
+                    if callable(condition) and not condition(self) or not condition:
+                        applicable = False
+                        break
+            self._applicable = applicable
+
+        return applicable
 
     # -------------------------------------------------------------------------
     # Tag methods, allows to enable/disable/alter items by tag
@@ -683,7 +694,7 @@ class S3NavigationItem:
             return 0
 
         # Check hook and enabled
-        check = self.check_hook()
+        check = self.applicable
         if check:
             enabled = self.check_enabled()
             if not enabled:
@@ -978,9 +989,7 @@ class S3NavigationItem:
             # Check custom conditions (hook), these methods
             # can alter any prior flags, which can then only be
             # overridden by the class' check_enabled method
-            cond = self.check_hook()
-
-            if cond:
+            if self.applicable:
                 # Run the class' check_enabled method:
                 # if this returns False, then this overrides any prior status
                 enabled = self.check_enabled()
@@ -1462,16 +1471,18 @@ class S3ComponentTabs:
         if not record_id and r.record:
             record_id = r.record[r.table._id]
 
+        request = current.request
         for i, tab in enumerate(tabs):
 
             # Determine the query variables for the tab URL
-            vars_match = tab.vars_match(r)
+            # - applying original GET vars to prevent session filter creep
+            vars_match = tab.vars_match(request)
             if vars_match:
-                _vars = Storage(r.get_vars)
+                _vars = Storage(request.get_vars)
             else:
                 _vars = Storage(tab.vars)
-                if "viewing" in r.get_vars:
-                    _vars.viewing = r.get_vars.viewing
+                if "viewing" in request.get_vars:
+                    _vars.viewing = request.get_vars.viewing
 
             # Determine the controller function for the tab URL
             if tab.function is None:

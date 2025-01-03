@@ -37,6 +37,7 @@ __all__ = ("S3AgeWidget",
            "S3HiddenWidget",
            "S3HierarchyWidget",
            "S3ImageCropWidget",
+           "ImageUploadWidget",
            "S3InvBinWidget",
            "S3KeyValueWidget",
            # Only used inside this module
@@ -47,6 +48,7 @@ __all__ = ("S3AgeWidget",
            "S3PhoneWidget",
            "S3QRInput",
            "S3MultiSelectWidget",
+           "EmptyOptionsWidget",
            "S3SelectWidget",
            "S3SliderWidget",
            "S3StringWidget",
@@ -56,7 +58,6 @@ __all__ = ("S3AgeWidget",
            "CheckboxesWidgetS3",
            "s3_comments_widget",
            "s3_richtext_widget",
-           "S3XMLContents",
            "S3TagCheckboxWidget",
            )
 
@@ -65,6 +66,8 @@ import json
 import locale
 import os
 import re
+
+from io import BytesIO
 from uuid import uuid4
 
 try:
@@ -592,8 +595,8 @@ class S3CalendarWidget(EdenFormWidget):
         return extremes
 
     # -------------------------------------------------------------------------
-    @staticmethod
-    def inject_script(selector, options):
+    @classmethod
+    def inject_script(cls, selector, options):
         """
             Helper function to inject the document-ready-JavaScript for
             this widget.
@@ -608,101 +611,13 @@ class S3CalendarWidget(EdenFormWidget):
             return
 
         s3 = current.response.s3
-        appname = current.request.application
 
-        request = current.request
-        s3 = current.response.s3
-
-        datepicker_l10n = None
-        timepicker_l10n = None
-        calendars_type = None
-        calendars_l10n = None
-        calendars_picker_l10n = None
-
-        # Paths to localization files
-        os_path_join = os.path.join
-        datepicker_l10n_path = os_path_join(request.folder, "static", "scripts", "ui", "i18n")
-        timepicker_l10n_path = os_path_join(request.folder, "static", "scripts", "ui", "i18n")
-        calendars_l10n_path = os_path_join(request.folder, "static", "scripts", "calendars", "i18n")
-
-        calendar = options["calendar"].lower()
-        if calendar != "gregorian":
-            # Include the right calendar script
-            filename = "jquery.calendars.%s.js" % calendar
-            lscript = os_path_join(calendars_l10n_path, filename)
-            if os.path.exists(lscript):
-                calendars_type = "calendars/i18n/%s" % filename
-
-        language = current.session.s3.language
-        if language in current.deployment_settings.date_formats:
-            # Localise if we have configured a Date Format and we have a jQueryUI options file
-
-            # Do we have a suitable locale file?
-            #if language in ("prs", "ps"):
-            #    # Dari & Pashto use Farsi
-            #    language = "fa"
-            #elif language == "ur":
-            #    # Urdu uses Arabic
-            #    language = "ar"
-            if "-" in language:
-                parts = language.split("-", 1)
-                language = "%s-%s" % (parts[0], parts[1].upper())
-
-            # datePicker regional
-            filename = "datepicker-%s.js" % language
-            path = os_path_join(timepicker_l10n_path, filename)
-            if os.path.exists(path):
-                timepicker_l10n = "ui/i18n/%s" % filename
-
-            # timePicker regional
-            filename = "jquery-ui-timepicker-%s.js" % language
-            path = os_path_join(datepicker_l10n_path, filename)
-            if os.path.exists(path):
-                datepicker_l10n = "ui/i18n/%s" % filename
-
-            if calendar != "gregorian" and language:
-                # calendars regional
-                filename = "jquery.calendars.%s-%s.js" % (calendar, language)
-                path = os_path_join(calendars_l10n_path, filename)
-                if os.path.exists(path):
-                    calendars_l10n = "calendars/i18n/%s" % filename
-                # calendarsPicker regional
-                filename = "jquery.calendars.picker-%s.js" % language
-                path = os_path_join(calendars_l10n_path, filename)
-                if os.path.exists(path):
-                    calendars_picker_l10n = "calendars/i18n/%s" % filename
-        else:
-            language = ""
-
+        scripts, language = cls.global_scripts(options.get("calendar"))
         options["language"] = language
 
-        # Global scripts
-        if s3.debug:
-            scripts = ("jquery.plugin.js",
-                       "calendars/jquery.calendars.all.js",
-                       "calendars/jquery.calendars.picker.ext.js",
-                       "S3/s3.ui.calendar.js",
-                       datepicker_l10n,
-                       timepicker_l10n,
-                       calendars_type,
-                       calendars_l10n,
-                       calendars_picker_l10n,
-                       )
-        else:
-            scripts = ("jquery.plugin.min.js",
-                       "S3/s3.ui.calendar.min.js",
-                       datepicker_l10n,
-                       timepicker_l10n,
-                       calendars_type,
-                       calendars_l10n,
-                       calendars_picker_l10n,
-                       )
         for script in scripts:
-            if not script:
-                continue
-            path = "/%s/static/scripts/%s" % (appname, script)
-            if path not in s3.scripts:
-                s3.scripts.append(path)
+            if script and script not in s3.scripts:
+                s3.scripts.append(script)
 
         # jQuery-ready script
         script = '''$('#%(selector)s').calendarWidget(%(options)s);''' % \
@@ -710,6 +625,71 @@ class S3CalendarWidget(EdenFormWidget):
                   "options": json.dumps(options, separators=JSONSEPARATORS),
                   }
         s3.jquery_ready.append(script)
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def global_scripts(calendar="gregorian"):
+
+        s3 = current.response.s3
+        request = current.request
+
+        folder = request.folder
+        appname = request.application
+
+        # Basic scripts
+        if s3.debug:
+            scripts = ("jquery.plugin.js",
+                       "calendars/jquery.calendars.all.js",
+                       "calendars/jquery.calendars.picker.ext.js",
+                       "S3/s3.ui.calendar.js",
+                       )
+        else:
+            scripts = ("jquery.plugin.min.js",
+                       "S3/s3.ui.calendar.min.js",
+                       )
+        scripts = ["/%s/static/scripts/%s" % (appname, script) for script in scripts]
+        append = scripts.append
+
+        # Helper to append a script only if it exists
+        def append_if_exists(*plist):
+            path = os.path.join(folder, *plist)
+            if os.path.exists(path):
+                append("/%s/%s" % (appname, "/".join(plist)))
+
+        # Calendar variant
+        calendar = calendar.lower()
+        if calendar != "gregorian":
+            filename = "jquery.calendars.%s.js" % calendar
+            append_if_exists("static", "scripts", "calendars", "i18n", filename)
+
+        # Localization scripts
+        language = current.session.s3.language
+        if language in current.deployment_settings.date_formats:
+
+            if "-" in language:
+                parts = language.split("-", 1)
+                language = "%s-%s" % (parts[0], parts[1].upper())
+
+            # datePicker regional
+            filename = "datepicker-%s.js" % language
+            append_if_exists("static", "scripts", "ui", "i18n", filename)
+
+            # timePicker regional
+            filename = "jquery-ui-timepicker-%s.js" % language
+            append_if_exists("static", "scripts", "ui", "i18n", filename)
+
+            if calendar != "gregorian" and language:
+                # calendars regional
+                filename = "jquery.calendars.%s-%s.js" % (calendar, language)
+                append_if_exists("static", "scripts", "calendars", "i18n", filename)
+
+                # calendarsPicker regional
+                filename = "jquery.calendars.picker-%s.js" % language
+                append_if_exists("static", "scripts", "calendars", "i18n", filename)
+        else:
+            language = ""
+
+        return scripts, language
 
 # =============================================================================
 class S3DateWidget(EdenFormWidget):
@@ -1194,7 +1174,7 @@ class S3HoursWidget(EdenFormWidget):
     PARTS = re.compile(r"((?:[+-]{0,1}\s*)(?:[0-9,.:]+)\s*(?:[^0-9,.:+-]*))")
     TOKEN = re.compile(r"([+-]{0,1}\s*)([0-9,.:]+)([^0-9,.:+-]*)")
 
-    def __init__(self, interval=None, precision=2, explicit_above=None):
+    def __init__(self, interval=None, precision=2, explicit_above=None, placeholder=None):
         """
             Args:
                 interval: standard interval to round up to (minutes),
@@ -1202,12 +1182,14 @@ class S3HoursWidget(EdenFormWidget):
                 precision: number of decimal places to keep
                 explicit_above: require explicit time unit or colon notation
                                 for value fragments above this limit
+                placeholder: placeholder for input
         """
 
         self.interval = interval
         self.precision = precision
 
         self.explicit_above = explicit_above
+        self.placeholder = placeholder
 
     # -------------------------------------------------------------------------
     def __call__(self, field, value, **attributes):
@@ -1225,6 +1207,9 @@ class S3HoursWidget(EdenFormWidget):
 
         attr["requires"] = self.validate
         attr["_title"] = current.T("In hours, or formatted like 1h10min, 15min, 0:45...")
+
+        if self.placeholder:
+            attr["_placeholder"] = self.placeholder
 
         widget = INPUT(**attr)
         widget.add_class("hours")
@@ -1676,9 +1661,9 @@ class S3QRInput(EdenFormWidget):
 # =============================================================================
 class S3EmbeddedComponentWidget(EdenFormWidget):
     """
-        Widget used by S3CRUD for link-table components with actuate="embed".
+        Widget used by BasicCRUD for link-table components with actuate="embed".
         Uses s3.embed_component.js for client-side processing, and
-        S3CRUD._postprocess_embedded to receive the data.
+        BasicCRUD._postprocess_embedded to receive the data.
     """
 
     def __init__(self,
@@ -2000,7 +1985,7 @@ class S3GroupedOptionsWidget(EdenFormWidget):
 
         fieldname = field.name
 
-        default = dict(value=value)
+        default = {"value": value}
         attr = self._attributes(field, default, **attributes)
 
         if "_id" in attr:
@@ -2166,8 +2151,8 @@ class S3GroupedOptionsWidget(EdenFormWidget):
         # Sort letters
         if letter_options:
             all_letters = sorted(letter_options.keys(), key=locale.strxfrm)
-            first_letter = min(u"A", all_letters[0])
-            last_letter = max(u"Z", all_letters[-1])
+            first_letter = min("A", all_letters[0])
+            last_letter = max("Z", all_letters[-1])
         else:
             # No point with grouping if we don't have any labels
             all_letters = []
@@ -2444,9 +2429,256 @@ i18n.upload_image='%s' ''' % (T("Please select a valid image!"),
         return DIV(elements)
 
 # =============================================================================
+class ImageUploadWidget(EdenFormWidget):
+    """
+        Allows the user to select and crop an image for upload
+            - cropping & scaling (if necessary) is done client-side
+            - currently using JCrop (https://jcrop.com)
+    """
+
+    def __init__(self,
+                 image_bounds = None,
+                 use_camera = True,
+                 ):
+        """
+            Args:
+                image_bounds: Limits the Size of the Image that can be
+                              uploaded, tuple (MaxWidth, MaxHeight)
+                use_camera: activate option to capture images from built-in
+                            or connected web camera
+        """
+
+        self.image_bounds = image_bounds
+
+        if use_camera:
+            # Apply global setting
+            self.use_camera = current.deployment_settings.get_ui_image_upload_use_camera()
+        else:
+            # Never use camera, irrespective global setting
+            self.use_camera = False
+
+        self.widget_id = None
+
+    # -------------------------------------------------------------------------
+    def __call__(self, field, value, download_url=None, **attributes):
+        """
+            Args:
+                field: Field using this widget
+                value: value if any
+                download_url: Download URL for saved Image
+        """
+
+        T = current.T
+
+        # DOM node ID for the widget
+        widget_id = self.widget_id = str(field).replace(".", "_")
+
+        # Determine image URL and file name
+        if value and download_url:
+            if callable(download_url):
+                download_url = download_url()
+            url = "%s/%s" % (download_url, value)
+            filename = field.retrieve(value, nameonly=True)[0]
+        else:
+            url = None
+            filename = None
+
+        # Configure post-processing of the uploaded image
+        postprocess = self.process_image
+        requires = field.requires
+        if isinstance(requires, (tuple, list)):
+            requires = [postprocess] + list(requires)
+        elif requires:
+            requires = [postprocess, requires]
+        else:
+            requires = postprocess
+
+        # The file input
+        # - not actually uploaded, image is read+processed client-side
+        #   and then submitted as b64-encoded image data through hidden
+        #   input (crop_data below)
+        attr = self._attributes(field, {"_class": "imagecrop-upload",
+                                        "_id": widget_id,
+                                        "_type": "file",
+                                        }, **attributes)
+        attr["requires"] = requires
+        file_input = INPUT(**attr)
+
+        # The upload area
+        # - a normal file input, an area for drag&drop
+        if self.use_camera:
+            # Add button to capture image from built-in/connected web camera
+            capture_btn = BUTTON(ICON("fa fa-video-camera"), T("Capture Image from Video"),
+                                 _type = "button",
+                                 _class = "primary button action-btn capture-btn",
+                                 )
+        else:
+            capture_btn = ""
+
+        upload_title = T("Upload different Image") if url else T("Upload Image")
+        upload_area = FIELDSET(LEGEND(upload_title, _class = "upload-title"),
+                               DIV(file_input,
+                                   DIV(T("or Drop here"), _class="imagecrop-drag"),
+                                   capture_btn,
+                                  _class = "upload-container",
+                                  _style = "display:none" if url else None,
+                                  ),
+                               )
+
+        # Hidden canvas
+        # - used to scale and crop the image on the client side
+        canvas = TAG["canvas"](_class="image-upload-canvas",
+                               _style="display:none",
+                               )
+
+        image_bounds = self.image_bounds
+        if image_bounds:
+            canvas.attributes["_width"] = image_bounds[0]
+            canvas.attributes["_height"] = image_bounds[1]
+        else:
+            # Images are not scaled and are uploaded as they are
+            canvas.attributes["_width"] = 0
+
+        # Preview + crop area
+        btn_class = "imagecrop-btn button"
+        crop_area = FIELDSET(LEGEND(T("Uploaded Image")),
+                             A(T("Enable Crop"),
+                               _class = "select-crop-btn %s" % btn_class,
+                               ),
+                             A(T("Crop Image"),
+                               _class = "crop-btn %s" % btn_class,
+                               ),
+                             A(T("Cancel"),
+                               _class = "remove-btn %s" % btn_class,
+                               ),
+                             HR(_style = "display:none"),
+                             IMG(_class = "uploaded-image",
+                                 _style = "display:none",
+                                 ),
+                             )
+
+        # Hidden input for the cropped image
+        crop_data_id = "%s-imagecrop-data" % widget_id
+        crop_data_attr = {"_type": "hidden",
+                          "_name": crop_data_id,
+                          "_id": crop_data_id,
+                          "_class": "imagecrop-data"
+                          }
+        if url and filename:
+            crop_data_attr["data"] = {"url": url,
+                                      "filename": filename,
+                                      }
+        crop_data = INPUT(**crop_data_attr)
+
+        # Inject scripts + styles
+        widget_opts = {}
+        self.inject_script(widget_id, widget_opts)
+
+        return DIV(upload_area,
+                   canvas,
+                   crop_area,
+                   crop_data,
+                   _class = "image-upload",
+                   )
+
+    # -------------------------------------------------------------------------
+    def process_image(self, value):
+        """
+            Post-processes the uploaded (+cropped) image
+
+            Args:
+                value: the input value (=uploaded image)
+
+            Returns:
+                a tuple (value, error), with value being the processed
+                image as Storage {filename, file} (or a FieldStorage if
+                the input already contains a file)
+        """
+
+        # If there is an uploaded file, accept it as-is
+        if value not in (b"", None):
+            return value, None
+
+        # Check for cropped image
+        variable = "%s-imagecrop-data" % self.widget_id
+        cropped_image = current.request.post_vars.get(variable)
+        if not cropped_image:
+            return None, current.T("No image was specified!")
+
+        # Parse the data
+        try:
+            metadata, cropped_image = cropped_image.rsplit(",", 1)
+            filename = metadata.rsplit(";", 2)[0]
+        except (ValueError, TypeError):
+            return None, current.T("invalid value!")
+
+        # Decode the base64-encoded image
+        import base64
+        f = Storage()
+        f.filename = filename
+        f.file = BytesIO(base64.b64decode(cropped_image))
+
+        return f, None
+
+    # -------------------------------------------------------------------------
+    @staticmethod
+    def inject_script(widget_id, options):
+        """
+            Injects scripts and styles used by this widget
+
+            Args:
+                widget_id: the DOM node ID of the widget
+                options: JSON-serializable dict of widget options
+        """
+
+        T = current.T
+        s3 = current.response.s3
+
+        # Static JavaScript
+        script_dir = "/%s/static/scripts" % current.request.application
+        debug = s3.debug
+        if debug:
+            scripts = ["jquery.color.js",
+                       "jquery.Jcrop.js",
+                       "S3/s3.ui.imageupload.js",
+                       ]
+        else:
+            scripts = ["S3/s3.ui.imageupload.min.js",
+                       ]
+        for script in scripts:
+            path = "%s/%s" % (script_dir, script)
+            if path not in s3.scripts:
+                s3.scripts.append(path)
+
+        # CSS used by static scripts
+        sheet = "plugins/jquery.Jcrop.css"
+        if sheet not in s3.stylesheets:
+            s3.stylesheets.append(sheet)
+
+        # I18n strings
+        s3.js_global.append('''
+i18n.capture_image_from_video='%s'
+i18n.capture_image_ok='%s'
+i18n.invalid_image='%s'
+i18n.supported_image_formats='%s'
+i18n.upload_new_image='%s'
+i18n.upload_image='%s' ''' % (T("Capture Image from Video"),
+                              T("OK"),
+                              T("Please select a valid image!"),
+                              T("Supported formats"),
+                              T("Upload different Image"),
+                              T("Upload Image"),
+                              ))
+
+        # Widget instantiation
+        script = """$('#%s').imageUpload(%s);""" % (widget_id, json.dumps(options))
+        if script not in s3.jquery_ready:
+            s3.jquery_ready.append(script)
+
+# =============================================================================
 class S3InvBinWidget(FormWidget):
     """
-        Widget used by S3CRUD to offer the user matching bins where
+        Widget used by BasicCRUD to offer the user matching bins where
         stock items can be placed
     """
 
@@ -2550,7 +2782,7 @@ class S3KeyValueWidget(ListWidget):
             try:
                 value = json.dumps(value, separators=JSONSEPARATORS)
             except:
-                raise("Bad value for key-value pair field")
+                raise ValueError("Bad value for key-value pair field")
         appname = current.request.application
         jsfile = "/%s/static/scripts/S3/%s" % (appname, "s3.keyvalue.widget.js")
 
@@ -2836,6 +3068,23 @@ class S3LocationLatLonWidget(EdenFormWidget):
                        )
 
 # =============================================================================
+class EmptyOptionsWidget(OptionsWidget):
+    """
+        Version of OptionsWidget that passes the currently selected option
+        additionally as data-attribute; required for IS_ONE_OF_EMPTY_SELECT
+        with filterOptionsS3
+    """
+
+    @classmethod
+    def widget(cls, field, value, **attributes):
+
+        widget = super().widget(field, value, **attributes)
+        if value is not None:
+            widget["data"] = {"selected": s3_str(value)}
+
+        return widget
+
+# =============================================================================
 class S3SelectWidget(OptionsWidget):
     """
         Standard OptionsWidget, but using the jQuery UI SelectMenu:
@@ -3029,10 +3278,7 @@ class S3MultiSelectWidget(MultipleOptionsWidget):
         if not isinstance(search_opt, bool) and \
            (search_opt == "auto" or isinstance(search_opt, int)):
             max_options = 10 if search_opt == "auto" else search_opt
-            if options_len > max_options:
-                search_opt = True
-            else:
-                search_opt = False
+            search_opt = bool(options_len > max_options)
         if search_opt is True and header_opt is False:
             # Must have at least "" as header to show the search field
             header_opt = ""
@@ -4106,7 +4352,7 @@ class S3PhoneWidget(StringWidget):
 def s3_comments_widget(field, value, **attr):
     """
         A smaller-than-normal textarea
-        to be used by the CommentsField & gis.desc_field Reusable fields
+        - used by the CommentsField & gis.desc_field templates
     """
 
     _id = attr.get("_id", "%s_%s" % (field._tablename, field.name))
@@ -4164,89 +4410,6 @@ def s3_richtext_widget(field, value):
                     value = value,
                     requires = field.requires,
                     )
-
-# =============================================================================
-class S3XMLContents:
-    """
-        Renderer for db-stored XML contents (e.g. CMS)
-
-        Replaces {{page}} expressions inside the contents with local URLs.
-
-        {{page}}                 - gives the URL of the current page
-        {{name:example}}         - gives the URL of the current page with
-                                   a query ?name=example (can add any number
-                                   of query variables)
-        {{c:org,f:organisation}} - c and f tokens override controller and
-                                   function of the current page, in this
-                                   example like /org/organisation
-        {{args:arg,arg}}         - override the current request's URL args
-                                   (this should come last in the expression)
-        {{noargs}}               - strip all URL args
-
-        NB does not check permissions for the result URLs
-    """
-
-    def __init__(self, contents):
-        """
-            Args:
-                contents: the contents (string)
-        """
-
-        self.contents = contents
-
-    # -------------------------------------------------------------------------
-    @staticmethod
-    def link(match):
-        """
-            Replace {{}} expressions with local URLs, with the ability to
-            override controller, function and URL query variables.Called
-            from re.sub.
-
-            Args:
-                match: the re match object
-        """
-
-        # Parse the expression
-        tokens = match.group(1).split(",")
-
-        args = True
-        parameters = {}
-        arguments = []
-        collect_args = False
-        for token in tokens:
-            if not token:
-                continue
-            elif ":" in token:
-                collect_args = False
-                key, value = token.split(":")
-            else:
-                key, value = token, None
-            key = key.strip()
-            if not value:
-                if key == "noargs":
-                    args = False
-                elif collect_args:
-                    arguments.append(key)
-            elif key == "args":
-                arguments.append(value.strip())
-                collect_args = True
-            else:
-                parameters[key] = value.strip()
-
-        # Construct the URL
-        request = current.request
-        c = parameters.pop("c", request.controller)
-        f = parameters.pop("f", request.function)
-        if not arguments:
-            arguments = request.args
-        args = arguments if args else []
-        return URL(c=c, f=f, args=args, vars=parameters, host=True)
-
-    # -------------------------------------------------------------------------
-    def xml(self):
-        """ Render the output """
-
-        return re.sub(r"\{\{(.+?)\}\}", self.link, self.contents)
 
 # =============================================================================
 class S3TagCheckboxWidget(EdenFormWidget):

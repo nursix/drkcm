@@ -14,7 +14,7 @@ S3.search = {};
      *
      * @param {object} s - the Ajax options dict
      */
-    var searchRewriteAjaxOptions = function(s, method) {
+    var searchRewriteAjaxOptions = function(s, method, action) {
 
         // Rewrite only GET
         if (s.type != 'GET') {
@@ -101,7 +101,12 @@ S3.search = {};
         s.processData = false;
 
         // Construct new Ajax URL
+        delete queryDict.$search;
         var ajaxURL = path + '?$search=' + method;
+        if (action) {
+            delete queryDict.$action;
+            ajaxURL = ajaxURL + '&$action=' + action;
+        }
 
         // Stringify and append queryDict
         var queryString = S3.queryString.stringify(queryDict);
@@ -252,7 +257,7 @@ S3.search = {};
 
         // If no form has been specified, find the first one
         if (undefined === form) {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         // Temporarily disable auto-submit
@@ -338,6 +343,8 @@ S3.search = {};
         form.trigger('optionChanged');
     };
 
+    S3.search.clearFilters = clearFilters;
+
     /**
      * Regex for the operator in a filter expression
      */
@@ -357,7 +364,7 @@ S3.search = {};
 
         // Fall back to first filter form in page
         if (typeof form == 'undefined') {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         var i,
@@ -371,7 +378,7 @@ S3.search = {};
             operator;
 
         // Text widgets
-        form.find('.text-filter:visible').each(function() {
+        $('.text-filter', form).each(function() {
             $this = $(this);
             id = $this.attr('id');
             urlVar = $('#' + id + '-data').val();
@@ -402,15 +409,11 @@ S3.search = {};
         });
 
         // Options widgets
-        form.find('.s3-groupedopts-widget:visible').prev(
-                  '.options-filter.groupedopts-filter-widget')
+        $('.s3-groupedopts-widget', form).prev('.options-filter.groupedopts-filter-widget')
         .add(
-        form.find('.ui-multiselect:visible').prev(
-                  '.options-filter.multiselect-filter-widget'))
+        $('.ui-multiselect', form).prev('.options-filter.multiselect-filter-widget'))
         .add(
-        form.find('.options-filter:visible,' +
-                  '.options-filter.multiselect-filter-widget.active' /*+
-                  ',.options-filter.multiselect-filter-bootstrap.active'*/))
+        $('.options-filter,.options-filter.multiselect-filter-widget', form))
         .each(function() {
             $this = $(this);
             id = $this.attr('id');
@@ -467,7 +470,7 @@ S3.search = {};
         });
 
         // Map widgets
-        form.find('.map-filter').each(function() {
+        $('.map-filter', form).each(function() {
 
             $this = $(this);
             id = $this.attr('id');
@@ -482,7 +485,7 @@ S3.search = {};
         });
 
         // Numerical range widgets -- each widget has two inputs.
-        form.find('.range-filter-input:visible').each(function() {
+        $('.range-filter-input', form).each(function() {
 
             $this = $(this);
             id = $this.attr('id');
@@ -497,9 +500,14 @@ S3.search = {};
         });
 
         // Date(time) range widgets -- each widget has two inputs.
-        form.find('.date-filter-input:visible').each(function() {
+        $('.date-filter-input', form).each(function() {
 
             $this = $(this);
+            // Skip if not yet initialized
+            if (!$this.calendarWidget('instance')) {
+                return;
+            }
+
             id = $this.attr('id');
             urlVar = $('#' + id + '-data').val();
             value = $this.val();
@@ -605,15 +613,11 @@ S3.search = {};
         });
 
         // Location widgets
-        form.find('.s3-groupedopts-widget:visible').prev(
-                  '.location-filter.groupedopts-filter-widget')
+        $('.s3-groupedopts-widget', form).prev('.location-filter.groupedopts-filter-widget')
         .add(
-        form.find('.ui-multiselect:visible').prev(
-                  '.location-filter.multiselect-filter-widget')
+        $('.ui-multiselect', form).prev('.location-filter.multiselect-filter-widget'))
         .add(
-        form.find('.location-filter:visible,' +
-                  '.location-filter.multiselect-filter-widget.active' /*+
-          ',.location-filter.multiselect-filter-bootstrap.active'*/)))
+        $('.location-filter,.location-filter.multiselect-filter-widget', form))
         .each(function() {
 
             $this = $(this);
@@ -655,7 +659,7 @@ S3.search = {};
         });
 
         // Hierarchy filter (experimental)
-        form.find('.hierarchy-filter:visible').each(function() {
+        $('.hierarchy-filter', form).each(function() {
 
             $this = $(this);
             id = $this.attr('id');
@@ -684,36 +688,22 @@ S3.search = {};
         });
 
         // Age filter widgets -- each widget has two inputs.
-        form.find('.age-filter-input:visible').each(function() {
+        $('.age-filter-input', form).each(function() {
 
             $this = $(this);
             id = $this.attr('id');
             urlVar = $('#' + id + '-data').val();
             value = $this.val();
 
-            var years = value - 0;
-            if (value && !isNaN(years)) {
-                var m = urlVar.match(FILTEROP);
-                if (m && m[1] == 'gt') {
-                    // Age in years is the same until one day before
-                    // the next birthday, so must add one year here:
-                    years += 1;
-                }
-                // Convert years (ago) into a date
-                var dt = new Date();
-                dt.setYear(dt.getFullYear() - years);
-                // Convert to ISO format
-                dt = dt.getFullYear() + '-' +
-                       ('0' + (dt.getMonth() + 1)).slice(-2) + '-' +
-                       ('0' + dt.getDate()).slice(-2);
-                queries.push([urlVar, dt]);
+            if (value !== '') {
+                queries.push([urlVar, value]);
             } else {
                 queries.push([urlVar, null]);
             }
         });
 
         // Value filter widgets
-        $('.value-filter:visible', form).each(function() {
+        $('.value-filter', form).each(function() {
 
             $this = $(this);
             id = $this.attr('id');
@@ -729,6 +719,12 @@ S3.search = {};
         // Other widgets go here...
 
         // return queries to caller
+        if (queries.filter(function(f) { return f[1] != null; }).length) {
+            form.addClass('has-active-filters');
+        } else {
+            form.removeClass('has-active-filters');
+        }
+
         return queries;
     };
 
@@ -741,7 +737,7 @@ S3.search = {};
     var setCurrentFilters = function(form, queries) {
 
         if (undefined === form) {
-            form = $('body').find('form.filter-form').first();
+            form = $('.filter-form').first();
         }
 
         // Temporarily disable auto-submit
@@ -921,6 +917,24 @@ S3.search = {};
                     $this.calendarWidget('setJSDate', new Date(dtString));
                 } else {
                     $this.calendarWidget('clear');
+                }
+            }
+        });
+
+        // Age filter widgets
+        form.find('.age-filter-input').each(function() {
+            $this = $(this);
+            id = $this.attr('id');
+            expression = $('#' + id + '-data').val();
+            if (q.hasOwnProperty(expression)) {
+                if (!$this.is(':visible') && !$this.hasClass('active')) {
+                    toggleAdvanced(form);
+                }
+                values = q[expression];
+                if (values) {
+                    $this.val(values[0]);
+                } else {
+                    $this.val('');
                 }
             }
         });
@@ -2307,6 +2321,11 @@ S3.search = {};
             );
         });
 
+        // Determine whether the form has active filters
+        $('.filter-form').each(function() {
+            getCurrentFilters($(this));
+        });
+
         // Don't submit if pressing Enter
         $('.text-filter').on('keypress', function(e) {
             if (e.which == 13) {
@@ -2726,15 +2745,14 @@ S3.search = {};
          */
         _load: function() {
 
-            var el = this.element,
-                filters = this.options.filters;
+            const filterForm = $(this.element).closest('form'),
+                  filters = this.options.filters;
 
-            var filter_id = $(el).val();
+            S3.search.clearFilters(filterForm);
+
+            let filter_id = $(el).val();
             if (filter_id && filters.hasOwnProperty(filter_id)) {
-                S3.search.setCurrentFilters($(el).closest('form'), filters[filter_id]);
-            } else {
-                // @todo: clear filters? => not in global scope
-                // S3.search.clearFilters($(this).closest('form'));
+                S3.search.setCurrentFilters(filterForm, filters[filter_id]);
             }
         },
 

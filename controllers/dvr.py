@@ -105,16 +105,6 @@ def person():
             status_opts = s3db.dvr_case_status_filter_opts
             default_status = None
 
-            # Set default for dvr_case_effort.person_id and hide it
-            etable = s3db.dvr_case_effort
-            field = etable.person_id
-            field.default = r.record.id
-            field.readable = field.writable = False
-
-            # Set default for dvr_case_effort.human_resource_id
-            field = etable.human_resource_id
-            field.default = auth.s3_logged_in_human_resource()
-
         # Should not be able to delete records in this view
         resource.configure(deletable = False)
 
@@ -852,6 +842,7 @@ def response_action():
 
         resource = r.resource
         table = resource.table
+        record = r.record
 
         # Beneficiary is required and must have a case file
         ptable = s3db.pr_person
@@ -870,40 +861,47 @@ def response_action():
         # Create/delete requires context perspective
         insertable = deletable = False
 
-        get_vars = r.get_vars
-        if "viewing" in get_vars:
-            try:
-                vtablename, record_id = get_vars["viewing"].split(".")
-            except ValueError:
-                return False
+        person_id = None
 
-            has_permission = auth.s3_has_permission
-            if vtablename == "pr_person":
-                if not has_permission("read", "pr_person", record_id):
-                    r.unauthorised()
-                query = (FS("person_id") == record_id)
-                resource.add_filter(query)
+        viewing = r.viewing
+        if viewing:
+            vtablename, person_id = viewing
+            if vtablename != "pr_person":
+                # Not supported
+                return None
 
-                field = r.table.case_activity_id
-                field.readable = field.writable = True
+            # Must be permitted to read the person record
+            if not auth.s3_has_permission("read", "pr_person", person_id):
+                r.unauthorised()
 
-                if record_id:
-                    # Restrict case activity selection to the case viewed
-                    atable = s3db.dvr_case_activity
-                    field.requires = IS_ONE_OF(db(atable.person_id == record_id),
-                                               "dvr_case_activity.id",
-                                               field.represent,
-                                               )
-            else:
-                return False
+            # Filter to case viewed
+            resource.add_filter(FS("person_id") == person_id)
 
+            # Enable case activity selection
+            field = table.case_activity_id
+            field.readable = field.writable = True
+
+            # Restrict case activity selection to the case viewed
+            atable = s3db.dvr_case_activity
+            field.requires = IS_ONE_OF(db(atable.person_id == person_id),
+                                       "dvr_case_activity.id",
+                                       field.represent,
+                                       )
+
+            # Can create and delete records in this perspective
             insertable = deletable = True
 
-        elif not r.record:
+        elif record:
+            person_id = record.person_id
 
+        else:
             # Filter out response actions of archived cases
             query = (FS("person_id$dvr_case.archived") == False)
             resource.add_filter(query)
+
+        if person_id and settings.get_dvr_vulnerabilities():
+            # Limit selectable vulnerabilities to case
+            s3db.dvr_configure_case_vulnerabilities(person_id)
 
         # Filter for "mine"
         mine = r.get_vars.get("mine")
@@ -1203,14 +1201,6 @@ def residence_permit_type():
 #
 def service_contact_type():
     """ Service Contact Types: RESTful CRUD controller """
-
-    return crud_controller()
-
-# =============================================================================
-# Site Activities (in connection with CR module)
-#
-def site_activity():
-    """ Site Activity Reports: RESTful CRUD Controller """
 
     return crud_controller()
 
