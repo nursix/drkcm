@@ -11,7 +11,8 @@ from collections import OrderedDict
 from gluon import current, IS_EMPTY_OR, IS_FLOAT_IN_RANGE, IS_IN_SET, IS_LENGTH
 from gluon.storage import Storage
 
-from core import FS, IS_ONE_OF, PopupLink, get_form_record_data, get_form_record_id
+from core import FS, IS_ONE_OF, PopupLink, S3SQLCustomForm, \
+                 get_form_record_data, get_form_record_id
 
 from ..uioptions import get_ui_options
 
@@ -750,8 +751,7 @@ def dvr_case_activity_resource(r, tablename):
     if r.interactive or r.representation in ("aadata", "json", "xlsx", "pdf"):
 
         # Fields and CRUD-Form
-        from core import S3SQLCustomForm, \
-                         S3SQLInlineComponent, \
+        from core import S3SQLInlineComponent, \
                          S3SQLInlineLink, \
                          S3SQLVerticalSubFormLayout
 
@@ -1377,6 +1377,56 @@ def response_action_onvalidation(form):
             status = db(query).select(stable.is_closed, limitby=(0, 1)).first()
             if status and status.is_closed:
                 form.errors["hours"] = T("Please specify the effort spent")
+
+# -------------------------------------------------------------------------
+def response_action_postprocess(default_postprocess):
+    """
+        Custom extension for response action postprocess:
+        - warns if the action concerns a vulnerability report but
+          no vulnerabilities have been specified
+
+        Args:
+            default_postprocess: the default postprocess
+
+        Returns:
+            the extended postprocess
+    """
+
+    def postprocess(form):
+
+        if callable(default_postprocess):
+            default_postprocess(form)
+
+        record_id = get_form_record_id(form)
+        if not record_id:
+            return
+
+        db = current.db
+        s3db = current.s3db
+
+        table = s3db.dvr_response_action
+        ttable = s3db.dvr_response_type
+        ltable = s3db.dvr_vulnerability_response_action
+
+        join = ttable.on((ttable.id == table.response_type_id) & \
+                         (ttable.code.belongs(("VRBAMF", "VRRP")))
+                         )
+        left = ltable.on((ltable.action_id == table.id) & \
+                         (ltable.vulnerability_id != None) & \
+                         (ltable.deleted == False)
+                         )
+        query = (table.id == record_id) & (table.deleted == False)
+        row = db(query).select(table.id,
+                               table.person_id,
+                               ltable.id,
+                               join = join,
+                               left = left,
+                               limitby = (0, 1),
+                               ).first()
+        if row and not row[ltable].id:
+            current.response.warning = current.T("No vulnerabilities specified!")
+
+    return postprocess
 
 # -------------------------------------------------------------------------
 def response_date_dt_orderby(field, direction, orderby, left_joins):
@@ -2127,6 +2177,13 @@ def dvr_response_action_resource(r, tablename):
                              "onvalidation",
                              response_action_onvalidation,
                              )
+
+    # Custom postprocess to warn for missing vulnerability links
+    if settings.get_dvr_response_vulnerabilities():
+        crud_form = s3db.get_config("dvr_response_action", "crud_form")
+        if isinstance(crud_form, S3SQLCustomForm):
+            postprocess = crud_form.opts.get("postprocess")
+            crud_form.opts["postprocess"] = response_action_postprocess(postprocess)
 
 # -------------------------------------------------------------------------
 def dvr_response_action_controller(**attr):

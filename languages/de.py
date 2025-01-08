@@ -4335,6 +4335,7 @@
 'No units currently registered': 'Zurzeit sind keine Einheiten registriert',
 'No valid registration card found': 'Keine gültige Registrierungskarte gefunden',
 'No volunteer availability registered': 'Zurzeit ist keine Verfügbarkeit von Freiwilligen registriert',
+'No vulnerabilities specified!': 'Keine Vulnerabilitäten angegeben!',
 'No': 'Nein',
 'No.': 'Nr.',
 'Non-allocable places': 'Nicht belegbare Plätze',
